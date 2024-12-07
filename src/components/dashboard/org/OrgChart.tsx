@@ -57,7 +57,7 @@ export function OrgChart({ data, searchTerm }: OrgChartProps) {
   };
 
   return (
-    <div className="flex justify-center pt-8 w-full">
+    <div className="flex justify-center pt-8 w-full overflow-x-auto"> {/* Added overflow-x-auto */}
       {renderNode(data, 0)}
     </div>
   );

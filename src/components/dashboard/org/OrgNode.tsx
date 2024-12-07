@@ -1,4 +1,3 @@
-import React from 'react';
 import { type OrgMember } from '../../../types/org';
 import { HighlightText } from './HighlightText';
 
@@ -8,7 +7,7 @@ interface OrgNodeProps {
   searchTerm: string;
 }
 
-export function OrgNode({ member, isRoot = false, searchTerm }: OrgNodeProps) {
+export function OrgNode({ member, searchTerm }: OrgNodeProps) {
   const initials = member.name
     .split(' ')
     .map(n => n[0])
