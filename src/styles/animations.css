@@ -1,0 +1,71 @@
+@keyframes searchPulse {
+  0%, 100% {
+    transform: scale(1) translate(0, 0);
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+  }
+  
+  25% {
+    transform: scale(1.05) translate(-5px, -5px);
+    box-shadow: 0 0 20px 10px rgba(99, 102, 241, 0.5);
+  }
+  
+  50% {
+    transform: scale(1.05) translate(5px, 5px);
+    box-shadow: 0 0 30px 15px rgba(99, 102, 241, 0.6);
+  }
+  
+  75% {
+    transform: scale(1.05) translate(-5px, 5px);
+    box-shadow: 0 0 20px 10px rgba(99, 102, 241, 0.5);
+  }
+}
+
+@keyframes vibrate {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  10% { transform: translate(-2px, -2px) rotate(-1deg); }
+  20% { transform: translate(2px, 2px) rotate(1deg); }
+  30% { transform: translate(-2px, 2px) rotate(0); }
+  40% { transform: translate(2px, -2px) rotate(1deg); }
+  50% { transform: translate(-2px, -2px) rotate(-1deg); }
+  60% { transform: translate(2px, 2px) rotate(0); }
+  70% { transform: translate(-2px, 2px) rotate(-1deg); }
+  80% { transform: translate(2px, -2px) rotate(1deg); }
+  90% { transform: translate(-2px, -2px) rotate(0); }
+}
+
+@keyframes ribbon {
+  0% { transform: translateY(-50%) rotate(0deg); }
+  100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+@keyframes glow {
+  0%, 100% { filter: brightness(100%) drop-shadow(0 0 0 rgba(99, 102, 241, 0)); }
+  50% { filter: brightness(120%) drop-shadow(0 0 15px rgba(99, 102, 241, 0.7)); }
+}
+
+.animate-search-match {
+  animation: 
+    vibrate 0.5s cubic-bezier(0.36, 0, 0.66, -0.56) 0s 1,
+    searchPulse 2s cubic-bezier(0.4, 0, 0.6, 1) 0.5s infinite,
+    glow 2s ease-in-out infinite;
+}
+
+.ribbon::before,
+.ribbon::after {
+  content: '🎉';
+  position: absolute;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  transform-origin: 50% 0;
+  animation: ribbon 2s linear infinite;
+  filter: drop-shadow(0 0 5px rgba(99, 102, 241, 0.5));
+}
+
+.ribbon::before {
+  left: -30px;
+}
+
+.ribbon::after {
+  right: -30px;
+}
