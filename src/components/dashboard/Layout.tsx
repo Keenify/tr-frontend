@@ -8,6 +8,9 @@ interface LayoutProps {
   onTabChange: (tab: 'sop' | 'org' | 'huddle') => void;
 }
 
+/**
+ * Layout component for the dashboard, including sidebar and main content area.
+ */
 export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
   const { signOut, session } = useAuth();
   const firstName = session?.user?.user_metadata?.first_name || 'User';
