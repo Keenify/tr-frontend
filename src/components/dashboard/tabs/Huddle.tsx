@@ -1,4 +1,3 @@
-import React from 'react';
 import { Plus, Search, MessageCircle, Clock } from 'lucide-react';
 
 export function Huddle() {

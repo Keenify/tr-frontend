@@ -17,7 +17,7 @@ export function HighlightText({ text, searchTerm }: HighlightTextProps) {
           key={index}
           className={
             part.toLowerCase() === searchTerm.toLowerCase()
-              ? 'bg-yellow-300 px-1 rounded animate-pulse'
+              ? 'bg-yellow-400 px-2 py-1 rounded-lg animate-pulse font-bold text-black shadow-lg'
               : ''
           }
         >

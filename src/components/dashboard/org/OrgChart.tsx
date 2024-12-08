@@ -40,7 +40,7 @@ export function OrgChart({ data, searchTerm }: OrgChartProps) {
             
             {/* Children */}
             <div className="flex gap-16 relative">
-              {node.children!.map((child, index) => (
+              {node.children!.map((child) => (
                 <div key={child.id} className="relative">
                   {/* Vertical line to child */}
                   {node.children!.length > 1 && (
