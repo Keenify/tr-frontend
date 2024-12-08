@@ -1,11 +1,45 @@
 import { useState } from 'react';
 import { Search, UserPlus } from 'lucide-react';
-import { OrgChart } from '../org/OrgChart';
+import { OrganizationGraph } from '@ant-design/graphs';
 import { useOrgData } from '../../../hooks/useOrgData';
 
 export function Org() {
   const { orgData } = useOrgData();
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Define the OrgMember type to fix the error
+  type OrgMember = {
+    id: string;
+    name: string;
+    role: string;
+    department?: string;
+    children?: OrgMember[];
+  };
+
+  // Convert your data to the format expected by OrganizationGraph
+  const convertToGraphData = (node: OrgMember): { id: string; value: { title: string; items: { text: string }[] }; children: any[] } => ({
+    id: node.id,
+    value: {
+      title: node.name,
+      items: [
+        { text: node.role },
+        { text: node.department || '' },
+      ],
+    },
+    children: node.children ? node.children.map(convertToGraphData) : [],
+  });
+
+  const graphData = {
+    id: 'root',
+    value: {
+      title: orgData.name,
+      items: [
+        { text: orgData.role },
+        { text: orgData.department || '' },
+      ],
+    },
+    children: [convertToGraphData(orgData)],
+  };
 
   return (
     <div className="divide-y divide-gray-200 h-full">
@@ -34,7 +68,7 @@ export function Org() {
       {/* Content */}
       <div className="px-6 py-4 overflow-x-auto flex-grow">
         <div className="w-full max-w-full mx-auto pb-16">
-          <OrgChart data={orgData} searchTerm={searchTerm} />
+          <OrganizationGraph data={graphData} />
         </div>
       </div>
     </div>

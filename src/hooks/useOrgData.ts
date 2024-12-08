@@ -9,6 +9,37 @@ const departmentColors = {
   operations: 'bg-purple-100 border-purple-300',
 };
 
+function transformOrgDataToGraph(orgData: OrgMember) {
+  const nodes: Array<{ id: string; label: string; role: string; department: string; color: string }> = [];
+  const edges: Array<{ source: string; target: string }> = [];
+
+  function traverse(member: OrgMember) {
+    // Add the current member as a node
+    nodes.push({
+      id: member.id,
+      label: member.name,
+      role: member.role,
+      department: member.department,
+      color: member.color,
+    });
+
+    // Add edges for each child
+    if (member.children) {
+      member.children.forEach((child) => {
+        edges.push({
+          source: member.id,
+          target: child.id,
+        });
+        traverse(child); // Recursively process each child
+      });
+    }
+  }
+
+  traverse(orgData);
+
+  return { nodes, edges };
+}
+
 export function useOrgData() {
   const [orgData] = useState<OrgMember>({
     id: '1',
@@ -146,5 +177,7 @@ export function useOrgData() {
     ]
   });
 
-  return { orgData, departmentColors };
+  const graphData = transformOrgDataToGraph(orgData);
+
+  return { orgData, departmentColors, graphData };
 }
