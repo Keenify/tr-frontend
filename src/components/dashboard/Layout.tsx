@@ -94,8 +94,8 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-full mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="flex-1 overflow-auto h-full">
+        <div className="max-w-full mx-auto py-8 px-4 sm:px-6 lg:px-8 h-full flex flex-col">
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-gray-900">
@@ -111,7 +111,7 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
           </div>
           
           {/* Content */}
-          <div className="bg-white shadow-sm rounded-lg">
+          <div className="bg-white shadow-sm rounded-lg flex-1">
             {children}
           </div>
         </div>
