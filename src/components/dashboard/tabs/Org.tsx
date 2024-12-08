@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, UserPlus } from 'lucide-react';
 import { OrganizationGraph } from '@ant-design/graphs';
 import { useOrgData } from '../../../hooks/useOrgData';
@@ -13,6 +13,7 @@ import { useOrgData } from '../../../hooks/useOrgData';
 export function Org() {
   const { orgData } = useOrgData();
   const [searchTerm, setSearchTerm] = useState('');
+  const [graphInstance, setGraphInstance] = useState<any>(null);
 
   /**
    * Type definition for an organizational member.
@@ -64,6 +65,60 @@ export function Org() {
     collapseExpand: true,
   };
 
+  useEffect(() => {
+    if (graphInstance) {
+      const nodes = graphInstance.getNodes();
+      
+      // Reset all nodes to default style first
+      nodes.forEach((node: any) => {
+        graphInstance.updateItem(node, {
+          style: {
+            stroke: undefined,
+            lineWidth: undefined
+          }
+        });
+        node.setState('highlight', false);
+      });
+
+      // Only apply highlighting if search term exists and is long enough
+      if (searchTerm && searchTerm.length > 2) {
+        const matchingNode = nodes.find((node: any) => {
+          const nodeData = node.get('model').value;
+          return nodeData.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                 nodeData.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                 nodeData.items.some((item: { text: string }) => 
+                   item.text.toLowerCase().includes(searchTerm.toLowerCase())
+                 );
+        });
+
+        if (matchingNode) {
+          try {
+            graphInstance.updateItem(matchingNode, {
+              style: {
+                stroke: '#ffff00',
+                lineWidth: 5
+              }
+            });
+            matchingNode.setState('highlight', true);
+          } catch (error) {
+            console.error('Error updating node style:', error);
+          }
+        }
+      }
+    }
+  }, [searchTerm, graphInstance]);
+
+  /**
+   * Callback function that is called when the organization graph is ready and initialized
+   * @param graph The graph instance from the visualization library
+   * @description This handler stores the graph instance in component state so it can be
+   * used later for animations and updates. The graph instance provides methods to manipulate
+   * the visualization.
+   */
+  const handleGraphReady = (graph: any) => {
+    setGraphInstance(graph);
+  };
+
   return (
     <div className="divide-y divide-gray-200 h-full flex flex-col">
       {/* Actions Bar */}
@@ -95,6 +150,7 @@ export function Org() {
           style={{ width: '100%', height: '100%' }} 
           nodeCfg={nodeConfig}
           behaviors={['drag-canvas', 'zoom-canvas', 'drag-node']}
+          onReady={handleGraphReady}
         />
       </div>
     </div>
