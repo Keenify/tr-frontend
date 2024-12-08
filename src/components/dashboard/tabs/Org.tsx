@@ -38,13 +38,14 @@ export function Org() {
    * @param {OrgMember} node - The organizational member to convert.
    * @returns {Object} The converted data suitable for the OrganizationGraph.
    */
-  const convertToGraphData = (node: OrgMember): { id: string; value: { title: string; items: { text: string }[] }; children: any[] } => ({
+  const convertToGraphData = (node: OrgMember): { id: string; value: { name: string; title: string; items: { text: string }[] }; children: any[] } => ({
     id: node.id,
     value: {
-      title: node.name,
+      name: node.name,
+      title: `${node.role} - ${node.department || 'N/A'}`,
       items: [
-        { text: node.role },
-        { text: node.department || '' },
+        { text: `Role: ${node.role}` },
+        { text: `Department: ${node.department || 'N/A'}` },
       ],
     },
     children: node.children ? node.children.map(convertToGraphData) : [],
@@ -78,7 +79,20 @@ export function Org() {
 
       {/* Content */}
       <div className="flex-grow overflow-auto">
-        <OrganizationGraph data={graphData} style={{ width: '100%', height: '100%' }} />
+        <OrganizationGraph 
+          data={graphData} 
+          style={{ width: '100%', height: '100%' }} 
+          nodeCfg={{
+            size: [250, 150], // Increase node size
+            labelCfg: {
+              style: {
+                fontSize: 12,
+                wordWrap: 'break-word', // Ensure text wraps
+                whiteSpace: 'normal', // Allow text to wrap
+              },
+            },
+          }}
+        />
       </div>
     </div>
   );
