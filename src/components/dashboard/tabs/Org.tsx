@@ -29,17 +29,9 @@ export function Org() {
     children: node.children ? node.children.map(convertToGraphData) : [],
   });
 
-  const graphData = {
-    id: 'root',
-    value: {
-      title: orgData.name,
-      items: [
-        { text: orgData.role },
-        { text: orgData.department || '' },
-      ],
-    },
-    children: [convertToGraphData(orgData)],
-  };
+  const graphData = convertToGraphData(orgData);
+
+  console.log(graphData);
 
   return (
     <div className="divide-y divide-gray-200 h-full">
