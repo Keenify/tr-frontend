@@ -42,7 +42,7 @@ export function Org() {
     id: node.id,
     value: {
       name: node.name,
-      title: `${node.role} - ${node.department || 'N/A'}`,
+      title: node.role || 'N/A',
       items: [
         { text: `Role: ${node.role}` },
         { text: `Department: ${node.department || 'N/A'}` },
@@ -52,6 +52,17 @@ export function Org() {
   });
 
   const graphData = convertToGraphData(orgData);
+
+  const nodeConfig = {
+    size: [120, 50],
+    labelCfg: {
+      style: {
+        fontSize: 12,
+      },
+    },
+    draggable: true,
+    collapseExpand: true,
+  };
 
   return (
     <div className="divide-y divide-gray-200 h-full flex flex-col">
@@ -82,16 +93,8 @@ export function Org() {
         <OrganizationGraph 
           data={graphData} 
           style={{ width: '100%', height: '100%' }} 
-          nodeCfg={{
-            size: [250, 150], // Increase node size
-            labelCfg: {
-              style: {
-                fontSize: 12,
-                wordWrap: 'break-word', // Ensure text wraps
-                whiteSpace: 'normal', // Allow text to wrap
-              },
-            },
-          }}
+          nodeCfg={nodeConfig}
+          behaviors={['drag-canvas', 'zoom-canvas', 'drag-node']}
         />
       </div>
     </div>
