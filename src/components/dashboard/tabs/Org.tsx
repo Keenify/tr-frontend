@@ -3,11 +3,27 @@ import { Search, UserPlus } from 'lucide-react';
 import { OrganizationGraph } from '@ant-design/graphs';
 import { useOrgData } from '../../../hooks/useOrgData';
 
+/**
+ * Org component that displays an organizational chart and provides search functionality.
+ * 
+ * This component fetches organizational data using the `useOrgData` hook and displays it
+ * in an interactive graph format using the `OrganizationGraph` component. It also includes
+ * a search bar to filter members and a button to add new members.
+ */
 export function Org() {
   const { orgData } = useOrgData();
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Define the OrgMember type to fix the error
+  /**
+   * Type definition for an organizational member.
+   * 
+   * @typedef {Object} OrgMember
+   * @property {string} id - Unique identifier for the member.
+   * @property {string} name - Name of the member.
+   * @property {string} role - Role of the member within the organization.
+   * @property {string} [department] - Optional department of the member.
+   * @property {OrgMember[]} [children] - Optional list of child members.
+   */
   type OrgMember = {
     id: string;
     name: string;
@@ -16,7 +32,12 @@ export function Org() {
     children?: OrgMember[];
   };
 
-  // Convert your data to the format expected by OrganizationGraph
+  /**
+   * Converts organizational data to the format expected by the OrganizationGraph component.
+   * 
+   * @param {OrgMember} node - The organizational member to convert.
+   * @returns {Object} The converted data suitable for the OrganizationGraph.
+   */
   const convertToGraphData = (node: OrgMember): { id: string; value: { title: string; items: { text: string }[] }; children: any[] } => ({
     id: node.id,
     value: {
@@ -31,10 +52,8 @@ export function Org() {
 
   const graphData = convertToGraphData(orgData);
 
-  console.log(graphData);
-
   return (
-    <div className="divide-y divide-gray-200 h-full">
+    <div className="divide-y divide-gray-200 h-full flex flex-col">
       {/* Actions Bar */}
       <div className="p-6">
         <div className="flex items-center justify-between">
@@ -58,10 +77,8 @@ export function Org() {
       </div>
 
       {/* Content */}
-      <div className="px-6 py-4 overflow-x-auto flex-grow">
-        <div className="w-full max-w-full mx-auto pb-16">
-          <OrganizationGraph data={graphData} />
-        </div>
+      <div className="flex-grow overflow-auto">
+        <OrganizationGraph data={graphData} style={{ width: '100%', height: '100%' }} />
       </div>
     </div>
   );
