@@ -2,6 +2,13 @@ import React from 'react';
 import { FileText, Users, LogOut, Calendar } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
+/**
+ * Props for the Layout component.
+ * @typedef {Object} LayoutProps
+ * @property {React.ReactNode} children - The content to be displayed within the layout.
+ * @property {string} activeTab - The currently active tab identifier.
+ * @property {function} onTabChange - Callback function to change the active tab.
+ */
 interface LayoutProps {
   children: React.ReactNode;
   activeTab: string;
@@ -10,6 +17,13 @@ interface LayoutProps {
 
 /**
  * Layout component for the dashboard, including sidebar and main content area.
+ * 
+ * This component provides a structured layout for the dashboard, featuring a sidebar
+ * with navigation options and a main content area. It utilizes the `useAuth` hook to
+ * manage user authentication state and display the user's first name in the profile section.
+ * 
+ * @param {LayoutProps} props - The properties for the Layout component.
+ * @returns {JSX.Element} The rendered layout component.
  */
 export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
   const { signOut, session } = useAuth();
