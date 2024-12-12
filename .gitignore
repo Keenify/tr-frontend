@@ -1,7 +1,7 @@
 # gitignore to react vite supabase project
 
 # Node modules
-node_modules
+node_modules/
 node_modules/.vite/deps/_metadata.json
 
 # Environment variables
