@@ -1,10 +1,21 @@
 # gitignore to react vite supabase project
 
-# Node modules
-node_modules/
-node_modules/.vite/deps/_metadata.json
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
 
-# Environment variables
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Build outputs
+/dist
+/build
+
+# Environment files
 .env
 .env.local
 .env.development.local
@@ -12,25 +23,18 @@ node_modules/.vite/deps/_metadata.json
 .env.production.local
 
 # Logs
-logs
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Build output
-dist/
-build/
-
-# Cache
-.cache/
-.vite/
-
 # Editor directories and files
-.vscode/
-.idea/
-*.sublime-workspace
-*.sublime-project
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # System files
 .DS_Store
