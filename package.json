@@ -15,6 +15,7 @@
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/supabase-js": "^2.47.7",
     "antd": "^5.22.3",
+    "dotenv": "^16.4.7",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
