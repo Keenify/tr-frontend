@@ -37,7 +37,11 @@ export function useAuth() {
       
       toast.success('Check your email for the confirmation link!');
     } catch (error) {
-      toast.error(error.message);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('An unknown error occurred.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -53,7 +57,11 @@ export function useAuth() {
       if (error) throw error;
       toast.success('Successfully logged in!');
     } catch (error) {
-      toast.error(error.message);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('An unknown error occurred.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +73,11 @@ export function useAuth() {
       if (error) throw error;
       toast.success('Successfully logged out!');
     } catch (error) {
-      toast.error(error.message);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('An unknown error occurred.');
+      }
     }
   };
 
