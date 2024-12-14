@@ -1,6 +1,6 @@
 import React from 'react';
-import { Layout } from './Layout';
 import { Session } from '@supabase/supabase-js';
+import { Layout } from './Layout';
 import { SOP } from './tabs/SOP';
 import { Org } from './tabs/Org';
 import { Huddle } from './tabs/Huddle';
