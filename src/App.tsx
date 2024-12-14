@@ -46,7 +46,7 @@ function App() {
       <Toaster position="top-right" />
       {!session ? (
         <div className="flex items-center justify-center min-h-screen bg-gray-100">
-          <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-md">
+          <div className="max-w-md w-full p-4 sm:p-6 bg-white rounded-lg shadow-md">
             <Auth
               supabaseClient={supabase}
               appearance={{
