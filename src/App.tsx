@@ -1,24 +1,74 @@
-import { Toaster } from 'react-hot-toast'; // Importing a component for displaying toast notifications
-import { AuthForm } from './components/auth/AuthForm'; // Importing the authentication form component
-import { Dashboard } from './components/dashboard/Dashboard'; // Importing the dashboard component
-import { useAuth } from './hooks/useAuth'; // Importing a custom hook for authentication
+import { useState, useEffect } from 'react';
+import { Toaster } from 'react-hot-toast';
+import { Auth } from '@supabase/auth-ui-react';
+import { ThemeSupa } from '@supabase/auth-ui-shared';
+import { Session } from '@supabase/supabase-js';
+
+import { supabase } from './lib/supabase';
+import { Dashboard } from './components/dashboard/Dashboard';
 
 /**
- * The main application component that determines what to render based on the user's authentication status.
+ * The main application component that handles user authentication and displays
+ * the appropriate content based on the user's session state.
+ *
+ * @returns {JSX.Element} The rendered application component.
  */
 function App() {
-  // Destructuring the session object from the useAuth hook
-  const { session } = useAuth();
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    // Fetch the current session and set it in the state
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Subscribe to authentication state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    // Cleanup subscription on component unmount
+    return () => subscription.unsubscribe();
+  }, []);
+
+  /**
+   * Signs out the current user and clears the session state.
+   */
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+  };
 
   return (
     <>
-      {/* Displaying toast notifications at the top-right corner of the screen */}
       <Toaster position="top-right" />
-      
-      {/* Conditionally rendering the Dashboard if the user is authenticated, otherwise rendering the AuthForm */}
-      {session ? <Dashboard /> : <AuthForm />}
+      {!session ? (
+        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+          <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-md">
+            <Auth
+              supabaseClient={supabase}
+              appearance={{
+                theme: ThemeSupa,
+                variables: {
+                  default: {
+                    colors: {
+                      brand: '#6366F1',
+                      brandAccent: '#4F46E5',
+                    },
+                  },
+                },
+              }}
+              providers={[]} // Disable all third-party providers
+            />
+          </div>
+        </div>
+      ) : (
+        <Dashboard session={session} signOut={signOut} />
+      )}
     </>
   );
 }
 
-export default App; // Exporting the App component as the default export
+export default App;

@@ -1,20 +1,18 @@
-import { useState } from 'react';
+import React from 'react';
 import { Layout } from './Layout';
+import { Session } from '@supabase/supabase-js';
 import { SOP } from './tabs/SOP';
 import { Org } from './tabs/Org';
 import { Huddle } from './tabs/Huddle';
 
-type Tab = 'sop' | 'org' | 'huddle';
+interface DashboardProps {
+  session: Session;
+  signOut: () => void;
+}
 
-/**
- * Dashboard component that manages tab state and renders the appropriate content.
- */
-export function Dashboard() {
-  const [activeTab, setActiveTab] = useState<Tab>('sop');
+export function Dashboard({ session, signOut }: DashboardProps) {
+  const [activeTab, setActiveTab] = React.useState<'sop' | 'org' | 'huddle'>('sop');
 
-  /**
-   * Renders content based on the active tab.
-   */
   const renderContent = () => {
     switch (activeTab) {
       case 'sop':
@@ -29,7 +27,7 @@ export function Dashboard() {
   };
 
   return (
-    <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+    <Layout activeTab={activeTab} onTabChange={setActiveTab} session={session} signOut={signOut}>
       {renderContent()}
     </Layout>
   );

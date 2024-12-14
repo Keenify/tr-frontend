@@ -1,6 +1,6 @@
 import React from 'react';
 import { FileText, Users, LogOut, Calendar } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
+import { Session } from '@supabase/supabase-js';
 
 /**
  * Props for the Layout component.
@@ -8,11 +8,15 @@ import { useAuth } from '../../hooks/useAuth';
  * @property {React.ReactNode} children - The content to be displayed within the layout.
  * @property {string} activeTab - The currently active tab identifier.
  * @property {function} onTabChange - Callback function to change the active tab.
+ * @property {Session} session - The current user session.
+ * @property {function} signOut - Function to sign out the user.
  */
 interface LayoutProps {
   children: React.ReactNode;
   activeTab: string;
   onTabChange: (tab: 'sop' | 'org' | 'huddle') => void;
+  session: Session;
+  signOut: () => void;
 }
 
 /**
@@ -25,9 +29,8 @@ interface LayoutProps {
  * @param {LayoutProps} props - The properties for the Layout component.
  * @returns {JSX.Element} The rendered layout component.
  */
-export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
-  const { signOut, session } = useAuth();
-  const firstName = session?.user?.user_metadata?.first_name || 'User';
+export function Layout({ children, activeTab, onTabChange, session, signOut }: LayoutProps) {
+  const firstName = session.user.user_metadata?.first_name || 'User';
 
   return (
     <div className="flex h-screen bg-gray-50">
