@@ -30,7 +30,7 @@ interface LayoutProps {
  * @returns {JSX.Element} The rendered layout component.
  */
 export function Layout({ children, activeTab, onTabChange, session, signOut }: LayoutProps) {
-  const firstName = session.user.user_metadata?.first_name || 'User';
+  const email = session.user.email || 'user@example.com';
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -42,12 +42,12 @@ export function Layout({ children, activeTab, onTabChange, session, signOut }: L
             <div className="flex items-center space-x-3">
               <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center">
                 <span className="text-white font-medium text-lg">
-                  {firstName.charAt(0)}
+                  {email.charAt(0)}
                 </span>
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-gray-900">Welcome,</h2>
-                <p className="text-sm text-gray-600">{firstName}</p>
+                <p className="text-sm text-gray-600">{email}</p>
               </div>
             </div>
           </div>
