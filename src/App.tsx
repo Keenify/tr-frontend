@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
+import { ThemeMinimal } from '@supabase/auth-ui-shared';
 import { Session } from '@supabase/supabase-js';
 
 import { supabase } from './lib/supabase';
@@ -50,7 +50,7 @@ function App() {
             <Auth
               supabaseClient={supabase}
               appearance={{
-                theme: ThemeSupa,
+                theme: ThemeMinimal,
                 variables: {
                   default: {
                     colors: {
