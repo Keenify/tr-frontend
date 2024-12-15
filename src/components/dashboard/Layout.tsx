@@ -1,6 +1,7 @@
 import React from 'react';
-import { FileText, Users, LogOut, Calendar } from 'lucide-react';
+import { Power } from 'react-feather'; // Import Power icon from react-feather
 import { Session } from '@supabase/supabase-js';
+import { supabase } from '../../lib/supabase'; // Import supabase client
 
 /**
  * Props for the Layout component.
@@ -10,13 +11,17 @@ import { Session } from '@supabase/supabase-js';
  * @property {function} onTabChange - Callback function to change the active tab.
  * @property {Session} session - The current user session.
  * @property {function} signOut - Function to sign out the user.
+ * @property {string} activeSubTab - The currently active subtab identifier.
+ * @property {function} onSubTabChange - Callback function to change the active subtab.
  */
 interface LayoutProps {
   children: React.ReactNode;
-  activeTab: string;
-  onTabChange: (tab: 'sop' | 'org' | 'huddle') => void;
+  activeTab: 'home' | 'content' | 'people' | 'groups' | 'marketplaces' | 'reports' | 'account';
+  onTabChange: (tab: 'home' | 'content' | 'people' | 'groups' | 'marketplaces' | 'reports' | 'account') => void;
   session: Session;
   signOut: () => void;
+  activeSubTab?: 'directory' | 'orgChart';
+  onSubTabChange?: (subTab: 'directory' | 'orgChart') => void;
 }
 
 /**
@@ -29,107 +34,99 @@ interface LayoutProps {
  * @param {LayoutProps} props - The properties for the Layout component.
  * @returns {JSX.Element} The rendered layout component.
  */
-export function Layout({ children, activeTab, onTabChange, session, signOut }: LayoutProps) {
+export function Layout({ children, activeTab, onTabChange, session, signOut, activeSubTab, onSubTabChange }: LayoutProps) {
   const email = session.user.email || 'user@example.com';
+  const [isPeopleSubmenuOpen, setIsPeopleSubmenuOpen] = React.useState(false);
+
+  // Function to handle sign out using Supabase
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    signOut(); // Call the passed signOut function to update the state
+  };
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className="w-64 bg-white border-r border-gray-200">
-        <div className="flex flex-col h-full">
-          {/* User Profile Section */}
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center space-x-3">
-              <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center">
-                <span className="text-white font-medium text-lg">
-                  {email.charAt(0)}
-                </span>
-              </div>
-              <div>
-                <h2 className="text-sm font-semibold text-gray-900">Welcome,</h2>
-                <p className="text-sm text-gray-600">{email}</p>
-              </div>
-            </div>
+    <div className="flex flex-col h-screen bg-gray-50">
+      {/* Top Bar */}
+      <div className="flex justify-between items-center bg-white border-b border-gray-200 px-4 py-2">
+        <div className="flex items-center">
+          <span role="img" aria-label="Company Logo" className="text-2xl">🏢</span>
+          {/* Removed active tab name display as per instructions */}
+        </div>
+        {/* User Profile Section */}
+        <div className="flex items-center space-x-3">
+          <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center">
+            <span className="text-white font-medium text-lg">
+              {email.charAt(0).toUpperCase()}
+            </span>
           </div>
-          
-          {/* Navigation */}
-          <div className="flex-1 py-6 px-4">
-            <div className="space-y-1">
-              <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Main Menu
-              </h3>
-              
-              <button
-                onClick={() => onTabChange('sop')}
-                className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  activeTab === 'sop'
-                    ? 'bg-indigo-50 text-indigo-600'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <FileText className="w-5 h-5 mr-3" />
-                SOP
-              </button>
-              
-              <button
-                onClick={() => onTabChange('org')}
-                className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  activeTab === 'org'
-                    ? 'bg-indigo-50 text-indigo-600'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <Users className="w-5 h-5 mr-3" />
-                Organization
-              </button>
-
-              <button
-                onClick={() => onTabChange('huddle')}
-                className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  activeTab === 'huddle'
-                    ? 'bg-indigo-50 text-indigo-600'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <Calendar className="w-5 h-5 mr-3" />
-                Daily Huddle
-              </button>
-            </div>
-          </div>
-          
-          {/* Footer */}
-          <div className="p-4 border-t border-gray-200">
+          <div>
+            <p className="text-sm text-gray-600">{email}</p>
             <button
-              onClick={signOut}
-              className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+              onClick={handleSignOut}
+              className="text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors flex items-center"
             >
-              <LogOut className="w-5 h-5 mr-3" />
+              <Power className="w-5 h-5 mr-1" />
               Sign Out
             </button>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto h-full">
-        <div className="max-w-full mx-auto py-8 px-4 sm:px-6 lg:px-8 h-full flex flex-col">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900">
-              {activeTab === 'sop' ? 'Standard Operating Procedures' : 
-               activeTab === 'org' ? 'Organization' : 
-               'Daily Huddle'}
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              {activeTab === 'sop' ? 'Manage and view all standard operating procedures' :
-               activeTab === 'org' ? 'Manage organizational structure and members' :
-               'Track daily meetings and team updates'}
-            </p>
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <div className="w-64 bg-white border-r border-gray-200 flex-shrink-0">
+          <div className="flex flex-col h-full">
+            {/* Navigation */}
+            <div className="flex-1 py-6 px-4">
+              <div className="space-y-1">
+                {['home', 'content', 'people', 'groups', 'marketplaces', 'reports', 'account'].map((tab) => (
+                  <React.Fragment key={tab}>
+                    <button
+                      onClick={() => {
+                        onTabChange(tab as LayoutProps['activeTab']);
+                        if (tab === 'people') {
+                          setIsPeopleSubmenuOpen(!isPeopleSubmenuOpen);
+                        }
+                      }}
+                      className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                        activeTab === tab
+                          ? 'bg-indigo-50 text-indigo-600'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    </button>
+                    {tab === 'people' && isPeopleSubmenuOpen && (
+                      <div className="pl-4 space-y-1">
+                        {['directory', 'orgChart'].map((subTab) => (
+                          <button
+                            key={subTab}
+                            onClick={() => onSubTabChange && onSubTabChange(subTab as 'directory' | 'orgChart')}
+                            className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                              activeSubTab === subTab
+                                ? 'bg-indigo-100 text-indigo-700'
+                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
+                            }`}
+                          >
+                            {subTab.charAt(0).toUpperCase() + subTab.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
           </div>
-          
-          {/* Content */}
-          <div className="bg-white shadow-sm rounded-lg flex-1">
-            {children}
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto">
+          <div className="w-full h-full flex flex-col">
+            {/* Content */}
+            <div className="bg-white shadow-sm rounded-lg flex-1 p-4 sm:p-6 lg:p-8">
+              {children}
+            </div>
           </div>
         </div>
       </div>
