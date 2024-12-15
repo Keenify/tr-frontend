@@ -1,7 +1,6 @@
 export default {
   plugins: {
-    'postcss-import': {},  // Add this line
-    tailwindcss: {},
+    'postcss-import': {},
     autoprefixer: {},
   },
 };
