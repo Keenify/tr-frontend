@@ -1,45 +1,49 @@
 import { useState, useEffect } from 'react';
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { Session } from '@supabase/supabase-js';
-
 import { supabase } from './lib/supabase';
 import { Dashboard } from './components/dashboard/Dashboard';
+import AuthForm from './components/auth/AuthComponent';
 
-/**
- * The main application component that manages user authentication and renders
- * the appropriate content based on the user's session state.
- *
- * @component
- * @returns {JSX.Element} The rendered application component.
- */
 function App() {
+  /**
+   * State to hold the current user session.
+   * Initially set to null, indicating no active session.
+   */
   const [session, setSession] = useState<Session | null>(null);
 
+  /**
+   * useEffect hook to manage session state and listen for authentication state changes.
+   * 
+   * This effect runs once on component mount and sets up a listener for authentication state changes.
+   * It fetches the current session and updates the session state accordingly.
+   * 
+   * The listener updates the session state whenever the authentication state changes (e.g., user logs in or out).
+   * The cleanup function unsubscribes from the authentication state changes when the component unmounts.
+   */
   useEffect(() => {
-    /**
-     * Fetches the current session and updates the session state.
-     */
+    // Function to fetch the current session from Supabase
     const fetchSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
     };
 
+    // Fetch the current session
     fetchSession();
 
-    /**
-     * Subscribes to authentication state changes and updates the session state.
-     */
+    // Set up a listener for authentication state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
 
-    // Cleanup subscription on component unmount
+    // Cleanup function to unsubscribe from the authentication state changes
     return () => subscription.unsubscribe();
   }, []);
 
   /**
-   * Signs out the current user and clears the session state.
+   * Function to sign out the user.
+   * 
+   * This function calls the Supabase signOut method to log the user out and then
+   * sets the session state to null, indicating no active session.
    */
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -47,37 +51,22 @@ function App() {
   };
 
   return (
+    /**
+     * This JSX fragment conditionally renders either the AuthForm or the Dashboard component
+     * based on the presence of a user session.
+     * 
+     * If there is no active session (i.e., the user is not logged in), the AuthForm component
+     * is rendered, allowing the user to log in.
+     * 
+     * If there is an active session (i.e., the user is logged in), the Dashboard component
+     * is rendered, providing the user with access to the application's main features.
+     */
     <>
       {!session ? (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
-          <div className="max-w-md w-full p-4 sm:p-6 bg-white rounded-lg shadow-md">
-            <Auth
-              supabaseClient={supabase}
-              showLinks={true}
-              appearance={{
-                theme: ThemeSupa,
-                variables: {
-                  default: {
-                    colors: {
-                      brand: '#6366F1',
-                      brandAccent: '#4F46E5',
-                    },
-                  },
-                },
-              }}
-              providers={[]} // Disable all third-party providers
-              localization={{
-                variables: {
-                  sign_in: {
-                    email_label: 'Email',
-                    password_label: 'Password',
-                  },
-                },
-              }}
-            />
-          </div>
-        </div>
+        // Render the authentication form when there is no active session
+        <AuthForm />
       ) : (
+        // Render the dashboard when there is an active session
         <Dashboard session={session} signOut={signOut} />
       )}
     </>
