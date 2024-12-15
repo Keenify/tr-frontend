@@ -43,3 +43,4 @@ Thumbs.db
 # Supabase
 supabase/.env
 
+src/.DS_Store
