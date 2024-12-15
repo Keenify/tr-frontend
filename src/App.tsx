@@ -1,31 +1,36 @@
 import { useState, useEffect } from 'react';
-import { Toaster } from 'react-hot-toast';
 import { Auth } from '@supabase/auth-ui-react';
-import { ThemeMinimal } from '@supabase/auth-ui-shared';
+import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { Session } from '@supabase/supabase-js';
 
 import { supabase } from './lib/supabase';
 import { Dashboard } from './components/dashboard/Dashboard';
 
 /**
- * The main application component that handles user authentication and displays
+ * The main application component that manages user authentication and renders
  * the appropriate content based on the user's session state.
  *
+ * @component
  * @returns {JSX.Element} The rendered application component.
  */
 function App() {
   const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
-    // Fetch the current session and set it in the state
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    /**
+     * Fetches the current session and updates the session state.
+     */
+    const fetchSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
-    });
+    };
 
-    // Subscribe to authentication state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    fetchSession();
+
+    /**
+     * Subscribes to authentication state changes and updates the session state.
+     */
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
 
@@ -43,14 +48,14 @@ function App() {
 
   return (
     <>
-      <Toaster position="top-right" />
       {!session ? (
         <div className="flex items-center justify-center min-h-screen bg-gray-100">
           <div className="max-w-md w-full p-4 sm:p-6 bg-white rounded-lg shadow-md">
             <Auth
               supabaseClient={supabase}
+              showLinks={true}
               appearance={{
-                theme: ThemeMinimal,
+                theme: ThemeSupa,
                 variables: {
                   default: {
                     colors: {
@@ -61,6 +66,14 @@ function App() {
                 },
               }}
               providers={[]} // Disable all third-party providers
+              localization={{
+                variables: {
+                  sign_in: {
+                    email_label: 'Email',
+                    password_label: 'Password',
+                  },
+                },
+              }}
             />
           </div>
         </div>
