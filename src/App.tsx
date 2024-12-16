@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
-import { Dashboard } from './components/dashboard/Dashboard';
-import AuthForm from './components/auth/AuthComponent';
+import { Dashboard } from './features/dashboard/components/Dashboard';
+import AuthForm from './features/auth/components/AuthComponent';
 
 function App() {
   /**

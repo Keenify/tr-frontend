@@ -1,7 +1,7 @@
 import React from 'react';
 import { Power } from 'react-feather'; // Import Power icon from react-feather
 import { Session } from '@supabase/supabase-js';
-import { supabase } from '../../lib/supabase'; // Import supabase client
+import { supabase } from '../../../lib/supabase'; // Import supabase client
 
 /**
  * Props for the Layout component.
