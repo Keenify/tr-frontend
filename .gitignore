@@ -43,4 +43,5 @@ Thumbs.db
 # Supabase
 supabase/.env
 
-src/.DS_Store
+# Ignore macOS system files
+.DS_Store
