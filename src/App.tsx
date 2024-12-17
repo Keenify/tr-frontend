@@ -42,6 +42,9 @@ const App: React.FC = () => {
     <Router>
       <Suspense fallback={<div>Loading...</div>}>
         <Routes>
+          {/* Redirect root path to /login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+
           {/* Public Route for Login */}
           <Route path="/login" element={<AuthForm />} />
 
