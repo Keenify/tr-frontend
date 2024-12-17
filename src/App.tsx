@@ -9,6 +9,19 @@ const Dashboard = lazy(() => import('./features/dashboard/components/Dashboard')
 const AuthForm = lazy(() => import('./features/auth/components/Auth'));
 const Onboarding = lazy(() => import('./features/onboarding/components/Onboarding'));
 
+const UserRouteWrapper: React.FC<{ session: any, children: React.ReactNode }> = ({ session, children }) => {
+  const { userId } = useParams<{ userId: string }>();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!session || userId !== session.user.id) {
+      navigate('/404', { replace: true });
+    }
+  }, [session, userId, navigate]);
+
+  return session && userId === session.user.id ? <>{children}</> : null;
+};
+
 /**
  * App Component
  * 
@@ -52,12 +65,21 @@ const App: React.FC = () => {
           <Route
             path="/:userId/dashboard"
             element={
-              <ProtectedRoute session={session} signOut={signOut} isOnboardingComplete={isOnboardingComplete} />
+              <UserRouteWrapper session={session}>
+                <ProtectedRoute session={session} signOut={signOut} isOnboardingComplete={isOnboardingComplete} />
+              </UserRouteWrapper>
             }
           />
 
           {/* Onboarding Route */}
-          <Route path="/:userId/onboarding" element={<Onboarding />} />
+          <Route
+            path="/:userId/onboarding"
+            element={
+              <UserRouteWrapper session={session}>
+                <Onboarding />
+              </UserRouteWrapper>
+            }
+          />
 
           {/* 404 Not Found Route */}
           <Route path="*" element={<NotFound />} />
@@ -73,33 +95,37 @@ const ProtectedRoute: React.FC<{ session: any, signOut: () => void, isOnboarding
   const { userId } = useParams<{ userId: string }>();
 
   useEffect(() => {
-    const checkUserExists = async () => {
+    const validateUser = async () => {
       if (session) {
         try {
+          // Check if the user exists
           const exists = await doesUserExist(session.user.id);
           setUserExists(exists);
+
+          // Validate if the userId from URL matches the session userId
+          if (userId !== session.user.id || !exists) {
+            navigate('/404', { replace: true });
+          }
         } catch (error) {
-          console.error('Error checking user existence:', error);
+          console.error('Error validating user:', error);
           setUserExists(false);
+          navigate('/404', { replace: true });
         }
       }
     };
 
-    checkUserExists();
-  }, [session]);
+    validateUser();
+  }, [session, userId, navigate]);
 
   useEffect(() => {
-    if (userExists === false || (session && userId !== session.user.id)) {
-      navigate('/404', { replace: true });
-    } else if (isOnboardingComplete !== null && session) {
-      const userId = session.user.id;
+    if (userExists && isOnboardingComplete !== null && session) {
       if (isOnboardingComplete) {
-        navigate(`/${userId}/dashboard`, { replace: true });
+        navigate(`/${session.user.id}/dashboard`, { replace: true });
       } else {
-        navigate(`/${userId}/onboarding`, { replace: true });
+        navigate(`/${session.user.id}/onboarding`, { replace: true });
       }
     }
-  }, [isOnboardingComplete, navigate, session, userExists, userId]);
+  }, [isOnboardingComplete, navigate, session, userExists]);
 
   return userExists === false ? <NotFound /> : session ? <Dashboard session={session} signOut={signOut} /> : <Navigate to="/login" replace />;
 };
