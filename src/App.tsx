@@ -94,9 +94,9 @@ const ProtectedRoute: React.FC<{ session: any, signOut: () => void, isOnboarding
     } else if (isOnboardingComplete !== null && session) {
       const userId = session.user.id;
       if (isOnboardingComplete) {
-        navigate(`/${userId}/dashboard`);
+        navigate(`/${userId}/dashboard`, { replace: true });
       } else {
-        navigate(`/${userId}/onboarding`);
+        navigate(`/${userId}/onboarding`, { replace: true });
       }
     }
   }, [isOnboardingComplete, navigate, session, userExists, userId]);
