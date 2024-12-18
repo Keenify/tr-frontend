@@ -8,6 +8,7 @@
 
 import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ClipLoader } from 'react-spinners';
 
 import { useSession } from './shared/hooks/useSession';
 import { getUserOnboardingStatus } from './services/userService';
@@ -40,7 +41,7 @@ const App: React.FC = () => {
 
   return (
     <Router>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<ClipLoader color="#36d7b7" />}>
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<AuthForm />} />
