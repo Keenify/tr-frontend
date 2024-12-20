@@ -11,7 +11,7 @@ const Onboarding: React.FC = () => {
   const handleNext = () => setStep((prev) => prev + 1);
   const handleBack = () => setStep((prev) => prev - 1);
   const handleFinish = () => {
-    console.log('Onboarding complete');
+    console.log('Status: Onboarding completed');
   };
 
   return (
