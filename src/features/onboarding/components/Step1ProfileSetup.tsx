@@ -57,7 +57,7 @@ const Step1ProfileSetup: React.FC<Step1ProfileSetupProps> = ({ onNext }) => {
         <h1 className="text-2xl font-bold">👋 Hi there! Let’s set up your profile</h1>
       </div>
       {/* Profile Setup */}
-      <div className="flex-grow flex items-start justify-center mt-72">
+      <div className="flex-grow flex items-start justify-center mt-48">
         <div className="flex flex-col md:flex-row items-start justify-between w-full max-w-4xl mx-auto px-4">
           <div className="flex-1">
             <div className="mb-4">
