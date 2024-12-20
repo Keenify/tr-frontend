@@ -1,7 +1,7 @@
 import React from 'react';
 import { Session } from '@supabase/supabase-js';
 import { Layout } from './Layout';
-
+import Content from './side_menu/Content';
 /**
  * Dashboard component props interface.
  * @interface DashboardProps
@@ -42,7 +42,7 @@ export function Dashboard({ session, signOut }: DashboardProps): JSX.Element {
       case 'home':
         return <div>Home Content</div>;
       case 'content':
-        return <div>Content</div>;
+        return <Content />;
       case 'groups':
         return <div>Groups</div>;
       case 'marketplaces':
