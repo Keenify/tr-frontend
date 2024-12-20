@@ -1,4 +1,5 @@
-const API_DOMAIN = import.meta.env.BACKEND_API_DOMAIN || 'http://127.0.0.1:8000';
+// Access environment variables from .env
+const API_DOMAIN = import.meta.env.VITE_BACKEND_API_DOMAIN;
 
 /**
  * Fetches user data by user ID.
@@ -6,18 +7,27 @@ const API_DOMAIN = import.meta.env.BACKEND_API_DOMAIN || 'http://127.0.0.1:8000'
  * @returns {Promise<any>} - A promise that resolves to the user data.
  */
 export async function getUserData(userId: string): Promise<any> {
-    const response = await fetch(`${API_DOMAIN}/employees/${encodeURIComponent(userId)}`, {
+    const endpoint = `${API_DOMAIN}/employees/${encodeURIComponent(userId)}`;
+
+    const response = await fetch(endpoint, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
         },
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
+        console.error('❌ API request failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            data
+        });
         throw new Error('Failed to fetch user data');
     }
 
-    return response.json();
+    return data;
 } 
 
 /**

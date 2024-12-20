@@ -60,7 +60,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ session, signOut, isOnb
   }, [isOnboardingComplete, navigate, session, userExists]);
 
   if (userExists === false) {
-    console.log('User does not exist or session is invalid, showing NotFound');
+    console.log('Remarks: User does not exist or session is invalid, showing NotFound');
     return <NotFound />;
   }
 

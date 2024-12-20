@@ -7,7 +7,7 @@
  */
 
 import React, { lazy, Suspense, useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, createBrowserRouter } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 
 import { useSession } from './shared/hooks/useSession';
@@ -39,29 +39,49 @@ const App: React.FC = () => {
     checkOnboardingStatus();
   }, [session]);
 
+  const router = createBrowserRouter([
+    {
+      path: "/",
+      element: <Navigate to="/login" replace />
+    },
+    {
+      path: "/login",
+      element: <AuthForm />
+    },
+    {
+      path: "/:userId/dashboard",
+      element: (
+        <UserRouteWrapper session={session}>
+          <ProtectedRoute session={session} signOut={signOut} isOnboardingComplete={isOnboardingComplete} />
+        </UserRouteWrapper>
+      )
+    },
+    {
+      path: "/:userId/onboarding",
+      element: (
+        <UserRouteWrapper session={session}>
+          <Onboarding />
+        </UserRouteWrapper>
+      )
+    },
+    {
+      path: "*",
+      element: <NotFound />
+    }
+  ], {
+    future: {
+      v7_startTransition: true,
+      v7_relativeSplatPath: true
+    }
+  });
+
   return (
     <Router>
       <Suspense fallback={<ClipLoader color="#36d7b7" />}>
         <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<AuthForm />} />
-          <Route
-            path="/:userId/dashboard"
-            element={
-              <UserRouteWrapper session={session}>
-                <ProtectedRoute session={session} signOut={signOut} isOnboardingComplete={isOnboardingComplete} />
-              </UserRouteWrapper>
-            }
-          />
-          <Route
-            path="/:userId/onboarding"
-            element={
-              <UserRouteWrapper session={session}>
-                <Onboarding />
-              </UserRouteWrapper>
-            }
-          />
-          <Route path="*" element={<NotFound />} />
+          {router.routes.map((route, index) => (
+            <Route key={index} path={route.path} element={route.element} />
+          ))}
         </Routes>
       </Suspense>
     </Router>
