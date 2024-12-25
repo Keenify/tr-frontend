@@ -59,7 +59,7 @@ const CreateSubjectModal: React.FC<CreateSubjectModalProps> = ({ isOpen, onClose
         const userData = await getUserData(session.user.id);
         const documentData = await createDocument(subjectName, 'draft', userData.id, selectedType);
 
-        console.log('Success:', documentData);
+        console.log('Success, Document Data:', documentData);
 
         onSubmit({ name: subjectName, type: selectedType, documentData });
         setSubjectName('');
