@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { updateDocument } from '../../../../../../services/docService'; // Adjust the import path as necessary
+import Editor from './Editor'; // Import the Editor component
 
 /**
  * Props for the SubjectDetail component.
@@ -33,6 +34,7 @@ interface SubjectDetailProps {
 const SubjectDetail: React.FC<SubjectDetailProps> = ({ subject }) => {
   const [topicTitle, setTopicTitle] = useState<string>('');
   const [description, setDescription] = useState<string>(subject.description);
+  const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false); // State to manage editor visibility
 
   /**
    * Handles changes to the description textarea.
@@ -114,6 +116,7 @@ const SubjectDetail: React.FC<SubjectDetailProps> = ({ subject }) => {
             />
             <button
               disabled={!topicTitle}
+              onClick={() => setIsEditorOpen(true)} // Open the editor
               className={`px-4 py-2 rounded-lg ${
                 topicTitle
                   ? 'bg-red-500 text-white hover:bg-red-600'
@@ -123,6 +126,9 @@ const SubjectDetail: React.FC<SubjectDetailProps> = ({ subject }) => {
               Create
             </button>
           </div>
+
+          {/* Editor */}
+          {isEditorOpen && <Editor initialContent={topicTitle} />}
         </div>
       </div>
     </div>
