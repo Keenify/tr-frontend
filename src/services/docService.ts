@@ -41,6 +41,35 @@ export async function createDocument(title: string, status: string, employeeId: 
 }
 
 
+/**
+ * Fetches a document by its ID.
+ * @param {string} documentId - The ID of the document to fetch.
+ * @returns {Promise<any>} - A promise that resolves to the fetched document data.
+ */
+export async function getDocument(documentId: string): Promise<any> {
+    const endpoint = `${API_DOMAIN}/documents/${documentId}`;
+
+    const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+        },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        console.error('❌ API request failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            data
+        });
+        throw new Error('Failed to fetch document');
+    }
+
+    return data;
+}
+
 
 /**
  * Creates a new document tab.
