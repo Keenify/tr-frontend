@@ -56,7 +56,7 @@ const Content: React.FC<ContentProps> = ({ session }) => {
 
   // Show subject detail view if a subject is selected
   if (selectedSubject) {
-    return <SubjectDetail subject={selectedSubject} />;
+    return <SubjectDetail subject={selectedSubject} session={session} />;
   }
 
   return (
