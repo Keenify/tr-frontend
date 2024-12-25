@@ -21,6 +21,7 @@ import { getUserOnboardingStatus } from './services/userService';
 import NotFound from './shared/components/NotFound';
 import UserRouteWrapper from './routes/UserRouteWrapper';
 import ProtectedRoute from './routes/ProtectedRoute';
+import EditorProtectedRoute from './routes/EditorProtectedRoute';
 
 // Lazy load components for better performance
 const AuthForm = lazy(() => import('./features/auth/components/Auth'));
@@ -62,8 +63,18 @@ const App: React.FC = () => {
     {
       path: "/:userId/dashboard",
       element: (
+        // session data is passed to the UserRouteWrapper component
         <UserRouteWrapper session={session}>
           <ProtectedRoute session={session} signOut={signOut} isOnboardingComplete={isOnboardingComplete} />
+        </UserRouteWrapper>
+      )
+    },
+    {
+      // session data and document tab id is passed to the EditorProtectedRoute component
+      path: "/:userId/dashboard/:subjectId/editor",
+      element: (
+        <UserRouteWrapper session={session}>
+          <EditorProtectedRoute session={session} />
         </UserRouteWrapper>
       )
     },
