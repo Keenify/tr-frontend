@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import CreateSubjectModal from '../../modals/CreateSubjectModal';
+import CreateSubjectModal from './modals/CreateSubjectModal';
 import SubjectDetail from './components/SubjectDetail';
+import { Session } from '@supabase/supabase-js';
 
 /**
  * Interface representing a subject in the content section
@@ -18,13 +19,17 @@ interface Subject {
   status: 'published' | 'unpublished';
 }
 
+interface ContentProps {
+  session: Session;
+}
+
 /**
  * Content component that displays the main content section with subject management
  * 
  * Allows creating new subjects and viewing subject details. Shows a grid of
  * content category filters.
  */
-const Content: React.FC = () => {
+const Content: React.FC<ContentProps> = ({ session }) => {
   // State for controlling create subject modal visibility
   const [isModalOpen, setIsModalOpen] = useState(false);
   // State for tracking currently selected subject
@@ -97,6 +102,7 @@ const Content: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleCreateSubject}
+        session={session}
       />
     </div>
   );
