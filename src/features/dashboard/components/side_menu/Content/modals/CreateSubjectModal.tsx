@@ -2,12 +2,12 @@
  * CreateSubjectModal component allows users to create new training subjects.
  * 
  * @component
- * @param {Object} props
- * @param {boolean} props.isOpen - Controls visibility of the modal
- * @param {Function} props.onClose - Callback function to close the modal
- * @param {Function} props.onSubmit - Callback function called with subject data on form submission
- * @param {Session} props.session - Session object
- * @returns {React.ReactElement | null} Returns the modal UI when open, null when closed
+ * @param {Object} props - The properties passed to the component.
+ * @param {boolean} props.isOpen - Controls visibility of the modal.
+ * @param {Function} props.onClose - Callback function to close the modal.
+ * @param {Function} props.onSubmit - Callback function called with subject data on form submission.
+ * @param {Session} props.session - Session object from Supabase.
+ * @returns {React.ReactElement | null} Returns the modal UI when open, null when closed.
  * 
  * @example
  * ```tsx
@@ -25,19 +25,34 @@ import { Session } from '@supabase/supabase-js';
 import { getUserData } from '../../../../../../services/userService';
 import { createDocument } from '../../../../../../services/docService';
 
+/**
+ * Props for the CreateSubjectModal component.
+ */
 interface CreateSubjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { name: string; type: 'Company' | 'Policies' | 'Processes' }) => void;
+  onSubmit: (data: { name: string; type: 'Company' | 'Policies' | 'Processes'; documentData: any }) => void;
   session: Session;
 }
 
+/**
+ * CreateSubjectModal component definition.
+ * 
+ * @param {CreateSubjectModalProps} props - The props for the component.
+ * @returns {React.ReactElement | null} The rendered modal component.
+ */
 const CreateSubjectModal: React.FC<CreateSubjectModalProps> = ({ isOpen, onClose, onSubmit, session }) => {
-  const [subjectName, setSubjectName] = useState('');
+  const [subjectName, setSubjectName] = useState<string>('');
   const [selectedType, setSelectedType] = useState<'Company' | 'Policies' | 'Processes' | null>(null);
 
   if (!isOpen) return null;
 
+  /**
+   * Handles the submission of the form to create a new subject.
+   * 
+   * @async
+   * @function
+   */
   const handleSubmit = async () => {
     if (subjectName && selectedType) {
       try {
@@ -46,7 +61,7 @@ const CreateSubjectModal: React.FC<CreateSubjectModalProps> = ({ isOpen, onClose
 
         console.log('Success:', documentData);
 
-        onSubmit({ name: subjectName, type: selectedType });
+        onSubmit({ name: subjectName, type: selectedType, documentData });
         setSubjectName('');
         setSelectedType(null);
       } catch (error) {

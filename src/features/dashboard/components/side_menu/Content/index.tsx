@@ -17,6 +17,7 @@ interface Subject {
   type: 'Company' | 'Policies' | 'Processes';
   /** Publishing status of the subject */
   status: 'published' | 'unpublished';
+  documentData?: any;
 }
 
 interface ContentProps {
@@ -30,6 +31,7 @@ interface ContentProps {
  * content category filters.
  */
 const Content: React.FC<ContentProps> = ({ session }) => {
+  
   // State for controlling create subject modal visibility
   const [isModalOpen, setIsModalOpen] = useState(false);
   // State for tracking currently selected subject
@@ -39,13 +41,14 @@ const Content: React.FC<ContentProps> = ({ session }) => {
    * Handles creation of a new subject
    * @param data Object containing name and type for new subject
    */
-  const handleCreateSubject = (data: { name: string; type: 'Company' | 'Policies' | 'Processes' }) => {
+  const handleCreateSubject = (data: { name: string; type: 'Company' | 'Policies' | 'Processes'; documentData: any }) => {
     const newSubject = {
       id: Date.now().toString(),
       title: data.name,
       description: '',
       type: data.type,
       status: 'unpublished' as const,
+      documentData: data.documentData,
     };
     setSelectedSubject(newSubject);
     setIsModalOpen(false);
