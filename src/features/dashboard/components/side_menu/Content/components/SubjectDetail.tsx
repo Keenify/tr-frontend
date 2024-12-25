@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { updateDocument } from '../../../../../../services/docService'; // Adjust the import path as necessary
 
 /**
  * Props for the SubjectDetail component.
@@ -37,10 +38,16 @@ const SubjectDetail: React.FC<SubjectDetailProps> = ({ subject }) => {
    * Handles changes to the description textarea.
    * @param {React.ChangeEvent<HTMLTextAreaElement>} e - The change event.
    */
-  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleDescriptionChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
     if (text.length <= 500) {
       setDescription(text);
+      try {
+        await updateDocument(subject.documentData.id, { description: text });
+        console.log('✅ Description updated successfully');
+      } catch (error) {
+        console.error('❌ Failed to update description:', error);
+      }
     }
   };
 
