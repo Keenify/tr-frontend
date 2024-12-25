@@ -2,7 +2,13 @@ import React from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 
-const Editor: React.FC<{ initialContent: string }> = ({ initialContent }) => {
+interface EditorProps {
+  initialContent: string;
+  title: string;
+  session: any;
+}
+
+const Editor: React.FC<EditorProps> = ({ initialContent, title }) => {
   const editor = useEditor({
     extensions: [StarterKit],
     content: initialContent,
@@ -10,6 +16,7 @@ const Editor: React.FC<{ initialContent: string }> = ({ initialContent }) => {
 
   return (
     <div className="editor">
+      <h1>{title}</h1>
       <EditorContent editor={editor} />
     </div>
   );
