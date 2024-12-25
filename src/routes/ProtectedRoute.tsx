@@ -6,15 +6,12 @@ import NotFound from '../shared/components/NotFound';
 import { Dashboard } from '../features/dashboard/components/Dashboard';
 
 /**
- * ProtectedRoute component ensures that only authenticated users with valid sessions
- * and completed onboarding can access certain routes. It redirects users to the appropriate
- * page based on their session status and onboarding completion.
- *
- * @param {Object} props - The component props
- * @param {Object} props.session - The current user session
- * @param {Function} props.signOut - Function to sign out the user
- * @param {boolean | null} props.isOnboardingComplete - Indicates if the onboarding process is complete
- * @returns {JSX.Element} - The rendered component
+ * Props for the ProtectedRoute component.
+ * 
+ * @interface ProtectedRouteProps
+ * @property {any} session - The current user session.
+ * @property {() => void} signOut - Function to sign out the user.
+ * @property {boolean | null} isOnboardingComplete - Indicates if the onboarding process is complete.
  */
 interface ProtectedRouteProps {
   session: any;
@@ -22,11 +19,23 @@ interface ProtectedRouteProps {
   isOnboardingComplete: boolean | null;
 }
 
+/**
+ * ProtectedRoute component ensures that only authenticated users with valid sessions
+ * and completed onboarding can access certain routes. It redirects users to the appropriate
+ * page based on their session status and onboarding completion.
+ * 
+ * @param {ProtectedRouteProps} props - The component props.
+ * @returns {JSX.Element} - The rendered component.
+ */
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ session, signOut, isOnboardingComplete }) => {
   const navigate = useNavigate();
   const [userExists, setUserExists] = useState<boolean | null>(null);
   const { userId } = useParams<{ userId: string }>();
 
+  /**
+   * Validates the user by checking if the session is valid and if the user exists.
+   * Updates the userExists state based on the validation result.
+   */
   useEffect(() => {
     const validateUser = async () => {
       if (session) {
@@ -47,6 +56,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ session, signOut, isOnb
     validateUser();
   }, [session, userId]);
 
+  /**
+   * Redirects the user based on their onboarding completion status.
+   * Navigates to the dashboard if onboarding is complete, otherwise to the onboarding page.
+   */
   useEffect(() => {
     if (userExists && isOnboardingComplete !== null && session) {
       if (isOnboardingComplete) {
