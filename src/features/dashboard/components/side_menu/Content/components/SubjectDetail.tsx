@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { updateDocument } from '../../../../../../services/docService'; // Adjust the import path as necessary
-import Editor from './Editor'; // Import the Editor component
+import { Session } from '@supabase/supabase-js';
+import { useNavigate } from 'react-router-dom';
+import { updateDocument, createDocumentTab } from '../../../../../../services/docService'; // Adjust the import path as necessary
 
 /**
  * Props for the SubjectDetail component.
@@ -23,6 +24,7 @@ interface SubjectDetailProps {
     type: 'Company' | 'Policies' | 'Processes';
     documentData?: any; // Include document data if applicable
   };
+  session: Session; // Add session prop
 }
 
 /**
@@ -31,10 +33,10 @@ interface SubjectDetailProps {
  * @returns {JSX.Element} The rendered component.
  */
 
-const SubjectDetail: React.FC<SubjectDetailProps> = ({ subject }) => {
+const SubjectDetail: React.FC<SubjectDetailProps> = ({ subject, session }) => {
   const [topicTitle, setTopicTitle] = useState<string>('');
   const [description, setDescription] = useState<string>(subject.description);
-  const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false); // State to manage editor visibility
+  const navigate = useNavigate();
 
   /**
    * Handles changes to the description textarea.
@@ -62,6 +64,26 @@ const SubjectDetail: React.FC<SubjectDetailProps> = ({ subject }) => {
 
   // Display Document Data in the UI
   const documentData = subject.documentData;
+
+  const handleCreateClick = async () => {
+    if (!topicTitle) return;
+
+    try {
+      const tabData = await createDocumentTab(subject.documentData.id, topicTitle, 1); // Assuming position is 1 for simplicity
+      console.log('✅ Tab created successfully:', tabData);
+
+      navigate(`/${session.user.id}/dashboard/${subject.documentData.id}/editor`, {
+        state: {
+          title: subject.title,
+          description,
+          topic: topicTitle,
+          tabId: tabData.id, // Pass the tab ID
+        },
+      });
+    } catch (error) {
+      console.error('❌ Failed to create tab:', error);
+    }
+  };
 
   return (
     <div className="max-w-5xl mx-auto p-4">
@@ -116,7 +138,7 @@ const SubjectDetail: React.FC<SubjectDetailProps> = ({ subject }) => {
             />
             <button
               disabled={!topicTitle}
-              onClick={() => setIsEditorOpen(true)} // Open the editor
+              onClick={handleCreateClick}
               className={`px-4 py-2 rounded-lg ${
                 topicTitle
                   ? 'bg-red-500 text-white hover:bg-red-600'
@@ -127,8 +149,6 @@ const SubjectDetail: React.FC<SubjectDetailProps> = ({ subject }) => {
             </button>
           </div>
 
-          {/* Editor */}
-          {isEditorOpen && <Editor initialContent={topicTitle} />}
         </div>
       </div>
     </div>
