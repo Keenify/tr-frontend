@@ -42,7 +42,7 @@ export function Dashboard({ session, signOut }: DashboardProps): JSX.Element {
       case 'home':
         return <div>Home Content</div>;
       case 'content':
-        return <Content />;
+        return <Content session={session} />;
       case 'groups':
         return <div>Groups</div>;
       case 'marketplaces':
