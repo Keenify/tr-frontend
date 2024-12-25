@@ -57,7 +57,7 @@ const CreateSubjectModal: React.FC<CreateSubjectModalProps> = ({ isOpen, onClose
     if (subjectName && selectedType) {
       try {
         const userData = await getUserData(session.user.id);
-        const documentData = await createDocument(subjectName, 'draft', userData.id);
+        const documentData = await createDocument(subjectName, 'draft', userData.id, selectedType);
 
         console.log('Success:', documentData);
 
