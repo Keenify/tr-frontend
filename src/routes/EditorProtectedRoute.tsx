@@ -65,7 +65,6 @@ const EditorProtectedRoute: React.FC<EditorProtectedRouteProps> = ({ session }) 
     <Editor
       initialContent={topic || ''}
       title={title || 'Untitled'}
-      session={session}
     />
   );
 };
