@@ -1,0 +1,13 @@
+/* Editor.css */
+.tiptap-editor {
+    border: none;
+    border-radius: 4px;
+    padding: 10px;
+    min-height: 150px;
+    outline: none !important;
+  }
+
+/* Target ProseMirror's focus styling */
+.tiptap-editor .ProseMirror:focus {
+  outline: none !important; /* Remove ProseMirror's focus outline */
+}
