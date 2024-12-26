@@ -74,9 +74,9 @@ const SubjectDetail: React.FC<SubjectDetailProps> = ({ subject, session }) => {
 
       navigate(`/${session.user.id}/dashboard/${subject.documentData.id}/editor`, {
         state: {
-          title: subject.title,
+          title: topicTitle,
           description,
-          topic: topicTitle,
+          topic: null,
           tabId: tabData.id, // Pass the tab ID
         },
       });
