@@ -221,3 +221,35 @@ export async function getDocumentContent(tabId: string): Promise<any> {
 
   return data;
 }
+
+
+/**
+ * Fetches documents by type.
+ * @param {string} type - The type of the document. Acceptable values are 'none', 'Processes', 'Company', 'Policies'.
+ * @returns {Promise<any>} - A promise that resolves to the list of document data.
+ */
+export async function getDocumentsByType(type: string): Promise<any> {
+  const endpoint = type === 'none' 
+    ? `${API_DOMAIN}/documents/type/`
+    : `${API_DOMAIN}/documents/type/?document_type=${encodeURIComponent(type)}`;
+
+  const response = await fetch(endpoint, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error("❌ API request failed:", {
+      status: response.status,
+      statusText: response.statusText,
+      data,
+    });
+    throw new Error("Failed to fetch documents by type");
+  }
+
+  return data;
+}
