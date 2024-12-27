@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CreateSubjectModal from './modals/CreateSubjectModal';
 import SubjectDetail from './components/SubjectDetail';
 import { Session } from '@supabase/supabase-js';
+import { getDocumentsByType } from "../../../../../services/docService"
 
 /**
  * Interface representing a subject in the content section
@@ -36,6 +38,9 @@ const Content: React.FC<ContentProps> = ({ session }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   // State for tracking currently selected subject
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  // State to store fetched documents
+  const [documents, setDocuments] = useState<any[]>([]);
+  const navigate = useNavigate();
 
   /**
    * Handles creation of a new subject
@@ -52,6 +57,17 @@ const Content: React.FC<ContentProps> = ({ session }) => {
     };
     setSelectedSubject(newSubject);
     setIsModalOpen(false);
+  };
+
+  // Function to fetch documents by type
+  const fetchDocuments = async (type: string) => {
+    try {
+      const data = await getDocumentsByType(type);
+      setDocuments(data);
+      console.log(`✅ Documents fetched successfully for type: ${type}`);
+    } catch (error) {
+      console.error(`❌ Failed to fetch documents for type: ${type}`, error);
+    }
   };
 
   // Show subject detail view if a subject is selected
@@ -72,33 +88,62 @@ const Content: React.FC<ContentProps> = ({ session }) => {
       </div>
 
       <div className="grid grid-cols-4 gap-4">
-        <div className="p-4 rounded-lg border hover:bg-gray-50 cursor-pointer">
+        <div
+          className="p-4 rounded-lg border hover:bg-gray-50 cursor-pointer"
+          onClick={() => fetchDocuments('none')}
+        >
           <div className="flex items-center gap-2">
             <span className="text-purple-500">🏠</span>
             <span>All content</span>
           </div>
         </div>
 
-        <div className="p-4 rounded-lg border hover:bg-gray-50 cursor-pointer">
+        <div
+          className="p-4 rounded-lg border hover:bg-gray-50 cursor-pointer"
+          onClick={() => fetchDocuments('Company')}
+        >
           <div className="flex items-center gap-2">
             <span className="text-yellow-500">📄</span>
             <span>Company</span>
           </div>
         </div>
 
-        <div className="p-4 rounded-lg border hover:bg-gray-50 cursor-pointer">
+        <div
+          className="p-4 rounded-lg border hover:bg-gray-50 cursor-pointer"
+          onClick={() => fetchDocuments('Policies')}
+        >
           <div className="flex items-center gap-2">
             <span className="text-pink-500">📝</span>
             <span>Policies</span>
           </div>
         </div>
 
-        <div className="p-4 rounded-lg border hover:bg-gray-50 cursor-pointer">
+        <div
+          className="p-4 rounded-lg border hover:bg-gray-50 cursor-pointer"
+          onClick={() => fetchDocuments('Processes')}
+        >
           <div className="flex items-center gap-2">
             <span className="text-blue-500">📊</span>
             <span>Processes</span>
           </div>
         </div>
+      </div>
+
+      {/* Document List */}
+      <div className="mt-6">
+        {documents.map((doc) => (
+          <div key={doc.id} className="flex justify-between items-center p-4 border rounded-lg shadow-sm mb-4">
+            <span
+              className="text-lg font-medium cursor-pointer hover:underline"
+              onClick={() => navigate(`/${session.user.id}/dashboard/${doc.id}/editor`, {
+                state: { title: doc.title, topic: doc.content }
+              })}
+            >
+              {doc.title}
+            </span>
+            <span className="text-sm text-gray-500">{doc.type}</span>
+          </div>
+        ))}
       </div>
 
       <CreateSubjectModal
