@@ -53,17 +53,26 @@ const Editor: React.FC<EditorProps> = ({ initialContent, title }) => {
   const editor = useEditor({
     extensions: [StarterKit, Underline],
     content: content,
-    onUpdate: async ({ editor }) => {
-      const updatedContent = editor.getHTML();
-      try {
-        await upsertDocumentContent(updatedContent, tabId);
-        console.log("✅ Content updated successfully");
-      } catch (error) {
-        console.error("❌ Failed to update content:", error);
-      }
-    },
   });
 
+  // Sync content every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (editor) {
+        const updatedContent = editor.getHTML();
+        try {
+          await upsertDocumentContent(updatedContent, tabId);
+          console.log("✅ Content synced successfully");
+        } catch (error) {
+          console.error("❌ Failed to sync content:", error);
+        }
+      }
+    }, 3000);
+
+    return () => clearInterval(interval); // Cleanup interval on component unmount
+  }, [editor, tabId]);
+
+  // Re-initialize the editor when content changes
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
       editor.commands.setContent(content);
