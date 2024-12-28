@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { updateDocument, createDocumentTab } from '../../../services/docService';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 /**
  * SubjectDetail component displays detailed information about a subject
@@ -16,24 +18,47 @@ const SubjectDetail: React.FC = () => {
 
   const [topicTitle, setTopicTitle] = useState<string>('');
   const [description, setDescription] = useState<string>(subject.description || '');
+  const [pendingDescription, setPendingDescription] = useState<string>(description);
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
+  const [isFocused, setIsFocused] = useState<boolean>(false);
 
   /**
    * Updates the description state and attempts to update the document's description.
    * @param {React.ChangeEvent<HTMLTextAreaElement>} e - The change event from the textarea.
    */
-  const handleDescriptionChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
     if (text.length <= 500) {
-      setDescription(text);
-      try {
-        await updateDocument(subject.id, { description: text });
-        console.log('✅ Description updated successfully');
-      } catch (error) {
-        console.error('❌ Failed to update description:', error);
-      }
+      setPendingDescription(text);
     }
   };
+
+  useEffect(() => {
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+    }
+
+    updateTimeoutRef.current = setTimeout(async () => {
+      if (pendingDescription !== description) {
+        try {
+          await updateDocument(subject.id, { description: pendingDescription });
+          setDescription(pendingDescription);
+          toast.success('Description updated successfully', {
+            position: 'top-right',
+          });
+        } catch (error) {
+          console.error('❌ Failed to update description:', error);
+        }
+      }
+    }, 2000);
+
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
+  }, [pendingDescription, description, subject.id]);
 
   useEffect(() => {
     if (subject.documentData) {
@@ -66,6 +91,7 @@ const SubjectDetail: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-4">
+      <ToastContainer />
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm mb-6">
         <span className="text-gray-600">Content</span>
@@ -90,15 +116,19 @@ const SubjectDetail: React.FC = () => {
         {/* Description */}
         <div className="text-gray-600 mb-4">
           <textarea
-            className="w-full p-2 border rounded-lg resize-none"
+            className={`w-full p-2 border rounded-lg resize-none ${isFocused ? 'text-black' : 'text-gray-500'}`}
             placeholder="Enter Subject description"
-            value={description}
+            value={pendingDescription}
             onChange={handleDescriptionChange}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             rows={3}
           />
-          <div className="text-right text-sm text-gray-500">
-            {description.length}/500
-          </div>
+          {isFocused && (
+            <div className="text-right text-sm text-gray-500">
+              {pendingDescription.length}/500
+            </div>
+          )}
         </div>
 
         {/* Content Area */}
