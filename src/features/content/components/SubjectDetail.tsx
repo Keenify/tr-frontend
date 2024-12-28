@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { updateDocument, createDocumentTab } from '../../../services/docService';
+import { updateDocument, createDocumentTab, getDocumentTabs } from '../../../services/docService';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -23,10 +23,6 @@ const SubjectDetail: React.FC = () => {
   const navigate = useNavigate();
   const [isFocused, setIsFocused] = useState<boolean>(false);
 
-  /**
-   * Updates the description state and attempts to update the document's description.
-   * @param {React.ChangeEvent<HTMLTextAreaElement>} e - The change event from the textarea.
-   */
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
     if (text.length <= 500) {
@@ -60,28 +56,20 @@ const SubjectDetail: React.FC = () => {
     };
   }, [pendingDescription, description, subject.id]);
 
-  useEffect(() => {
-    if (subject.documentData) {
-      console.log('Document Data:', subject.documentData);
-    }
-  }, [subject.documentData]);
-
-  /**
-   * Handles the creation of a new document tab.
-   */
   const handleCreateClick = async () => {
     if (!topicTitle) return;
 
+    const docTabs = await getDocumentTabs(subject.id);
+    const maxPosition = docTabs.reduce((max, tab) => tab.position > max ? tab.position : max, 0);
+
     try {
-      const tabData = await createDocumentTab(subject.documentData.id, topicTitle, 1);
+      const tabData = await createDocumentTab(subject.id, topicTitle, maxPosition + 1);
       console.log('✅ Tab created successfully:', tabData);
 
-      navigate(`/${session.user.id}/content/${subject.documentData.id}/editor`, {
+      navigate(`/${session.user.id}/steps/${tabData.id}/editor`, {
         state: {
-          title: topicTitle,
-          description,
-          topic: null,
-          tabId: tabData.id,
+          tabData,
+          session,
         },
       });
     } catch (error) {
