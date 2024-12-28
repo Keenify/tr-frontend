@@ -20,6 +20,7 @@ const AuthForm = lazy(() => import('./features/auth/components/Auth'));
 const Home = lazy(() => import('./features/home/components/Home'));
 const Content = lazy(() => import('./features/content/components/Content'));
 const SubjectDetail = lazy(() => import('./features/content/components/SubjectDetail'));
+const Editor = lazy(() => import('./features/content/components/Editor'));
 
 const App: React.FC = () => {
   const { session, signOut } = useSession();
@@ -54,6 +55,7 @@ const App: React.FC = () => {
                   )
                 }
               />
+              <Route path="steps/:tabId/editor" element={<Editor />} />
             </Route>
           </Route>
 
