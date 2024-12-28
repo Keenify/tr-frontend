@@ -15,13 +15,11 @@ import UserRouteWrapper from './routes/UserRouteWrapper';
 // Dashboard Layout
 import { DashboardLayout } from './features/dashboard/components/DashboardLayout';
 
-// Lazy load example for AuthForm
+// Lazy load all components
 const AuthForm = lazy(() => import('./features/auth/components/Auth'));
-
-// Components
-import Home from './features/home/components/Home';
-import Content from './features/content/components/Content';
-import SubjectDetail from './features/content/components/SubjectDetail';
+const Home = lazy(() => import('./features/home/components/Home'));
+const Content = lazy(() => import('./features/content/components/Content'));
+const SubjectDetail = lazy(() => import('./features/content/components/SubjectDetail'));
 
 const App: React.FC = () => {
   const { session, signOut } = useSession();
