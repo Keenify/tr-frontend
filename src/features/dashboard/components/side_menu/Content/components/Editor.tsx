@@ -20,6 +20,8 @@ interface EditorProps {
   title: string;
 }
 
+// FIXME: tabid is not present if access editor from dashboard directly
+
 /**
  * Editor component.
  *
@@ -39,6 +41,7 @@ const Editor: React.FC<EditorProps> = ({ initialContent, title }) => {
       if (tabId && !initialContent) {
         try {
           const data = await getDocumentContent(tabId);
+          console.log("🚀 ~ fetchContent ~ data:", data)
           setContent(data.content.key);
           console.log("✅ Document content fetched successfully");
         } catch (error) {
