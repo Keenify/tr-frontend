@@ -1,53 +1,33 @@
 import React, { useEffect, useState } from 'react';
-import { Session } from '@supabase/supabase-js';
-import { useNavigate } from 'react-router-dom';
-import { updateDocument, createDocumentTab } from '../../../services/docService'; // Adjust the import path as necessary
+import { useLocation, useNavigate } from 'react-router-dom';
+import { updateDocument, createDocumentTab } from '../../../services/docService';
 
 /**
- * Props for the SubjectDetail component.
- * @typedef {Object} SubjectDetailProps
- * @property {Object} subject - The subject details.
- * @property {string} subject.id - The unique identifier for the subject.
- * @property {string} subject.title - The title of the subject.
- * @property {string} subject.description - The description of the subject.
- * @property {'Company' | 'Policies' | 'Processes'} subject.type - The type of the subject.
- * @property {'published' | 'unpublished'} subject.status - The publication status of the subject.
- * @property {any} [subject.documentData] - Optional document data related to the subject.
+ * SubjectDetail component displays detailed information about a subject
+ * and allows users to update the description and create new document tabs.
  */
+const SubjectDetail: React.FC = () => {
+  const location = useLocation();
+  const { subject, session } = location.state || {};
 
-// Define the SubjectDetailProps interface
-interface SubjectDetailProps {
-  subject: {
-    id: string;
-    title: string;
-    description: string;
-    type: 'Company' | 'Policies' | 'Processes';
-    documentData?: any; // Include document data if applicable
-  };
-  session: Session; // Add session prop
-}
+  if (!subject || !session) {
+    return <div>Error: Subject or session data is missing. Please try again.</div>;
+  }
 
-/**
- * A component to display and edit details of a subject.
- * @param {SubjectDetailProps} props - The props for the component.
- * @returns {JSX.Element} The rendered component.
- */
-
-const SubjectDetail: React.FC<SubjectDetailProps> = ({ subject, session }) => {
   const [topicTitle, setTopicTitle] = useState<string>('');
-  const [description, setDescription] = useState<string>(subject.description);
+  const [description, setDescription] = useState<string>(subject.description || '');
   const navigate = useNavigate();
 
   /**
-   * Handles changes to the description textarea.
-   * @param {React.ChangeEvent<HTMLTextAreaElement>} e - The change event.
+   * Updates the description state and attempts to update the document's description.
+   * @param {React.ChangeEvent<HTMLTextAreaElement>} e - The change event from the textarea.
    */
   const handleDescriptionChange = async (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
     if (text.length <= 500) {
       setDescription(text);
       try {
-        await updateDocument(subject.documentData.id, { description: text });
+        await updateDocument(subject.id, { description: text });
         console.log('✅ Description updated successfully');
       } catch (error) {
         console.error('❌ Failed to update description:', error);
@@ -55,29 +35,28 @@ const SubjectDetail: React.FC<SubjectDetailProps> = ({ subject, session }) => {
     }
   };
 
-  // Use useEffect to log document data only once or when it changes
   useEffect(() => {
     if (subject.documentData) {
       console.log('Document Data:', subject.documentData);
     }
   }, [subject.documentData]);
 
-  // Display Document Data in the UI
-  const documentData = subject.documentData;
-
+  /**
+   * Handles the creation of a new document tab.
+   */
   const handleCreateClick = async () => {
     if (!topicTitle) return;
 
     try {
-      const tabData = await createDocumentTab(subject.documentData.id, topicTitle, 1); // Assuming position is 1 for simplicity
+      const tabData = await createDocumentTab(subject.documentData.id, topicTitle, 1);
       console.log('✅ Tab created successfully:', tabData);
 
-      navigate(`/${session.user.id}/dashboard/${subject.documentData.id}/editor`, {
+      navigate(`/${session.user.id}/content/${subject.documentData.id}/editor`, {
         state: {
           title: topicTitle,
           description,
           topic: null,
-          tabId: tabData.id, // Pass the tab ID
+          tabId: tabData.id,
         },
       });
     } catch (error) {
@@ -102,7 +81,7 @@ const SubjectDetail: React.FC<SubjectDetailProps> = ({ subject, session }) => {
               {subject.type === 'Company' ? '📄' : subject.type === 'Policies' ? '📝' : '📊'}
             </div>
             <div>
-              <h1 className="text-2xl font-semibold">{documentData.title}</h1>
+              <h1 className="text-2xl font-semibold">{subject.title}</h1>
               <div className="text-sm text-gray-500">{subject.type}</div>
             </div>
           </div>
@@ -148,7 +127,6 @@ const SubjectDetail: React.FC<SubjectDetailProps> = ({ subject, session }) => {
               Create
             </button>
           </div>
-
         </div>
       </div>
     </div>

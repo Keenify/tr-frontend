@@ -1,36 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CreateSubjectModal from '../modals/CreateSubjectModal';
-import SubjectDetail from './SubjectDetail';
 import { Session } from '@supabase/supabase-js';
 import { getDocumentsByType } from "../../../services/docService"
 
-/**
- * Interface representing a subject in the content section
- */
-interface Subject {
-  /** Unique identifier for the subject */
-  id: string;
-  /** Title/name of the subject */
-  title: string;
-  /** Description text for the subject */
-  description: string;
-  /** Category type of the subject */
-  type: SubjectType;
-  /** Publishing status of the subject */
-  status: 'published' | 'unpublished';
-  documentData?: any;
-}
 
 interface ContentProps {
   session: Session;
 }
-
-// Define the types as a constant array
-const SUBJECT_TYPES = ['Company', 'Policies', 'Processes'] as const;
-
-// Use the constant in your code
-type SubjectType = typeof SUBJECT_TYPES[number];
 
 /**
  * Content component that displays the main content section with subject management
@@ -42,8 +19,6 @@ const Content: React.FC<ContentProps> = ({ session }) => {
   
   // State for controlling create subject modal visibility
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // State for tracking currently selected subject
-  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   // State to store fetched documents
   const [documents, setDocuments] = useState<any[]>([]);
   const navigate = useNavigate();
@@ -59,17 +34,10 @@ const Content: React.FC<ContentProps> = ({ session }) => {
    * @param data Object containing name and type for new subject
    */
   const handleCreateSubject = (data: { name: string; types: string[]; documentData: any }) => {
-    const newSubjects = data.types.map(type => ({
-      id: Date.now().toString() + type, // Ensure unique ID for each type
-      title: data.name,
-      description: '',
-      type: type as SubjectType, // Cast the string to SubjectType
-      status: 'unpublished' as const,
-      documentData: data.documentData,
-    }));
-    
-    // Assuming you want to set the first subject as selected
-    setSelectedSubject(newSubjects[0]);
+    // Navigate to SubjectDetail with the response and session
+    navigate(`/${session.user.id}/content/${data.documentData.id}`, {
+      state: { subject: data.documentData, session }
+    });
     setIsModalOpen(false);
   };
 
@@ -84,11 +52,6 @@ const Content: React.FC<ContentProps> = ({ session }) => {
       console.error(`❌ Failed to fetch documents for type: ${type}`, error);
     }
   };
-
-  // Show subject detail view if a subject is selected
-  if (selectedSubject) {
-    return <SubjectDetail subject={selectedSubject} session={session} />;
-  }
 
   return (
     <div>

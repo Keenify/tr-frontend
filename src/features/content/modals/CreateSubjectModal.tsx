@@ -21,6 +21,7 @@
  */
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Session } from '@supabase/supabase-js';
 import { getUserData } from '../../../services/userService';
 import { createDocument } from '../../../services/docService';
@@ -44,6 +45,7 @@ interface CreateSubjectModalProps {
 const CreateSubjectModal: React.FC<CreateSubjectModalProps> = ({ isOpen, onClose, onSubmit, session }) => {
   const [subjectName, setSubjectName] = useState<string>('');
   const [selectedType, setSelectedType] = useState<'Company' | 'Policies' | 'Processes' | null>(null);
+  const navigate = useNavigate();
 
   if (!isOpen) return null;
 
@@ -59,13 +61,17 @@ const CreateSubjectModal: React.FC<CreateSubjectModalProps> = ({ isOpen, onClose
         const userData = await getUserData(session.user.id);
         const documentData = await createDocument(subjectName, 'draft', userData.id, selectedType);
 
-        console.log('Success, Document Data:', documentData);
-
+        // Call the onSubmit prop with the new subject data
         onSubmit({ name: subjectName, types: [selectedType], documentData });
-        setSubjectName('');
-        setSelectedType(null);
+
+        // Navigate to SubjectDetail with the response and session
+        navigate(`/${session.user.id}/content/${documentData.id}`, {
+          state: { subject: documentData, session }
+        });
+
+        onClose();
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error creating subject:', error);
       }
     }
   };
