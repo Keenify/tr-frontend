@@ -57,16 +57,18 @@ export async function upsertDocumentContent(
 ): Promise<any> {
   const endpoint = `${API_DOMAIN}/documents/contents/`;
 
+  const requestBody = {
+    content: { key: content },
+    tab_id: tabId,
+  };
+
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      content: { key: content },
-      tab_id: tabId,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   const data = await response.json();
