@@ -19,9 +19,23 @@ const SubjectDetail: React.FC = () => {
   const [topicTitle, setTopicTitle] = useState<string>('');
   const [description, setDescription] = useState<string>(subject.description || '');
   const [pendingDescription, setPendingDescription] = useState<string>(description);
+  const [documentTabs, setDocumentTabs] = useState<any[]>([]);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
   const [isFocused, setIsFocused] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchTabs = async () => {
+      try {
+        const tabs = await getDocumentTabs(subject.id);
+        setDocumentTabs(tabs);
+      } catch (error) {
+        console.error('❌ Failed to fetch document tabs:', error);
+      }
+    };
+
+    fetchTabs();
+  }, [subject.id]);
 
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
@@ -59,11 +73,10 @@ const SubjectDetail: React.FC = () => {
   const handleCreateClick = async () => {
     if (!topicTitle) return;
 
-    const docTabs = await getDocumentTabs(subject.id);
-    const maxPosition = docTabs.reduce((max, tab) => tab.position > max ? tab.position : max, 0);
-
     try {
-      const tabData = await createDocumentTab(subject.id, topicTitle, maxPosition + 1);
+      const tabData = await createDocumentTab(subject.id, topicTitle, documentTabs.length + 1);
+      setDocumentTabs([...documentTabs, tabData]);
+      setTopicTitle('');
       console.log('✅ Tab created successfully:', tabData);
 
       navigate(`/${session.user.id}/steps/${tabData.id}/editor`, {
@@ -121,6 +134,29 @@ const SubjectDetail: React.FC = () => {
 
         {/* Content Area */}
         <div>
+          {/* Existing Topics */}
+          <div className="mb-4">
+            {documentTabs.map((tab) => (
+              <div key={tab.id} className="flex items-center gap-2 mb-2">
+                <select className="border rounded-lg px-3 py-2" disabled>
+                  <option value="topic">Topic</option>
+                </select>
+                <input
+                  type="text"
+                  value={tab.title}
+                  readOnly
+                  className="flex-1 border rounded-lg px-3 py-2 bg-gray-100"
+                />
+                <button
+                  onClick={() => navigate(`/${session.user.id}/steps/${tab.id}/editor`, { state: { tabData: tab, session } })}
+                  className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600"
+                >
+                  Edit
+                </button>
+              </div>
+            ))}
+          </div>
+
           {/* Add Topic Form */}
           <div className="flex items-center gap-2 mb-4">
             <select className="border rounded-lg px-3 py-2">
