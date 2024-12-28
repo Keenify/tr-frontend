@@ -155,6 +155,37 @@ export async function createDocumentTab(
 }
 
 /**
+ * Fetches document tabs. If a tabId is provided, fetches the specific tab.
+ * @param {string} documentId - The ID of the document.
+ * @param {string} [tabId] - Optional ID of the tab to fetch.
+ * @returns {Promise<any[]>} - A promise that resolves to an array of tab data.
+ */
+export async function getDocumentTabs(documentId: string, tabId?: string): Promise<any[]> {
+  const endpoint = `${API_DOMAIN}/documents/${documentId}/tabs/${tabId ? `?tab_id=${encodeURIComponent(tabId)}` : ''}`;
+
+  const response = await fetch(endpoint, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error("❌ API request failed:", {
+      status: response.status,
+      statusText: response.statusText,
+      data,
+    });
+    throw new Error("Failed to fetch document tabs");
+  }
+
+  return data;
+}
+
+
+/**
  * Updates an existing document.
  * @param {string} documentId - The ID of the document to update.
  * @param {Partial<{ title: string, status: string, employee_id: string, description: string, type: string }>} updateData - The data to update.
