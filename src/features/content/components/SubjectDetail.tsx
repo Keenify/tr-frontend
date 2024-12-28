@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
-import { updateDocument, createDocumentTab } from '../../../../../../services/docService'; // Adjust the import path as necessary
+import { updateDocument, createDocumentTab } from '../../../services/docService'; // Adjust the import path as necessary
 
 /**
  * Props for the SubjectDetail component.

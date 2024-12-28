@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import NotFound from "../shared/components/NotFound";
-import Editor from "../features/dashboard/components/side_menu/Content/components/Editor";
+import Editor from "../features/content/components/Editor";
 import { getDocument } from "../services/docService";
 
 /**

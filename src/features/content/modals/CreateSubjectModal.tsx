@@ -22,8 +22,8 @@
 
 import React, { useState } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { getUserData } from '../../../../../../services/userService';
-import { createDocument } from '../../../../../../services/docService';
+import { getUserData } from '../../../services/userService';
+import { createDocument } from '../../../services/docService';
 
 /**
  * Props for the CreateSubjectModal component.
@@ -31,7 +31,7 @@ import { createDocument } from '../../../../../../services/docService';
 interface CreateSubjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { name: string; type: 'Company' | 'Policies' | 'Processes'; documentData: any }) => void;
+  onSubmit: (data: { name: string; types: string[]; documentData: any }) => void;
   session: Session;
 }
 
@@ -61,7 +61,7 @@ const CreateSubjectModal: React.FC<CreateSubjectModalProps> = ({ isOpen, onClose
 
         console.log('Success, Document Data:', documentData);
 
-        onSubmit({ name: subjectName, type: selectedType, documentData });
+        onSubmit({ name: subjectName, types: [selectedType], documentData });
         setSubjectName('');
         setSelectedType(null);
       } catch (error) {

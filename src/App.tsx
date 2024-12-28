@@ -1,104 +1,66 @@
-/**
- * App.tsx
- * Main application component that sets up routing and session management.
- * 
- * This component uses React Router for navigation and lazy loads components
- * for better performance. It also manages user session and onboarding status.
- * 
- * Key Features:
- * - Utilizes React Router for client-side routing.
- * - Implements lazy loading for performance optimization.
- * - Manages user session and onboarding status.
- * - Provides protected routes for authenticated users.
- */
-
-import React, { lazy, Suspense, useEffect, useState } from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 
+// Hooks for session
 import { useSession } from './shared/hooks/useSession';
-import { getUserOnboardingStatus } from './services/userService';
+
+// Not Found
 import NotFound from './shared/components/NotFound';
-import UserRouteWrapper from './routes/UserRouteWrapper';
+
+// Routes
 import ProtectedRoute from './routes/ProtectedRoute';
-import EditorProtectedRoute from './routes/EditorProtectedRoute';
+import UserRouteWrapper from './routes/UserRouteWrapper';
 
-// Lazy load components for better performance
+// Dashboard Layout
+import { DashboardLayout } from './features/dashboard/components/DashboardLayout';
+
+// Lazy load example for AuthForm
 const AuthForm = lazy(() => import('./features/auth/components/Auth'));
-const Onboarding = lazy(() => import('./features/onboarding/components/Onboarding'));
 
-/**
- * Main App component
- * 
- * @returns {JSX.Element} The main application component with routing and session management.
- */
+// Components
+import Home from './features/home/components/Home';
+import Content from './features/content/components/Content';
+import SubjectDetail from './features/content/components/SubjectDetail';
+
 const App: React.FC = () => {
   const { session, signOut } = useSession();
-  const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    const checkOnboardingStatus = async () => {
-      if (session) {
-        try {
-          const isOnboardingComplete = await getUserOnboardingStatus(session.user.id);
-          setIsOnboardingComplete(isOnboardingComplete);
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-        }
-      }
-    };
-
-    checkOnboardingStatus();
-  }, [session]);
-
-  const routes = [
-    {
-      path: "/",
-      element: <Navigate to="/login" replace />
-    },
-    {
-      path: "/login",
-      element: <AuthForm />
-    },
-    {
-      path: "/:userId/dashboard",
-      element: (
-        // session data is passed to the UserRouteWrapper component
-        <UserRouteWrapper session={session}>
-          <ProtectedRoute session={session} signOut={signOut} isOnboardingComplete={isOnboardingComplete} />
-        </UserRouteWrapper>
-      )
-    },
-    {
-      // session data and document tab id is passed to the EditorProtectedRoute component
-      path: "/:userId/dashboard/:subjectId/editor",
-      element: (
-        <UserRouteWrapper session={session}>
-          <EditorProtectedRoute session={session} />
-        </UserRouteWrapper>
-      )
-    },
-    {
-      path: "/:userId/onboarding",
-      element: (
-        <UserRouteWrapper session={session}>
-          <Onboarding />
-        </UserRouteWrapper>
-      )
-    },
-    {
-      path: "*",
-      element: <NotFound />
-    }
-  ];
 
   return (
     <Router>
       <Suspense fallback={<ClipLoader color="#36d7b7" />}>
         <Routes>
-          {routes.map((route) => (
-            <Route key={route.path} path={route.path} element={route.element} />
-          ))}
+          {/* Default Redirect to User-Specific Route */}
+          <Route path="/" element={<Navigate to={session ? `/${session.user.id}` : "/login"} replace />} />
+
+          {/* Public Routes */}
+          <Route path="/login" element={<AuthForm />} />
+
+          {/* Protected Area */}
+          <Route element={session ? <ProtectedRoute session={session} /> : <Navigate to="/login" replace />}>
+            <Route path=":userId/*" element={session ? <UserRouteWrapper session={session} /> : <Navigate to="/login" replace />}>
+              <Route
+                path="*"
+                element={
+                  session ? (
+                    <DashboardLayout session={session} signOut={signOut} activeTab="home" onTabChange={() => {}}>
+                      <Routes>
+                        <Route index element={<Home session={session} />} />
+                        <Route path="content" element={<Content session={session} />} />
+                        <Route path="content/:subjectId" element={<SubjectDetail />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </DashboardLayout>
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                }
+              />
+            </Route>
+          </Route>
+
+          {/* Catch-all for anything else */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </Router>

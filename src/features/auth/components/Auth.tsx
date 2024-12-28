@@ -25,7 +25,7 @@ const AuthForm: React.FC = () => {
 
   useEffect(() => {
     if (session) {
-      navigate(`/${session.user.id}/dashboard`);
+      navigate(`/${session.user.id}`);
     }
   }, [session, navigate]);
 

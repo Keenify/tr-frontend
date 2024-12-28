@@ -2,6 +2,7 @@ import React from 'react';
 import { Power } from 'react-feather'; // Import Power icon from react-feather
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase'; // Import supabase client
+import { useNavigate, useParams } from 'react-router-dom';
 
 /**
  * Props for the Layout component.
@@ -14,10 +15,15 @@ import { supabase } from '../../../lib/supabase'; // Import supabase client
  * @property {string} activeSubTab - The currently active subtab identifier.
  * @property {function} onSubTabChange - Callback function to change the active subtab.
  */
+
+// Define the possible tabs
+const tabs = ['home', 'content', 'people', 'groups', 'marketplaces', 'reports', 'account'] as const;
+type TabType = typeof tabs[number];
+
 interface LayoutProps {
   children: React.ReactNode;
-  activeTab: 'home' | 'content' | 'people' | 'groups' | 'marketplaces' | 'reports' | 'account';
-  onTabChange: (tab: 'home' | 'content' | 'people' | 'groups' | 'marketplaces' | 'reports' | 'account') => void;
+  activeTab: TabType;
+  onTabChange: (tab: TabType) => void;
   session: Session;
   signOut: () => void;
   activeSubTab?: 'directory' | 'orgChart';
@@ -34,14 +40,28 @@ interface LayoutProps {
  * @param {LayoutProps} props - The properties for the Layout component.
  * @returns {JSX.Element} The rendered layout component.
  */
-export function Layout({ children, activeTab, onTabChange, session, signOut, activeSubTab, onSubTabChange }: LayoutProps) {
+export function DashboardLayout({ children, onTabChange, session, signOut, activeSubTab, onSubTabChange }: LayoutProps) {
   const email = session.user.email || 'user@example.com';
   const [isPeopleSubmenuOpen, setIsPeopleSubmenuOpen] = React.useState(false);
+  const navigate = useNavigate();
+  const { userId } = useParams<{ userId: string }>();
+  const [activeTabState, setActiveTabState] = React.useState<TabType>('home');
 
   // Function to handle sign out using Supabase
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     signOut(); // Call the passed signOut function to update the state
+  };
+
+  // Function to handle tab change
+  const handleTabChange = (tab: TabType) => {
+    setActiveTabState(tab);
+    onTabChange(tab);
+    if (tab === 'home') {
+      navigate(`/${userId}`);
+    } else {
+      navigate(`/${userId}/${tab}`);
+    }
   };
 
   return (
@@ -79,18 +99,18 @@ export function Layout({ children, activeTab, onTabChange, session, signOut, act
             {/* Navigation */}
             <div className="flex-1 py-6 px-4">
               <div className="space-y-1">
-                {['home', 'content', 'people', 'groups', 'marketplaces', 'reports', 'account'].map((tab) => (
+                {tabs.map((tab) => (
                   <React.Fragment key={tab}>
                     <button
                       onClick={() => {
-                        onTabChange(tab as LayoutProps['activeTab']);
+                        handleTabChange(tab);
                         if (tab === 'people') {
-                          setIsPeopleSubmenuOpen(!isPeopleSubmenuOpen);
+                          setIsPeopleSubmenuOpen(!isPeopleSubmenuOpen); // Toggle submenu open state
                         }
                       }}
                       className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        activeTab === tab
-                          ? 'bg-indigo-50 text-indigo-600'
+                        activeTabState === tab
+                          ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >

@@ -4,9 +4,9 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import { FaBold, FaItalic, FaUnderline, FaStrikethrough } from "react-icons/fa";
-import { upsertDocumentContent, getDocumentContent } from "../../../../../../services/docService";
+import { upsertDocumentContent, getDocumentContent } from "../../../services/docService";
 
-import "./Editor.css";
+import "./../styles/Editor.css";
 
 /**
  * Props for the Editor component.
@@ -16,8 +16,8 @@ import "./Editor.css";
  * @property {string} title - The title of the document being edited.
  */
 interface EditorProps {
-  initialContent: string;
-  title: string;
+  initialContent?: string;
+  title?: string;
 }
 
 // FIXME: tabid is not present if access editor from dashboard directly
@@ -34,29 +34,38 @@ interface EditorProps {
 const Editor: React.FC<EditorProps> = ({ initialContent, title }) => {
   const location = useLocation();
   const { tabId } = location.state || {};
-  const [content, setContent] = useState<string>(initialContent);
+  const [content, setContent] = useState<string>('');
 
   useEffect(() => {
     const fetchContent = async () => {
-      if (tabId && !initialContent) {
+      if (tabId) {
         try {
           const data = await getDocumentContent(tabId);
-          console.log("🚀 ~ fetchContent ~ data:", data)
+          console.log("🚀 ~ fetchContent ~ data:", data);
           setContent(data.content.key);
           console.log("✅ Document content fetched successfully");
         } catch (error) {
           console.error("❌ Failed to fetch document content:", error);
         }
+      } else {
+        console.warn("⚠️ No tabId found in location.state");
       }
     };
 
     fetchContent();
-  }, [tabId, initialContent]);
+  }, [tabId]);
 
   const editor = useEditor({
     extensions: [StarterKit, Underline],
     content: content,
   });
+
+  // Re-initialize the editor when content changes
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content);
+    }
+  }, [content, editor]);
 
   // Sync content every 3 seconds
   useEffect(() => {
@@ -74,13 +83,6 @@ const Editor: React.FC<EditorProps> = ({ initialContent, title }) => {
 
     return () => clearInterval(interval); // Cleanup interval on component unmount
   }, [editor, tabId]);
-
-  // Re-initialize the editor when content changes
-  useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content);
-    }
-  }, [content, editor]);
 
   if (!editor) {
     return null;

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import CreateSubjectModal from './modals/CreateSubjectModal';
-import SubjectDetail from './components/SubjectDetail';
+import CreateSubjectModal from '../modals/CreateSubjectModal';
+import SubjectDetail from './SubjectDetail';
 import { Session } from '@supabase/supabase-js';
-import { getDocumentsByType } from "../../../../../services/docService"
+import { getDocumentsByType } from "../../../services/docService"
 
 /**
  * Interface representing a subject in the content section
@@ -16,7 +16,7 @@ interface Subject {
   /** Description text for the subject */
   description: string;
   /** Category type of the subject */
-  type: 'Company' | 'Policies' | 'Processes';
+  type: SubjectType;
   /** Publishing status of the subject */
   status: 'published' | 'unpublished';
   documentData?: any;
@@ -25,6 +25,12 @@ interface Subject {
 interface ContentProps {
   session: Session;
 }
+
+// Define the types as a constant array
+const SUBJECT_TYPES = ['Company', 'Policies', 'Processes'] as const;
+
+// Use the constant in your code
+type SubjectType = typeof SUBJECT_TYPES[number];
 
 /**
  * Content component that displays the main content section with subject management
@@ -41,27 +47,36 @@ const Content: React.FC<ContentProps> = ({ session }) => {
   // State to store fetched documents
   const [documents, setDocuments] = useState<any[]>([]);
   const navigate = useNavigate();
+  const [activeContentType, setActiveContentType] = useState<string>('none');
+
+  useEffect(() => {
+    // Fetch all documents when the component mounts
+    fetchDocuments('none');
+  }, []);
 
   /**
    * Handles creation of a new subject
    * @param data Object containing name and type for new subject
    */
-  const handleCreateSubject = (data: { name: string; type: 'Company' | 'Policies' | 'Processes'; documentData: any }) => {
-    const newSubject = {
-      id: Date.now().toString(),
+  const handleCreateSubject = (data: { name: string; types: string[]; documentData: any }) => {
+    const newSubjects = data.types.map(type => ({
+      id: Date.now().toString() + type, // Ensure unique ID for each type
       title: data.name,
       description: '',
-      type: data.type,
+      type: type as SubjectType, // Cast the string to SubjectType
       status: 'unpublished' as const,
       documentData: data.documentData,
-    };
-    setSelectedSubject(newSubject);
+    }));
+    
+    // Assuming you want to set the first subject as selected
+    setSelectedSubject(newSubjects[0]);
     setIsModalOpen(false);
   };
 
   // Function to fetch documents by type
   const fetchDocuments = async (type: string) => {
     try {
+      setActiveContentType(type);
       const data = await getDocumentsByType(type);
       setDocuments(data);
       console.log(`✅ Documents fetched successfully for type: ${type}`);
@@ -88,45 +103,24 @@ const Content: React.FC<ContentProps> = ({ session }) => {
       </div>
 
       <div className="grid grid-cols-4 gap-4">
-        <div
-          className="p-4 rounded-lg border hover:bg-gray-50 cursor-pointer"
-          onClick={() => fetchDocuments('none')}
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-purple-500">🏠</span>
-            <span>All content</span>
+        {['none', 'Company', 'Policies', 'Processes'].map((type) => (
+          <div
+            key={type}
+            className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+              activeContentType === type
+                ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600'
+                : 'hover:bg-gray-50'
+            }`}
+            onClick={() => fetchDocuments(type)}
+          >
+            <div className="flex items-center gap-2">
+              <span className={`text-${type === 'none' ? 'purple' : type === 'Company' ? 'yellow' : type === 'Policies' ? 'pink' : 'blue'}-500`}>
+                {type === 'none' ? '🏠' : type === 'Company' ? '📄' : type === 'Policies' ? '📝' : '📊'}
+              </span>
+              <span>{type === 'none' ? 'All content' : type}</span>
+            </div>
           </div>
-        </div>
-
-        <div
-          className="p-4 rounded-lg border hover:bg-gray-50 cursor-pointer"
-          onClick={() => fetchDocuments('Company')}
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-yellow-500">📄</span>
-            <span>Company</span>
-          </div>
-        </div>
-
-        <div
-          className="p-4 rounded-lg border hover:bg-gray-50 cursor-pointer"
-          onClick={() => fetchDocuments('Policies')}
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-pink-500">📝</span>
-            <span>Policies</span>
-          </div>
-        </div>
-
-        <div
-          className="p-4 rounded-lg border hover:bg-gray-50 cursor-pointer"
-          onClick={() => fetchDocuments('Processes')}
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-blue-500">📊</span>
-            <span>Processes</span>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Document List */}
@@ -135,8 +129,8 @@ const Content: React.FC<ContentProps> = ({ session }) => {
           <div key={doc.id} className="flex justify-between items-center p-4 border rounded-lg shadow-sm mb-4">
             <span
               className="text-lg font-medium cursor-pointer hover:underline"
-              onClick={() => navigate(`/${session.user.id}/dashboard/${doc.id}/editor`, {
-                state: { title: doc.title, topic: doc.content }
+              onClick={() => navigate(`/${session.user.id}/content/${doc.id}`, {
+                state: { subject: doc, session }
               })}
             >
               {doc.title}
