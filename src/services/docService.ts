@@ -286,3 +286,30 @@ export async function getDocumentsByType(type: string): Promise<any> {
 
   return data;
 }
+
+/**
+ * Deletes a document by its ID.
+ * @param {string} documentId - The ID of the document to delete.
+ * @returns {Promise<boolean>} - A promise that resolves to true if deletion was successful.
+ */
+export async function deleteDocument(documentId: string): Promise<boolean> {
+  const endpoint = `${API_DOMAIN}/documents/${documentId}`;
+
+  const response = await fetch(endpoint, {
+    method: "DELETE",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    console.error("❌ API request failed:", {
+      status: response.status,
+      statusText: response.statusText,
+    });
+    throw new Error("Failed to delete document");
+  }
+
+  const data = await response.json();
+  return data;
+}

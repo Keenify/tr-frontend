@@ -1,8 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import CreateSubjectModal from '../modals/CreateSubjectModal';
+
 import { Session } from '@supabase/supabase-js';
-import { getDocumentsByType } from "../../../services/docService"
+import { deleteDocument, getDocumentsByType } from "../../../services/docService";
+import { FaEllipsisV } from 'react-icons/fa';
+
+// Modals
+import CreateSubjectModal from '../modals/CreateSubjectModal';
+import DeleteSubjectModal from '../modals/DeleteSubjectModal';
 
 
 interface ContentProps {
@@ -23,6 +28,9 @@ const Content: React.FC<ContentProps> = ({ session }) => {
   const [documents, setDocuments] = useState<any[]>([]);
   const navigate = useNavigate();
   const [activeContentType, setActiveContentType] = useState<string>('none');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<any>(null);
+  const [showMenu, setShowMenu] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch all documents when the component mounts
@@ -50,6 +58,22 @@ const Content: React.FC<ContentProps> = ({ session }) => {
       console.log(`✅ Documents fetched successfully for type: ${type}`);
     } catch (error) {
       console.error(`❌ Failed to fetch documents for type: ${type}`, error);
+    }
+  };
+
+  // Add delete handler
+  const handleDelete = async () => {
+    if (!selectedDoc) return;
+    
+    try {
+      await deleteDocument(selectedDoc.id);
+      // Refresh documents list
+      fetchDocuments(activeContentType);
+      setShowDeleteModal(false);
+      setSelectedDoc(null);
+      console.log('✅ Document deleted successfully');
+    } catch (error) {
+      console.error('❌ Failed to delete document:', error);
     }
   };
 
@@ -98,11 +122,48 @@ const Content: React.FC<ContentProps> = ({ session }) => {
             >
               {doc.title}
             </span>
-            <span className="text-sm text-gray-500">{doc.type}</span>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-500">{doc.type}</span>
+              <div className="relative">
+                <button
+                  onClick={() => setShowMenu(showMenu === doc.id ? null : doc.id)}
+                  className="p-2 hover:bg-gray-100 rounded-full"
+                >
+                  <FaEllipsisV className="text-gray-500" />
+                </button>
+                
+                {showMenu === doc.id && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border">
+                    <button
+                      onClick={() => {
+                        setSelectedDoc(doc);
+                        setShowDeleteModal(true);
+                        setShowMenu(null);
+                      }}
+                      className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 rounded-lg"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         ))}
       </div>
 
+      {/* Delete Subject Modal */}
+      <DeleteSubjectModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedDoc(null);
+        }}
+        onConfirm={handleDelete}
+        documentTitle={selectedDoc?.title || ''}
+      />
+
+      {/* Create Subject Modal */}
       <CreateSubjectModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
