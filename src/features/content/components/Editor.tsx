@@ -20,7 +20,6 @@ import {
   FaAlignJustify, 
   FaAlignLeft, 
   FaAlignRight, 
-  FaLink, 
   FaTextHeight, 
   FaListUl, 
   FaListOl, 
@@ -35,7 +34,7 @@ import { upsertDocumentContent, getDocumentContent } from "../../../services/doc
 import "./../styles/Editor.css";
 
 // Toolbar
-import { UndoRedoMenu, HeadingMenu, TextFormatMenu, ColorMenu } from "./EditorToolbar";
+import { UndoRedoMenu, HeadingMenu, TextFormatMenu, ColorMenu, LinkMenu } from "./EditorToolbar";
 
 interface LineHeightAttributes {
   lineHeight?: string;
@@ -205,59 +204,6 @@ const Editor: React.FC = () => {
     }
   };
 
-  // Add new component for link menu
-  const LinkMenu = ({ editor }: { editor: any }) => {
-    if (!editor.isActive('link')) return null;
-
-    // Get the current selection coordinates
-    const { from } = editor.state.selection;
-    const domRect = editor.view.coordsAtPos(from);
-    const style = {
-      position: 'fixed' as const,
-      left: `${domRect.left}px`,
-      top: `${domRect.bottom + 5}px`,
-      zIndex: 100,
-    };
-
-    return (
-      <div 
-        className="bg-white shadow-lg rounded-lg p-2 flex gap-2" 
-        style={style}
-      >
-        <a 
-          href={editor.getAttributes('link').href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-500 hover:text-blue-600"
-        >
-          {editor.getAttributes('link').href}
-        </a>
-        <button
-          onClick={() => editor.chain().focus().unsetLink().run()}
-          className="text-red-500 hover:text-red-600 px-2"
-        >
-          Remove
-        </button>
-        <button
-          onClick={() => {
-            const url = editor.getAttributes('link').href;
-            setLinkUrl(url);
-            const { from, to } = editor.state.selection;
-            const selectedText = editor.state.doc.textBetween(from, to, '');
-            setLinkText(selectedText);
-            setShowLinkMenu(true);
-          }}
-          className="text-gray-500 hover:text-gray-600 px-2"
-        >
-          Edit
-        </button>
-        {/* Vertical divider */}
-        <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
-        
-      </div>
-    );
-  };
-
   if (!editor) {
     return null;
   }
@@ -290,107 +236,19 @@ const Editor: React.FC = () => {
             <ColorMenu editor={editor} />
             {/* Vertical divider */}
             <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
-            {/* Link button and popup */}
-            <div className="relative">
-              <button
-                onClick={() => {
-                  const selection = editor.state.selection;
-                  const selectedText = selection.empty 
-                    ? '' 
-                    : editor.view.state.doc.textBetween(
-                        selection.from,
-                        selection.to,
-                        ''
-                      );
-                  setLinkText(selectedText);
-                  setShowLinkMenu(true);
-                }}
-                className={`inline-flex items-center justify-center w-10 h-8 rounded ${
-                  editor.isActive('link') ? 'bg-gray-300' : 'bg-gray-200'
-                }`}
-              >
-                <FaLink />
-              </button>
-
-              {showLinkMenu && (
-                <div className="absolute top-full left-0 mt-1 w-72 bg-white shadow-lg rounded-lg p-4 z-10">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-lg font-medium">Link</span>
-                    <button 
-                      onClick={() => setShowLinkMenu(false)}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      ×
-                    </button>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Text</label>
-                      <input
-                        type="text"
-                        value={linkText}
-                        onChange={(e) => setLinkText(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">URL</label>
-                      <input
-                        type="url"
-                        value={linkUrl}
-                        onChange={(e) => {
-                          setLinkUrl(e.target.value);
-                          setIsValidUrl(isValidURL(e.target.value));
-                        }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      />
-                    </div>
-
-                    <div className="flex justify-end space-x-2">
-                      <button
-                        onClick={() => {
-                          setShowLinkMenu(false);
-                          setLinkUrl('');
-                          setLinkText('');
-                        }}
-                        className="px-4 py-2 text-purple-600 hover:bg-purple-50 rounded-md"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (linkUrl) {
-                            if (linkText && editor.state.selection.empty) {
-                              editor.chain()
-                                .focus()
-                                .insertContent(linkText)
-                                .setTextSelection(editor.state.selection.from - linkText.length)
-                                .setLink({ href: linkUrl })
-                                .run();
-                            } else {
-                              editor.chain().focus().setLink({ href: linkUrl }).run();
-                            }
-                          }
-                          setShowLinkMenu(false);
-                          setLinkUrl('');
-                          setLinkText('');
-                        }}
-                        className={`px-4 py-2 rounded-md ${
-                          isValidUrl 
-                            ? 'bg-blue-500 hover:bg-blue-600 text-white cursor-pointer' 
-                            : 'bg-gray-200 cursor-not-allowed'
-                        }`}
-                        disabled={!isValidUrl}
-                      >
-                        Save Link
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Link Menu */}
+            <LinkMenu 
+              editor={editor}
+              showLinkMenu={showLinkMenu}
+              setShowLinkMenu={setShowLinkMenu}
+              linkText={linkText}
+              setLinkText={setLinkText}
+              linkUrl={linkUrl}
+              setLinkUrl={setLinkUrl}
+              isValidUrl={isValidUrl}
+              setIsValidUrl={setIsValidUrl}
+              isValidURL={isValidURL}
+            />
             {/* Vertical divider */}
             <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
             {/* Text Alignment */}
@@ -531,9 +389,6 @@ const Editor: React.FC = () => {
           />
         </div>
       </div>
-
-      {/* Move LinkMenu outside the editor container */}
-      {editor && <LinkMenu editor={editor} />}
     </div>
   );
 };
