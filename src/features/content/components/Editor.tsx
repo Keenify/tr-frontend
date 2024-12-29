@@ -20,13 +20,9 @@ import {
   FaAlignJustify, 
   FaAlignLeft, 
   FaAlignRight, 
-  FaBold, 
   FaFont, 
   FaHighlighter, 
-  FaItalic, 
   FaLink, 
-  FaStrikethrough, 
-  FaUnderline, 
   FaTextHeight, 
   FaListUl, 
   FaListOl, 
@@ -41,7 +37,7 @@ import { upsertDocumentContent, getDocumentContent } from "../../../services/doc
 import "./../styles/Editor.css";
 
 // Toolbar
-import { UndoRedoMenu, HeadingMenu } from "./EditorToolbar";
+import { UndoRedoMenu, HeadingMenu, TextFormatMenu } from "./EditorToolbar";
 
 interface LineHeightAttributes {
   lineHeight?: string;
@@ -288,42 +284,10 @@ const Editor: React.FC = () => {
             <HeadingMenu editor={editor} />
             {/* Vertical divider */}
             <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
-            {/* Bold button */}
-            <button
-              onClick={() => editor.chain().focus().toggleBold().run()}
-              className={`px-3 py-1 rounded ${
-                editor.isActive("bold") ? "bg-gray-300" : "bg-gray-200"
-              }`}
-            >
-              <FaBold />
-            </button>
-            {/* Italic button */}
-            <button
-              onClick={() => editor.chain().focus().toggleItalic().run()}
-              className={`px-3 py-1 rounded ${
-                editor.isActive("italic") ? "bg-gray-300" : "bg-gray-200"
-              }`}
-            >
-              <FaItalic />
-            </button>
-            {/* Underline button */}
-            <button
-              onClick={() => editor.chain().focus().toggleUnderline().run()}
-              className={`px-3 py-1 rounded ${
-                editor.isActive("underline") ? "bg-gray-300" : "bg-gray-200"
-              }`}
-            >
-              <FaUnderline />
-            </button>
-            {/* Strikethrough button */}
-            <button
-              onClick={() => editor.chain().focus().toggleStrike().run()}
-              className={`inline-flex items-center justify-center w-10 h-8 rounded ${
-                editor.isActive("strike") ? "bg-gray-300" : "bg-gray-200"
-              }`}
-            >
-              <FaStrikethrough className="text-lg" />
-            </button>
+            {/* Text Format Menu */}
+            <TextFormatMenu editor={editor} />
+            {/* Vertical divider */}
+            <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
             {/* Text Color */}
             <div className="relative">
               <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer">

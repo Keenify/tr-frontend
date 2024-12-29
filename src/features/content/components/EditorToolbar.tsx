@@ -1,7 +1,7 @@
-import { FaUndo, FaRedo } from "react-icons/fa";
-import { Editor } from '@tiptap/react';
-import { RiArrowDownSLine } from "react-icons/ri";
 import React, { useState } from 'react';
+import { Editor } from '@tiptap/react';
+import { FaRedo, FaUndo, FaBold, FaItalic, FaUnderline, FaStrikethrough } from "react-icons/fa";
+import { RiArrowDownSLine } from "react-icons/ri";
 
 // Undo/Redo Menu
 export const UndoRedoMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
@@ -85,3 +85,44 @@ export const HeadingMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
     </div>
   );
 };
+
+// Text Format Menu
+export const TextFormatMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
+  return (
+    <div className="flex gap-2">
+      <button
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        className={`px-3 py-1 rounded ${
+          editor.isActive("bold") ? "bg-gray-300" : "bg-gray-200"
+        }`}
+      >
+        <FaBold />
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        className={`px-3 py-1 rounded ${
+          editor.isActive("italic") ? "bg-gray-300" : "bg-gray-200"
+        }`}
+      >
+        <FaItalic />
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
+        className={`px-3 py-1 rounded ${
+          editor.isActive("underline") ? "bg-gray-300" : "bg-gray-200"
+        }`}
+      >
+        <FaUnderline />
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        className={`inline-flex items-center justify-center w-10 h-8 rounded ${
+          editor.isActive("strike") ? "bg-gray-300" : "bg-gray-200"
+        }`}
+      >
+        <FaStrikethrough className="text-lg" />
+      </button>
+    </div>
+  );
+};
+
