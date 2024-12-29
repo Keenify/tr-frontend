@@ -571,8 +571,6 @@ const Editor: React.FC = () => {
             </div>
           )}
         </div>
-        {/* Vertical divider */}
-        <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
         {/* Line Spacing */}
         <div className="relative">
           <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer"
@@ -604,8 +602,6 @@ const Editor: React.FC = () => {
             </div>
           )}
         </div>
-        {/* Vertical divider */}
-        <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
         {/* List Options */}
         <div className="relative">
           <label 
