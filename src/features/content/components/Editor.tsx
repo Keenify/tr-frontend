@@ -1,11 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
+
+// Extensions
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
-import { FaBold, FaItalic, FaUnderline, FaStrikethrough } from "react-icons/fa";
+
+
+// Icons
+import { FaBold, FaItalic, FaUnderline, FaStrikethrough, FaUndo, FaRedo } from "react-icons/fa";
+
+// Services
 import { upsertDocumentContent, getDocumentContent } from "../../../services/docService";
 
+// Styles
 import "./../styles/Editor.css";
 
 /**
@@ -41,7 +49,10 @@ const Editor: React.FC = () => {
   }, [tabData]);
 
   const editor = useEditor({
-    extensions: [StarterKit, Underline],
+    extensions: [
+      StarterKit,
+      Underline
+    ],
     content: content,
   });
 
@@ -82,6 +93,18 @@ const Editor: React.FC = () => {
       </div>
       {/* Toolbar section */}
       <div className="bg-white shadow-lg rounded-lg p-2 w-full max-w-3xl flex justify-center space-x-2">
+        <button
+          onClick={() => editor.chain().focus().undo().run()}
+          className="px-3 py-1 rounded bg-gray-200"
+        >
+          <FaUndo />
+        </button>
+        <button
+          onClick={() => editor.chain().focus().redo().run()}
+          className="px-3 py-1 rounded bg-gray-200"
+        >
+          <FaRedo />
+        </button>
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
           className={`px-3 py-1 rounded ${
