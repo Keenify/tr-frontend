@@ -7,11 +7,12 @@ import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import TextStyle from '@tiptap/extension-text-style'
 import Color from '@tiptap/extension-color'
+import Highlight from '@tiptap/extension-highlight'
 
 // Icons
-import { FaBold, FaItalic, FaUnderline, FaStrikethrough, FaUndo, FaRedo } from "react-icons/fa";
+import { FaBold, FaItalic, FaUnderline, FaStrikethrough, FaUndo, FaRedo, FaHighlighter } from "react-icons/fa";
 import { RiArrowDownSLine } from "react-icons/ri";
-import { TbTextColor } from "react-icons/tb";
+import { FaFont } from "react-icons/fa";
 
 // Services
 import { upsertDocumentContent, getDocumentContent } from "../../../services/docService";
@@ -69,7 +70,8 @@ const Editor: React.FC = () => {
       }),
       Underline,
       TextStyle,
-      Color
+      Color,
+      Highlight.configure({ multicolor: true })
     ],
     content: content,
   });
@@ -192,6 +194,7 @@ const Editor: React.FC = () => {
             </div>
           )}
         </div>
+        {/* Vertical divider */}
         <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
         {/* Bold button */}
         <button
@@ -229,24 +232,37 @@ const Editor: React.FC = () => {
         >
           <FaStrikethrough className="text-lg" />
         </button>
-        {/* Text color picker */}
+        {/* Text Color */}
         <div className="relative">
           <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer">
-            <TbTextColor className="text-lg" />
+            <FaFont />
             <input
               type="color"
-              className="absolute opacity-0 w-full h-full cursor-pointer"
-              onChange={(e) =>
-                editor
-                  .chain()
-                  .focus()
-                  .setColor((e.target as HTMLInputElement).value)
-                  .run()
-              }
+              className="absolute opacity-0 w-0 h-0"
+              onInput={e => editor.chain().focus().setColor((e.target as HTMLInputElement).value).run()}
             />
           </label>
         </div>
+        {/* Highlight Color */}
+        <div className="relative">
+          <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer">
+            <FaHighlighter />
+            <input
+              type="color"
+              className="absolute opacity-0 w-0 h-0"
+              onInput={(e) => {
+                const target = e.target as HTMLInputElement;
+                editor.chain().focus().setHighlight({ color: target.value }).run();
+              }}
+            />
+          </label>
+        </div>
+        {/* Vertical divider */}
+        <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
+        
       </div>
+
+
 
       {/* Editor content section */}
       <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-3xl">
