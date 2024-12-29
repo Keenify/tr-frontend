@@ -22,37 +22,33 @@ import {
 import { RiArrowDownSLine } from "react-icons/ri";
 
 /**
- * UndoRedoMenu component.
- * Provides undo and redo functionality for the editor.
- *
- * @param {Editor} editor - The Tiptap editor instance.
- * @returns {JSX.Element} - The rendered UndoRedoMenu component.
+ * Component for undo and redo actions in the editor.
+ * 
+ * @param {Editor} editor - Instance of Tiptap editor.
+ * @returns {JSX.Element} - Rendered component for undo and redo.
  */
-export const UndoRedoMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
-  return (
-    <div className="flex gap-2">
-      <button
-        onClick={() => editor.chain().focus().undo().run()}
-        className="px-3 py-1 rounded bg-gray-200"
-      >
-        <FaUndo />
-      </button>
-      <button
-        onClick={() => editor.chain().focus().redo().run()}
-        className="px-3 py-1 rounded bg-gray-200"
-      >
-        <FaRedo />
-      </button>
-    </div>
-  );
-};
+export const UndoRedoMenu: React.FC<{ editor: Editor }> = ({ editor }) => (
+  <div className="flex gap-2">
+    <button
+      onClick={() => editor.chain().focus().undo().run()}
+      className="px-3 py-1 rounded bg-gray-200"
+    >
+      <FaUndo />
+    </button>
+    <button
+      onClick={() => editor.chain().focus().redo().run()}
+      className="px-3 py-1 rounded bg-gray-200"
+    >
+      <FaRedo />
+    </button>
+  </div>
+);
 
 /**
- * HeadingMenu component.
- * Allows users to select heading levels or set text to normal.
- *
- * @param {Editor} editor - The Tiptap editor instance.
- * @returns {JSX.Element} - The rendered HeadingMenu component.
+ * Component for selecting heading levels or normal text.
+ * 
+ * @param {Editor} editor - Instance of Tiptap editor.
+ * @returns {JSX.Element} - Rendered component for heading selection.
  */
 export const HeadingMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
@@ -117,87 +113,81 @@ export const HeadingMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
 };
 
 /**
- * TextFormatMenu component.
- * Provides text formatting options such as bold, italic, underline, and strikethrough.
- *
- * @param {Editor} editor - The Tiptap editor instance.
- * @returns {JSX.Element} - The rendered TextFormatMenu component.
+ * Component for text formatting options like bold, italic, etc.
+ * 
+ * @param {Editor} editor - Instance of Tiptap editor.
+ * @returns {JSX.Element} - Rendered component for text formatting.
  */
-export const TextFormatMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
-  return (
-    <div className="flex gap-2">
-      <button
-        onClick={() => editor.chain().focus().toggleBold().run()}
-        className={`px-3 py-1 rounded ${
-          editor.isActive("bold") ? "bg-gray-300" : "bg-gray-200"
-        }`}
-      >
-        <FaBold />
-      </button>
-      <button
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-        className={`px-3 py-1 rounded ${
-          editor.isActive("italic") ? "bg-gray-300" : "bg-gray-200"
-        }`}
-      >
-        <FaItalic />
-      </button>
-      <button
-        onClick={() => editor.chain().focus().toggleUnderline().run()}
-        className={`px-3 py-1 rounded ${
-          editor.isActive("underline") ? "bg-gray-300" : "bg-gray-200"
-        }`}
-      >
-        <FaUnderline />
-      </button>
-      <button
-        onClick={() => editor.chain().focus().toggleStrike().run()}
-        className={`inline-flex items-center justify-center w-10 h-8 rounded ${
-          editor.isActive("strike") ? "bg-gray-300" : "bg-gray-200"
-        }`}
-      >
-        <FaStrikethrough className="text-lg" />
-      </button>
-    </div>
-  );
-};
+export const TextFormatMenu: React.FC<{ editor: Editor }> = ({ editor }) => (
+  <div className="flex gap-2">
+    <button
+      onClick={() => editor.chain().focus().toggleBold().run()}
+      className={`px-3 py-1 rounded ${
+        editor.isActive("bold") ? "bg-gray-300" : "bg-gray-200"
+      }`}
+    >
+      <FaBold />
+    </button>
+    <button
+      onClick={() => editor.chain().focus().toggleItalic().run()}
+      className={`px-3 py-1 rounded ${
+        editor.isActive("italic") ? "bg-gray-300" : "bg-gray-200"
+      }`}
+    >
+      <FaItalic />
+    </button>
+    <button
+      onClick={() => editor.chain().focus().toggleUnderline().run()}
+      className={`px-3 py-1 rounded ${
+        editor.isActive("underline") ? "bg-gray-300" : "bg-gray-200"
+      }`}
+    >
+      <FaUnderline />
+    </button>
+    <button
+      onClick={() => editor.chain().focus().toggleStrike().run()}
+      className={`inline-flex items-center justify-center w-10 h-8 rounded ${
+        editor.isActive("strike") ? "bg-gray-300" : "bg-gray-200"
+      }`}
+    >
+      <FaStrikethrough className="text-lg" />
+    </button>
+  </div>
+);
 
 /**
- * ColorMenu component.
- * Allows users to change text color and highlight color.
- *
- * @param {Editor} editor - The Tiptap editor instance.
- * @returns {JSX.Element} - The rendered ColorMenu component.
+ * Component for changing text and highlight colors.
+ * 
+ * @param {Editor} editor - Instance of Tiptap editor.
+ * @returns {JSX.Element} - Rendered component for color selection.
  */
-export const ColorMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
-  return (
-    <div className="flex gap-2">
-      <div className="relative">
-        <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer">
-          <FaFont />
-          <input
-            type="color"
-            className="absolute opacity-0 w-0 h-0"
-            onInput={e => editor.chain().focus().setColor((e.target as HTMLInputElement).value).run()}
-          />
-        </label>
-      </div>
-      <div className="relative">
-        <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer">
-          <FaHighlighter />
-          <input
-            type="color"
-            className="absolute opacity-0 w-0 h-0"
-            onInput={(e) => {
-              const target = e.target as HTMLInputElement;
-              editor.chain().focus().setHighlight({ color: target.value }).run();
-            }}
-          />
-        </label>
-      </div>
+export const ColorMenu: React.FC<{ editor: Editor }> = ({ editor }) => (
+  <div className="flex gap-2">
+    <div className="relative">
+      <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer">
+        <FaFont />
+        <input
+          type="color"
+          className="absolute opacity-0 w-0 h-0"
+          onInput={e => editor.chain().focus().setColor((e.target as HTMLInputElement).value).run()}
+        />
+      </label>
     </div>
-  );
-};
+    <div className="relative">
+      <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer">
+        <FaHighlighter />
+        <input
+          type="color"
+          className="absolute opacity-0 w-0 h-0"
+          onInput={(e) => {
+            const target = e.target as HTMLInputElement;
+            editor.chain().focus().setHighlight({ color: target.value }).run();
+          }}
+        />
+      </label>
+    </div>
+  </div>
+);
 
 interface LinkMenuProps {
   editor: any;
@@ -212,6 +202,12 @@ interface LinkMenuProps {
   isValidURL: (str: string) => boolean;
 }
 
+/**
+ * Component for managing links in the editor.
+ * 
+ * @param {LinkMenuProps} props - Properties for link management.
+ * @returns {JSX.Element} - Rendered component for link management.
+ */
 export const LinkMenu: React.FC<LinkMenuProps> = ({
   editor,
   showLinkMenu,
@@ -224,14 +220,11 @@ export const LinkMenu: React.FC<LinkMenuProps> = ({
   setIsValidUrl,
   isValidURL,
 }) => {
-  // Add state to track the popup position
   const [popupPosition, setPopupPosition] = useState<{ left: number; top: number } | null>(null);
 
-  // Add floating menu for active links
   const FloatingLinkMenu = () => {
     if (!editor.isActive('link')) return null;
 
-    // Get the current selection coordinates
     const { from } = editor.state.selection;
     const domRect = editor.view.coordsAtPos(from);
     const style = {
@@ -267,10 +260,9 @@ export const LinkMenu: React.FC<LinkMenuProps> = ({
             const { from, to } = editor.state.selection;
             const selectedText = editor.state.doc.textBetween(from, to, '');
             setLinkText(selectedText);
-            // Set popup position below the floating menu
             setPopupPosition({
               left: domRect.left,
-              top: domRect.bottom + 45 // Add some spacing
+              top: domRect.bottom + 45
             });
             setShowLinkMenu(true);
           }}
@@ -297,7 +289,7 @@ export const LinkMenu: React.FC<LinkMenuProps> = ({
                   ''
                 );
             setLinkText(selectedText);
-            setPopupPosition(null); // Reset position for toolbar clicks
+            setPopupPosition(null);
             setShowLinkMenu(true);
           }}
           className={`inline-flex items-center justify-center w-10 h-8 rounded ${
@@ -411,6 +403,12 @@ interface TextAlignMenuProps {
   editor: Editor;
 }
 
+/**
+ * Component for text alignment options.
+ * 
+ * @param {Editor} editor - Instance of Tiptap editor.
+ * @returns {JSX.Element} - Rendered component for text alignment.
+ */
 export const TextAlignMenu: React.FC<TextAlignMenuProps> = ({ editor }) => {
   const [showAlignMenu, setShowAlignMenu] = useState(false);
 
@@ -475,6 +473,12 @@ interface LineSpacingMenuProps {
   editor: Editor;
 }
 
+/**
+ * Component for line spacing options.
+ * 
+ * @param {Editor} editor - Instance of Tiptap editor.
+ * @returns {JSX.Element} - Rendered component for line spacing.
+ */
 export const LineSpacingMenu: React.FC<LineSpacingMenuProps> = ({ editor }) => {
   const [showLineSpacingMenu, setShowLineSpacingMenu] = useState(false);
 
@@ -518,6 +522,12 @@ interface ListMenuProps {
   editor: Editor;
 }
 
+/**
+ * Component for list options like bullet, ordered, and task lists.
+ * 
+ * @param {Editor} editor - Instance of Tiptap editor.
+ * @returns {JSX.Element} - Rendered component for list options.
+ */
 export const ListMenu: React.FC<ListMenuProps> = ({ editor }) => {
   const [showListMenu, setShowListMenu] = useState(false);
 
