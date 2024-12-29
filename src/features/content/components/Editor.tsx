@@ -5,10 +5,13 @@ import { useEditor, EditorContent } from "@tiptap/react";
 // Extensions
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
+import TextStyle from '@tiptap/extension-text-style'
+import Color from '@tiptap/extension-color'
 
 // Icons
 import { FaBold, FaItalic, FaUnderline, FaStrikethrough, FaUndo, FaRedo } from "react-icons/fa";
 import { RiArrowDownSLine } from "react-icons/ri";
+import { TbTextColor } from "react-icons/tb";
 
 // Services
 import { upsertDocumentContent, getDocumentContent } from "../../../services/docService";
@@ -64,7 +67,9 @@ const Editor: React.FC = () => {
           levels: [1, 2, 3, 4]
         }
       }),
-      Underline
+      Underline,
+      TextStyle,
+      Color
     ],
     content: content,
   });
@@ -109,37 +114,47 @@ const Editor: React.FC = () => {
       {/* Title section */}
       <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-3xl relative">
         <h1 className="text-3xl font-bold text-center">{tabData?.title}</h1>
-        <span className="absolute top-0 right-0 text-sm text-gray-500 p-2">Topic</span>
+        <span className="absolute top-0 right-0 text-sm text-gray-500 p-2">
+          Topic
+        </span>
       </div>
       {/* Toolbar section */}
       <div className="bg-white shadow-lg rounded-lg p-2 w-full max-w-3xl flex justify-center space-x-2">
+        {/* Undo button */}
         <button
           onClick={() => editor.chain().focus().undo().run()}
           className="px-3 py-1 rounded bg-gray-200"
         >
           <FaUndo />
         </button>
+        {/* Redo button */}
         <button
           onClick={() => editor.chain().focus().redo().run()}
           className="px-3 py-1 rounded bg-gray-200"
         >
           <FaRedo />
         </button>
+        {/* Heading menu toggle */}
         <div className="relative">
           <button
             onClick={() => setShowHeadingMenu(!showHeadingMenu)}
             className="px-3 py-1 rounded bg-gray-200 flex items-center gap-1"
           >
-            {editor.isActive('heading', { level: 1 }) ? 'H1' :
-             editor.isActive('heading', { level: 2 }) ? 'H2' :
-             editor.isActive('heading', { level: 3 }) ? 'H3' :
-             editor.isActive('heading', { level: 4 }) ? 'H4' :
-             'Normal'}
+            {editor.isActive("heading", { level: 1 })
+              ? "H1"
+              : editor.isActive("heading", { level: 2 })
+              ? "H2"
+              : editor.isActive("heading", { level: 3 })
+              ? "H3"
+              : editor.isActive("heading", { level: 4 })
+              ? "H4"
+              : "Normal"}
             <RiArrowDownSLine />
           </button>
-          
+
           {showHeadingMenu && (
             <div className="absolute top-full left-0 mt-1 w-40 bg-white shadow-lg rounded-lg overflow-hidden z-10">
+              {/* Normal text button */}
               <button
                 className="w-full px-4 py-2 text-left hover:bg-gray-100 text-base"
                 onClick={() => {
@@ -149,17 +164,25 @@ const Editor: React.FC = () => {
               >
                 Normal
               </button>
+              {/* Heading level buttons */}
               {[1, 2, 3, 4].map((level) => (
                 <button
                   key={level}
                   className={`w-full px-4 py-2 text-left hover:bg-gray-100 ${
-                    level === 1 ? 'text-2xl' :
-                    level === 2 ? 'text-xl' :
-                    level === 3 ? 'text-lg' :
-                    'text-base'
+                    level === 1
+                      ? "text-2xl"
+                      : level === 2
+                      ? "text-xl"
+                      : level === 3
+                      ? "text-lg"
+                      : "text-base"
                   }`}
                   onClick={() => {
-                    editor.chain().focus().toggleHeading({ level: level as 1 | 2 | 3 | 4 }).run();
+                    editor
+                      .chain()
+                      .focus()
+                      .toggleHeading({ level: level as 1 | 2 | 3 | 4 })
+                      .run();
                     setShowHeadingMenu(false);
                   }}
                 >
@@ -170,6 +193,7 @@ const Editor: React.FC = () => {
           )}
         </div>
         <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
+        {/* Bold button */}
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
           className={`px-3 py-1 rounded ${
@@ -178,6 +202,7 @@ const Editor: React.FC = () => {
         >
           <FaBold />
         </button>
+        {/* Italic button */}
         <button
           onClick={() => editor.chain().focus().toggleItalic().run()}
           className={`px-3 py-1 rounded ${
@@ -186,6 +211,7 @@ const Editor: React.FC = () => {
         >
           <FaItalic />
         </button>
+        {/* Underline button */}
         <button
           onClick={() => editor.chain().focus().toggleUnderline().run()}
           className={`px-3 py-1 rounded ${
@@ -194,14 +220,32 @@ const Editor: React.FC = () => {
         >
           <FaUnderline />
         </button>
+        {/* Strikethrough button */}
         <button
           onClick={() => editor.chain().focus().toggleStrike().run()}
-          className={`px-3 py-1 rounded ${
+          className={`inline-flex items-center justify-center w-10 h-8 rounded ${
             editor.isActive("strike") ? "bg-gray-300" : "bg-gray-200"
           }`}
         >
-          <FaStrikethrough />
+          <FaStrikethrough className="text-lg" />
         </button>
+        {/* Text color picker */}
+        <div className="relative">
+          <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer">
+            <TbTextColor className="text-lg" />
+            <input
+              type="color"
+              className="absolute opacity-0 w-full h-full cursor-pointer"
+              onChange={(e) =>
+                editor
+                  .chain()
+                  .focus()
+                  .setColor((e.target as HTMLInputElement).value)
+                  .run()
+              }
+            />
+          </label>
+        </div>
       </div>
 
       {/* Editor content section */}

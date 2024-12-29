@@ -16,6 +16,7 @@
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/supabase-js": "^2.47.7",
     "@tiptap/extension-bold": "^2.10.4",
+    "@tiptap/extension-color": "^2.10.4",
     "@tiptap/extension-heading": "^2.10.4",
     "@tiptap/extension-history": "^2.10.4",
     "@tiptap/extension-image": "^2.10.4",
