@@ -145,14 +145,9 @@ const SubjectDetail: React.FC = () => {
                   type="text"
                   value={tab.title}
                   readOnly
-                  className="flex-1 border rounded-lg px-3 py-2 bg-gray-100"
-                />
-                <button
                   onClick={() => navigate(`/${session.user.id}/steps/${tab.id}/editor`, { state: { tabData: tab, session } })}
-                  className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600"
-                >
-                  Edit
-                </button>
+                  className="flex-1 border rounded-lg px-3 py-2 bg-gray-100 cursor-pointer hover:underline"
+                />
               </div>
             ))}
           </div>
