@@ -10,9 +10,25 @@ import Color from '@tiptap/extension-color'
 import Highlight from '@tiptap/extension-highlight'
 import Link from '@tiptap/extension-link'
 import TextAlign from '@tiptap/extension-text-align'
+import { Extension } from '@tiptap/core'
 
 // Icons
-import { FaBold, FaItalic, FaUnderline, FaStrikethrough, FaUndo, FaRedo, FaHighlighter, FaLink, FaFont, FaAlignLeft, FaAlignCenter, FaAlignRight, FaAlignJustify } from "react-icons/fa";
+import { 
+  FaAlignCenter, 
+  FaAlignJustify, 
+  FaAlignLeft, 
+  FaAlignRight, 
+  FaBold, 
+  FaFont, 
+  FaHighlighter, 
+  FaItalic, 
+  FaLink, 
+  FaRedo, 
+  FaStrikethrough, 
+  FaUnderline, 
+  FaUndo, 
+  FaTextHeight 
+} from "react-icons/fa";
 import { RiArrowDownSLine } from "react-icons/ri";
 
 // Services
@@ -20,6 +36,34 @@ import { upsertDocumentContent, getDocumentContent } from "../../../services/doc
 
 // Styles
 import "./../styles/Editor.css";
+
+interface LineHeightAttributes {
+  lineHeight?: string;
+}
+
+const CustomLineHeight = Extension.create({
+  name: 'lineHeight',
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['paragraph', 'heading'],
+        attributes: {
+          lineHeight: {
+            default: '1',
+            parseHTML: (element: HTMLElement) => element.style.lineHeight,
+            renderHTML: (attributes: LineHeightAttributes) => {
+              if (!attributes.lineHeight) return {}
+              return {
+                style: `--line-height: ${attributes.lineHeight};`
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+})
 
 /**
  * Editor component.
@@ -39,6 +83,7 @@ const Editor: React.FC = () => {
   const [linkText, setLinkText] = useState('');
   const [isValidUrl, setIsValidUrl] = useState(false);
   const [showAlignMenu, setShowAlignMenu] = useState(false);
+  const [showLineSpacingMenu, setShowLineSpacingMenu] = useState(false);
 
   /**
    * Fetches the document content based on the tab ID from the location state.
@@ -75,7 +120,7 @@ const Editor: React.FC = () => {
         }
       }),
       Underline,
-      TextStyle,
+      TextStyle.configure(),
       Color,
       Highlight.configure({ multicolor: true }),
       Link.configure({
@@ -88,6 +133,7 @@ const Editor: React.FC = () => {
         types: ['heading', 'paragraph'],
         alignments: ['left', 'center', 'right', 'justify'],
       }),
+      CustomLineHeight,
     ],
     content: content,
   });
@@ -495,6 +541,39 @@ const Editor: React.FC = () => {
               >
                 <FaAlignJustify /> Justify
               </button>
+            </div>
+          )}
+        </div>
+        {/* Vertical divider */}
+        <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
+        {/* Line Spacing */}
+        <div className="relative">
+          <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer"
+                 onClick={() => setShowLineSpacingMenu(!showLineSpacingMenu)}>
+            <FaTextHeight />
+          </label>
+          
+          {showLineSpacingMenu && (
+            <div className="absolute top-full left-0 mt-1 w-40 bg-white shadow-lg rounded-lg overflow-hidden z-10">
+              {[
+                { label: 'Single', value: '1' },
+                { label: '1.15', value: '1.15' },
+                { label: '1.5', value: '1.5' },
+                { label: 'Double', value: '2' },
+                { label: '2.5', value: '2.5' },
+                { label: 'Triple', value: '3' },
+              ].map(({ label, value }) => (
+                <button
+                  key={value}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+                  onClick={() => {
+                    editor.commands.updateAttributes('paragraph', { lineHeight: value });
+                    setShowLineSpacingMenu(false);
+                  }}
+                >
+                  <FaTextHeight className="w-4 h-4" /> {label}
+                </button>
+              ))}
             </div>
           )}
         </div>

@@ -43,3 +43,11 @@
 .tiptap-editor a:hover {
   color: #2563eb;
 }
+
+.tiptap-editor [style*="--line-height"] {
+  line-height: var(--line-height) !important;
+}
+
+.tiptap-editor p {
+  margin: 0.5em 0;
+}
