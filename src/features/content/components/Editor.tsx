@@ -169,6 +169,7 @@ const Editor: React.FC = () => {
             </div>
           )}
         </div>
+        <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
           className={`px-3 py-1 rounded ${
