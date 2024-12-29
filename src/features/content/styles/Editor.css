@@ -11,3 +11,23 @@
 .tiptap-editor .ProseMirror:focus {
   outline: none !important; /* Remove ProseMirror's focus outline */
 }
+
+.tiptap-editor h1 {
+  font-size: 2em;
+  font-weight: bold;
+}
+
+.tiptap-editor h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.tiptap-editor h3 {
+  font-size: 1.17em;
+  font-weight: bold;
+}
+
+.tiptap-editor h4 {
+  font-size: 1em;
+  font-weight: bold;
+}
