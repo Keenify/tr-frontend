@@ -1,5 +1,5 @@
 import React from 'react';
-import { Power } from 'react-feather'; // Import Power icon from react-feather
+import { Power, ThumbsUp } from 'react-feather'; // Import Power and ThumbsUp icons from react-feather
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase'; // Import supabase client
 import { useNavigate, useParams } from 'react-router-dom';
@@ -29,6 +29,19 @@ interface LayoutProps {
   activeSubTab?: 'directory' | 'orgChart';
   onSubTabChange?: (subTab: 'directory' | 'orgChart') => void;
 }
+
+// Add this CSS to your global styles or add it inline with a style tag
+const blinkingThumbStyle = `
+  @keyframes blink {
+    0% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 0.4; transform: scale(1); }
+  }
+  .blinking-thumb {
+    animation: blink 2s infinite;
+    color: #10B981; /* Emerald-500 color */
+  }
+`;
 
 /**
  * Layout component for the dashboard, including sidebar and main content area.
@@ -66,6 +79,7 @@ export function DashboardLayout({ children, onTabChange, session, signOut, activ
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
+      <style>{blinkingThumbStyle}</style>
       {/* Top Bar */}
       <div className="flex justify-between items-center bg-white border-b border-gray-200 px-4 py-2">
         <div className="flex items-center">
@@ -105,16 +119,17 @@ export function DashboardLayout({ children, onTabChange, session, signOut, activ
                       onClick={() => {
                         handleTabChange(tab);
                         if (tab === 'people') {
-                          setIsPeopleSubmenuOpen(!isPeopleSubmenuOpen); // Toggle submenu open state
+                          setIsPeopleSubmenuOpen(!isPeopleSubmenuOpen);
                         }
                       }}
-                      className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                         activeTabState === tab
                           ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
-                      {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                      <span>{tab.charAt(0).toUpperCase() + tab.slice(1)}</span>
+                      {tab === 'content' && <ThumbsUp size={16} className="text-gray-400" />}
                     </button>
                     {tab === 'people' && isPeopleSubmenuOpen && (
                       <div className="pl-4 space-y-1">
