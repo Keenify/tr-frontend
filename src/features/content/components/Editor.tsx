@@ -62,7 +62,7 @@ const CustomLineHeight = Extension.create({
  */
 const Editor: React.FC = () => {
   const location = useLocation();
-  const { tabData } = location.state || {};
+  const { tabData, subject } = location.state || {};
   const [content, setContent] = useState<string>('');
   const [showLinkMenu, setShowLinkMenu] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');

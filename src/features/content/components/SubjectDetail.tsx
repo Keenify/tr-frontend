@@ -88,6 +88,7 @@ const SubjectDetail: React.FC = () => {
 
       navigate(`/${session.user.id}/steps/${tabData.id}/editor`, {
         state: {
+          subject,
           tabData,
           session,
         },
@@ -223,7 +224,7 @@ const SubjectDetail: React.FC = () => {
                   type="text"
                   value={tab.title}
                   readOnly
-                  onClick={() => navigate(`/${session.user.id}/steps/${tab.id}/editor`, { state: { tabData: tab, session } })}
+                  onClick={() => navigate(`/${session.user.id}/steps/${tab.id}/editor`, { state: { subject, tabData: tab, session } })}
                   className="flex-1 border rounded-lg px-3 py-2 bg-gray-100 cursor-pointer hover:underline"
                 />
                 <div className="relative">
