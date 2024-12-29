@@ -341,3 +341,43 @@ export async function deleteDocumentTab(documentId: string, tabId: string): Prom
   const data = await response.json();
   return data;
 }
+
+/**
+ * Updates a document tab.
+ * @param {string} documentId - The ID of the document.
+ * @param {string} tabId - The ID of the tab to update.
+ * @param {Partial<{ title: string, position: number }>} updateData - The data to update.
+ * @returns {Promise<any>} - A promise that resolves to the updated tab data.
+ */
+export async function updateDocumentTab(
+  documentId: string,
+  tabId: string,
+  updateData: Partial<{
+    title: string;
+    position: number;
+  }>
+): Promise<any> {
+  const endpoint = `${API_DOMAIN}/documents/${documentId}/tabs/${tabId}`;
+
+  const response = await fetch(endpoint, {
+    method: "PUT",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(updateData),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error("❌ API request failed:", {
+      status: response.status,
+      statusText: response.statusText,
+      data,
+    });
+    throw new Error("Failed to update document tab");
+  }
+
+  return data;
+}
