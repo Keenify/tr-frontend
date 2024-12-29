@@ -28,6 +28,8 @@ const SubjectDetail: React.FC = () => {
   const [showMenu, setShowMenu] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedTab, setSelectedTab] = useState<any>(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [pendingTitle, setPendingTitle] = useState(subject.title);
 
   useEffect(() => {
     const fetchTabs = async () => {
@@ -110,6 +112,34 @@ const SubjectDetail: React.FC = () => {
     }
   };
 
+  const handleTitleUpdate = async () => {
+    if (pendingTitle === subject.title || !pendingTitle.trim()) {
+      setPendingTitle(subject.title);
+      setIsEditingTitle(false);
+      return;
+    }
+
+    try {
+      await updateDocument(subject.id, { title: pendingTitle });
+      setIsEditingTitle(false);
+      toast.success('Title updated successfully', {
+        position: 'top-right',
+      });
+    } catch (error) {
+      console.error('❌ Failed to update title:', error);
+      setPendingTitle(subject.title);
+      toast.error('Failed to update title', {
+        position: 'top-right',
+      });
+    }
+  };
+
+  const handleTitleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleTitleUpdate();
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto p-4">
       <ToastContainer />
@@ -128,7 +158,35 @@ const SubjectDetail: React.FC = () => {
               {subject.type === 'Company' ? '📄' : subject.type === 'Policies' ? '📝' : '📊'}
             </div>
             <div>
-              <h1 className="text-2xl font-semibold">{subject.title}</h1>
+              {isEditingTitle ? (
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={pendingTitle}
+                    onChange={(e) => {
+                      if (e.target.value.length <= 100) {
+                        setPendingTitle(e.target.value);
+                      }
+                    }}
+                    onBlur={handleTitleUpdate}
+                    onKeyPress={handleTitleKeyPress}
+                    autoFocus
+                    className="text-2xl font-semibold w-full p-1 border rounded"
+                  />
+                  <div className="absolute right-2 bottom-1 text-xs text-gray-500">
+                    {pendingTitle.length}/100
+                  </div>
+                </div>
+              ) : (
+                <h1 
+                  className="text-2xl font-semibold cursor-pointer group relative"
+                  onClick={() => setIsEditingTitle(true)}
+                >
+                  <span className="group-hover:bg-gray-100 px-1 py-0.5 rounded">
+                    {pendingTitle}
+                  </span>
+                </h1>
+              )}
               <div className="text-sm text-gray-500">{subject.type}</div>
             </div>
           </div>
