@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
+import { updateDocumentTab } from "../../../services/docService";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Extensions
 import StarterKit from "@tiptap/starter-kit";
@@ -77,6 +80,8 @@ const Editor: React.FC = () => {
   const [linkUrl, setLinkUrl] = useState('');
   const [linkText, setLinkText] = useState('');
   const [isValidUrl, setIsValidUrl] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [pendingTitle, setPendingTitle] = useState(tabData?.title || '');
 
   /**
    * Fetches the document content based on the tab ID from the location state.
@@ -198,18 +203,78 @@ const Editor: React.FC = () => {
     }
   };
 
+  /**
+   * Updates the document tab title.
+   */
+  const handleTitleUpdate = async () => {
+    if (!subject?.id || !tabData?.id) return;
+    if (pendingTitle === tabData.title || !pendingTitle.trim()) {
+      setPendingTitle(tabData.title);
+      setIsEditingTitle(false);
+      return;
+    }
+
+    try {
+      await updateDocumentTab(subject.id, tabData.id, { title: pendingTitle });
+      setIsEditingTitle(false);
+      toast.success('Topic title updated successfully', {
+        position: 'top-right',
+      });
+    } catch (error) {
+      console.error('❌ Failed to update topic title:', error);
+      setPendingTitle(tabData.title);
+      toast.error('Failed to update topic title', {
+        position: 'top-right',
+      });
+    }
+  };
+
+  /**
+   * Handles key press events for title input.
+   *
+   * @param {React.KeyboardEvent<HTMLInputElement>} e - The key press event.
+   */
+  const handleTitleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleTitleUpdate();
+    }
+  };
+
   if (!editor) {
     return null;
   }
 
   return (
     <div className="editor-container min-h-screen bg-gray-100 p-4">
+      <ToastContainer />
       {/* Fixed header section */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-gray-100 px-4 pt-4">
         <div className="mx-auto max-w-3xl space-y-4">
           {/* Title section */}
           <div className="bg-white shadow-lg rounded-lg p-6 relative">
-            <h1 className="text-3xl font-bold text-center">{tabData?.title}</h1>
+            {isEditingTitle ? (
+              <div className="relative">
+                <input
+                  type="text"
+                  value={pendingTitle}
+                  onChange={(e) => setPendingTitle(e.target.value)}
+                  onBlur={handleTitleUpdate}
+                  onKeyPress={handleTitleKeyPress}
+                  autoFocus
+                  className="text-3xl font-bold w-full p-1 border rounded text-center"
+                  maxLength={100}
+                />
+              </div>
+            ) : (
+              <h1 
+                className="text-3xl font-bold text-center cursor-pointer group relative"
+                onClick={() => setIsEditingTitle(true)}
+              >
+                <span className="group-hover:bg-gray-100 px-2 py-1 rounded">
+                  {pendingTitle}
+                </span>
+              </h1>
+            )}
             <span className="absolute top-0 right-0 text-sm text-gray-500 p-2">
               Topic
             </span>
