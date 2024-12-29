@@ -5,6 +5,7 @@
     padding: 10px;
     min-height: 150px;
     outline: none !important;
+    position: relative;
   }
 
 /* Target ProseMirror's focus styling */
@@ -33,10 +34,12 @@
 }
 
 .tiptap-editor a {
-  color: #3b82f6; /* Tailwind's blue-500 */
+  color: #3b82f6;
   text-decoration: underline;
+  cursor: pointer;
+  position: relative;
 }
 
 .tiptap-editor a:hover {
-  color: #2563eb; /* Tailwind's blue-600 */
+  color: #2563eb;
 }

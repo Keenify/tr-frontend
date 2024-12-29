@@ -76,7 +76,12 @@ const Editor: React.FC = () => {
       TextStyle,
       Color,
       Highlight.configure({ multicolor: true }),
-      Link
+      Link.configure({
+        HTMLAttributes: {
+          class: 'cursor-pointer',
+        },
+        openOnClick: false,
+      })
     ],
     content: content,
   });
@@ -125,6 +130,56 @@ const Editor: React.FC = () => {
     } catch {
       return false;
     }
+  };
+
+  // Add new component for link menu
+  const LinkMenu = ({ editor }: { editor: any }) => {
+    if (!editor.isActive('link')) return null;
+
+    // Get the current selection coordinates
+    const { from } = editor.state.selection;
+    const domRect = editor.view.coordsAtPos(from);
+    const style = {
+      position: 'fixed' as const,
+      left: `${domRect.left}px`,
+      top: `${domRect.bottom + 5}px`,
+      zIndex: 100,
+    };
+
+    return (
+      <div 
+        className="bg-white shadow-lg rounded-lg p-2 flex gap-2" 
+        style={style}
+      >
+        <a 
+          href={editor.getAttributes('link').href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-500 hover:text-blue-600"
+        >
+          {editor.getAttributes('link').href}
+        </a>
+        <button
+          onClick={() => editor.chain().focus().unsetLink().run()}
+          className="text-red-500 hover:text-red-600 px-2"
+        >
+          Remove
+        </button>
+        <button
+          onClick={() => {
+            const url = editor.getAttributes('link').href;
+            setLinkUrl(url);
+            const { from, to } = editor.state.selection;
+            const selectedText = editor.state.doc.textBetween(from, to, '');
+            setLinkText(selectedText);
+            setShowLinkMenu(true);
+          }}
+          className="text-gray-500 hover:text-gray-600 px-2"
+        >
+          Edit
+        </button>
+      </div>
+    );
   };
 
   if (!editor) {
@@ -382,8 +437,6 @@ const Editor: React.FC = () => {
         </div>
       </div>
 
-
-
       {/* Editor content section */}
       <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-3xl">
         <EditorContent
@@ -392,6 +445,9 @@ const Editor: React.FC = () => {
           placeholder="Add content here"
         />
       </div>
+
+      {/* Move LinkMenu outside the editor container */}
+      {editor && <LinkMenu editor={editor} />}
     </div>
   );
 };
