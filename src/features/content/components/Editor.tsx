@@ -6,7 +6,6 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 
-
 // Icons
 import { FaBold, FaItalic, FaUnderline, FaStrikethrough, FaUndo, FaRedo } from "react-icons/fa";
 
@@ -29,10 +28,14 @@ const Editor: React.FC = () => {
   const { tabData } = location.state || {};
   const [content, setContent] = useState<string>('');
 
+  /**
+   * Fetches the document content based on the tab ID from the location state.
+   * If successful, sets the content state with the fetched data.
+   * Logs an error if the fetch operation fails.
+   */
   useEffect(() => {
     const fetchContent = async () => {
       if (tabData?.id) {
-
         try {
           const data = await getDocumentContent(tabData.id);
           setContent(data.content.key);
@@ -48,6 +51,10 @@ const Editor: React.FC = () => {
     fetchContent();
   }, [tabData]);
 
+  /**
+   * Initializes the Tiptap editor with specified extensions and content.
+   * The editor is re-initialized whenever the content changes.
+   */
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -56,14 +63,21 @@ const Editor: React.FC = () => {
     content: content,
   });
 
-  // Re-initialize the editor when content changes
+  /**
+   * Updates the editor content if it differs from the current state content.
+   * This ensures the editor reflects the latest content state.
+   */
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
       editor.commands.setContent(content);
     }
   }, [content, editor]);
 
-  // Sync content every 3 seconds
+  /**
+   * Periodically syncs the editor content with the server every 3 seconds.
+   * Attempts to upsert the document content and logs the result.
+   * Cleans up the interval on component unmount.
+   */
   useEffect(() => {
     const interval = setInterval(async () => {
       if (editor) {
