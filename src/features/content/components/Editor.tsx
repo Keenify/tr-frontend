@@ -11,6 +11,8 @@ import Highlight from '@tiptap/extension-highlight'
 import Link from '@tiptap/extension-link'
 import TextAlign from '@tiptap/extension-text-align'
 import { Extension } from '@tiptap/core'
+import TaskList from '@tiptap/extension-task-list'
+import TaskItem from '@tiptap/extension-task-item'
 
 // Icons
 import { 
@@ -27,7 +29,10 @@ import {
   FaStrikethrough, 
   FaUnderline, 
   FaUndo, 
-  FaTextHeight 
+  FaTextHeight, 
+  FaListUl, 
+  FaListOl, 
+  FaCheckSquare 
 } from "react-icons/fa";
 import { RiArrowDownSLine } from "react-icons/ri";
 
@@ -84,6 +89,7 @@ const Editor: React.FC = () => {
   const [isValidUrl, setIsValidUrl] = useState(false);
   const [showAlignMenu, setShowAlignMenu] = useState(false);
   const [showLineSpacingMenu, setShowLineSpacingMenu] = useState(false);
+  const [showListMenu, setShowListMenu] = useState(false);
 
   /**
    * Fetches the document content based on the tab ID from the location state.
@@ -117,7 +123,28 @@ const Editor: React.FC = () => {
       StarterKit.configure({
         heading: {
           levels: [1, 2, 3, 4]
-        }
+        },
+        bulletList: {
+          HTMLAttributes: {
+            class: 'bullet-list',
+          },
+        },
+        orderedList: {
+          HTMLAttributes: {
+            class: 'ordered-list',
+          },
+        },
+      }),
+      TaskList.configure({
+        HTMLAttributes: {
+          class: 'task-list',
+        },
+      }),
+      TaskItem.configure({
+        nested: true,
+        HTMLAttributes: {
+          class: 'task-item',
+        },
       }),
       Underline,
       TextStyle.configure(),
@@ -574,6 +601,49 @@ const Editor: React.FC = () => {
                   <FaTextHeight className="w-4 h-4" /> {label}
                 </button>
               ))}
+            </div>
+          )}
+        </div>
+        {/* Vertical divider */}
+        <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
+        {/* List Options */}
+        <div className="relative">
+          <label 
+            className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer"
+            onClick={() => setShowListMenu(!showListMenu)}
+          >
+            <FaListUl />
+          </label>
+          
+          {showListMenu && (
+            <div className="absolute top-full left-0 mt-1 w-40 bg-white shadow-lg rounded-lg overflow-hidden z-10">
+              <button
+                className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+                onClick={() => {
+                  editor.chain().focus().toggleBulletList().run();
+                  setShowListMenu(false);
+                }}
+              >
+                <FaListUl /> Bulleted list
+              </button>
+              <button
+                className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+                onClick={() => {
+                  editor.chain().focus().toggleOrderedList().run();
+                  setShowListMenu(false);
+                }}
+              >
+                <FaListOl /> Numbered list
+              </button>
+              <button
+                className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+                onClick={() => {
+                  editor.chain().focus().toggleTaskList().run();
+                  setShowListMenu(false);
+                }}
+              >
+                <FaCheckSquare /> Check list
+              </button>
             </div>
           )}
         </div>
