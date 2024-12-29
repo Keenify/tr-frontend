@@ -22,7 +22,16 @@ import { upsertDocumentContent, getDocumentContent } from "../../../services/doc
 import "./../styles/Editor.css";
 
 // Toolbar
-import { UndoRedoMenu, HeadingMenu, TextFormatMenu, ColorMenu, LinkMenu, TextAlignMenu, LineSpacingMenu, ListMenu } from "./EditorToolbar";
+import { 
+  UndoRedoMenu, 
+  HeadingMenu, 
+  TextFormatMenu, 
+  ColorMenu, 
+  LinkMenu,
+  TextAlignMenu,
+  LineSpacingMenu,
+  ListMenu 
+} from "./EditorToolbar";
 
 interface LineHeightAttributes {
   lineHeight?: string;
