@@ -1,9 +1,24 @@
 import React, { useState } from 'react';
 import { Editor } from '@tiptap/react';
-import { FaBold, FaItalic, FaRedo, FaStrikethrough, FaUnderline, FaUndo, FaFont, FaHighlighter } from "react-icons/fa";
+import { 
+  FaBold, 
+  FaItalic, 
+  FaRedo, 
+  FaStrikethrough, 
+  FaUnderline, 
+  FaUndo, 
+  FaFont, 
+  FaHighlighter 
+} from "react-icons/fa";
 import { RiArrowDownSLine } from "react-icons/ri";
 
-// Undo/Redo Menu
+/**
+ * UndoRedoMenu component.
+ * Provides undo and redo functionality for the editor.
+ *
+ * @param {Editor} editor - The Tiptap editor instance.
+ * @returns {JSX.Element} - The rendered UndoRedoMenu component.
+ */
 export const UndoRedoMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
   return (
     <div className="flex gap-2">
@@ -23,7 +38,13 @@ export const UndoRedoMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
   );
 };
 
-// Heading Menu
+/**
+ * HeadingMenu component.
+ * Allows users to select heading levels or set text to normal.
+ *
+ * @param {Editor} editor - The Tiptap editor instance.
+ * @returns {JSX.Element} - The rendered HeadingMenu component.
+ */
 export const HeadingMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
 
@@ -86,7 +107,13 @@ export const HeadingMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
   );
 };
 
-// Text Format Menu
+/**
+ * TextFormatMenu component.
+ * Provides text formatting options such as bold, italic, underline, and strikethrough.
+ *
+ * @param {Editor} editor - The Tiptap editor instance.
+ * @returns {JSX.Element} - The rendered TextFormatMenu component.
+ */
 export const TextFormatMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
   return (
     <div className="flex gap-2">
@@ -126,7 +153,13 @@ export const TextFormatMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
   );
 };
 
-// Text Color Menu
+/**
+ * ColorMenu component.
+ * Allows users to change text color and highlight color.
+ *
+ * @param {Editor} editor - The Tiptap editor instance.
+ * @returns {JSX.Element} - The rendered ColorMenu component.
+ */
 export const ColorMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
   return (
     <div className="flex gap-2">
@@ -156,4 +189,3 @@ export const ColorMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
     </div>
   );
 };
-

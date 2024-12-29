@@ -20,7 +20,6 @@ import {
   FaAlignJustify, 
   FaAlignLeft, 
   FaAlignRight, 
-  FaHighlighter, 
   FaLink, 
   FaTextHeight, 
   FaListUl, 
