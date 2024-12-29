@@ -9,7 +9,11 @@ import {
   FaUndo, 
   FaFont, 
   FaHighlighter, 
-  FaLink 
+  FaLink, 
+  FaAlignLeft, 
+  FaAlignCenter, 
+  FaAlignRight, 
+  FaAlignJustify 
 } from "react-icons/fa";
 import { RiArrowDownSLine } from "react-icons/ri";
 
@@ -399,3 +403,66 @@ export const LinkMenu: React.FC<LinkMenuProps> = ({
   );
 };
 
+interface TextAlignMenuProps {
+  editor: Editor;
+}
+
+export const TextAlignMenu: React.FC<TextAlignMenuProps> = ({ editor }) => {
+  const [showAlignMenu, setShowAlignMenu] = useState(false);
+
+  return (
+    <div className="relative">
+      <label 
+        className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer"
+        onClick={() => setShowAlignMenu(!showAlignMenu)}
+      >
+        {editor.isActive({ textAlign: 'left' }) ? <FaAlignLeft /> :
+         editor.isActive({ textAlign: 'center' }) ? <FaAlignCenter /> :
+         editor.isActive({ textAlign: 'right' }) ? <FaAlignRight /> :
+         editor.isActive({ textAlign: 'justify' }) ? <FaAlignJustify /> :
+         <FaAlignLeft />}
+      </label>
+      
+      {showAlignMenu && (
+        <div className="absolute top-full left-0 mt-1 w-40 bg-white shadow-lg rounded-lg overflow-hidden z-10">
+          <button
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+            onClick={() => {
+              editor.chain().focus().setTextAlign('left').run();
+              setShowAlignMenu(false);
+            }}
+          >
+            <FaAlignLeft /> Left
+          </button>
+          <button
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+            onClick={() => {
+              editor.chain().focus().setTextAlign('center').run();
+              setShowAlignMenu(false);
+            }}
+          >
+            <FaAlignCenter /> Center
+          </button>
+          <button
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+            onClick={() => {
+              editor.chain().focus().setTextAlign('right').run();
+              setShowAlignMenu(false);
+            }}
+          >
+            <FaAlignRight /> Right
+          </button>
+          <button
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+            onClick={() => {
+              editor.chain().focus().setTextAlign('justify').run();
+              setShowAlignMenu(false);
+            }}
+          >
+            <FaAlignJustify /> Justify
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};

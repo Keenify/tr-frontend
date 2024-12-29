@@ -16,10 +16,6 @@ import TaskItem from '@tiptap/extension-task-item'
 
 // Icons
 import { 
-  FaAlignCenter, 
-  FaAlignJustify, 
-  FaAlignLeft, 
-  FaAlignRight, 
   FaTextHeight, 
   FaListUl, 
   FaListOl, 
@@ -34,7 +30,7 @@ import { upsertDocumentContent, getDocumentContent } from "../../../services/doc
 import "./../styles/Editor.css";
 
 // Toolbar
-import { UndoRedoMenu, HeadingMenu, TextFormatMenu, ColorMenu, LinkMenu } from "./EditorToolbar";
+import { UndoRedoMenu, HeadingMenu, TextFormatMenu, ColorMenu, LinkMenu, TextAlignMenu } from "./EditorToolbar";
 
 interface LineHeightAttributes {
   lineHeight?: string;
@@ -80,7 +76,6 @@ const Editor: React.FC = () => {
   const [linkUrl, setLinkUrl] = useState('');
   const [linkText, setLinkText] = useState('');
   const [isValidUrl, setIsValidUrl] = useState(false);
-  const [showAlignMenu, setShowAlignMenu] = useState(false);
   const [showLineSpacingMenu, setShowLineSpacingMenu] = useState(false);
   const [showListMenu, setShowListMenu] = useState(false);
 
@@ -251,59 +246,9 @@ const Editor: React.FC = () => {
             />
             {/* Vertical divider */}
             <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
-            {/* Text Alignment */}
-            <div className="relative">
-              <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer"
-                     onClick={() => setShowAlignMenu(!showAlignMenu)}>
-                {editor.isActive({ textAlign: 'left' }) ? <FaAlignLeft /> :
-                 editor.isActive({ textAlign: 'center' }) ? <FaAlignCenter /> :
-                 editor.isActive({ textAlign: 'right' }) ? <FaAlignRight /> :
-                 editor.isActive({ textAlign: 'justify' }) ? <FaAlignJustify /> :
-                 <FaAlignLeft />}
-              </label>
-              
-              {showAlignMenu && (
-                <div className="absolute top-full left-0 mt-1 w-40 bg-white shadow-lg rounded-lg overflow-hidden z-10">
-                  <button
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
-                    onClick={() => {
-                      editor.chain().focus().setTextAlign('left').run();
-                      setShowAlignMenu(false);
-                    }}
-                  >
-                    <FaAlignLeft /> Left
-                  </button>
-                  <button
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
-                    onClick={() => {
-                      editor.chain().focus().setTextAlign('center').run();
-                      setShowAlignMenu(false);
-                    }}
-                  >
-                    <FaAlignCenter /> Center
-                  </button>
-                  <button
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
-                    onClick={() => {
-                      editor.chain().focus().setTextAlign('right').run();
-                      setShowAlignMenu(false);
-                    }}
-                  >
-                    <FaAlignRight /> Right
-                  </button>
-                  <button
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
-                    onClick={() => {
-                      editor.chain().focus().setTextAlign('justify').run();
-                      setShowAlignMenu(false);
-                    }}
-                  >
-                    <FaAlignJustify /> Justify
-                  </button>
-                </div>
-              )}
-            </div>
-            {/* Line Spacing */}
+            {/* Text Alignment Menu */}
+            <TextAlignMenu editor={editor} />
+            {/* Line Spacing Menu */}
             <div className="relative">
               <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer"
                      onClick={() => setShowLineSpacingMenu(!showLineSpacingMenu)}>
