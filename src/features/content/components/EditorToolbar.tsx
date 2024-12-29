@@ -13,7 +13,8 @@ import {
   FaAlignLeft, 
   FaAlignCenter, 
   FaAlignRight, 
-  FaAlignJustify 
+  FaAlignJustify, 
+  FaTextHeight 
 } from "react-icons/fa";
 import { RiArrowDownSLine } from "react-icons/ri";
 
@@ -466,3 +467,47 @@ export const TextAlignMenu: React.FC<TextAlignMenuProps> = ({ editor }) => {
     </div>
   );
 };
+
+interface LineSpacingMenuProps {
+  editor: Editor;
+}
+
+export const LineSpacingMenu: React.FC<LineSpacingMenuProps> = ({ editor }) => {
+  const [showLineSpacingMenu, setShowLineSpacingMenu] = useState(false);
+
+  return (
+    <div className="relative">
+      <label 
+        className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer"
+        onClick={() => setShowLineSpacingMenu(!showLineSpacingMenu)}
+      >
+        <FaTextHeight />
+      </label>
+      
+      {showLineSpacingMenu && (
+        <div className="absolute top-full left-0 mt-1 w-40 bg-white shadow-lg rounded-lg overflow-hidden z-10">
+          {[
+            { label: 'Single', value: '1' },
+            { label: '1.15', value: '1.15' },
+            { label: '1.5', value: '1.5' },
+            { label: 'Double', value: '2' },
+            { label: '2.5', value: '2.5' },
+            { label: 'Triple', value: '3' },
+          ].map(({ label, value }) => (
+            <button
+              key={value}
+              className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+              onClick={() => {
+                editor.commands.updateAttributes('paragraph', { lineHeight: value });
+                setShowLineSpacingMenu(false);
+              }}
+            >
+              <FaTextHeight className="w-4 h-4" /> {label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+

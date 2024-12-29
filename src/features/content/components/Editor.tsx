@@ -30,7 +30,7 @@ import { upsertDocumentContent, getDocumentContent } from "../../../services/doc
 import "./../styles/Editor.css";
 
 // Toolbar
-import { UndoRedoMenu, HeadingMenu, TextFormatMenu, ColorMenu, LinkMenu, TextAlignMenu } from "./EditorToolbar";
+import { UndoRedoMenu, HeadingMenu, TextFormatMenu, ColorMenu, LinkMenu, TextAlignMenu, LineSpacingMenu } from "./EditorToolbar";
 
 interface LineHeightAttributes {
   lineHeight?: string;
@@ -76,7 +76,6 @@ const Editor: React.FC = () => {
   const [linkUrl, setLinkUrl] = useState('');
   const [linkText, setLinkText] = useState('');
   const [isValidUrl, setIsValidUrl] = useState(false);
-  const [showLineSpacingMenu, setShowLineSpacingMenu] = useState(false);
   const [showListMenu, setShowListMenu] = useState(false);
 
   /**
@@ -249,36 +248,7 @@ const Editor: React.FC = () => {
             {/* Text Alignment Menu */}
             <TextAlignMenu editor={editor} />
             {/* Line Spacing Menu */}
-            <div className="relative">
-              <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer"
-                     onClick={() => setShowLineSpacingMenu(!showLineSpacingMenu)}>
-                <FaTextHeight />
-              </label>
-              
-              {showLineSpacingMenu && (
-                <div className="absolute top-full left-0 mt-1 w-40 bg-white shadow-lg rounded-lg overflow-hidden z-10">
-                  {[
-                    { label: 'Single', value: '1' },
-                    { label: '1.15', value: '1.15' },
-                    { label: '1.5', value: '1.5' },
-                    { label: 'Double', value: '2' },
-                    { label: '2.5', value: '2.5' },
-                    { label: 'Triple', value: '3' },
-                  ].map(({ label, value }) => (
-                    <button
-                      key={value}
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
-                      onClick={() => {
-                        editor.commands.updateAttributes('paragraph', { lineHeight: value });
-                        setShowLineSpacingMenu(false);
-                      }}
-                    >
-                      <FaTextHeight className="w-4 h-4" /> {label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <LineSpacingMenu editor={editor} />
             {/* List Options */}
             <div className="relative">
               <label 
