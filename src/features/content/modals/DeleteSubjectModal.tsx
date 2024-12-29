@@ -21,7 +21,7 @@ const DeleteSubjectModal: React.FC<DeleteSubjectModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-96">
-        <h2 className="text-xl font-semibold mb-4">Delete Topic</h2>
+        <h2 className="text-xl font-semibold mb-4">Delete Subject</h2>
         <p className="text-gray-600 mb-6">
           Are you sure you want to permanently delete {documentTitle}?
         </p>
