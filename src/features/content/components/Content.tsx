@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Tooltip } from 'react-tooltip';
 
 import { Session } from '@supabase/supabase-js';
 import { deleteDocument, getDocumentsByType } from "../../../services/docService";
@@ -54,10 +55,15 @@ const Content: React.FC<ContentProps> = ({ session }) => {
     try {
       setActiveContentType(type);
       const data = await getDocumentsByType(type);
-      setDocuments(data);
+      setDocuments(data || []); // Ensure we set empty array if no data
       console.log(`✅ Documents fetched successfully for type: ${type}`);
-    } catch (error) {
-      console.error(`❌ Failed to fetch documents for type: ${type}`, error);
+    } catch (error: any) {
+      setDocuments([]); // Always set empty array on error
+      if (error.status === 404) {
+        console.log(`ℹ️ No documents found for type: ${type}`);
+      } else {
+        console.error(`❌ Failed to fetch documents for type: ${type}`, error);
+      }
     }
   };
 
@@ -93,6 +99,7 @@ const Content: React.FC<ContentProps> = ({ session }) => {
         {['none', 'Company', 'Policies', 'Processes'].map((type) => (
           <div
             key={type}
+            data-tooltip-id={`tooltip-${type}`}
             className={`p-4 rounded-lg border cursor-pointer transition-colors ${
               activeContentType === type
                 ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600'
@@ -106,50 +113,62 @@ const Content: React.FC<ContentProps> = ({ session }) => {
               </span>
               <span>{type === 'none' ? 'All content' : type}</span>
             </div>
+            <Tooltip id={`tooltip-${type}`}>
+              {type === 'none' && "View all your content in one place"}
+              {type === 'Company' && "Create content that outlines your story, values, mission, and vision in a way that gets everyone on the same page"}
+              {type === 'Policies' && "Document the operating rules and standards of your business into a guided, organised, digital employee handbook."}
+              {type === 'Processes' && "Create step-by-step training manuals that outline your company's standard operating procedures (SOPs)."}
+            </Tooltip>
           </div>
         ))}
       </div>
 
       {/* Document List */}
       <div className="mt-6">
-        {documents.map((doc) => (
-          <div key={doc.id} className="flex justify-between items-center p-4 border rounded-lg shadow-sm mb-4">
-            <span
-              className="text-lg font-medium cursor-pointer hover:underline"
-              onClick={() => navigate(`/${session.user.id}/content/${doc.id}`, {
-                state: { subject: doc, session }
-              })}
-            >
-              {doc.title}
-            </span>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-500">{doc.type}</span>
-              <div className="relative">
-                <button
-                  onClick={() => setShowMenu(showMenu === doc.id ? null : doc.id)}
-                  className="p-2 hover:bg-gray-100 rounded-full"
-                >
-                  <FaEllipsisV className="text-gray-500" />
-                </button>
-                
-                {showMenu === doc.id && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border">
-                    <button
-                      onClick={() => {
-                        setSelectedDoc(doc);
-                        setShowDeleteModal(true);
-                        setShowMenu(null);
-                      }}
-                      className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 rounded-lg"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                )}
+        {documents && documents.length > 0 ? (
+          documents.map((doc) => (
+            <div key={doc.id} className="flex justify-between items-center p-4 border rounded-lg shadow-sm mb-4">
+              <span
+                className="text-lg font-medium cursor-pointer hover:underline"
+                onClick={() => navigate(`/${session.user.id}/content/${doc.id}`, {
+                  state: { subject: doc, session }
+                })}
+              >
+                {doc.title}
+              </span>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-500">{doc.type}</span>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowMenu(showMenu === doc.id ? null : doc.id)}
+                    className="p-2 hover:bg-gray-100 rounded-full"
+                  >
+                    <FaEllipsisV className="text-gray-500" />
+                  </button>
+                  
+                  {showMenu === doc.id && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border">
+                      <button
+                        onClick={() => {
+                          setSelectedDoc(doc);
+                          setShowDeleteModal(true);
+                          setShowMenu(null);
+                        }}
+                        className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 rounded-lg"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
+          ))
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 px-4">
+            <h3 className="text-xl font-medium text-gray-900 mb-2">No documents yet</h3>
           </div>
-        ))}
+        )}
       </div>
 
       {/* Delete Subject Modal */}
