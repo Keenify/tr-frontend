@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Editor } from '@tiptap/react';
-import { FaRedo, FaUndo, FaBold, FaItalic, FaUnderline, FaStrikethrough } from "react-icons/fa";
+import { FaBold, FaItalic, FaRedo, FaStrikethrough, FaUnderline, FaUndo, FaFont, FaHighlighter } from "react-icons/fa";
 import { RiArrowDownSLine } from "react-icons/ri";
 
 // Undo/Redo Menu
@@ -122,6 +122,37 @@ export const TextFormatMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
       >
         <FaStrikethrough className="text-lg" />
       </button>
+    </div>
+  );
+};
+
+// Text Color Menu
+export const ColorMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
+  return (
+    <div className="flex gap-2">
+      <div className="relative">
+        <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer">
+          <FaFont />
+          <input
+            type="color"
+            className="absolute opacity-0 w-0 h-0"
+            onInput={e => editor.chain().focus().setColor((e.target as HTMLInputElement).value).run()}
+          />
+        </label>
+      </div>
+      <div className="relative">
+        <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer">
+          <FaHighlighter />
+          <input
+            type="color"
+            className="absolute opacity-0 w-0 h-0"
+            onInput={(e) => {
+              const target = e.target as HTMLInputElement;
+              editor.chain().focus().setHighlight({ color: target.value }).run();
+            }}
+          />
+        </label>
+      </div>
     </div>
   );
 };

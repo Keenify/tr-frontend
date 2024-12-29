@@ -20,7 +20,6 @@ import {
   FaAlignJustify, 
   FaAlignLeft, 
   FaAlignRight, 
-  FaFont, 
   FaHighlighter, 
   FaLink, 
   FaTextHeight, 
@@ -37,7 +36,7 @@ import { upsertDocumentContent, getDocumentContent } from "../../../services/doc
 import "./../styles/Editor.css";
 
 // Toolbar
-import { UndoRedoMenu, HeadingMenu, TextFormatMenu } from "./EditorToolbar";
+import { UndoRedoMenu, HeadingMenu, TextFormatMenu, ColorMenu } from "./EditorToolbar";
 
 interface LineHeightAttributes {
   lineHeight?: string;
@@ -288,31 +287,8 @@ const Editor: React.FC = () => {
             <TextFormatMenu editor={editor} />
             {/* Vertical divider */}
             <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
-            {/* Text Color */}
-            <div className="relative">
-              <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer">
-                <FaFont />
-                <input
-                  type="color"
-                  className="absolute opacity-0 w-0 h-0"
-                  onInput={e => editor.chain().focus().setColor((e.target as HTMLInputElement).value).run()}
-                />
-              </label>
-            </div>
-            {/* Highlight Color */}
-            <div className="relative">
-              <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer">
-                <FaHighlighter />
-                <input
-                  type="color"
-                  className="absolute opacity-0 w-0 h-0"
-                  onInput={(e) => {
-                    const target = e.target as HTMLInputElement;
-                    editor.chain().focus().setHighlight({ color: target.value }).run();
-                  }}
-                />
-              </label>
-            </div>
+            {/* Text Color Menu */}
+            <ColorMenu editor={editor} />
             {/* Vertical divider */}
             <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
             {/* Link button and popup */}
