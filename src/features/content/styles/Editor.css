@@ -31,3 +31,12 @@
   font-size: 1em;
   font-weight: bold;
 }
+
+.tiptap-editor a {
+  color: #3b82f6; /* Tailwind's blue-500 */
+  text-decoration: underline;
+}
+
+.tiptap-editor a:hover {
+  color: #2563eb; /* Tailwind's blue-600 */
+}

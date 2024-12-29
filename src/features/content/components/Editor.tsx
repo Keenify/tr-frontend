@@ -8,11 +8,11 @@ import Underline from "@tiptap/extension-underline";
 import TextStyle from '@tiptap/extension-text-style'
 import Color from '@tiptap/extension-color'
 import Highlight from '@tiptap/extension-highlight'
+import Link from '@tiptap/extension-link'
 
 // Icons
-import { FaBold, FaItalic, FaUnderline, FaStrikethrough, FaUndo, FaRedo, FaHighlighter } from "react-icons/fa";
+import { FaBold, FaItalic, FaUnderline, FaStrikethrough, FaUndo, FaRedo, FaHighlighter, FaLink, FaFont } from "react-icons/fa";
 import { RiArrowDownSLine } from "react-icons/ri";
-import { FaFont } from "react-icons/fa";
 
 // Services
 import { upsertDocumentContent, getDocumentContent } from "../../../services/docService";
@@ -33,6 +33,10 @@ const Editor: React.FC = () => {
   const { tabData } = location.state || {};
   const [content, setContent] = useState<string>('');
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
+  const [showLinkMenu, setShowLinkMenu] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkText, setLinkText] = useState('');
+  const [isValidUrl, setIsValidUrl] = useState(false);
 
   /**
    * Fetches the document content based on the tab ID from the location state.
@@ -71,7 +75,8 @@ const Editor: React.FC = () => {
       Underline,
       TextStyle,
       Color,
-      Highlight.configure({ multicolor: true })
+      Highlight.configure({ multicolor: true }),
+      Link
     ],
     content: content,
   });
@@ -106,6 +111,21 @@ const Editor: React.FC = () => {
 
     return () => clearInterval(interval); // Cleanup interval on component unmount
   }, [editor, tabData]);
+
+  /**
+   * Validates a URL string.
+   *
+   * @param {string} str - The URL string to validate.
+   * @returns {boolean} - True if the URL is valid, false otherwise.
+   */
+  const isValidURL = (str: string) => {
+    try {
+      new URL(str);
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
   if (!editor) {
     return null;
@@ -259,7 +279,107 @@ const Editor: React.FC = () => {
         </div>
         {/* Vertical divider */}
         <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
-        
+        {/* Link button and popup */}
+        <div className="relative">
+          <button
+            onClick={() => {
+              const selection = editor.state.selection;
+              const selectedText = selection.empty 
+                ? '' 
+                : editor.view.state.doc.textBetween(
+                    selection.from,
+                    selection.to,
+                    ''
+                  );
+              setLinkText(selectedText);
+              setShowLinkMenu(true);
+            }}
+            className={`inline-flex items-center justify-center w-10 h-8 rounded ${
+              editor.isActive('link') ? 'bg-gray-300' : 'bg-gray-200'
+            }`}
+          >
+            <FaLink />
+          </button>
+
+          {showLinkMenu && (
+            <div className="absolute top-full left-0 mt-1 w-72 bg-white shadow-lg rounded-lg p-4 z-10">
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-lg font-medium">Link</span>
+                <button 
+                  onClick={() => setShowLinkMenu(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Text</label>
+                  <input
+                    type="text"
+                    value={linkText}
+                    onChange={(e) => setLinkText(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">URL</label>
+                  <input
+                    type="url"
+                    value={linkUrl}
+                    onChange={(e) => {
+                      setLinkUrl(e.target.value);
+                      setIsValidUrl(isValidURL(e.target.value));
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <button
+                    onClick={() => {
+                      setShowLinkMenu(false);
+                      setLinkUrl('');
+                      setLinkText('');
+                    }}
+                    className="px-4 py-2 text-purple-600 hover:bg-purple-50 rounded-md"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (linkUrl) {
+                        if (linkText && editor.state.selection.empty) {
+                          editor.chain()
+                            .focus()
+                            .insertContent(linkText)
+                            .setTextSelection(editor.state.selection.from - linkText.length)
+                            .setLink({ href: linkUrl })
+                            .run();
+                        } else {
+                          editor.chain().focus().setLink({ href: linkUrl }).run();
+                        }
+                      }
+                      setShowLinkMenu(false);
+                      setLinkUrl('');
+                      setLinkText('');
+                    }}
+                    className={`px-4 py-2 rounded-md ${
+                      isValidUrl 
+                        ? 'bg-blue-500 hover:bg-blue-600 text-white cursor-pointer' 
+                        : 'bg-gray-200 cursor-not-allowed'
+                    }`}
+                    disabled={!isValidUrl}
+                  >
+                    Save Link
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
 
