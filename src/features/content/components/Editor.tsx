@@ -25,10 +25,8 @@ import {
   FaHighlighter, 
   FaItalic, 
   FaLink, 
-  FaRedo, 
   FaStrikethrough, 
   FaUnderline, 
-  FaUndo, 
   FaTextHeight, 
   FaListUl, 
   FaListOl, 
@@ -41,6 +39,9 @@ import { upsertDocumentContent, getDocumentContent } from "../../../services/doc
 
 // Styles
 import "./../styles/Editor.css";
+
+// Toolbar
+import { UndoRedoMenu } from "./EditorToolbar";
 
 interface LineHeightAttributes {
   lineHeight?: string;
@@ -283,19 +284,7 @@ const Editor: React.FC = () => {
           {/* Toolbar section */}
           <div className="bg-white shadow-lg rounded-lg p-2 flex justify-center space-x-2">
             {/* Undo button */}
-            <button
-              onClick={() => editor.chain().focus().undo().run()}
-              className="px-3 py-1 rounded bg-gray-200"
-            >
-              <FaUndo />
-            </button>
-            {/* Redo button */}
-            <button
-              onClick={() => editor.chain().focus().redo().run()}
-              className="px-3 py-1 rounded bg-gray-200"
-            >
-              <FaRedo />
-            </button>
+            <UndoRedoMenu editor={editor} />
             {/* Heading menu toggle */}
             <div className="relative">
               <button
