@@ -32,7 +32,7 @@ import {
   FaListOl, 
   FaCheckSquare 
 } from "react-icons/fa";
-import { RiArrowDownSLine } from "react-icons/ri";
+
 
 // Services
 import { upsertDocumentContent, getDocumentContent } from "../../../services/docService";
@@ -41,7 +41,7 @@ import { upsertDocumentContent, getDocumentContent } from "../../../services/doc
 import "./../styles/Editor.css";
 
 // Toolbar
-import { UndoRedoMenu } from "./EditorToolbar";
+import { UndoRedoMenu, HeadingMenu } from "./EditorToolbar";
 
 interface LineHeightAttributes {
   lineHeight?: string;
@@ -83,7 +83,6 @@ const Editor: React.FC = () => {
   const location = useLocation();
   const { tabData } = location.state || {};
   const [content, setContent] = useState<string>('');
-  const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [showLinkMenu, setShowLinkMenu] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [linkText, setLinkText] = useState('');
@@ -286,63 +285,7 @@ const Editor: React.FC = () => {
             {/* Undo button */}
             <UndoRedoMenu editor={editor} />
             {/* Heading menu toggle */}
-            <div className="relative">
-              <button
-                onClick={() => setShowHeadingMenu(!showHeadingMenu)}
-                className="px-3 py-1 rounded bg-gray-200 flex items-center gap-1"
-              >
-                {editor.isActive("heading", { level: 1 })
-                  ? "H1"
-                  : editor.isActive("heading", { level: 2 })
-                  ? "H2"
-                  : editor.isActive("heading", { level: 3 })
-                  ? "H3"
-                  : editor.isActive("heading", { level: 4 })
-                  ? "H4"
-                  : "Normal"}
-                <RiArrowDownSLine />
-              </button>
-
-              {showHeadingMenu && (
-                <div className="absolute top-full left-0 mt-1 w-40 bg-white shadow-lg rounded-lg overflow-hidden z-10">
-                  {/* Normal text button */}
-                  <button
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 text-base"
-                    onClick={() => {
-                      editor.chain().focus().setParagraph().run();
-                      setShowHeadingMenu(false);
-                    }}
-                  >
-                    Normal
-                  </button>
-                  {/* Heading level buttons */}
-                  {[1, 2, 3, 4].map((level) => (
-                    <button
-                      key={level}
-                      className={`w-full px-4 py-2 text-left hover:bg-gray-100 ${
-                        level === 1
-                          ? "text-2xl"
-                          : level === 2
-                          ? "text-xl"
-                          : level === 3
-                          ? "text-lg"
-                          : "text-base"
-                      }`}
-                      onClick={() => {
-                        editor
-                          .chain()
-                          .focus()
-                          .toggleHeading({ level: level as 1 | 2 | 3 | 4 })
-                          .run();
-                        setShowHeadingMenu(false);
-                      }}
-                    >
-                      Heading {level}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <HeadingMenu editor={editor} />
             {/* Vertical divider */}
             <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
             {/* Bold button */}
