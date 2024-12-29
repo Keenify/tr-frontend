@@ -14,14 +14,6 @@ import { Extension } from '@tiptap/core'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 
-// Icons
-import { 
-  FaTextHeight, 
-  FaListUl, 
-  FaListOl, 
-  FaCheckSquare 
-} from "react-icons/fa";
-
 
 // Services
 import { upsertDocumentContent, getDocumentContent } from "../../../services/docService";
@@ -30,7 +22,7 @@ import { upsertDocumentContent, getDocumentContent } from "../../../services/doc
 import "./../styles/Editor.css";
 
 // Toolbar
-import { UndoRedoMenu, HeadingMenu, TextFormatMenu, ColorMenu, LinkMenu, TextAlignMenu, LineSpacingMenu } from "./EditorToolbar";
+import { UndoRedoMenu, HeadingMenu, TextFormatMenu, ColorMenu, LinkMenu, TextAlignMenu, LineSpacingMenu, ListMenu } from "./EditorToolbar";
 
 interface LineHeightAttributes {
   lineHeight?: string;
@@ -76,7 +68,6 @@ const Editor: React.FC = () => {
   const [linkUrl, setLinkUrl] = useState('');
   const [linkText, setLinkText] = useState('');
   const [isValidUrl, setIsValidUrl] = useState(false);
-  const [showListMenu, setShowListMenu] = useState(false);
 
   /**
    * Fetches the document content based on the tab ID from the location state.
@@ -250,46 +241,7 @@ const Editor: React.FC = () => {
             {/* Line Spacing Menu */}
             <LineSpacingMenu editor={editor} />
             {/* List Options */}
-            <div className="relative">
-              <label 
-                className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer"
-                onClick={() => setShowListMenu(!showListMenu)}
-              >
-                <FaListUl />
-              </label>
-              
-              {showListMenu && (
-                <div className="absolute top-full left-0 mt-1 w-40 bg-white shadow-lg rounded-lg overflow-hidden z-10">
-                  <button
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
-                    onClick={() => {
-                      editor.chain().focus().toggleBulletList().run();
-                      setShowListMenu(false);
-                    }}
-                  >
-                    <FaListUl /> Bulleted list
-                  </button>
-                  <button
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
-                    onClick={() => {
-                      editor.chain().focus().toggleOrderedList().run();
-                      setShowListMenu(false);
-                    }}
-                  >
-                    <FaListOl /> Numbered list
-                  </button>
-                  <button
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
-                    onClick={() => {
-                      editor.chain().focus().toggleTaskList().run();
-                      setShowListMenu(false);
-                    }}
-                  >
-                    <FaCheckSquare /> Check list
-                  </button>
-                </div>
-              )}
-            </div>
+            <ListMenu editor={editor} />
           </div>
         </div>
       </div>

@@ -14,7 +14,10 @@ import {
   FaAlignCenter, 
   FaAlignRight, 
   FaAlignJustify, 
-  FaTextHeight 
+  FaTextHeight, 
+  FaListUl, 
+  FaListOl, 
+  FaCheckSquare 
 } from "react-icons/fa";
 import { RiArrowDownSLine } from "react-icons/ri";
 
@@ -511,3 +514,53 @@ export const LineSpacingMenu: React.FC<LineSpacingMenuProps> = ({ editor }) => {
   );
 };
 
+interface ListMenuProps {
+  editor: Editor;
+}
+
+export const ListMenu: React.FC<ListMenuProps> = ({ editor }) => {
+  const [showListMenu, setShowListMenu] = useState(false);
+
+  return (
+    <div className="relative">
+      <label 
+        className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer"
+        onClick={() => setShowListMenu(!showListMenu)}
+      >
+        <FaListUl />
+      </label>
+      
+      {showListMenu && (
+        <div className="absolute top-full left-0 mt-1 w-40 bg-white shadow-lg rounded-lg overflow-hidden z-10">
+          <button
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+            onClick={() => {
+              editor.chain().focus().toggleBulletList().run();
+              setShowListMenu(false);
+            }}
+          >
+            <FaListUl /> Bulleted list
+          </button>
+          <button
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+            onClick={() => {
+              editor.chain().focus().toggleOrderedList().run();
+              setShowListMenu(false);
+            }}
+          >
+            <FaListOl /> Numbered list
+          </button>
+          <button
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-2"
+            onClick={() => {
+              editor.chain().focus().toggleTaskList().run();
+              setShowListMenu(false);
+            }}
+          >
+            <FaCheckSquare /> Check list
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
