@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { updateDocument, createDocumentTab, getDocumentTabs } from '../../../services/docService';
+import { updateDocument, createDocumentTab, getDocumentTabs, deleteDocumentTab } from '../../../services/docService';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { FaEllipsisV } from 'react-icons/fa';
+import DeleteTopicModal from '../modals/DeleteTopicModal';
 
 /**
  * SubjectDetail component displays detailed information about a subject
@@ -23,6 +25,9 @@ const SubjectDetail: React.FC = () => {
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
   const [isFocused, setIsFocused] = useState<boolean>(false);
+  const [showMenu, setShowMenu] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<any>(null);
 
   useEffect(() => {
     const fetchTabs = async () => {
@@ -90,6 +95,21 @@ const SubjectDetail: React.FC = () => {
     }
   };
 
+  const handleDeleteTab = async () => {
+    if (!selectedTab || !subject) return;
+    
+    try {
+      await deleteDocumentTab(subject.id, selectedTab.id);
+      const updatedTabs = documentTabs.filter(tab => tab.id !== selectedTab.id);
+      setDocumentTabs(updatedTabs);
+      setShowDeleteModal(false);
+      setSelectedTab(null);
+      console.log('✅ Topic deleted successfully');
+    } catch (error) {
+      console.error('❌ Failed to delete topic:', error);
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto p-4">
       <ToastContainer />
@@ -148,6 +168,29 @@ const SubjectDetail: React.FC = () => {
                   onClick={() => navigate(`/${session.user.id}/steps/${tab.id}/editor`, { state: { tabData: tab, session } })}
                   className="flex-1 border rounded-lg px-3 py-2 bg-gray-100 cursor-pointer hover:underline"
                 />
+                <div className="relative">
+                  <button
+                    onClick={() => setShowMenu(showMenu === tab.id ? null : tab.id)}
+                    className="p-2 hover:bg-gray-100 rounded-full"
+                  >
+                    <FaEllipsisV className="text-gray-500" />
+                  </button>
+                  
+                  {showMenu === tab.id && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border">
+                      <button
+                        onClick={() => {
+                          setSelectedTab(tab);
+                          setShowDeleteModal(true);
+                          setShowMenu(null);
+                        }}
+                        className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 rounded-lg"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -178,6 +221,17 @@ const SubjectDetail: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Add DeleteTopicModal */}
+      <DeleteTopicModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedTab(null);
+        }}
+        onConfirm={handleDeleteTab}
+        topicTitle={selectedTab?.title || ''}
+      />
     </div>
   );
 };

@@ -313,3 +313,31 @@ export async function deleteDocument(documentId: string): Promise<boolean> {
   const data = await response.json();
   return data;
 }
+
+/**
+ * Deletes a document tab.
+ * @param {string} documentId - The ID of the document.
+ * @param {string} tabId - The ID of the tab to delete.
+ * @returns {Promise<boolean>} - A promise that resolves to true if deletion was successful.
+ */
+export async function deleteDocumentTab(documentId: string, tabId: string): Promise<boolean> {
+  const endpoint = `${API_DOMAIN}/documents/${documentId}/tabs/${tabId}`;
+
+  const response = await fetch(endpoint, {
+    method: "DELETE",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    console.error("❌ API request failed:", {
+      status: response.status,
+      statusText: response.statusText,
+    });
+    throw new Error("Failed to delete document tab");
+  }
+
+  const data = await response.json();
+  return data;
+}
