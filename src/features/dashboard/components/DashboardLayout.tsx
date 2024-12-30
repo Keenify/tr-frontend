@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Power, ThumbsUp } from 'react-feather'; // Import Power and ThumbsUp icons from react-feather
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase'; // Import supabase client
@@ -59,6 +59,7 @@ export function DashboardLayout({ children, onTabChange, session, signOut, activ
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
   const [activeTabState, setActiveTabState] = React.useState<TabType>('home');
+  const [localActiveSubTab, setLocalActiveSubTab] = useState<'directory' | 'orgChart' | undefined>(activeSubTab);
 
   // Function to handle sign out using Supabase
   const handleSignOut = async () => {
@@ -69,11 +70,31 @@ export function DashboardLayout({ children, onTabChange, session, signOut, activ
   // Function to handle tab change
   const handleTabChange = (tab: TabType) => {
     setActiveTabState(tab);
+    if (tab === 'people') {
+      // Only toggle submenu for people tab
+      setIsPeopleSubmenuOpen(!isPeopleSubmenuOpen);
+      return; // Don't navigate or call onTabChange
+    }
     onTabChange(tab);
     if (tab === 'home') {
       navigate(`/${userId}`);
     } else {
       navigate(`/${userId}/${tab}`);
+    }
+  };
+
+  // Function to handle subtab click
+  const handleSubTabClick = (subTab: 'directory' | 'orgChart') => {
+    setLocalActiveSubTab(subTab);
+    if (onSubTabChange) {
+      onSubTabChange(subTab);
+    }
+    setActiveTabState('people');
+    
+    if (subTab === 'directory') {
+      navigate(`/${userId}/people`);
+    } else {
+      navigate(`/${userId}/org_chart`);
     }
   };
 
@@ -116,12 +137,7 @@ export function DashboardLayout({ children, onTabChange, session, signOut, activ
                 {tabs.map((tab) => (
                   <React.Fragment key={tab}>
                     <button
-                      onClick={() => {
-                        handleTabChange(tab);
-                        if (tab === 'people') {
-                          setIsPeopleSubmenuOpen(!isPeopleSubmenuOpen);
-                        }
-                      }}
+                      onClick={() => handleTabChange(tab)}
                       className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                         activeTabState === tab
                           ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600'
@@ -136,14 +152,14 @@ export function DashboardLayout({ children, onTabChange, session, signOut, activ
                         {['directory', 'orgChart'].map((subTab) => (
                           <button
                             key={subTab}
-                            onClick={() => onSubTabChange && onSubTabChange(subTab as 'directory' | 'orgChart')}
+                            onClick={() => handleSubTabClick(subTab as 'directory' | 'orgChart')}
                             className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                              activeSubTab === subTab
-                                ? 'bg-indigo-100 text-indigo-700'
+                              localActiveSubTab === subTab
+                                ? 'bg-red-50 text-red-600 border-l-4 border-red-600'
                                 : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
                             }`}
                           >
-                            {subTab.charAt(0).toUpperCase() + subTab.slice(1)}
+                            {subTab === 'orgChart' ? 'Org Chart' : 'Directory'}
                           </button>
                         ))}
                       </div>
