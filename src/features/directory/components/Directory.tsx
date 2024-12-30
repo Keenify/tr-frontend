@@ -4,7 +4,14 @@ import { EmployeeCard } from '../components/EmployeeCard';
 import { AddTeammateButton } from '../components/AddTeammateButton';
 
 export const Directory = ({ companyId }: { companyId: string }) => {
-  const { employees, isLoading, error, filters, setFilters } = useDirectory(companyId);
+  const { 
+    employees, 
+    isLoading, 
+    error, 
+    filters, 
+    setFilters, 
+    fetchEmployees
+  } = useDirectory(companyId);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -33,7 +40,10 @@ export const Directory = ({ companyId }: { companyId: string }) => {
             <option value="asc">Name (A to Z)</option>
             <option value="desc">Name (Z to A)</option>
           </select>
-          <AddTeammateButton />
+          <AddTeammateButton 
+            companyId={companyId} 
+            onTeammateAdded={fetchEmployees}
+          />
         </div>
       </div>
 
