@@ -2,11 +2,15 @@ import { Employee } from '../types/directory.types';
 
 interface EmployeeCardProps {
   employee: Employee;
+  onClick: () => void;
 }
 
-export const EmployeeCard = ({ employee }: EmployeeCardProps) => {
+export const EmployeeCard = ({ employee, onClick }: EmployeeCardProps) => {
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+    <div 
+      onClick={onClick}
+      className="cursor-pointer hover:shadow-lg transition-shadow duration-200 bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+    >
       <div className="aspect-square relative">
         {employee.profile_pic_url ? (
           <img

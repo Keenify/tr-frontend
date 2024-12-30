@@ -15,4 +15,5 @@ export interface Employee {
 export interface DirectoryFilters {
   searchQuery: string;
   sortOrder: 'asc' | 'desc';
+  selectedEmployeeId: string | null;
 }

@@ -6,7 +6,8 @@ export const useDirectory = (companyId: string) => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [filters, setFilters] = useState<DirectoryFilters>({
     searchQuery: '',
-    sortOrder: 'asc'
+    sortOrder: 'asc',
+    selectedEmployeeId: null
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
