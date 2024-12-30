@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Employee, DirectoryFilters } from '../types/directory.types';
 import { directoryService } from '../services/directoryService';
 
@@ -11,9 +11,10 @@ export const useDirectory = (companyId: string) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchEmployees = async () => {
+  const fetchEmployees = useCallback(async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const data = await directoryService.fetchEmployees(companyId);
       setEmployees(data);
     } catch (err) {
@@ -21,11 +22,11 @@ export const useDirectory = (companyId: string) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [companyId]);
 
   useEffect(() => {
     fetchEmployees();
-  }, [companyId]);
+  }, [fetchEmployees]);
 
   const filteredEmployees = employees
     .filter(employee => {
