@@ -21,6 +21,7 @@ const Home = lazy(() => import('./features/home/components/Home'));
 const Content = lazy(() => import('./features/content/components/Content'));
 const SubjectDetail = lazy(() => import('./features/content/components/SubjectDetail'));
 const Editor = lazy(() => import('./features/content/components/Editor'));
+const DirectoryPage = lazy(() => import('./features/directory/routes/DirectoryPage'));
 
 const App: React.FC = () => {
   const { session, signOut } = useSession();
@@ -46,6 +47,7 @@ const App: React.FC = () => {
                       <Routes>
                         <Route index element={<Home session={session} />} />
                         <Route path="content" element={<Content session={session} />} />
+                        <Route path="people" element={<DirectoryPage session={session} />} />
                         <Route path="content/:subjectId" element={<SubjectDetail />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
