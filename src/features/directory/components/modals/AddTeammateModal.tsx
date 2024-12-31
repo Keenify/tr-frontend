@@ -66,8 +66,9 @@ export const AddTeammateModal = ({ isOpen, onClose, onSuccess, companyId }: AddT
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-md">
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-black opacity-50" onClick={onClose}></div>
+      <div className="relative bg-white rounded-lg p-6 max-w-md w-full mx-4">
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b">
           <h2 className="text-xl font-bold">Add a user</h2>
@@ -95,6 +96,7 @@ export const AddTeammateModal = ({ isOpen, onClose, onSuccess, companyId }: AddT
                 First Name <span className="text-red-500">*</span>
               </label>
               <input
+                title="First Name"
                 type="text"
                 value={formData.first_name}
                 onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
@@ -109,6 +111,7 @@ export const AddTeammateModal = ({ isOpen, onClose, onSuccess, companyId }: AddT
                 Last Name <span className="text-red-500">*</span>
               </label>
               <input
+                title="Last Name"
                 type="text"
                 value={formData.last_name}
                 onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
@@ -123,6 +126,7 @@ export const AddTeammateModal = ({ isOpen, onClose, onSuccess, companyId }: AddT
                 Work Email <span className="text-red-500">*</span>
               </label>
               <input
+                title="Work Email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -138,6 +142,7 @@ export const AddTeammateModal = ({ isOpen, onClose, onSuccess, companyId }: AddT
                 Job Title
               </label>
               <input
+                title="Job Title"
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -151,6 +156,7 @@ export const AddTeammateModal = ({ isOpen, onClose, onSuccess, companyId }: AddT
                 Phone Number
               </label>
               <input
+                title="Phone Number"
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}

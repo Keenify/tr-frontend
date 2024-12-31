@@ -14,6 +14,7 @@ import UserRouteWrapper from './routes/UserRouteWrapper';
 
 // Dashboard Layout
 import { DashboardLayout } from './features/dashboard/components/DashboardLayout';
+import OrgChartPage from './features/directory/components/OrgChart/OrgChartPage';
 
 // Lazy load all components
 const AuthForm = lazy(() => import('./features/auth/components/Auth'));
@@ -48,6 +49,7 @@ const App: React.FC = () => {
                         <Route index element={<Home session={session} />} />
                         <Route path="content" element={<Content session={session} />} />
                         <Route path="people" element={<DirectoryPage session={session} />} />
+                        <Route path="org_chart" element={<OrgChartPage session={session} />} />
                         <Route path="content/:subjectId" element={<SubjectDetail />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>

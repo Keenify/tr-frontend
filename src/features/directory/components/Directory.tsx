@@ -45,6 +45,7 @@ export const Directory = ({ companyId }: { companyId: string }) => {
           </div>
           <div className="flex gap-4">
             <select
+              title="Sort by"
               className="px-4 py-2 border rounded-md bg-white"
               value={filters.sortOrder}
               onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value as 'asc' | 'desc' })}
