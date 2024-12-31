@@ -30,12 +30,14 @@ import { RiArrowDownSLine } from "react-icons/ri";
 export const UndoRedoMenu: React.FC<{ editor: Editor }> = ({ editor }) => (
   <div className="flex gap-2">
     <button
+      title="Undo"
       onClick={() => editor.chain().focus().undo().run()}
       className="px-3 py-1 rounded bg-gray-200"
     >
       <FaUndo />
     </button>
     <button
+      title="Redo"
       onClick={() => editor.chain().focus().redo().run()}
       className="px-3 py-1 rounded bg-gray-200"
     >
@@ -121,6 +123,7 @@ export const HeadingMenu: React.FC<{ editor: Editor }> = ({ editor }) => {
 export const TextFormatMenu: React.FC<{ editor: Editor }> = ({ editor }) => (
   <div className="flex gap-2">
     <button
+      title="Bold"
       onClick={() => editor.chain().focus().toggleBold().run()}
       className={`px-3 py-1 rounded ${
         editor.isActive("bold") ? "bg-gray-300" : "bg-gray-200"
@@ -129,6 +132,7 @@ export const TextFormatMenu: React.FC<{ editor: Editor }> = ({ editor }) => (
       <FaBold />
     </button>
     <button
+      title="Italic"
       onClick={() => editor.chain().focus().toggleItalic().run()}
       className={`px-3 py-1 rounded ${
         editor.isActive("italic") ? "bg-gray-300" : "bg-gray-200"
@@ -137,6 +141,7 @@ export const TextFormatMenu: React.FC<{ editor: Editor }> = ({ editor }) => (
       <FaItalic />
     </button>
     <button
+      title="Underline"
       onClick={() => editor.chain().focus().toggleUnderline().run()}
       className={`px-3 py-1 rounded ${
         editor.isActive("underline") ? "bg-gray-300" : "bg-gray-200"
@@ -145,6 +150,7 @@ export const TextFormatMenu: React.FC<{ editor: Editor }> = ({ editor }) => (
       <FaUnderline />
     </button>
     <button
+      title="Strikethrough" 
       onClick={() => editor.chain().focus().toggleStrike().run()}
       className={`inline-flex items-center justify-center w-10 h-8 rounded ${
         editor.isActive("strike") ? "bg-gray-300" : "bg-gray-200"
@@ -167,6 +173,7 @@ export const ColorMenu: React.FC<{ editor: Editor }> = ({ editor }) => (
       <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer">
         <FaFont />
         <input
+          title="Text Color"
           type="color"
           className="absolute opacity-0 w-0 h-0"
           onInput={e => editor.chain().focus().setColor((e.target as HTMLInputElement).value).run()}
@@ -177,6 +184,7 @@ export const ColorMenu: React.FC<{ editor: Editor }> = ({ editor }) => (
       <label className="inline-flex items-center justify-center w-10 h-8 rounded bg-gray-200 cursor-pointer">
         <FaHighlighter />
         <input
+          title="Highlight Color"
           type="color"
           className="absolute opacity-0 w-0 h-0"
           onInput={(e) => {
@@ -190,7 +198,7 @@ export const ColorMenu: React.FC<{ editor: Editor }> = ({ editor }) => (
 );
 
 interface LinkMenuProps {
-  editor: any;
+  editor: Editor;
   showLinkMenu: boolean;
   setShowLinkMenu: (show: boolean) => void;
   linkText: string;
@@ -279,6 +287,7 @@ export const LinkMenu: React.FC<LinkMenuProps> = ({
     <>
       <div className="relative">
         <button
+          title="Link"
           onClick={() => {
             const selection = editor.state.selection;
             const selectedText = selection.empty 
@@ -329,6 +338,7 @@ export const LinkMenu: React.FC<LinkMenuProps> = ({
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Text</label>
                 <input
+                  title="Text"
                   type="text"
                   value={linkText}
                   onChange={(e) => setLinkText(e.target.value)}
@@ -339,6 +349,7 @@ export const LinkMenu: React.FC<LinkMenuProps> = ({
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">URL</label>
                 <input
+                  title="URL"
                   type="url"
                   value={linkUrl}
                   onChange={(e) => {
