@@ -254,8 +254,10 @@ const Editor: React.FC = () => {
           <div className="bg-white shadow-lg rounded-lg p-6 relative">
             {isEditingTitle ? (
               <div className="relative">
-                <input
+                <input    
                   type="text"
+                  title="Topic Title"
+                  placeholder="Topic Title"
                   value={pendingTitle}
                   onChange={(e) => setPendingTitle(e.target.value)}
                   onBlur={handleTitleUpdate}
