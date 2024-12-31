@@ -14,24 +14,28 @@ const SubjectDetail: React.FC = () => {
   const location = useLocation();
   const { subject, session } = location.state || {};
 
-  if (!subject || !session) {
-    return <div>Error: Subject or session data is missing. Please try again.</div>;
-  }
-
   const [topicTitle, setTopicTitle] = useState<string>('');
-  const [description, setDescription] = useState<string>(subject.description || '');
+  const [description, setDescription] = useState<string>(subject?.description || '');
   const [pendingDescription, setPendingDescription] = useState<string>(description);
-  const [documentTabs, setDocumentTabs] = useState<any[]>([]);
+  const [documentTabs, setDocumentTabs] = useState<DocumentTab[]>([]);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
   const [isFocused, setIsFocused] = useState<boolean>(false);
   const [showMenu, setShowMenu] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<any>(null);
+  const [selectedTab, setSelectedTab] = useState<DocumentTab | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [pendingTitle, setPendingTitle] = useState(subject.title);
+  const [pendingTitle, setPendingTitle] = useState(subject?.title || '');
+
+  interface DocumentTab {
+    id: string;
+    title: string;
+    // Add other properties as needed
+  }
 
   useEffect(() => {
+    if (!subject) return;
+
     const fetchTabs = async () => {
       try {
         const tabs = await getDocumentTabs(subject.id);
@@ -42,16 +46,11 @@ const SubjectDetail: React.FC = () => {
     };
 
     fetchTabs();
-  }, [subject.id]);
-
-  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const text = e.target.value;
-    if (text.length <= 500) {
-      setPendingDescription(text);
-    }
-  };
+  }, [subject]);
 
   useEffect(() => {
+    if (!subject) return;
+
     if (updateTimeoutRef.current) {
       clearTimeout(updateTimeoutRef.current);
     }
@@ -75,7 +74,18 @@ const SubjectDetail: React.FC = () => {
         clearTimeout(updateTimeoutRef.current);
       }
     };
-  }, [pendingDescription, description, subject.id]);
+  }, [pendingDescription, description, subject]);
+
+  if (!subject || !session) {
+    return <div>Error: Subject or session data is missing. Please try again.</div>;
+  }
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const text = e.target.value;
+    if (text.length <= 500) {
+      setPendingDescription(text);
+    }
+  };
 
   const handleCreateClick = async () => {
     if (!topicTitle) return;
@@ -163,6 +173,8 @@ const SubjectDetail: React.FC = () => {
                 <div className="relative">
                   <input
                     type="text"
+                    title="Topic Title"
+                    placeholder="Topic Title"
                     value={pendingTitle}
                     onChange={(e) => {
                       if (e.target.value.length <= 100) {
@@ -217,10 +229,12 @@ const SubjectDetail: React.FC = () => {
           <div className="mb-4">
             {documentTabs.map((tab) => (
               <div key={tab.id} className="flex items-center gap-2 mb-2">
-                <select className="border rounded-lg px-3 py-2" disabled>
+                <select className="border rounded-lg px-3 py-2" disabled title="Topic">
                   <option value="topic">Topic</option>
                 </select>
                 <input
+                  title="Topic Title"
+                  placeholder="Topic Title"
                   type="text"
                   value={tab.title}
                   readOnly
@@ -229,6 +243,7 @@ const SubjectDetail: React.FC = () => {
                 />
                 <div className="relative">
                   <button
+                    title="Delete Topic"
                     onClick={() => setShowMenu(showMenu === tab.id ? null : tab.id)}
                     className="p-2 hover:bg-gray-100 rounded-full"
                   >
@@ -256,7 +271,7 @@ const SubjectDetail: React.FC = () => {
 
           {/* Add Topic Form */}
           <div className="flex items-center gap-2 mb-4">
-            <select className="border rounded-lg px-3 py-2">
+            <select className="border rounded-lg px-3 py-2" title="Topic">
               <option value="topic">Topic</option>
             </select>
             <input
