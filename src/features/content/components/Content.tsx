@@ -10,6 +10,13 @@ import { FaEllipsisV } from 'react-icons/fa';
 import CreateSubjectModal from '../modals/CreateSubjectModal';
 import DeleteSubjectModal from '../modals/DeleteSubjectModal';
 
+// Define or update the Document type or interface
+interface Document {
+  id: string;
+  title: string;
+  type: string;
+  // Add other properties as needed
+}
 
 interface ContentProps {
   session: Session;
@@ -26,11 +33,11 @@ const Content: React.FC<ContentProps> = ({ session }) => {
   // State for controlling create subject modal visibility
   const [isModalOpen, setIsModalOpen] = useState(false);
   // State to store fetched documents
-  const [documents, setDocuments] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const navigate = useNavigate();
   const [activeContentType, setActiveContentType] = useState<string>('none');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedDoc, setSelectedDoc] = useState<any>(null);
+  const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [showMenu, setShowMenu] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,7 +49,7 @@ const Content: React.FC<ContentProps> = ({ session }) => {
    * Handles creation of a new subject
    * @param data Object containing name and type for new subject
    */
-  const handleCreateSubject = (data: { name: string; types: string[]; documentData: any }) => {
+  const handleCreateSubject = (data: { name: string; types: string[]; documentData: Document }) => {
     // Navigate to SubjectDetail with the response and session
     navigate(`/${session.user.id}/content/${data.documentData.id}`, {
       state: { subject: data.documentData, session }
@@ -57,9 +64,9 @@ const Content: React.FC<ContentProps> = ({ session }) => {
       const data = await getDocumentsByType(type);
       setDocuments(data || []); // Ensure we set empty array if no data
       console.log(`✅ Documents fetched successfully for type: ${type}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setDocuments([]); // Always set empty array on error
-      if (error.status === 404) {
+      if (error instanceof Error && isHttpError(error) && error.status === 404) {
         console.log(`ℹ️ No documents found for type: ${type}`);
       } else {
         console.error(`❌ Failed to fetch documents for type: ${type}`, error);
@@ -193,5 +200,14 @@ const Content: React.FC<ContentProps> = ({ session }) => {
     </div>
   );
 };
+
+function isHttpError(error: unknown): error is { status: number } {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'status' in error &&
+    typeof (error as { status: unknown }).status === 'number'
+  );
+}
 
 export default Content;
