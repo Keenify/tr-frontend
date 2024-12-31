@@ -125,6 +125,7 @@ const Step2CompanyInfo: React.FC<Step2CompanyInfoProps> = ({ onNext, onBack }) =
             <div className="mb-4">
               <label className="block mb-1 font-bold">What Industry are you in? *</label>
               <select
+                title="What Industry are you in?"
                 value={industry}
                 onChange={handleIndustryChange}
                 className={`w-full p-2 border rounded ${errors.industry ? 'border-red-500' : ''}`}
@@ -141,6 +142,7 @@ const Step2CompanyInfo: React.FC<Step2CompanyInfoProps> = ({ onNext, onBack }) =
             <div className="mb-4">
               <label className="block mb-1 font-bold">How many people are in your company?</label>
               <input
+                title="How many people are in your company?"
                 type="range"
                 min="0"
                 max={companySizeOptions.length - 1}

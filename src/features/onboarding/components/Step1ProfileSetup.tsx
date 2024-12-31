@@ -93,6 +93,7 @@ const Step1ProfileSetup: React.FC<Step1ProfileSetupProps> = ({ onNext }) => {
             <div className="mb-4">
               <label className="block mb-1 font-bold">How did you hear about us? *</label>
               <select
+                title="How did you hear about us?"
                 value={referralSource}
                 onChange={(e) => setReferralSource(e.target.value)}
                 className={`w-full p-2 border rounded ${referralError ? 'border-red-500' : ''}`}

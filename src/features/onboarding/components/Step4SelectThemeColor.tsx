@@ -16,6 +16,7 @@ const Step4SelectThemeColor: React.FC<Step4SelectThemeColorProps> = ({ onNext, o
       <div className="flex space-x-2 mb-4">
         {predefinedColors.map((color) => (
           <button
+            title="Select a color theme"
             key={color}
             style={{ backgroundColor: color }}
             className={`w-8 h-8 rounded-full ${selectedColor === color ? 'ring-2 ring-offset-2 ring-blue-500' : ''}`}
@@ -24,6 +25,7 @@ const Step4SelectThemeColor: React.FC<Step4SelectThemeColorProps> = ({ onNext, o
         ))}
       </div>
       <input
+        title="Select a color theme"
         type="color"
         value={selectedColor}
         onChange={(e) => setSelectedColor(e.target.value)}

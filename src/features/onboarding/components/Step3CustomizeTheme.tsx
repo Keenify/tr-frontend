@@ -49,6 +49,7 @@ const Step3CustomizeTheme: React.FC<Step3CustomizeThemeProps> = ({ onNext, onBac
             <div className="mb-4">
               <label className="block mb-1 font-bold">Upload your company logo *</label>
               <input
+                title="Upload your company logo"
                 type="file"
                 onChange={handleFileChange}
                 accept="image/*"
