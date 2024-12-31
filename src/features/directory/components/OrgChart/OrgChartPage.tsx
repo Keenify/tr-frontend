@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
 import { OrgChart } from './OrgChart';
-import { directoryService } from "../../services/directoryService"
 import { Session } from '@supabase/supabase-js';
+import { directoryService } from "../../services/directoryService";
+import { useEffect, useState } from 'react';
 
 /**
  * Props for OrgChartPage component.
