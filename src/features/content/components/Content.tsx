@@ -140,6 +140,7 @@ const Content: React.FC<ContentProps> = ({ session }) => {
                 <span className="text-sm text-gray-500">{doc.type}</span>
                 <div className="relative">
                   <button
+                    title="Edit"
                     onClick={() => setShowMenu(showMenu === doc.id ? null : doc.id)}
                     className="p-2 hover:bg-gray-100 rounded-full"
                   >
