@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import noOrgChartImage from '../../assets/org_chart.svg';
 import { OrgChartConfigPanel } from './OrgChartConfigPanel';
+import { directoryService } from '../../services/directoryService';
+import { Employee } from '../../types/directory.types';
 
 /**
  * Props for OrgChart component.
@@ -8,6 +10,13 @@ import { OrgChartConfigPanel } from './OrgChartConfigPanel';
  */
 interface OrgChartProps {
   companyId: string;
+}
+
+/**
+ * TreeNode interface extends Employee and adds a children property.
+ */
+interface TreeNode extends Employee {
+  children: TreeNode[];
 }
 
 /**
@@ -22,9 +31,56 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
   const [activeTab, setActiveTab] = useState<'people' | 'roles'>('people');
   const [searchQuery, setSearchQuery] = useState('');
   const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [treeData, setTreeData] = useState<TreeNode | null>(null);
 
-  // TODO: Remove this after testing
-  console.log("need to remove this", companyId);
+  /**
+   * useEffect hook to fetch employees data when the component mounts or when the companyId changes.
+   * It calls the directoryService to retrieve the list of employees for the given companyId.
+   * On successful fetch, it updates the employees state with the retrieved data.
+   * Logs an error message to the console if the fetch operation fails.
+   */
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const employeesData = await directoryService.fetchEmployees(companyId);
+        setEmployees(employeesData);
+        setTreeData(transformToTree(employeesData));
+      } catch (error) {
+        console.error("Failed to fetch employees", error);
+      }
+    };
+
+    fetchEmployees();
+  }, [companyId]);
+
+
+  /**
+   * Transforms the list of employees into a tree structure.
+   * @param employees - The list of employees to transform.
+   * @returns The root node of the tree or null if the transformation fails.
+   */
+  const transformToTree = (employees: Employee[]): TreeNode | null => {
+    const idToNodeMap: { [key: string]: TreeNode } = {};
+    let root: TreeNode | null = null;
+
+    employees.forEach((employee) => {
+      idToNodeMap[employee.id] = { ...employee, children: [] };
+    });
+
+    employees.forEach((employee) => {
+      if (employee.reports_to) {
+        idToNodeMap[employee.reports_to].children.push(idToNodeMap[employee.id]);
+      } else {
+        root = idToNodeMap[employee.id];
+      }
+    });
+
+    return root;
+  };
+
+  console.log("employees", employees);  // TODO: Remove this after testing
+  console.log("treeData", treeData);  // TODO: Remove this after testing
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
