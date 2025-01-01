@@ -2,10 +2,22 @@ import { useState } from 'react';
 import noOrgChartImage from '../../assets/org_chart.svg';
 import { OrgChartConfigPanel } from './OrgChartConfigPanel';
 
+/**
+ * Props for OrgChart component.
+ * @param companyId - The ID of the company for which the org chart is displayed.
+ */
 interface OrgChartProps {
   companyId: string;
 }
 
+/**
+ * OrgChart component displays the organizational chart for a given company.
+ * It allows users to toggle between viewing people and roles, search within the chart,
+ * and open a configuration panel to build the people chart.
+ * 
+ * @param companyId - The ID of the company for which the org chart is displayed.
+ * @returns JSX.Element - The rendered org chart component.
+ */
 export const OrgChart = ({ companyId }: OrgChartProps) => {
   const [activeTab, setActiveTab] = useState<'people' | 'roles'>('people');
   const [searchQuery, setSearchQuery] = useState('');
@@ -69,7 +81,6 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
             Build people chart
           </button>
         </div>
-
       </div>
 
       {/* Empty State */}
