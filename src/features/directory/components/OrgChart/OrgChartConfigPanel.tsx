@@ -60,6 +60,24 @@ export const OrgChartConfigPanel = ({ isOpen, onClose, companyId, onUpdate }: Or
     }
   };
 
+  const handleHighestRankingChange = async (newHighestRankingId: string) => {
+    try {
+      // Update the previous highest-ranking employee to not be the highest rank
+      if (highestRanking) {
+        await directoryService.updateEmployee(highestRanking, { highest_rank: false });
+      }
+
+      // Update the new highest-ranking employee
+      await directoryService.updateEmployee(newHighestRankingId, { highest_rank: true });
+
+      // Update the state
+      setHighestRanking(newHighestRankingId);
+      onUpdate();
+    } catch (error) {
+      console.error('Failed to update highest ranking executive:', error);
+    }
+  };
+
   return (
     <>
       {/* Backdrop */}
@@ -115,9 +133,8 @@ export const OrgChartConfigPanel = ({ isOpen, onClose, companyId, onUpdate }: Or
               <select
                 title="Select the highest ranking executive"
                 value={highestRanking}
-                onChange={(e) => setHighestRanking(e.target.value)}
+                onChange={(e) => handleHighestRankingChange(e.target.value)}
                 className={`w-full p-2 border rounded-md ${highestRanking ? 'bg-gray-200 text-gray-500' : ''}`}
-                disabled={!!highestRanking}
                 style={{ appearance: highestRanking ? 'none' : 'auto' }}
               >
                 <option value="">Select...</option>

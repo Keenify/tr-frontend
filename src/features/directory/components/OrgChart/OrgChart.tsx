@@ -43,7 +43,14 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
     try {
       const employeesData = await directoryService.fetchEmployees(companyId);
       setEmployees(employeesData);
-      setTreeData(transformToTree(employeesData));
+
+      // Check if there is an employee with the highest rank
+      const hasHighestRank = employeesData.some(emp => emp.highest_rank);
+      if (hasHighestRank) {
+        setTreeData(transformToTree(employeesData));
+      } else {
+        setTreeData(null);
+      }
     } catch (error) {
       console.error("Failed to fetch employees", error);
     }
