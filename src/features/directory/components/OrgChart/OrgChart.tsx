@@ -141,6 +141,7 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
     </div>
   );
 };
+
 /**
  * Transforms the list of employees into a tree structure.
  * @param employees - The list of employees to transform.
