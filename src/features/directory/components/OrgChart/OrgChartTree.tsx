@@ -1,5 +1,5 @@
-import React from "react";
-import Tree, { RawNodeDatum } from "react-d3-tree";
+import React, { useState, useEffect } from "react";
+import Tree, { RawNodeDatum, CustomNodeElementProps } from "react-d3-tree";
 import { Employee } from "../../types/directory.types";
 import MemoizedTreeNodeComponent from "./TreeNodeComponent";
 import "./styles/OrgChartTree.css";
@@ -14,22 +14,36 @@ interface OrgChartTreeProps {
 }
 
 const OrgChartTree: React.FC<OrgChartTreeProps> = ({ node }) => {
-  const treeData: RawNodeDatum[] = [node];
+  const [translate, setTranslate] = useState({ x: 0, y: 0 });
 
-  const renderCustomNode = ({ nodeDatum }: { nodeDatum: RawNodeDatum }) => (
+  useEffect(() => {
+    const dimensions = document
+      .querySelector(".org-chart-container")
+      ?.getBoundingClientRect();
+    if (dimensions) {
+      setTranslate({
+        x: dimensions.width / 2,
+        y: dimensions.height / 4,
+      });
+    }
+  }, []);
+
+  const renderCustomNode = ({ nodeDatum }: CustomNodeElementProps) => (
     <foreignObject width="150" height="100" x="-75" y="-50">
       <div style={{ width: '150px', height: '100px' }}>
-        <MemoizedTreeNodeComponent node={nodeDatum as TreeNode} />
+        <MemoizedTreeNodeComponent node={nodeDatum as unknown as TreeNode} />
       </div>
     </foreignObject>
   );
+
+  const treeData: RawNodeDatum[] = [node];
 
   return (
     <div className="org-chart-container">
       <Tree
         data={treeData}
         orientation="vertical"
-        translate={{ x: 200, y: 100 }}
+        translate={translate}
         pathFunc="elbow"
         nodeSize={{ x: 220, y: 120 }}
         renderCustomNodeElement={renderCustomNode}
