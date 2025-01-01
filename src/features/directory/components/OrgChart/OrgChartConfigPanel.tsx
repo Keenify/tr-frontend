@@ -21,6 +21,21 @@ export const OrgChartConfigPanel = ({ isOpen, onClose, companyId }: OrgChartConf
       try {
         const data = await directoryService.fetchEmployees(companyId);
         setEmployees(data);
+
+        // Find the highest-ranking employee
+        const highestRankEmployee = data.find(emp => emp.highest_rank === true);
+        if (highestRankEmployee) {
+          setHighestRanking(highestRankEmployee.id);
+        }
+
+        // Set initial reporting structure
+        const initialStructure = data.reduce((acc, emp) => {
+          if (emp.reports_to) {
+            acc[emp.id] = emp.reports_to;
+          }
+          return acc;
+        }, {} as Record<string, string>);
+        setReportingStructure(initialStructure);
       } catch (error) {
         console.error('Failed to fetch employees:', error);
       }
