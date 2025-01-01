@@ -1,5 +1,6 @@
 import React from "react";
 import { Employee } from "../../types/directory.types";
+import "./TreeNodeComponent.css";
 
 /**
  * TreeNode interface extends Employee and adds a children property.
@@ -30,37 +31,27 @@ const TreeNodeComponent: React.FC<TreeNodeComponentProps> = ({ node }) => {
   };
 
   return (
-    <div className="border rounded-lg shadow-md p-4 bg-white max-w-xs mx-auto relative">
-      <div className="absolute -top-6 left-4">
+    <div className="tree-node">
+      <div className="avatar">
         {node.profile_pic_url ? (
           <img
             src={node.profile_pic_url}
             alt={`${node.first_name} ${node.last_name}`}
-            className="w-12 h-12 rounded-full border-2 border-white"
           />
         ) : (
-          <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold border-2 border-white">
+          <div className="initials">
             {getInitials(node.first_name, node.last_name)}
           </div>
         )}
       </div>
-      <div className="flex items-start space-x-4 mt-6">
-        <div>
-          <div className="font-bold text-orange-600">
-            {node.first_name} {node.last_name}
-          </div>
-          <div className="text-sm text-gray-500">{node.role}</div>
+      <div className="text-content">
+        <div className="name">
+          {node.first_name} {node.last_name}
         </div>
+        <div className="role">{node.role}</div>
       </div>
-      {node.children.length > 0 && (
-        <div className="mt-2">
-          {node.children.map((child) => (
-            <TreeNodeComponent key={child.id} node={child} />
-          ))}
-        </div>
-      )}
     </div>
   );
 };
 
-export default TreeNodeComponent;
+export default React.memo(TreeNodeComponent);

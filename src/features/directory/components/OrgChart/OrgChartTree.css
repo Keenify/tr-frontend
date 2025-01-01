@@ -1,0 +1,19 @@
+.org-chart-container {
+  width: 100%;
+  height: 500px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 20px;
+  overflow: auto;
+}
+
+.node__circle {
+  fill: #ffffff;
+  stroke: #cccccc;
+  stroke-width: 2px;
+}
+
+.node__text {
+  font-size: 12px;
+  fill: #333333;
+}

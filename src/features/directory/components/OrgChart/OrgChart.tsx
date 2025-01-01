@@ -3,7 +3,7 @@ import noOrgChartImage from "../../assets/org_chart.svg";
 import { OrgChartConfigPanel } from "./OrgChartConfigPanel";
 import { directoryService } from "../../services/directoryService";
 import { Employee } from "../../types/directory.types";
-import TreeNodeComponent from "./TreeNodeComponent";
+import OrgChartTree from "./OrgChartTree";
 
 /**
  * Props for OrgChart component.
@@ -17,6 +17,7 @@ interface OrgChartProps {
  * TreeNode interface extends Employee and adds a children property.
  */
 interface TreeNode extends Employee {
+  name: string;
   children: TreeNode[];
 }
 
@@ -116,9 +117,7 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
 
       {/* Org Chart Tree */}
       {treeData ? (
-        <div className="mt-8">
-          <TreeNodeComponent node={treeData} />
-        </div>
+        <OrgChartTree node={treeData} />
       ) : (
         <div className="flex flex-col items-center justify-center py-16">
           <img
@@ -152,7 +151,11 @@ const transformToTree = (employees: Employee[]): TreeNode | null => {
   let root: TreeNode | null = null;
 
   employees.forEach((employee) => {
-    idToNodeMap[employee.id] = { ...employee, children: [] };
+    idToNodeMap[employee.id] = {
+      ...employee,
+      name: `${employee.first_name} ${employee.last_name}`,
+      children: [],
+    };
   });
 
   employees.forEach((employee) => {
