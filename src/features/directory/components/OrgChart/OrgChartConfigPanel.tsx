@@ -129,32 +129,34 @@ export const OrgChartConfigPanel = ({ isOpen, onClose, companyId, onUpdate }: Or
               </select>
             </div>
 
-            {/* Reporting Structure */}
-            {employees
-              .filter(emp => emp.id !== highestRanking)
-              .map(employee => (
-                <div key={employee.id} className="mb-6">
-                  <h3 className="font-medium mb-2">
-                    {employee.first_name} {employee.last_name}
-                  </h3>
-                  <div className="text-sm text-gray-500 mb-1">Reports to</div>
-                  <select
-                    title="Select the manager for this employee"
-                    value={reportingStructure[employee.id] || ''}
-                    onChange={(e) => handleReportingChange(employee.id, e.target.value)}
-                    className="w-full p-2 border rounded-md"
-                  >
-                    <option value="">Select...</option>
-                    {employees
-                      .filter(emp => emp.id !== employee.id)
-                      .map(emp => (
-                        <option key={emp.id} value={emp.id}>
-                          {emp.first_name} {emp.last_name}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              ))}
+            {/* Conditionally render Reporting Structure */}
+            {highestRanking && (
+              employees
+                .filter(emp => emp.id !== highestRanking)
+                .map(employee => (
+                  <div key={employee.id} className="mb-6">
+                    <h3 className="font-medium mb-2">
+                      {employee.first_name} {employee.last_name}
+                    </h3>
+                    <div className="text-sm text-gray-500 mb-1">Reports to</div>
+                    <select
+                      title="Select the manager for this employee"
+                      value={reportingStructure[employee.id] || ''}
+                      onChange={(e) => handleReportingChange(employee.id, e.target.value)}
+                      className="w-full p-2 border rounded-md"
+                    >
+                      <option value="">Select...</option>
+                      {employees
+                        .filter(emp => emp.id !== employee.id)
+                        .map(emp => (
+                          <option key={emp.id} value={emp.id}>
+                            {emp.first_name} {emp.last_name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                ))
+            )}
           </div>
         </div>
       </div>
