@@ -1,6 +1,6 @@
 import React from "react";
 import { Employee } from "../../types/directory.types";
-import "./TreeNodeComponent.css";
+import "./styles/TreeNodeComponent.css";
 
 /**
  * TreeNode interface extends Employee and adds a children property.

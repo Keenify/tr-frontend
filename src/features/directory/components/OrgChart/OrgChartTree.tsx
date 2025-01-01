@@ -2,7 +2,7 @@ import React from "react";
 import Tree, { RawNodeDatum } from "react-d3-tree";
 import { Employee } from "../../types/directory.types";
 import MemoizedTreeNodeComponent from "./TreeNodeComponent";
-import "./OrgChartTree.css";
+import "./styles/OrgChartTree.css";
 
 interface TreeNode extends Employee {
   name: string;
