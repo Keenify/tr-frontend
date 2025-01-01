@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import noOrgChartImage from "../../assets/org_chart.svg";
 import { OrgChartConfigPanel } from "./OrgChartConfigPanel";
 import { directoryService } from "../../services/directoryService";
@@ -36,26 +36,19 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
   const [, setEmployees] = useState<Employee[]>([]);
   const [treeData, setTreeData] = useState<TreeNode | null>(null);
 
-  /**
-   * This useEffect hook is responsible for fetching employee data whenever the component mounts
-   * or when the companyId changes. It utilizes the directoryService to obtain the list of employees
-   * associated with the specified companyId. Upon a successful fetch, the employees state is updated
-   * with the retrieved data, and the organizational tree structure is set. If the fetch operation fails,
-   * an error message is logged to the console.
-   */
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        const employeesData = await directoryService.fetchEmployees(companyId);
-        setEmployees(employeesData);
-        setTreeData(transformToTree(employeesData));
-      } catch (error) {
-        console.error("Failed to fetch employees", error);
-      }
-    };
-
-    fetchEmployees();
+  const fetchEmployees = useCallback(async () => {
+    try {
+      const employeesData = await directoryService.fetchEmployees(companyId);
+      setEmployees(employeesData);
+      setTreeData(transformToTree(employeesData));
+    } catch (error) {
+      console.error("Failed to fetch employees", error);
+    }
   }, [companyId]);
+
+  useEffect(() => {
+    fetchEmployees();
+  }, [fetchEmployees]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -136,6 +129,7 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
         isOpen={isConfigPanelOpen}
         onClose={() => setIsConfigPanelOpen(false)}
         companyId={companyId}
+        onUpdate={fetchEmployees}
       />
     </div>
   );

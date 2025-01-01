@@ -8,9 +8,10 @@ interface OrgChartConfigPanelProps {
   isOpen: boolean;
   onClose: () => void;
   companyId: string;
+  onUpdate: () => void;
 }
 
-export const OrgChartConfigPanel = ({ isOpen, onClose, companyId }: OrgChartConfigPanelProps) => {
+export const OrgChartConfigPanel = ({ isOpen, onClose, companyId, onUpdate }: OrgChartConfigPanelProps) => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [highestRanking, setHighestRanking] = useState<string>('');
   const [reportingStructure, setReportingStructure] = useState<Record<string, string>>({});
@@ -46,11 +47,17 @@ export const OrgChartConfigPanel = ({ isOpen, onClose, companyId }: OrgChartConf
     }
   }, [companyId, isOpen]);
 
-  const handleReportingChange = (employeeId: string, managerId: string) => {
-    setReportingStructure(prev => ({
-      ...prev,
-      [employeeId]: managerId
-    }));
+  const handleReportingChange = async (employeeId: string, managerId: string) => {
+    try {
+      await directoryService.updateEmployee(employeeId, { reports_to: managerId });
+      setReportingStructure(prev => ({
+        ...prev,
+        [employeeId]: managerId
+      }));
+      onUpdate();
+    } catch (error) {
+      console.error('Failed to update reporting structure:', error);
+    }
   };
 
   return (
@@ -156,7 +163,7 @@ export const OrgChartConfigPanel = ({ isOpen, onClose, companyId }: OrgChartConf
         onClose={() => setIsModalOpen(false)}
         onSuccess={() => {
           setIsModalOpen(false);
-          // Refresh employees or perform any other action needed
+          onUpdate();
         }}
         companyId={companyId}
       />
