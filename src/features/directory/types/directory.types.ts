@@ -5,10 +5,12 @@ export interface Employee {
   email: string;
   phone: string | null;
   role: string;
-  user_id: string;
+  user_id: string | null;
   completed_sign_up_sequence: boolean;
   profile_pic_url: string | null;
   company_id: string; // This is a UUID
+  reports_to: string | null;
+  highest_rank: boolean;
   created_at: string;
 }
 
