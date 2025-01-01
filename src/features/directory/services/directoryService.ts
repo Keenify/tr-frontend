@@ -53,4 +53,25 @@ export const directoryService = {
     }
     return response.json();
   },
+
+  /**
+   * Updates an employee's information.
+   * @param userId - The ID of the user to update.
+   * @param updateData - Partial data of the employee to be updated.
+   * @returns A promise that resolves to the updated Employee object.
+   * @throws Will throw an error if the update operation fails.
+   */
+  async updateEmployee(userId: string, updateData: Partial<Employee>): Promise<Employee> {
+    const response = await fetch(`${API_BASE_URL}/employees/${userId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updateData),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to update employee");
+    }
+    return response.json();
+  },
 };
