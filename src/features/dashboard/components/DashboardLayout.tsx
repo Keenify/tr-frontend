@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Power, ThumbsUp } from 'react-feather'; // Import Power and ThumbsUp icons from react-feather
+import { Power, ThumbsUp, Clock } from 'react-feather'; // Import Power, ThumbsUp, and Clock icons from react-feather
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase'; // Import supabase client
 import { useNavigate, useParams } from 'react-router-dom';
@@ -145,7 +145,8 @@ export function DashboardLayout({ children, onTabChange, session, signOut, activ
                       }`}
                     >
                       <span>{tab.charAt(0).toUpperCase() + tab.slice(1)}</span>
-                      {tab === 'content' && <ThumbsUp size={16} className="text-gray-400" />}
+                      {(tab === 'content' || tab === 'people') && <ThumbsUp size={16} className="text-gray-400" />}
+                      {['groups', 'marketplaces', 'reports', 'account'].includes(tab) && <Clock size={16} className="text-gray-400" />}
                     </button>
                     {tab === 'people' && isPeopleSubmenuOpen && (
                       <div className="pl-4 space-y-1">
@@ -153,13 +154,14 @@ export function DashboardLayout({ children, onTabChange, session, signOut, activ
                           <button
                             key={subTab}
                             onClick={() => handleSubTabClick(subTab as 'directory' | 'orgChart')}
-                            className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                            className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                               localActiveSubTab === subTab
                                 ? 'bg-red-50 text-red-600 border-l-4 border-red-600'
                                 : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
                             }`}
                           >
-                            {subTab === 'orgChart' ? 'Org Chart' : 'Directory'}
+                            <span>{subTab === 'orgChart' ? 'Org Chart' : 'Directory'}</span>
+                            <ThumbsUp size={16} className="text-gray-400" />
                           </button>
                         ))}
                       </div>
