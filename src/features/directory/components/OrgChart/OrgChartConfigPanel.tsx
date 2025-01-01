@@ -116,7 +116,9 @@ export const OrgChartConfigPanel = ({ isOpen, onClose, companyId, onUpdate }: Or
                 title="Select the highest ranking executive"
                 value={highestRanking}
                 onChange={(e) => setHighestRanking(e.target.value)}
-                className="w-full p-2 border rounded-md"
+                className={`w-full p-2 border rounded-md ${highestRanking ? 'bg-gray-200 text-gray-500' : ''}`}
+                disabled={!!highestRanking}
+                style={{ appearance: highestRanking ? 'none' : 'auto' }}
               >
                 <option value="">Select...</option>
                 {employees.map((emp) => (
