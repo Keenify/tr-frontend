@@ -11,9 +11,10 @@ interface TreeNode extends Employee {
 
 interface OrgChartTreeProps {
   node: TreeNode;
+  onNodeClick: (employee: Employee) => void;
 }
 
-const OrgChartTree: React.FC<OrgChartTreeProps> = ({ node }) => {
+const OrgChartTree: React.FC<OrgChartTreeProps> = ({ node, onNodeClick }) => {
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -30,7 +31,10 @@ const OrgChartTree: React.FC<OrgChartTreeProps> = ({ node }) => {
 
   const renderCustomNode = ({ nodeDatum }: CustomNodeElementProps) => (
     <foreignObject width="150" height="100" x="-75" y="-50">
-      <div style={{ width: '150px', height: '100px' }}>
+      <div
+        style={{ width: '150px', height: '100px', cursor: 'pointer' }}
+        onClick={() => onNodeClick(nodeDatum as unknown as Employee)}
+      >
         <MemoizedTreeNodeComponent node={nodeDatum as unknown as TreeNode} />
       </div>
     </foreignObject>

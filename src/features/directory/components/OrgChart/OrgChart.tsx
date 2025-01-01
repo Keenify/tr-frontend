@@ -4,6 +4,7 @@ import { OrgChartConfigPanel } from "./OrgChartConfigPanel";
 import { directoryService } from "../../services/directoryService";
 import { Employee } from "../../types/directory.types";
 import OrgChartTree from "./OrgChartTree";
+import { EmployeePanel } from "../EmployeePanel";
 
 /**
  * Props for OrgChart component.
@@ -35,6 +36,8 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
   const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
   const [, setEmployees] = useState<Employee[]>([]);
   const [treeData, setTreeData] = useState<TreeNode | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | undefined>(undefined);
+  const [isEmployeePanelOpen, setIsEmployeePanelOpen] = useState(false);
 
   const fetchEmployees = useCallback(async () => {
     try {
@@ -49,6 +52,11 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
   useEffect(() => {
     fetchEmployees();
   }, [fetchEmployees]);
+
+  const handleNodeClick = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setIsEmployeePanelOpen(true);
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -110,7 +118,7 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
 
       {/* Org Chart Tree */}
       {treeData ? (
-        <OrgChartTree node={treeData} />
+        <OrgChartTree node={treeData} onNodeClick={handleNodeClick} />
       ) : (
         <div className="flex flex-col items-center justify-center py-16">
           <img
@@ -123,6 +131,13 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
           </h2>
         </div>
       )}
+
+      {/* Employee Panel */}
+      <EmployeePanel
+        employee={selectedEmployee}
+        isOpen={isEmployeePanelOpen}
+        onClose={() => setIsEmployeePanelOpen(false)}
+      />
 
       {/* Add the config panel */}
       <OrgChartConfigPanel
