@@ -7,14 +7,14 @@ const API_DOMAIN = import.meta.env.VITE_BACKEND_API_DOMAIN;
  * @param {string} status - The status of the document.
  * @param {string} employeeId - The ID of the employee.
  * @param {string} type - The type of the document.
- * @returns {Promise<any>} - A promise that resolves to the created document data.
+ * @returns {Promise<{ id: string; title: string; position: number }>} - A promise that resolves to the created document data.
  */
 export async function createDocument(
   title: string,
   status: string,
   employeeId: string,
   type: string
-): Promise<any> {
+): Promise<{ id: string; title: string; position: number }> {
   const endpoint = `${API_DOMAIN}/documents/`;
 
   const response = await fetch(endpoint, {
@@ -54,7 +54,7 @@ export async function createDocument(
 export async function upsertDocumentContent(
   content: string,
   tabId: string
-): Promise<any> {
+): Promise<{ content: { key: string }; tab_id: string }> {
   const endpoint = `${API_DOMAIN}/documents/contents/`;
 
   const requestBody = {
@@ -88,9 +88,9 @@ export async function upsertDocumentContent(
 /**
  * Fetches a document by its ID.
  * @param {string} documentId - The ID of the document to fetch.
- * @returns {Promise<any>} - A promise that resolves to the fetched document data.
+ * @returns {Promise<{ id: string; title: string; content: string }>} - A promise that resolves to the fetched document data.
  */
-export async function getDocument(documentId: string): Promise<any> {
+export async function getDocument(documentId: string): Promise<{ id: string; title: string; content: string }> {
   const endpoint = `${API_DOMAIN}/documents/${documentId}`;
 
   const response = await fetch(endpoint, {
@@ -119,13 +119,13 @@ export async function getDocument(documentId: string): Promise<any> {
  * @param {string} documentId - The ID of the document.
  * @param {string} title - The title of the tab.
  * @param {number} position - The position of the tab.
- * @returns {Promise<any>} - A promise that resolves to the created tab data.
+ * @returns {Promise<{ id: string; title: string; position: number }>} - A promise that resolves to the created tab data.
  */
 export async function createDocumentTab(
   documentId: string,
   title: string,
   position: number
-): Promise<any> {
+): Promise<{ id: string; title: string; position: number }> {
   const endpoint = `${API_DOMAIN}/documents/${documentId}/tabs/`;
 
   const response = await fetch(endpoint, {
@@ -158,9 +158,9 @@ export async function createDocumentTab(
  * Fetches document tabs. If a tabId is provided, fetches the specific tab.
  * @param {string} documentId - The ID of the document.
  * @param {string} [tabId] - Optional ID of the tab to fetch.
- * @returns {Promise<any[]>} - A promise that resolves to an array of tab data.
+ * @returns {Promise<{ id: string; title: string; position: number }[]>} - A promise that resolves to an array of tab data.
  */
-export async function getDocumentTabs(documentId: string, tabId?: string): Promise<any[]> {
+export async function getDocumentTabs(documentId: string, tabId?: string): Promise<{ id: string; title: string; position: number }[]> {
   const endpoint = `${API_DOMAIN}/documents/${documentId}/tabs/${tabId ? `?tab_id=${encodeURIComponent(tabId)}` : ''}`;
 
   const response = await fetch(endpoint, {
@@ -189,7 +189,7 @@ export async function getDocumentTabs(documentId: string, tabId?: string): Promi
  * Updates an existing document.
  * @param {string} documentId - The ID of the document to update.
  * @param {Partial<{ title: string, status: string, employee_id: string, description: string, type: string }>} updateData - The data to update.
- * @returns {Promise<any>} - A promise that resolves to the updated document data.
+ * @returns {Promise<{ id: string; title: string; position: number }>} - A promise that resolves to the updated document data.
  */
 export async function updateDocument(
   documentId: string,
@@ -200,7 +200,7 @@ export async function updateDocument(
     description: string;
     type: string;
   }>
-): Promise<any> {
+): Promise<{ id: string; title: string; position: number }> {
   const endpoint = `${API_DOMAIN}/documents/${documentId}`;
 
   const response = await fetch(endpoint, {
@@ -229,9 +229,9 @@ export async function updateDocument(
 /**
  * Fetches document content by tab ID.
  * @param {string} tabId - The ID of the tab.
- * @returns {Promise<any>} - A promise that resolves to the document content data.
+ * @returns {Promise<{ content: { key: string }; tab_id: string }>} - A promise that resolves to the document content data.
  */
-export async function getDocumentContent(tabId: string): Promise<any> {
+export async function getDocumentContent(tabId: string): Promise<{ content: { key: string }; tab_id: string }> {
   const endpoint = `${API_DOMAIN}/documents/contents/${encodeURIComponent(tabId)}`;
 
   const response = await fetch(endpoint, {
@@ -259,9 +259,9 @@ export async function getDocumentContent(tabId: string): Promise<any> {
 /**
  * Fetches documents by type.
  * @param {string} type - The type of the document. Acceptable values are 'none', 'Processes', 'Company', 'Policies'.
- * @returns {Promise<any>} - A promise that resolves to the list of document data.
+ * @returns {Promise<{ id: string; title: string; position: number }[]>} - A promise that resolves to the list of document data.
  */
-export async function getDocumentsByType(type: string): Promise<any> {
+export async function getDocumentsByType(type: string): Promise<{ id: string; title: string; position: number }[]> {
   const endpoint = type === 'none' 
     ? `${API_DOMAIN}/documents/type/`
     : `${API_DOMAIN}/documents/type/?document_type=${encodeURIComponent(type)}`;
@@ -347,7 +347,7 @@ export async function deleteDocumentTab(documentId: string, tabId: string): Prom
  * @param {string} documentId - The ID of the document.
  * @param {string} tabId - The ID of the tab to update.
  * @param {Partial<{ title: string, position: number }>} updateData - The data to update.
- * @returns {Promise<any>} - A promise that resolves to the updated tab data.
+ * @returns {Promise<{ id: string; title: string; position: number }>} - A promise that resolves to the updated tab data.
  */
 export async function updateDocumentTab(
   documentId: string,
@@ -356,7 +356,7 @@ export async function updateDocumentTab(
     title: string;
     position: number;
   }>
-): Promise<any> {
+): Promise<{ id: string; title: string; position: number }> {
   const endpoint = `${API_DOMAIN}/documents/${documentId}/tabs/${tabId}`;
 
   const response = await fetch(endpoint, {
