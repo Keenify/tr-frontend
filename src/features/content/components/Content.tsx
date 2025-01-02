@@ -62,15 +62,19 @@ const Content: React.FC<ContentProps> = ({ session }) => {
     try {
       setActiveContentType(type);
       const data = await getDocumentsByType(type);
-      setDocuments(data || []); // Ensure we set empty array if no data
-      console.log(`✅ Documents fetched successfully for type: ${type}`);
-    } catch (error: unknown) {
-      setDocuments([]); // Always set empty array on error
-      if (error instanceof Error && isHttpError(error) && error.status === 404) {
+      const documentsWithType = data.map((doc) => ({
+        ...doc,
+        type: type,
+      }));
+      setDocuments(documentsWithType || []); // Ensure we set empty array if no data
+      if (documentsWithType.length === 0) {
         console.log(`ℹ️ No documents found for type: ${type}`);
       } else {
-        console.error(`❌ Failed to fetch documents for type: ${type}`, error);
+        console.log(`✅ Documents fetched successfully for type: ${type}`);
       }
+    } catch (error: unknown) {
+      setDocuments([]); // Always set empty array on error
+      console.error(`❌ Failed to fetch documents for type: ${type}`, error);
     }
   };
 
@@ -200,14 +204,5 @@ const Content: React.FC<ContentProps> = ({ session }) => {
     </div>
   );
 };
-
-function isHttpError(error: unknown): error is { status: number } {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'status' in error &&
-    typeof (error as { status: unknown }).status === 'number'
-  );
-}
 
 export default Content;
