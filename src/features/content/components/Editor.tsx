@@ -219,14 +219,15 @@ const Editor: React.FC = () => {
    */
   const handleTitleUpdate = async () => {
     if (!subject?.id || !tabData?.id) return;
-    if (pendingTitle === tabData.title || !pendingTitle.trim()) {
-      setPendingTitle(tabData.title);
+    
+    if (pendingTitle === tabData.title) {
       setIsEditingTitle(false);
       return;
     }
 
     try {
       await updateDocumentTab(subject.id, tabData.id, { title: pendingTitle });
+      tabData.title = pendingTitle;
       setIsEditingTitle(false);
       toast.success('Topic title updated successfully', {
         position: 'top-right',
@@ -336,6 +337,10 @@ const Editor: React.FC = () => {
     }
   }, [editor, steps, activeStepIndex]);
 
+  const handleTitleClick = () => {
+    setIsEditingTitle(true);
+  };
+
   return (
     <EditorLayout
       title={pendingTitle}
@@ -344,6 +349,7 @@ const Editor: React.FC = () => {
       onTitleChange={setPendingTitle}
       onTitleBlur={handleTitleUpdate}
       onTitleKeyPress={handleTitleKeyPress}
+      onTitleClick={handleTitleClick}
       toolbarChildren={
         <>
           {editor && (

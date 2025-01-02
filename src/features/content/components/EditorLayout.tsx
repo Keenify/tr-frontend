@@ -18,6 +18,7 @@ interface EditorLayoutProps {
   onAddStep: () => void;
   onDeleteStep: (index: number) => void;
   onStepTitleChange: (index: number, title: string) => void;
+  onTitleClick: () => void;
 }
 
 export const EditorLayout: React.FC<EditorLayoutProps> = ({
@@ -35,6 +36,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   onAddStep,
   onDeleteStep,
   onStepTitleChange,
+  onTitleClick,
 }) => {
   return (
     <div className="flex h-screen">
@@ -104,7 +106,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
                 ) : (
                   <h1
                     className="text-3xl font-bold text-center cursor-pointer group relative"
-                    onClick={() => onTitleChange(title)}
+                    onClick={onTitleClick}
                   >
                     <span className="group-hover:bg-gray-100 px-2 py-1 rounded">
                       {title}
