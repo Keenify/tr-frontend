@@ -1,6 +1,7 @@
 import React from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { Step } from '../../../services/docService';
 
 interface EditorLayoutProps {
   children: React.ReactNode;
@@ -11,6 +12,12 @@ interface EditorLayoutProps {
   onTitleBlur: () => void;
   onTitleKeyPress: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   toolbarChildren: React.ReactNode;
+  steps: Step[];
+  activeStepIndex: number;
+  setActiveStepIndex: (index: number) => void;
+  onAddStep: () => void;
+  onDeleteStep: (index: number) => void;
+  onStepTitleChange: (index: number, title: string) => void;
 }
 
 export const EditorLayout: React.FC<EditorLayoutProps> = ({
@@ -22,12 +29,40 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   onTitleBlur,
   onTitleKeyPress,
   toolbarChildren,
+  steps,
+  activeStepIndex,
+  setActiveStepIndex,
+//   onAddStep,
+//   onDeleteStep,
+  onStepTitleChange,
 }) => {
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
       <div className="w-64 bg-white border-r border-gray-200 flex-shrink-0">
-        {/* Add your sidebar content here */}
+        <div className="p-4">
+          <h2 className="text-lg font-bold mb-4">Steps</h2>
+          <ul>
+            {steps?.map((step, index) => (
+              <li
+                key={index}
+                className={`mb-2 cursor-pointer ${
+                  index === activeStepIndex ? 'bg-gray-200' : ''
+                }`}
+                onClick={() => setActiveStepIndex(index)}
+              >
+                <input
+                  title="Step Title"
+                  placeholder="Step Title"
+                  type="text"
+                  value={step.title}
+                  onChange={(e) => onStepTitleChange(index, e.target.value)}
+                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
       {/* Editor Container */}
@@ -74,10 +109,18 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
               </div>
             </div>
           </div>
-
-          {/* Main content with padding to account for fixed header */}
-          <div className="pt-48 mx-auto max-w-3xl">
-            <div className="bg-white shadow-lg rounded-lg p-6">{children}</div>
+          {/* Scrollable content section */}
+          <div className="pt-40 flex-1 overflow-auto">
+            <div className="mx-auto max-w-3xl">
+              {steps && steps.length > 0 && (
+                <div className="bg-white shadow-lg rounded-lg p-6 mb-4">
+                  <h2 className="text-xl font-bold mb-4">
+                    {steps[activeStepIndex]?.title}
+                  </h2>
+                  {children}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

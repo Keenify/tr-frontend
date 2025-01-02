@@ -5,6 +5,7 @@ import { updateDocumentTab } from "../../../services/docService";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { EditorLayout } from './EditorLayout';
+import { DocumentContent, Step, upsertDocumentContent, getDocumentContent } from '../../../services/docService';
 
 // Extensions
 import StarterKit from "@tiptap/starter-kit";
@@ -17,10 +18,6 @@ import TextAlign from '@tiptap/extension-text-align'
 import { Extension } from '@tiptap/core'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
-
-
-// Services
-import { upsertDocumentContent, getDocumentContent } from "../../../services/docService";
 
 // Styles
 import "./../styles/Editor.css";
@@ -76,13 +73,16 @@ const CustomLineHeight = Extension.create({
 const Editor: React.FC = () => {
   const location = useLocation();
   const { tabData, subject } = location.state || {};
-  const [content, setContent] = useState<string>('');
+  const [content, ] = useState<string>('');
   const [showLinkMenu, setShowLinkMenu] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [linkText, setLinkText] = useState('');
   const [isValidUrl, setIsValidUrl] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [pendingTitle, setPendingTitle] = useState(tabData?.title || '');
+  const [steps, setSteps] = useState<Step[]>([]);
+  const [activeStepIndex, setActiveStepIndex] = useState(0);
+  const [contentId, setContentId] = useState<string | null>(null);
 
   /**
    * Fetches the document content based on the tab ID from the location state.
@@ -94,7 +94,8 @@ const Editor: React.FC = () => {
       if (tabData?.id) {
         try {
           const data = await getDocumentContent(tabData.id);
-          setContent(data.content.key);
+          setSteps(data.content.steps);
+          setContentId(data.id);
           console.log("✅ Document content fetched successfully");
         } catch (error) {
           console.error("❌ Failed to fetch document content:", error);
@@ -175,10 +176,19 @@ const Editor: React.FC = () => {
    */
   useEffect(() => {
     const interval = setInterval(async () => {
-      if (editor) {
-        const updatedContent = editor.getHTML();
+      if (editor && contentId) {
+        const updatedContent: DocumentContent = {
+          content: {
+            steps: steps?.map((step, index) => ({
+              ...step,
+              content: index === activeStepIndex ? editor.getHTML() : step.content,
+            })) || [],
+          },
+          id: contentId,
+          tab_id: tabData?.id || '',
+        };
         try {
-          await upsertDocumentContent(updatedContent, tabData?.id);
+          await upsertDocumentContent(updatedContent, contentId);
           console.log("✅ Content synced successfully");
         } catch (error) {
           console.error("❌ Failed to sync content:", error);
@@ -186,8 +196,8 @@ const Editor: React.FC = () => {
       }
     }, 3000);
 
-    return () => clearInterval(interval); // Cleanup interval on component unmount
-  }, [editor, tabData]);
+    return () => clearInterval(interval);
+  }, [editor, contentId, steps, activeStepIndex, tabData]);
 
   /**
    * Validates a URL string.
@@ -241,6 +251,40 @@ const Editor: React.FC = () => {
     }
   };
 
+  const handleStepTitleChange = (index: number, title: string) => {
+    const updatedSteps = [...steps];
+    updatedSteps[index].title = title;
+    setSteps(updatedSteps);
+  };
+
+  const handleStepContentChange = (content: string) => {
+    const updatedSteps = [...steps];
+    updatedSteps[activeStepIndex].content = content;
+    setSteps(updatedSteps);
+  };
+
+  const handleAddStep = () => {
+    const newStep: Step = {
+      title: `Step ${steps.length + 1}`,
+      content: '',
+      step_number: steps.length + 1,
+    };
+    setSteps([...steps, newStep]);
+    setActiveStepIndex(steps.length);
+  };
+
+  const handleDeleteStep = (index: number) => {
+    const updatedSteps = steps.filter((_, i) => i !== index);
+    setSteps(updatedSteps);
+    setActiveStepIndex(Math.min(activeStepIndex, updatedSteps.length - 1));
+  };
+
+  useEffect(() => {
+    if (editor && steps?.length > 0) {
+      editor.commands.setContent(steps[activeStepIndex].content);
+    }
+  }, [editor, steps, activeStepIndex]);
+
   return (
     <EditorLayout
       title={pendingTitle}
@@ -280,11 +324,18 @@ const Editor: React.FC = () => {
           )}
         </>
       }
+      steps={steps}
+      activeStepIndex={activeStepIndex}
+      setActiveStepIndex={setActiveStepIndex}
+      onAddStep={handleAddStep}
+      onDeleteStep={handleDeleteStep}
+      onStepTitleChange={handleStepTitleChange}
     >
       <EditorContent
         editor={editor}
-        className="tiptap-editor"
+        className="tiptap-editor mt-4" // Add margin-top class
         placeholder="Add content here"
+        onChange={() => handleStepContentChange(editor?.getHTML() || '')}
       />
     </EditorLayout>
   );
