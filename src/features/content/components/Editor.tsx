@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
 import { updateDocumentTab } from "../../../services/docService";
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { EditorLayout } from './EditorLayout';
 
 // Extensions
 import StarterKit from "@tiptap/starter-kit";
@@ -240,99 +241,52 @@ const Editor: React.FC = () => {
     }
   };
 
-  if (!editor) {
-    return null;
-  }
-
   return (
-    <div className="editor-container min-h-screen bg-gray-100 p-4">
-      <ToastContainer />
-      {/* Fixed header section */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-gray-100 px-4 pt-4">
-        <div className="mx-auto max-w-3xl space-y-4">
-          {/* Title section */}
-          <div className="bg-white shadow-lg rounded-lg p-6 relative">
-            {isEditingTitle ? (
-              <div className="relative">
-                <input    
-                  type="text"
-                  title="Topic Title"
-                  placeholder="Topic Title"
-                  value={pendingTitle}
-                  onChange={(e) => setPendingTitle(e.target.value)}
-                  onBlur={handleTitleUpdate}
-                  onKeyPress={handleTitleKeyPress}
-                  autoFocus
-                  className="text-3xl font-bold w-full p-1 border rounded text-center"
-                  maxLength={100}
-                />
-              </div>
-            ) : (
-              <h1 
-                className="text-3xl font-bold text-center cursor-pointer group relative"
-                onClick={() => setIsEditingTitle(true)}
-              >
-                <span className="group-hover:bg-gray-100 px-2 py-1 rounded">
-                  {pendingTitle}
-                </span>
-              </h1>
-            )}
-            <span className="absolute top-0 right-0 text-sm text-gray-500 p-2">
-              Topic
-            </span>
-          </div>
-          {/* Toolbar section */}
-          <div className="bg-white shadow-lg rounded-lg p-2 flex justify-center space-x-2">
-            {/* Undo button */}
-            <UndoRedoMenu editor={editor} />
-            {/* Heading menu toggle */}
-            <HeadingMenu editor={editor} />
-            {/* Vertical divider */}
-            <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
-            {/* Text Format Menu */}
-            <TextFormatMenu editor={editor} />
-            {/* Vertical divider */}
-            <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
-            {/* Text Color Menu */}
-            <ColorMenu editor={editor} />
-            {/* Vertical divider */}
-            <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
-            {/* Link Menu */}
-            <LinkMenu 
-              editor={editor}
-              showLinkMenu={showLinkMenu}
-              setShowLinkMenu={setShowLinkMenu}
-              linkText={linkText}
-              setLinkText={setLinkText}
-              linkUrl={linkUrl}
-              setLinkUrl={setLinkUrl}
-              isValidUrl={isValidUrl}
-              setIsValidUrl={setIsValidUrl}
-              isValidURL={isValidURL}
-            />
-            {/* Vertical divider */}
-            <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
-            {/* Text Alignment Menu */}
-            <TextAlignMenu editor={editor} />
-            {/* Line Spacing Menu */}
-            <LineSpacingMenu editor={editor} />
-            {/* List Options */}
-            <ListMenu editor={editor} />
-          </div>
-        </div>
-      </div>
-
-      {/* Main content with padding to account for fixed header */}
-      <div className="pt-48 mx-auto max-w-3xl"> {/* Adjust pt-48 value as needed */}
-        <div className="bg-white shadow-lg rounded-lg p-6">
-          <EditorContent
-            editor={editor}
-            className="tiptap-editor"
-            placeholder="Add content here"
-          />
-        </div>
-      </div>
-    </div>
+    <EditorLayout
+      title={pendingTitle}
+      isEditingTitle={isEditingTitle}
+      pendingTitle={pendingTitle}
+      onTitleChange={setPendingTitle}
+      onTitleBlur={handleTitleUpdate}
+      onTitleKeyPress={handleTitleKeyPress}
+      toolbarChildren={
+        <>
+          {editor && (
+            <>
+              <UndoRedoMenu editor={editor} />
+              <HeadingMenu editor={editor} />
+              <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
+              <TextFormatMenu editor={editor} />
+              <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
+              <ColorMenu editor={editor} />
+              <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
+              <LinkMenu 
+                editor={editor}
+                showLinkMenu={showLinkMenu}
+                setShowLinkMenu={setShowLinkMenu}
+                linkText={linkText}
+                setLinkText={setLinkText}
+                linkUrl={linkUrl}
+                setLinkUrl={setLinkUrl}
+                isValidUrl={isValidUrl}
+                setIsValidUrl={setIsValidUrl}
+                isValidURL={isValidURL}
+              />
+              <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
+              <TextAlignMenu editor={editor} />
+              <LineSpacingMenu editor={editor} />
+              <ListMenu editor={editor} />
+            </>
+          )}
+        </>
+      }
+    >
+      <EditorContent
+        editor={editor}
+        className="tiptap-editor"
+        placeholder="Add content here"
+      />
+    </EditorLayout>
   );
 };
 
