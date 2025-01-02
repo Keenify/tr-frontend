@@ -176,7 +176,7 @@ const Editor: React.FC = () => {
    */
   useEffect(() => {
     const interval = setInterval(async () => {
-      if (editor && contentId) {
+      if (editor && contentId && steps.length > 0) {
         const updatedContent: DocumentContent = {
           content: {
             steps: steps?.map((step, index) => ({
@@ -263,25 +263,76 @@ const Editor: React.FC = () => {
     setSteps(updatedSteps);
   };
 
-  const handleAddStep = () => {
+  const handleAddStep = async () => {
     const newStep: Step = {
       title: `Step ${steps.length + 1}`,
       content: '',
       step_number: steps.length + 1,
     };
-    setSteps([...steps, newStep]);
-    setActiveStepIndex(steps.length);
+    const updatedSteps = [...steps, newStep];
+    setSteps(updatedSteps);
+    setActiveStepIndex(updatedSteps.length - 1);
+
+    if (contentId) {
+      const updatedContent: DocumentContent = {
+        content: {
+          steps: updatedSteps,
+        },
+        id: contentId,
+        tab_id: tabData?.id || '',
+      };
+      try {
+        await upsertDocumentContent(updatedContent, contentId);
+        console.log("✅ Step added successfully");
+      } catch (error) {
+        console.error("❌ Failed to add step:", error);
+      }
+    }
   };
 
-  const handleDeleteStep = (index: number) => {
+  const handleDeleteStep = async (index: number) => {
     const updatedSteps = steps.filter((_, i) => i !== index);
-    setSteps(updatedSteps);
-    setActiveStepIndex(Math.min(activeStepIndex, updatedSteps.length - 1));
+    
+    // Recalculate step numbers
+    const recalculatedSteps = updatedSteps.map((step, i) => ({
+      ...step,
+      step_number: i + 1,
+    }));
+
+    // Update activeStepIndex before setting steps
+    const newActiveStepIndex = Math.max(0, Math.min(activeStepIndex, recalculatedSteps.length - 1));
+    setActiveStepIndex(newActiveStepIndex);
+    setSteps(recalculatedSteps);
+
+    if (contentId) {
+      const updatedContent: DocumentContent = {
+        content: {
+          steps: recalculatedSteps,
+        },
+        id: contentId,
+        tab_id: tabData?.id || '',
+      };
+      try {
+        await upsertDocumentContent(updatedContent, contentId);
+        console.log("✅ Step deleted successfully");
+      } catch (error) {
+        console.error("❌ Failed to delete step:", error);
+      }
+    }
+
+    // Clear editor content if no steps remain
+    if (recalculatedSteps.length === 0 && editor) {
+      editor.commands.clearContent();
+    }
   };
 
   useEffect(() => {
-    if (editor && steps?.length > 0) {
+    if (!editor) return;
+    
+    if (steps?.length > 0 && activeStepIndex >= 0 && activeStepIndex < steps.length) {
       editor.commands.setContent(steps[activeStepIndex].content);
+    } else {
+      editor.commands.clearContent();
     }
   }, [editor, steps, activeStepIndex]);
 

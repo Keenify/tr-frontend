@@ -32,8 +32,8 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   steps,
   activeStepIndex,
   setActiveStepIndex,
-//   onAddStep,
-//   onDeleteStep,
+  onAddStep,
+  onDeleteStep,
   onStepTitleChange,
 }) => {
   return (
@@ -59,9 +59,21 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
                   onChange={(e) => onStepTitleChange(index, e.target.value)}
                   className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
                 />
+                <button
+                  onClick={() => onDeleteStep(index)}
+                  className="text-red-500 hover:text-red-700 ml-2"
+                >
+                  Delete
+                </button>
               </li>
             ))}
           </ul>
+          <button
+            onClick={onAddStep}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Add Step
+          </button>
         </div>
       </div>
 
