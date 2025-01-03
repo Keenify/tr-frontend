@@ -11,7 +11,6 @@ export interface DocumentContent {
   content: {
     steps: Step[];
   };
-  id: string;
   tab_id: string;
 }
 
@@ -366,20 +365,19 @@ export async function updateDocumentTab(
 /**
  * Upserts document content.
  * @param {DocumentContent} content - The content of the document.
- * @param {string} contentId - The ID of the content.
+ * @param {string} tabId - The ID of the tab.
  * @returns {Promise<DocumentContent>} - A promise that resolves to the updated or created content data.
  */
-export async function upsertDocumentContent(content: DocumentContent, contentId: string): Promise<DocumentContent> {
-  const endpoint = `${API_DOMAIN}/documents/contents/${contentId}`;
+export async function upsertDocumentContent(content: DocumentContent, tabId: string): Promise<DocumentContent> {
+  const endpoint = `${API_DOMAIN}/documents/contents/`;
 
   const requestBody = {
-    content: {
-      steps: content.content.steps,
-    },
+    content: content.content,
+    tab_id: tabId,
   };
 
   const response = await fetch(endpoint, {
-    method: "PUT",
+    method: "POST",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",

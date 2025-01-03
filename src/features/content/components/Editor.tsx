@@ -166,7 +166,7 @@ const Editor: React.FC = () => {
    */
   useEffect(() => {
     const interval = setInterval(async () => {
-      if (editor && contentId && steps.length > 0) {
+      if (editor && tabData?.id && steps.length > 0) {
         const updatedContent: DocumentContent = {
           content: {
             steps: steps?.map((step, index) => ({
@@ -174,11 +174,10 @@ const Editor: React.FC = () => {
               content: index === activeStepIndex ? editor.getHTML() : step.content,
             })) || [],
           },
-          id: contentId,
-          tab_id: tabData?.id || '',
+          tab_id: tabData.id,
         };
         try {
-          const response = await upsertDocumentContent(updatedContent, contentId);
+          const response = await upsertDocumentContent(updatedContent, tabData.id);
           console.log("✅ Content synced successfully:", response);
         } catch (error) {
           console.error("❌ Failed to sync content:", error);
@@ -187,7 +186,7 @@ const Editor: React.FC = () => {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [editor, contentId, steps, activeStepIndex, tabData]);
+  }, [editor, tabData, steps, activeStepIndex]);
 
   /**
    * Updates the document tab title.
