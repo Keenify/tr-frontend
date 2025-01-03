@@ -21,6 +21,58 @@ import {
 } from "react-icons/fa";
 import { RiArrowDownSLine } from "react-icons/ri";
 
+interface EditorToolbarProps {
+  editor: Editor | null;
+}
+
+export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor }) => {
+  const [showLinkMenu, setShowLinkMenu] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkText, setLinkText] = useState('');
+  const [isValidUrl, setIsValidUrl] = useState(false);
+
+  const isValidURL = (str: string) => {
+    try {
+      new URL(str);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  if (!editor) {
+    return null;
+  }
+
+  return (
+    <>
+      <UndoRedoMenu editor={editor} />
+      <HeadingMenu editor={editor} />
+      <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
+      <TextFormatMenu editor={editor} />
+      <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
+      <ColorMenu editor={editor} />
+      <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
+      <LinkMenu 
+        editor={editor}
+        showLinkMenu={showLinkMenu}
+        setShowLinkMenu={setShowLinkMenu}
+        linkText={linkText}
+        setLinkText={setLinkText}
+        linkUrl={linkUrl}
+        setLinkUrl={setLinkUrl}
+        isValidUrl={isValidUrl}
+        setIsValidUrl={setIsValidUrl}
+        isValidURL={isValidURL}
+      />
+      <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
+      <TextAlignMenu editor={editor} />
+      <LineSpacingMenu editor={editor} />
+      <ListMenu editor={editor} />
+    </>
+  );
+};
+
 /**
  * Component for undo and redo actions in the editor.
  * 
