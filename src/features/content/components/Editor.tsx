@@ -18,21 +18,14 @@ import TextAlign from '@tiptap/extension-text-align'
 import { Extension } from '@tiptap/core'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
+import Image from "@tiptap/extension-image";
 
 // Styles
 import "./../styles/Editor.css";
 
 // Toolbar
-import { 
-  UndoRedoMenu, 
-  HeadingMenu, 
-  TextFormatMenu, 
-  ColorMenu, 
-  LinkMenu,
-  TextAlignMenu,
-  LineSpacingMenu,
-  ListMenu 
-} from "./EditorToolbar";
+import { EditorToolbar } from "./EditorToolbar";
+import { MediaToolbar } from "./MediaToolbar";
 
 interface LineHeightAttributes {
   lineHeight?: string;
@@ -74,10 +67,6 @@ const Editor: React.FC = () => {
   const location = useLocation();
   const { tabData, subject } = location.state || {};
   const [content, ] = useState<string>('');
-  const [showLinkMenu, setShowLinkMenu] = useState(false);
-  const [linkUrl, setLinkUrl] = useState('');
-  const [linkText, setLinkText] = useState('');
-  const [isValidUrl, setIsValidUrl] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [pendingTitle, setPendingTitle] = useState(tabData?.title || '');
   const [steps, setSteps] = useState<Step[]>([]);
@@ -155,6 +144,7 @@ const Editor: React.FC = () => {
         alignments: ['left', 'center', 'right', 'justify'],
       }),
       CustomLineHeight,
+      Image,
     ],
     content: content,
   });
@@ -188,8 +178,8 @@ const Editor: React.FC = () => {
           tab_id: tabData?.id || '',
         };
         try {
-          await upsertDocumentContent(updatedContent, contentId);
-          console.log("✅ Content synced successfully");
+          const response = await upsertDocumentContent(updatedContent, contentId);
+          console.log("✅ Content synced successfully:", response);
         } catch (error) {
           console.error("❌ Failed to sync content:", error);
         }
@@ -198,21 +188,6 @@ const Editor: React.FC = () => {
 
     return () => clearInterval(interval);
   }, [editor, contentId, steps, activeStepIndex, tabData]);
-
-  /**
-   * Validates a URL string.
-   *
-   * @param {string} str - The URL string to validate.
-   * @returns {boolean} - True if the URL is valid, false otherwise.
-   */
-  const isValidURL = (str: string) => {
-    try {
-      new URL(str);
-      return true;
-    } catch {
-      return false;
-    }
-  };
 
   /**
    * Updates the document tab title.
@@ -350,37 +325,8 @@ const Editor: React.FC = () => {
       onTitleBlur={handleTitleUpdate}
       onTitleKeyPress={handleTitleKeyPress}
       onTitleClick={handleTitleClick}
-      toolbarChildren={
-        <>
-          {editor && (
-            <>
-              <UndoRedoMenu editor={editor} />
-              <HeadingMenu editor={editor} />
-              <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
-              <TextFormatMenu editor={editor} />
-              <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
-              <ColorMenu editor={editor} />
-              <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
-              <LinkMenu 
-                editor={editor}
-                showLinkMenu={showLinkMenu}
-                setShowLinkMenu={setShowLinkMenu}
-                linkText={linkText}
-                setLinkText={setLinkText}
-                linkUrl={linkUrl}
-                setLinkUrl={setLinkUrl}
-                isValidUrl={isValidUrl}
-                setIsValidUrl={setIsValidUrl}
-                isValidURL={isValidURL}
-              />
-              <div className="h-6 w-px bg-gray-300 mx-1 self-center"></div>
-              <TextAlignMenu editor={editor} />
-              <LineSpacingMenu editor={editor} />
-              <ListMenu editor={editor} />
-            </>
-          )}
-        </>
-      }
+      formatToolbarChildren={<EditorToolbar editor={editor} />}
+      mediaToolbarChildren={<MediaToolbar editor={editor} />}
       steps={steps}
       activeStepIndex={activeStepIndex}
       setActiveStepIndex={setActiveStepIndex}

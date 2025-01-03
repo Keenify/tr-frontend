@@ -116,6 +116,11 @@ export async function createDocumentTab(
     }),
   });
 
+  console.log("Body:", JSON.stringify({
+    title,
+    position,
+  }));
+
   const data = await response.json();
 
   if (!response.ok) {
