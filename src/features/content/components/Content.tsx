@@ -14,8 +14,8 @@ import DeleteSubjectModal from '../modals/DeleteSubjectModal';
 interface Document {
   id: string;
   title: string;
-  type: string;
-  // Add other properties as needed
+  position: number;
+  type?: string;  // Make type optional since it might not always be present
 }
 
 interface ContentProps {
@@ -62,18 +62,14 @@ const Content: React.FC<ContentProps> = ({ session }) => {
     try {
       setActiveContentType(type);
       const data = await getDocumentsByType(type);
-      const documentsWithType = data.map((doc) => ({
-        ...doc,
-        type: type,
-      }));
-      setDocuments(documentsWithType || []); // Ensure we set empty array if no data
-      if (documentsWithType.length === 0) {
+      setDocuments(data || []); // Use the data directly without modifying type
+      if (data.length === 0) {
         console.log(`ℹ️ No documents found for type: ${type}`);
       } else {
         console.log(`✅ Documents fetched successfully for type: ${type}`);
       }
     } catch (error: unknown) {
-      setDocuments([]); // Always set empty array on error
+      setDocuments([]);
       console.error(`❌ Failed to fetch documents for type: ${type}`, error);
     }
   };
