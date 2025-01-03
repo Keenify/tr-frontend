@@ -11,12 +11,7 @@ import CreateSubjectModal from '../modals/CreateSubjectModal';
 import DeleteSubjectModal from '../modals/DeleteSubjectModal';
 
 // Define or update the Document type or interface
-interface Document {
-  id: string;
-  title: string;
-  position: number;
-  type?: string;  // Make type optional since it might not always be present
-}
+import { Document } from '../types/document';
 
 interface ContentProps {
   session: Session;

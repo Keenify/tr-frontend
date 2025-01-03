@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import { Session } from '@supabase/supabase-js';
 import { getUserData } from '../../../services/userService';
 import { createDocument } from '../../../services/docService';
+import { Document } from '../types/document';
 
 /**
  * Props for the CreateSubjectModal component.
@@ -32,7 +33,7 @@ import { createDocument } from '../../../services/docService';
 interface CreateSubjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { name: string; types: string[]; documentData: any }) => void;
+  onSubmit: (data: { name: string; types: string[]; documentData: Document }) => void;
   session: Session;
 }
 
