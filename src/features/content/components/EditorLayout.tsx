@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Step } from '../../../services/docService';
@@ -11,7 +11,8 @@ interface EditorLayoutProps {
   onTitleChange: (value: string) => void;
   onTitleBlur: () => void;
   onTitleKeyPress: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  toolbarChildren: React.ReactNode;
+  formatToolbarChildren: React.ReactNode;
+  mediaToolbarChildren: React.ReactNode;
   steps: Step[];
   activeStepIndex: number;
   setActiveStepIndex: (index: number) => void;
@@ -29,7 +30,8 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   onTitleChange,
   onTitleBlur,
   onTitleKeyPress,
-  toolbarChildren,
+  formatToolbarChildren,
+  mediaToolbarChildren,
   steps,
   activeStepIndex,
   setActiveStepIndex,
@@ -38,6 +40,8 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   onStepTitleChange,
   onTitleClick,
 }) => {
+  const [activeTab, setActiveTab] = useState('format');
+
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
@@ -84,8 +88,8 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
         <div className="editor-container min-h-screen bg-gray-100 p-4">
           <ToastContainer />
           {/* Fixed header section */}
-          <div className="fixed top-0 left-64 right-0 z-50 bg-gray-100 px-4 pt-4">
-            <div className="mx-auto max-w-3xl space-y-4">
+          <div className="fixed top-0 left-64 right-0 z-50 bg-gray-100 px-4 pt-8">
+            <div className="mx-auto max-w-4xl space-y-4">
               {/* Title section */}
               <div className="bg-white shadow-lg rounded-lg p-6 relative">
                 {isEditingTitle ? (
@@ -118,14 +122,35 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
                 </span>
               </div>
               {/* Toolbar section */}
-              <div className="bg-white shadow-lg rounded-lg p-2 flex justify-center space-x-2">
-                {toolbarChildren}
+              <div className="flex flex-col items-center space-y-2">
+                <div className="flex space-x-2">
+                  <button
+                    className={`px-4 py-2 rounded ${
+                      activeTab === 'format' ? 'bg-blue-500 text-white' : 'bg-gray-200'
+                    }`}
+                    onClick={() => setActiveTab('format')}
+                  >
+                    Format
+                  </button>
+                  <button
+                    className={`px-4 py-2 rounded ${
+                      activeTab === 'insert' ? 'bg-blue-500 text-white' : 'bg-gray-200'
+                    }`}
+                    onClick={() => setActiveTab('insert')}
+                  >
+                    Insert
+                  </button>
+                </div>
+                <div className="bg-white shadow-lg rounded-lg p-2 flex justify-center space-x-2 w-full max-w-4xl">
+                  {activeTab === 'format' && formatToolbarChildren}
+                  {activeTab === 'insert' && mediaToolbarChildren}
+                </div>
               </div>
             </div>
           </div>
           {/* Scrollable content section */}
-          <div className="pt-40 flex-1 overflow-auto">
-            <div className="mx-auto max-w-3xl">
+          <div className="pt-64 flex-1 overflow-auto">
+            <div className="mx-auto max-w-4xl">
               {steps && steps.length > 0 && (
                 <div className="bg-white shadow-lg rounded-lg p-6 mb-4">
                   <h2 className="text-xl font-bold mb-4">
