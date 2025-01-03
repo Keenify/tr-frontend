@@ -71,7 +71,6 @@ const Editor: React.FC = () => {
   const [pendingTitle, setPendingTitle] = useState(tabData?.title || '');
   const [steps, setSteps] = useState<Step[]>([]);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
-  const [contentId, setContentId] = useState<string | null>(null);
 
   /**
    * Fetches the document content based on the tab ID from the location state.
@@ -84,7 +83,6 @@ const Editor: React.FC = () => {
         try {
           const data = await getDocumentContent(tabData.id);
           setSteps(data.content.steps);
-          setContentId(data.id);
           console.log("✅ Document content fetched successfully");
         } catch (error) {
           console.error("❌ Failed to fetch document content:", error);
@@ -177,13 +175,13 @@ const Editor: React.FC = () => {
           tab_id: tabData.id,
         };
         try {
-          const response = await upsertDocumentContent(updatedContent, tabData.id);
+          const response = await upsertDocumentContent(updatedContent);
           console.log("✅ Content synced successfully:", response);
         } catch (error) {
           console.error("❌ Failed to sync content:", error);
         }
       }
-    }, 3000);
+    }, 1000);
 
     return () => clearInterval(interval);
   }, [editor, tabData, steps, activeStepIndex]);
@@ -248,16 +246,15 @@ const Editor: React.FC = () => {
     setSteps(updatedSteps);
     setActiveStepIndex(updatedSteps.length - 1);
 
-    if (contentId) {
+    if (tabData?.id) {
       const updatedContent: DocumentContent = {
         content: {
           steps: updatedSteps,
         },
-        id: contentId,
         tab_id: tabData?.id || '',
       };
       try {
-        await upsertDocumentContent(updatedContent, contentId);
+        await upsertDocumentContent(updatedContent);
         console.log("✅ Step added successfully");
       } catch (error) {
         console.error("❌ Failed to add step:", error);
@@ -279,16 +276,15 @@ const Editor: React.FC = () => {
     setActiveStepIndex(newActiveStepIndex);
     setSteps(recalculatedSteps);
 
-    if (contentId) {
+    if (tabData?.id) {
       const updatedContent: DocumentContent = {
         content: {
           steps: recalculatedSteps,
         },
-        id: contentId,
         tab_id: tabData?.id || '',
       };
       try {
-        await upsertDocumentContent(updatedContent, contentId);
+        await upsertDocumentContent(updatedContent);
         console.log("✅ Step deleted successfully");
       } catch (error) {
         console.error("❌ Failed to delete step:", error);

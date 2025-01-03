@@ -368,12 +368,12 @@ export async function updateDocumentTab(
  * @param {string} tabId - The ID of the tab.
  * @returns {Promise<DocumentContent>} - A promise that resolves to the updated or created content data.
  */
-export async function upsertDocumentContent(content: DocumentContent, tabId: string): Promise<DocumentContent> {
+export async function upsertDocumentContent(content: DocumentContent): Promise<DocumentContent> {
   const endpoint = `${API_DOMAIN}/documents/contents/`;
 
   const requestBody = {
     content: content.content,
-    tab_id: tabId,
+    tab_id: content.tab_id,
   };
 
   const response = await fetch(endpoint, {
