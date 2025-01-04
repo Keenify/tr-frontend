@@ -19,6 +19,7 @@ import { Extension } from '@tiptap/core'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import Image from "@tiptap/extension-image";
+import ResizableImage from '../extensions/ResizableImage';
 
 // Styles
 import "./../styles/Editor.css";
@@ -145,6 +146,7 @@ const Editor: React.FC = () => {
       }),
       CustomLineHeight,
       Image,
+      ResizableImage,
     ],
     content: content,
   });
