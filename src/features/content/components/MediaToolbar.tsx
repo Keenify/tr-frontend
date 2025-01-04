@@ -41,13 +41,25 @@ export const MediaToolbar: React.FC<MediaToolbarProps> = ({ editor }) => {
 
   const handleImageUpload = async () => {
     if (editor && imageFile) {
-      const imageUrl = await uploadImage(imageFile);
-      editor.chain().focus().insertContent({
-        type: 'resizableImage',
-        attrs: { src: imageUrl, width: '60%' },
-      }).run();
-      setImageFile(null);
-      setShowImageModal(false);
+      try {
+        const imageUrl = await uploadImage(imageFile);
+        editor.chain()
+          .focus()
+          .insertContent([
+            {
+              type: 'resizableImage',
+              attrs: {
+                src: imageUrl,
+                width: '60%'
+              }
+            }
+          ])
+          .run();
+        setImageFile(null);
+        setShowImageModal(false);
+      } catch (error) {
+        console.error('Error uploading image:', error);
+      }
     }
   };
 

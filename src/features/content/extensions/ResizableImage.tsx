@@ -22,6 +22,13 @@ const ResizableImage = Node.create({
     return [
       {
         tag: 'div[data-resizable-image-wrapper]',
+        getAttrs: (dom) => {
+          const container = (dom as HTMLElement).querySelector('.image-container');
+          return {
+            src: container?.querySelector('img')?.getAttribute('src'),
+            width: (container as HTMLElement)?.style.width
+          };
+        }
       },
     ];
   },

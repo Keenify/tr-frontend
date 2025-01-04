@@ -169,16 +169,19 @@ const Editor: React.FC = () => {
   useEffect(() => {
     const interval = setInterval(async () => {
       if (editor && tabData?.id && steps.length > 0) {
-        const updatedContent: DocumentContent = {
-          content: {
-            steps: steps?.map((step, index) => ({
-              ...step,
-              content: index === activeStepIndex ? editor.getHTML() : step.content,
-            })) || [],
-          },
-          tab_id: tabData.id,
-        };
         try {
+          // Get JSON content instead of HTML
+          const content = editor.getJSON();
+          const updatedContent: DocumentContent = {
+            content: {
+              steps: steps?.map((step, index) => ({
+                ...step,
+                content: index === activeStepIndex ? JSON.stringify(content) : step.content,
+              })) || [],
+            },
+            tab_id: tabData.id,
+          };
+          
           await upsertDocumentContent(updatedContent);
         } catch (error) {
           console.error("❌ Failed to sync content:", error);
@@ -326,7 +329,18 @@ const Editor: React.FC = () => {
     if (!editor) return;
     
     if (steps?.length > 0 && activeStepIndex >= 0 && activeStepIndex < steps.length) {
-      editor.commands.setContent(steps[activeStepIndex].content);
+      try {
+        const content = steps[activeStepIndex].content;
+        if (content) {
+          const parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
+          editor.commands.setContent(parsedContent);
+        } else {
+          editor.commands.clearContent();
+        }
+      } catch (error) {
+        console.error('Error setting content:', error);
+        editor.commands.clearContent();
+      }
     } else {
       editor.commands.clearContent();
     }
