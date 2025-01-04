@@ -60,6 +60,8 @@ const CustomLineHeight = Extension.create({
  *
  * This component provides a rich text editor interface using the Tiptap library.
  * It includes basic text formatting options such as bold, italic, underline, and strikethrough.
+ * The editor content is periodically synced with the server.
+ * Users can add, delete, and update steps within the document.
  *
  * @returns {JSX.Element | null} - The rendered component or null if the editor is not initialized.
  */
@@ -223,18 +225,32 @@ const Editor: React.FC = () => {
     }
   };
 
+  /**
+   * Handles the change of step title.
+   *
+   * @param {number} index - The index of the step.
+   * @param {string} title - The new title of the step.
+   */
   const handleStepTitleChange = (index: number, title: string) => {
     const updatedSteps = [...steps];
     updatedSteps[index].title = title;
     setSteps(updatedSteps);
   };
 
+  /**
+   * Handles the change of step content.
+   *
+   * @param {string} content - The new content of the step.
+   */
   const handleStepContentChange = (content: string) => {
     const updatedSteps = [...steps];
     updatedSteps[activeStepIndex].content = content;
     setSteps(updatedSteps);
   };
 
+  /**
+   * Adds a new step to the document.
+   */
   const handleAddStep = async () => {
     const newStep: Step = {
       title: `Step ${steps.length + 1}`,
@@ -261,6 +277,11 @@ const Editor: React.FC = () => {
     }
   };
 
+  /**
+   * Deletes a step from the document.
+   *
+   * @param {number} index - The index of the step to delete.
+   */
   const handleDeleteStep = async (index: number) => {
     const updatedSteps = steps.filter((_, i) => i !== index);
     
@@ -296,6 +317,9 @@ const Editor: React.FC = () => {
     }
   };
 
+  /**
+   * Updates the editor content based on the active step index.
+   */
   useEffect(() => {
     if (!editor) return;
     
@@ -306,6 +330,9 @@ const Editor: React.FC = () => {
     }
   }, [editor, steps, activeStepIndex]);
 
+  /**
+   * Handles the click event on the title to enable editing.
+   */
   const handleTitleClick = () => {
     setIsEditingTitle(true);
   };
