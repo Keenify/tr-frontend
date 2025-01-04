@@ -34,6 +34,7 @@ const Content: React.FC<ContentProps> = ({ session }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [showMenu, setShowMenu] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     // Fetch all documents when the component mounts
@@ -54,6 +55,7 @@ const Content: React.FC<ContentProps> = ({ session }) => {
 
   // Function to fetch documents by type
   const fetchDocuments = async (type: string) => {
+    setIsLoading(true);
     try {
       setActiveContentType(type);
       const data = await getDocumentsByType(type);
@@ -66,6 +68,8 @@ const Content: React.FC<ContentProps> = ({ session }) => {
     } catch (error: unknown) {
       setDocuments([]);
       console.error(`❌ Failed to fetch documents for type: ${type}`, error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -127,7 +131,11 @@ const Content: React.FC<ContentProps> = ({ session }) => {
 
       {/* Document List */}
       <div className="mt-6">
-        {documents && documents.length > 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+          </div>
+        ) : documents && documents.length > 0 ? (
           documents.map((doc) => (
             <div key={doc.id} className="flex justify-between items-center p-4 border rounded-lg shadow-sm mb-4">
               <span

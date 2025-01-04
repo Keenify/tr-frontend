@@ -26,6 +26,7 @@ const SubjectDetail: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState<DocumentTab | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [pendingTitle, setPendingTitle] = useState(subject?.title || '');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   interface DocumentTab {
     id: string;
@@ -37,11 +38,14 @@ const SubjectDetail: React.FC = () => {
     if (!subject) return;
 
     const fetchTabs = async () => {
+      setIsLoading(true);
       try {
         const tabs = await getDocumentTabs(subject.id);
         setDocumentTabs(tabs);
       } catch (error) {
         console.error('❌ Failed to fetch document tabs:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -223,77 +227,84 @@ const SubjectDetail: React.FC = () => {
           )}
         </div>
 
-        {/* Content Area */}
-        <div>
-          {/* Existing Topics */}
-          <div className="mb-4">
-            {documentTabs.map((tab) => (
-              <div key={tab.id} className="flex items-center gap-2 mb-2">
-                <select className="border rounded-lg px-3 py-2" disabled title="Topic">
-                  <option value="topic">Topic</option>
-                </select>
-                <input
-                  title="Topic Title"
-                  placeholder="Topic Title"
-                  type="text"
-                  value={tab.title}
-                  readOnly
-                  onClick={() => navigate(`/${session.user.id}/steps/${tab.id}/editor`, { state: { subject, tabData: tab, session } })}
-                  className="flex-1 border rounded-lg px-3 py-2 bg-gray-100 cursor-pointer hover:underline"
-                />
-                <div className="relative">
-                  <button
-                    title="Delete Topic"
-                    onClick={() => setShowMenu(showMenu === tab.id ? null : tab.id)}
-                    className="p-2 hover:bg-gray-100 rounded-full"
-                  >
-                    <FaEllipsisV className="text-gray-500" />
-                  </button>
-                  
-                  {showMenu === tab.id && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border">
-                      <button
-                        onClick={() => {
-                          setSelectedTab(tab);
-                          setShowDeleteModal(true);
-                          setShowMenu(null);
-                        }}
-                        className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 rounded-lg"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
+        {/* Loading Animation */}
+        {isLoading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+          </div>
+        ) : (
+          /* Content Area */
+          <div>
+            {/* Existing Topics */}
+            <div className="mb-4">
+              {documentTabs.map((tab) => (
+                <div key={tab.id} className="flex items-center gap-2 mb-2">
+                  <select className="border rounded-lg px-3 py-2" disabled title="Topic">
+                    <option value="topic">Topic</option>
+                  </select>
+                  <input
+                    title="Topic Title"
+                    placeholder="Topic Title"
+                    type="text"
+                    value={tab.title}
+                    readOnly
+                    onClick={() => navigate(`/${session.user.id}/steps/${tab.id}/editor`, { state: { subject, tabData: tab, session } })}
+                    className="flex-1 border rounded-lg px-3 py-2 bg-gray-100 cursor-pointer hover:underline"
+                  />
+                  <div className="relative">
+                    <button
+                      title="Delete Topic"
+                      onClick={() => setShowMenu(showMenu === tab.id ? null : tab.id)}
+                      className="p-2 hover:bg-gray-100 rounded-full"
+                    >
+                      <FaEllipsisV className="text-gray-500" />
+                    </button>
+                    
+                    {showMenu === tab.id && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border">
+                        <button
+                          onClick={() => {
+                            setSelectedTab(tab);
+                            setShowDeleteModal(true);
+                            setShowMenu(null);
+                          }}
+                          className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 rounded-lg"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          {/* Add Topic Form */}
-          <div className="flex items-center gap-2 mb-4">
-            <select className="border rounded-lg px-3 py-2" title="Topic">
-              <option value="topic">Topic</option>
-            </select>
-            <input
-              type="text"
-              placeholder="Enter topic title"
-              value={topicTitle}
-              onChange={(e) => setTopicTitle(e.target.value)}
-              className="flex-1 border rounded-lg px-3 py-2"
-            />
-            <button
-              disabled={!topicTitle}
-              onClick={handleCreateClick}
-              className={`px-4 py-2 rounded-lg ${
-                topicTitle
-                  ? 'bg-red-500 text-white hover:bg-red-600'
-                  : 'bg-gray-100 text-gray-400'
-              }`}
-            >
-              Create
-            </button>
+            {/* Add Topic Form */}
+            <div className="flex items-center gap-2 mb-4">
+              <select className="border rounded-lg px-3 py-2" title="Topic">
+                <option value="topic">Topic</option>
+              </select>
+              <input
+                type="text"
+                placeholder="Enter topic title"
+                value={topicTitle}
+                onChange={(e) => setTopicTitle(e.target.value)}
+                className="flex-1 border rounded-lg px-3 py-2"
+              />
+              <button
+                disabled={!topicTitle}
+                onClick={handleCreateClick}
+                className={`px-4 py-2 rounded-lg ${
+                  topicTitle
+                    ? 'bg-red-500 text-white hover:bg-red-600'
+                    : 'bg-gray-100 text-gray-400'
+                }`}
+              >
+                Create
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Add DeleteTopicModal */}
