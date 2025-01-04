@@ -2,7 +2,7 @@
 .tiptap-editor {
     border: none;
     border-radius: 4px;
-    padding: 10px;
+    padding: 1rem;
     min-height: 150px;
     outline: none !important;
     position: relative;
@@ -102,46 +102,105 @@
   list-style-type: decimal !important;
 }
 
+/* Image wrapper styles */
 [data-resizable-image-wrapper] {
   position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.image-container {
+  position: relative;
   display: inline-block;
-  width: auto;
-  margin: 0 auto;
+  max-width: 100%;
 }
 
 [data-resizable-image-wrapper] img {
   display: block;
-  max-width: 100%;
   height: auto;
-  margin: 0 auto;
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.image-container:hover img {
+  border-color: #2563eb;
+}
+
+/* Fix the resize handles container to match image dimensions */
+.resize-handles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .resize-handle {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  height: 30%;
-  width: 12px;
-  background-color: grey;
+  width: 8px;
+  height: 24px;
+  background-color: rgba(200, 200, 200, 0.8);
+  cursor: ew-resize !important;
+  pointer-events: all;
   opacity: 0;
-  transition: opacity 0.2s;
-  z-index: 100;
+  transition: all 0.2s ease;
+  z-index: 2;
 }
 
-[data-resizable-image-wrapper]:hover .resize-handle {
-  opacity: 0.6;
+/* Show resize cursor on hover area */
+.resize-handle::before {
+  content: '';
+  position: absolute;
+  top: -100%;
+  bottom: -100%;
+  left: -4px;
+  right: -4px;
+  cursor: ew-resize;
 }
 
-.resize-handle:hover {
-  opacity: 1 !important;
+.image-container:hover .resize-handle {
+  opacity: 1;
 }
 
 .resize-handle-left {
-  left: -6px;
-  cursor: ew-resize !important;
+  left: 2px;
 }
 
 .resize-handle-right {
-  right: -6px;
+  right: 2px;
+}
+
+.resize-handle:hover {
+  background-color: rgba(150, 150, 150, 0.9);
+  width: 6px;
+}
+
+/* Keep handles visible while resizing */
+[data-resizing="true"] .resize-handle {
+  opacity: 1;
+}
+
+/* Prevent text selection while resizing */
+[data-resizing="true"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Add resize cursor to the handle areas */
+.resize-handle-left:hover,
+.resize-handle-right:hover {
   cursor: ew-resize !important;
+}
+
+/* Ensure proper containment */
+.ProseMirror [data-resizable-image-wrapper] {
+  position: relative;
+  display: flex;
+  justify-content: center;
 }
