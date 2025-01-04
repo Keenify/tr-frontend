@@ -175,8 +175,7 @@ const Editor: React.FC = () => {
           tab_id: tabData.id,
         };
         try {
-          const response = await upsertDocumentContent(updatedContent);
-          console.log("✅ Content synced successfully:", response);
+          await upsertDocumentContent(updatedContent);
         } catch (error) {
           console.error("❌ Failed to sync content:", error);
         }
@@ -331,9 +330,12 @@ const Editor: React.FC = () => {
     >
       <EditorContent
         editor={editor}
-        className="tiptap-editor mt-4" // Add margin-top class
+        className="tiptap-editor mt-4"
         placeholder="Add content here"
-        onChange={() => handleStepContentChange(editor?.getHTML() || '')}
+        onChange={() => {
+          const content = editor?.getHTML() || '';
+          handleStepContentChange(content);
+        }}
       />
     </EditorLayout>
   );
