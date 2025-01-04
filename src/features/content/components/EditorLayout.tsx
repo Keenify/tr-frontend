@@ -85,10 +85,10 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
 
       {/* Editor Container */}
       <div className="flex-1 overflow-auto">
-        <div className="editor-container min-h-screen bg-gray-100 p-4">
+        <div className="editor-container min-h-screen bg-gray-100">
           <ToastContainer />
           {/* Fixed header section */}
-          <div className="fixed top-0 left-64 right-0 z-50 bg-gray-100 px-4 pt-8">
+          <div className="fixed top-0 left-64 right-0 z-50 bg-gray-100 pt-8">
             <div className="mx-auto px-4 space-y-4">
               {/* Title section */}
               <div className="bg-white shadow-lg rounded-lg p-6 relative">
@@ -150,13 +150,15 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           </div>
           {/* Scrollable content section */}
           <div className="pt-64 flex-1 overflow-auto">
-            <div className="mx-auto px-4">
+            <div className="px-4">
               {steps && steps.length > 0 && (
-                <div className="bg-white shadow-lg rounded-lg p-6 mb-4">
-                  <h2 className="text-xl font-bold mb-4">
-                    {steps[activeStepIndex]?.title}
-                  </h2>
-                  {children}
+                <div className="bg-white shadow-lg rounded-lg mb-4">
+                  <div className="p-4">
+                    <h2 className="text-xl font-bold mb-4">
+                      {steps[activeStepIndex]?.title}
+                    </h2>
+                    {children}
+                  </div>
                 </div>
               )}
             </div>
