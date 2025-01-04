@@ -17,7 +17,6 @@ export const MediaToolbar: React.FC<MediaToolbarProps> = ({ editor }) => {
     try {
       const fileKey = `content/${Date.now()}_${file.name}`;
 
-      // Upload the file to Supabase Storage
       const { error } = await supabase.storage
         .from(bucketName)
         .upload(fileKey, file, {
@@ -30,13 +29,9 @@ export const MediaToolbar: React.FC<MediaToolbarProps> = ({ editor }) => {
         throw error;
       }
 
-      // Generate a public URL for the uploaded file
       const { data } = supabase.storage.from(bucketName).getPublicUrl(fileKey);
       const publicUrl = data.publicUrl;
 
-      console.log(data);
-
-      console.log('Public URL:', publicUrl);
       return publicUrl;
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -47,7 +42,10 @@ export const MediaToolbar: React.FC<MediaToolbarProps> = ({ editor }) => {
   const handleImageUpload = async () => {
     if (editor && imageFile) {
       const imageUrl = await uploadImage(imageFile);
-      editor.chain().focus().setImage({ src: imageUrl }).run();
+      editor.chain().focus().insertContent({
+        type: 'resizableImage',
+        attrs: { src: imageUrl, width: '60%' },
+      }).run();
       setImageFile(null);
       setShowImageModal(false);
     }
@@ -113,7 +111,6 @@ export const MediaToolbar: React.FC<MediaToolbarProps> = ({ editor }) => {
           </div>
         </div>
       )}
-      {/* Add more media toolbar items as needed */}
     </div>
   );
 };
