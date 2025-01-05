@@ -1,10 +1,8 @@
-import { Node, mergeAttributes } from '@tiptap/core';
+import { Node } from '@tiptap/core';
 
 const ResizableImage = Node.create({
   name: 'resizableImage',
-
   group: 'block',
-
   atom: true,
 
   addAttributes() {
@@ -19,116 +17,132 @@ const ResizableImage = Node.create({
   },
 
   parseHTML() {
-    return [
-      {
-        tag: 'div[data-resizable-image-wrapper]',
-        getAttrs: (dom) => {
-          const container = (dom as HTMLElement).querySelector('.image-container');
-          return {
-            src: container?.querySelector('img')?.getAttribute('src'),
-            width: (container as HTMLElement)?.style.width
-          };
-        }
-      },
-    ];
+    return [{
+      tag: 'div[data-resizable-image]',
+      getAttrs: (dom) => ({
+        src: (dom as HTMLElement).querySelector('img')?.getAttribute('src'),
+        width: (dom as HTMLElement).querySelector('.image-container')?.getAttribute('style')?.match(/width:\s*([\d.]+%)/)?.[1],
+      }),
+    }];
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ['div', mergeAttributes(HTMLAttributes, { 'data-resizable-image-wrapper': '' }), 
-      ['div', { class: 'image-container', style: `width: ${HTMLAttributes.width};` }, [
-        ['img', { src: HTMLAttributes.src }],
-        ['div', { class: 'resize-handles' }, [
+    return [
+      'div',
+      { 'data-resizable-image': '' },
+      [
+        'div',
+        { class: 'image-container', style: `width: ${HTMLAttributes.width}` },
+        [
+          'img',
+          { src: HTMLAttributes.src },
+        ],
+        [
+          'div',
+          { class: 'resize-handles' },
           ['div', { class: 'resize-handle resize-handle-left' }],
-          ['div', { class: 'resize-handle resize-handle-right' }]
-        ]]
-      ]]
+          ['div', { class: 'resize-handle resize-handle-right' }],
+        ],
+      ],
     ];
   },
 
   addNodeView() {
-    return ({ node, editor }) => {
-      const wrapper = document.createElement('div');
-      wrapper.setAttribute('data-resizable-image-wrapper', '');
-
+    return ({ node, getPos, editor }) => {
+      if (typeof getPos !== 'function') {
+        return {
+          dom: document.createElement('div'),
+          update: () => false,
+          destroy: () => {},
+        };
+      }
+      
       const container = document.createElement('div');
-      container.className = 'image-container';
-      container.style.width = node.attrs.width;
+      container.setAttribute('data-resizable-image', '');
+      
+      const imageContainer = document.createElement('div');
+      imageContainer.className = 'image-container';
+      imageContainer.style.width = node.attrs.width;
 
       const img = document.createElement('img');
       img.src = node.attrs.src;
 
-      const resizeHandles = document.createElement('div');
-      resizeHandles.className = 'resize-handles';
+      const handles = document.createElement('div');
+      handles.className = 'resize-handles';
 
-      const resizeHandleLeft = document.createElement('div');
-      resizeHandleLeft.className = 'resize-handle resize-handle-left';
+      const leftHandle = document.createElement('div');
+      leftHandle.className = 'resize-handle resize-handle-left';
 
-      const resizeHandleRight = document.createElement('div');
-      resizeHandleRight.className = 'resize-handle resize-handle-right';
+      const rightHandle = document.createElement('div');
+      rightHandle.className = 'resize-handle resize-handle-right';
 
-      resizeHandles.appendChild(resizeHandleLeft);
-      resizeHandles.appendChild(resizeHandleRight);
-      container.appendChild(img);
-      container.appendChild(resizeHandles);
-      wrapper.appendChild(container);
+      handles.appendChild(leftHandle);
+      handles.appendChild(rightHandle);
+      imageContainer.appendChild(img);
+      imageContainer.appendChild(handles);
+      container.appendChild(imageContainer);
 
       let resizing = false;
-      let startX: number;
-      let startWidth: number;
+      let startX = 0;
+      let startWidth = 0;
 
-      const handlePointerDown = (event: PointerEvent, direction: string) => {
-        event.preventDefault();
-        wrapper.setAttribute('data-resizing', 'true');
-        startX = event.clientX;
-        startWidth = parseInt(container.style.width, 10);
-        resizing = true;
-
-        const onPointerMove = (e: PointerEvent) => handlePointerMove(e, direction);
-        const onPointerUp = () => {
-          resizing = false;
-          wrapper.removeAttribute('data-resizing');
-          document.removeEventListener('pointermove', onPointerMove);
-          document.removeEventListener('pointerup', onPointerUp);
-        };
-
-        document.addEventListener('pointermove', onPointerMove);
-        document.addEventListener('pointerup', onPointerUp);
-      };
-
-      const handlePointerMove = (event: PointerEvent, direction: string) => {
+      const handleResize = (e: PointerEvent, direction: 'left' | 'right') => {
         if (!resizing) return;
-
-        const deltaX = event.clientX - startX;
+        
+        const delta = e.clientX - startX;
         const newWidth = direction === 'right'
-          ? startWidth + (deltaX / wrapper.offsetWidth) * 100
-          : startWidth - (deltaX / wrapper.offsetWidth) * 100;
+          ? startWidth + (delta / container.offsetWidth) * 100
+          : startWidth - (delta / container.offsetWidth) * 100;
 
-        const limitedWidth = Math.min(Math.max(newWidth, 10), 100);
-        container.style.width = `${limitedWidth}%`;
-
-        editor.commands.updateAttributes('resizableImage', {
-          width: `${limitedWidth}%`,
-        });
+        const width = `${Math.min(Math.max(newWidth, 10), 100)}%`;
+        imageContainer.style.width = width;
       };
 
-      const handlePointerDownLeft = (e: PointerEvent) => handlePointerDown(e, 'left');
-      const handlePointerDownRight = (e: PointerEvent) => handlePointerDown(e, 'right');
+      const handlePointerUp = () => {
+        if (!resizing) return;
+        resizing = false;
+        
+        const pos = getPos();
+        const tr = editor.state.tr.setNodeMarkup(pos, undefined, {
+          ...node.attrs,
+          width: imageContainer.style.width,
+        });
+        editor.view.dispatch(tr);
+      };
 
-      resizeHandleLeft.addEventListener('pointerdown', handlePointerDownLeft);
-      resizeHandleRight.addEventListener('pointerdown', handlePointerDownRight);
+      const handlePointerDown = (e: PointerEvent, direction: 'left' | 'right') => {
+        resizing = true;
+        startX = e.clientX;
+        startWidth = parseFloat(imageContainer.style.width);
+        e.preventDefault();
+        
+        const onMove = (e: PointerEvent) => handleResize(e, direction);
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', () => {
+          document.removeEventListener('pointermove', onMove);
+          handlePointerUp();
+        }, { once: true });
+      };
+
+      leftHandle.addEventListener('pointerdown', (e) => handlePointerDown(e, 'left'));
+      rightHandle.addEventListener('pointerdown', (e) => handlePointerDown(e, 'right'));
 
       return {
-        dom: wrapper,
+        dom: container,
         update: (updatedNode) => {
           if (updatedNode.type !== node.type) return false;
-          img.src = updatedNode.attrs.src;
-          container.style.width = updatedNode.attrs.width;
+          if (img.src !== updatedNode.attrs.src) {
+            img.src = updatedNode.attrs.src;
+          }
+          if (imageContainer.style.width !== updatedNode.attrs.width) {
+            imageContainer.style.width = updatedNode.attrs.width;
+          }
           return true;
         },
         destroy() {
-          resizeHandleLeft.removeEventListener('pointerdown', handlePointerDownLeft);
-          resizeHandleRight.removeEventListener('pointerdown', handlePointerDownRight);
-        },
+          leftHandle.removeEventListener('pointerdown', (e) => handlePointerDown(e, 'left'));
+          rightHandle.removeEventListener('pointerdown', (e) => handlePointerDown(e, 'right'));
+        }
       };
     };
   },
