@@ -6,22 +6,20 @@ import { ClipLoader } from 'react-spinners';
 import { useSession } from './shared/hooks/useSession';
 
 // Not Found
-import NotFound from './shared/components/NotFound';
-
-// Routes
-import UserRouteWrapper from './routes/UserRouteWrapper';
+const NotFound = lazy(() => import('./shared/components/NotFound'));
 
 // Dashboard Layout
 import { DashboardLayout } from './features/dashboard/components/DashboardLayout';
 import OrgChartPage from './features/directory/components/OrgChart/OrgChartPage';
 
-// Lazy load all components
-const AuthForm = lazy(() => import('./features/auth/components/Auth'));
-const Home = lazy(() => import('./features/home/components/Home'));
-const Content = lazy(() => import('./features/content/components/Content'));
-const SubjectDetail = lazy(() => import('./features/content/components/SubjectDetail'));
-const Editor = lazy(() => import('./features/content/components/Editor'));
-const DirectoryPage = lazy(() => import('./features/directory/routes/DirectoryPage'));
+// Import all components
+import AuthForm from './features/auth/components/Auth';
+import Home from './features/home/components/Home';
+import Content from './features/content/components/Content';
+import SubjectDetail from './features/content/components/SubjectDetail';
+import Editor from './features/content/components/Editor';
+import DirectoryPage from './features/directory/routes/DirectoryPage';
+import ProtectedRoute from './routes/ProtectedRoute';
 
 const App: React.FC = () => {
   const { session, signOut } = useSession();
@@ -34,36 +32,22 @@ const App: React.FC = () => {
       <Suspense fallback={<ClipLoader color="#36d7b7" />}>
         <Routes>
           {/* Default Redirect to User-Specific Route */}
-          <Route path="/" element={<Navigate to={session ? `/${session.user.id}` : "/login"} replace />} />
+          <Route path="/" element={<Navigate to={session ? `/${session.user.id}/home` : "/login"} replace />} />
 
           {/* Public Routes */}
           <Route path="/login" element={<AuthForm />} />
 
-          {/* Protected Area */}
-          <Route element={session ? <UserRouteWrapper session={session} /> : <Navigate to="/login" replace />}>
-            <Route path=":userId/*">
-              <Route
-                path="*"
-                element={
-                  session ? (
-                    <DashboardLayout session={session} signOut={signOut} activeTab="home" onTabChange={() => {}}>
-                      <Routes>
-                        <Route index element={<Home session={session} />} />
-                        <Route path="content" element={<Content session={session} />} />
-                        <Route path="people" element={<DirectoryPage session={session} />} />
-                        <Route path="org_chart" element={<OrgChartPage session={session} />} />
-                        <Route path="content/:subjectId" element={<SubjectDetail />} />
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </DashboardLayout>
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )
-                }
-              />
-              <Route path="steps/:tabId/editor" element={<Editor />} />
-            </Route>
-          </Route>
+          {/* Protected Routes */}
+          {session && (
+            <>
+              <Route path="/:userId/home" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="home" onTabChange={() => {}}><Home session={session} /></DashboardLayout>} />} />
+              <Route path="/:userId/content" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="content" onTabChange={() => {}}><Content session={session} /></DashboardLayout>} />} />
+              <Route path="/:userId/people" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="directory" onTabChange={() => {}}><DirectoryPage session={session} /></DashboardLayout>} />} />
+              <Route path="/:userId/org_chart" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="orgChart" onTabChange={() => {}}><OrgChartPage session={session} /></DashboardLayout>} />} />
+              <Route path="/:userId/content/:subjectId" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="content" onTabChange={() => {}}><SubjectDetail /></DashboardLayout>} />} />
+              <Route path="/:userId/steps/:tabId/editor" element={<Editor />} />
+            </>
+          )}
 
           {/* Catch-all for anything else */}
           <Route path="*" element={<NotFound />} />

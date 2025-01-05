@@ -53,27 +53,37 @@ const blinkingThumbStyle = `
  * @param {LayoutProps} props - The properties for the Layout component.
  * @returns {JSX.Element} The rendered layout component.
  */
-export function DashboardLayout({ children, onTabChange, session, signOut, activeSubTab, onSubTabChange }: LayoutProps) {
+export function DashboardLayout({ children, activeTab, onTabChange, session, signOut, activeSubTab, onSubTabChange }: LayoutProps) {
   const email = session.user.email || 'user@example.com';
-  const [isPeopleSubmenuOpen, setIsPeopleSubmenuOpen] = React.useState(false);
+  const [isPeopleSubmenuOpen, setIsPeopleSubmenuOpen] = React.useState(activeTab === 'people');
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
-  const [activeTabState, setActiveTabState] = React.useState<TabType>('home');
+  const [activeTabState, setActiveTabState] = React.useState<TabType>(activeTab);
   const [localActiveSubTab, setLocalActiveSubTab] = useState<'directory' | 'orgChart' | undefined>(activeSubTab);
+
+  // Update state when props change
+  React.useEffect(() => {
+    setActiveTabState(activeTab);
+    setIsPeopleSubmenuOpen(activeTab === 'people');
+  }, [activeTab]);
+
+  React.useEffect(() => {
+    setLocalActiveSubTab(activeSubTab);
+  }, [activeSubTab]);
 
   // Function to handle sign out using Supabase
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     signOut(); // Call the passed signOut function to update the state
+    navigate('/login');
   };
 
   // Function to handle tab change
   const handleTabChange = (tab: TabType) => {
     setActiveTabState(tab);
     if (tab === 'people') {
-      // Only toggle submenu for people tab
       setIsPeopleSubmenuOpen(!isPeopleSubmenuOpen);
-      return; // Don't navigate or call onTabChange
+      return;
     }
     onTabChange(tab);
     if (tab === 'home') {
@@ -105,7 +115,6 @@ export function DashboardLayout({ children, onTabChange, session, signOut, activ
       <div className="flex justify-between items-center bg-white border-b border-gray-200 px-4 py-2">
         <div className="flex items-center">
           <span role="img" aria-label="Company Logo" className="text-2xl">🏢</span>
-          {/* Removed active tab name display as per instructions */}
         </div>
         {/* User Profile Section */}
         <div className="flex items-center space-x-3">
