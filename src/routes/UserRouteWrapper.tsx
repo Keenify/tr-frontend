@@ -6,11 +6,12 @@
  * - If match, render Outlet
  */
 import React from 'react';
+import { Session } from '@supabase/supabase-js';
 import { useParams, Outlet } from 'react-router-dom';
 import NotFound from '../shared/components/NotFound';
 
 interface UserRouteWrapperProps {
-  session: any; // adjust the typing to your session type if possible
+  session: Session; 
 }
 
 const UserRouteWrapper: React.FC<UserRouteWrapperProps> = ({ session }) => {
