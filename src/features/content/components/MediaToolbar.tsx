@@ -82,8 +82,14 @@ export const MediaToolbar: React.FC<MediaToolbarProps> = ({ editor }) => {
     }
   };
 
+  const handleCloseModal = () => {
+    setShowImageModal(false);
+    setImagePreview(null);
+    setImageFile(null);
+  };
+
   return (
-    <div className="flex gap-2">
+    <div className="relative flex gap-2">
       <button
         className="px-3 py-1 rounded bg-gray-200"
         onClick={() => setShowImageModal(true)}
@@ -91,8 +97,8 @@ export const MediaToolbar: React.FC<MediaToolbarProps> = ({ editor }) => {
         Image
       </button>
       {showImageModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 max-w-lg w-full">
+        <div className="absolute left-0 top-full mt-1 z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-[500px]">
             <h2 className="text-xl font-bold mb-4">Add Image</h2>
             <div className="mb-4">
               <label htmlFor="imageFile" className="block mb-1">
@@ -113,7 +119,7 @@ export const MediaToolbar: React.FC<MediaToolbarProps> = ({ editor }) => {
             <div className="flex justify-end">
               <button
                 className="px-4 py-2 bg-gray-200 rounded mr-2"
-                onClick={() => setShowImageModal(false)}
+                onClick={handleCloseModal}
               >
                 Cancel
               </button>
