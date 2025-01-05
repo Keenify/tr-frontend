@@ -46,7 +46,7 @@ const App: React.FC = () => {
                 path="*"
                 element={
                   session ? (
-                    <DashboardLayout session={session} signOut={signOut} onTabChange={() => {}}>
+                    <DashboardLayout session={session} signOut={signOut} activeTab="home" onTabChange={() => {}}>
                       <Routes>
                         <Route index element={<Home session={session} />} />
                         <Route path="content" element={<Content session={session} />} />
