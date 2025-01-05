@@ -120,7 +120,7 @@ const ResizableImage = Node.create({
       return {
         dom: wrapper,
         update: (updatedNode) => {
-          if (updatedNode.type !== this.type) return false;
+          if (updatedNode.type !== node.type) return false;
           img.src = updatedNode.attrs.src;
           container.style.width = updatedNode.attrs.width;
           return true;

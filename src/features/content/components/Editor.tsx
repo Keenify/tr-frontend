@@ -76,29 +76,6 @@ const Editor: React.FC = () => {
   const [activeStepIndex, setActiveStepIndex] = useState(0);
 
   /**
-   * Fetches the document content based on the tab ID from the location state.
-   * If successful, sets the content state with the fetched data.
-   * Logs an error if the fetch operation fails.
-   */
-  useEffect(() => {
-    const fetchContent = async () => {
-      if (tabData?.id) {
-        try {
-          const data = await getDocumentContent(tabData.id);
-          setSteps(data.content.steps);
-          console.log("✅ Document content fetched successfully");
-        } catch (error) {
-          console.error("❌ Failed to fetch document content:", error);
-        }
-      } else {
-        console.warn("⚠️ No tabId found in location.state");
-      }
-    };
-
-    fetchContent();
-  }, [tabData]);
-
-  /**
    * Initializes the Tiptap editor with specified extensions and content.
    * The editor is re-initialized whenever the content changes.
    */
@@ -152,6 +129,38 @@ const Editor: React.FC = () => {
   });
 
   /**
+   * Fetches the document content based on the tab ID from the location state.
+   * If successful, sets the content state with the fetched data.
+   * Logs an error if the fetch operation fails.
+   */
+  useEffect(() => {
+    const fetchContent = async () => {
+      if (tabData?.id) {
+        try {
+          const data = await getDocumentContent(tabData.id);
+          setSteps(data.content.steps);
+          
+          // If there are steps, set the content for the active step
+          if (data.content.steps?.length > 0) {
+            const activeStep = data.content.steps[activeStepIndex];
+            if (activeStep?.content && editor) {
+              const parsedContent = JSON.parse(activeStep.content);
+              editor.commands.setContent(parsedContent);
+            }
+          }
+          console.log("✅ Document content fetched successfully");
+        } catch (error) {
+          console.error("❌ Failed to fetch document content:", error);
+        }
+      } else {
+        console.warn("⚠️ No tabId found in location.state");
+      }
+    };
+
+    fetchContent();
+  }, [tabData, activeStepIndex, editor]);
+
+  /**
    * Updates the editor content if it differs from the current state content.
    * This ensures the editor reflects the latest content state.
    */
@@ -170,7 +179,6 @@ const Editor: React.FC = () => {
     const interval = setInterval(async () => {
       if (editor && tabData?.id && steps.length > 0) {
         try {
-          // Get JSON content instead of HTML
           const content = editor.getJSON();
           const updatedContent: DocumentContent = {
             content: {
@@ -183,6 +191,7 @@ const Editor: React.FC = () => {
           };
           
           await upsertDocumentContent(updatedContent);
+          console.log("✅ Content synced successfully");
         } catch (error) {
           console.error("❌ Failed to sync content:", error);
         }
@@ -330,9 +339,10 @@ const Editor: React.FC = () => {
     
     if (steps?.length > 0 && activeStepIndex >= 0 && activeStepIndex < steps.length) {
       try {
-        const content = steps[activeStepIndex].content;
-        if (content) {
-          const parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
+        const stepContent = steps[activeStepIndex].content;
+        if (stepContent) {
+          const parsedContent = typeof stepContent === 'string' ? 
+            JSON.parse(stepContent) : stepContent;
           editor.commands.setContent(parsedContent);
         } else {
           editor.commands.clearContent();
@@ -376,8 +386,10 @@ const Editor: React.FC = () => {
         className="tiptap-editor mt-4"
         placeholder="Add content here"
         onChange={() => {
-          const content = editor?.getHTML() || '';
-          handleStepContentChange(content);
+          if (editor) {
+            const content = editor.getJSON();
+            handleStepContentChange(JSON.stringify(content));
+          }
         }}
       />
     </EditorLayout>
