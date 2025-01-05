@@ -84,11 +84,11 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
       </div>
 
       {/* Editor Container */}
-      <div className="flex-1 overflow-auto overflow-y-scroll">
-        <div className="editor-container min-h-screen bg-gray-100">
+      <div className="flex-1 overflow-visible">
+        <div className="editor-container min-h-screen bg-gray-100 relative">
           <ToastContainer />
           {/* Fixed header section */}
-          <div className="fixed top-0 left-64 right-0 z-50 bg-gray-100 pt-8 overflow-y-scroll">
+          <div className="fixed top-0 left-64 right-0 z-50 bg-gray-100 pt-8">
             <div className="max-w-4xl mx-auto px-4" style={{ paddingRight: "calc(1rem + 8px)" }}>
               {/* Title section */}
               <div className="bg-white shadow-lg rounded-lg p-6 relative">
@@ -122,7 +122,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
                 </span>
               </div>
               {/* Toolbar section */}
-              <div className="flex flex-col items-center space-y-2">
+              <div className="flex flex-col items-center space-y-2 mt-4">
                 <div className="flex flex-wrap justify-center space-x-2">
                   <button
                     className={`px-4 py-2 rounded ${
@@ -141,7 +141,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
                     Insert
                   </button>
                 </div>
-                <div className="bg-white shadow-lg rounded-lg p-2 flex flex-wrap justify-center space-x-2 w-full">
+                <div className="bg-white shadow-lg rounded-lg p-2 flex flex-wrap justify-center space-x-2 w-full relative" style={{ overflow: 'visible', zIndex: 20 }}>
                   {activeTab === 'format' && formatToolbarChildren}
                   {activeTab === 'insert' && mediaToolbarChildren}
                 </div>
