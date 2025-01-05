@@ -1,9 +1,21 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+/**
+ * NotFound component renders a 404 error page with a message and a button
+ * to navigate back to the previous page.
+ * 
+ * This component is used as a fallback for routes that do not match any
+ * defined paths in the application.
+ * 
+ * @returns {JSX.Element} A React component that displays a 404 error message.
+ */
 const NotFound: React.FC = () => {
   const navigate = useNavigate();
 
+  /**
+   * Handles the "Go Back" button click event by navigating back to the previous page.
+   */
   const handleGoBack = () => {
     navigate(-1); // Navigate back to the previous page
   };
