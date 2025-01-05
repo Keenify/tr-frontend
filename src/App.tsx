@@ -9,7 +9,6 @@ import { useSession } from './shared/hooks/useSession';
 import NotFound from './shared/components/NotFound';
 
 // Routes
-import ProtectedRoute from './routes/ProtectedRoute';
 import UserRouteWrapper from './routes/UserRouteWrapper';
 
 // Dashboard Layout
@@ -41,13 +40,13 @@ const App: React.FC = () => {
           <Route path="/login" element={<AuthForm />} />
 
           {/* Protected Area */}
-          <Route element={session ? <ProtectedRoute session={session} /> : <Navigate to="/login" replace />}>
-            <Route path=":userId/*" element={session ? <UserRouteWrapper session={session} /> : <Navigate to="/login" replace />}>
+          <Route element={session ? <UserRouteWrapper session={session} /> : <Navigate to="/login" replace />}>
+            <Route path=":userId/*">
               <Route
                 path="*"
                 element={
                   session ? (
-                    <DashboardLayout session={session} signOut={signOut} activeTab="home" onTabChange={() => {}}>
+                    <DashboardLayout session={session} signOut={signOut} onTabChange={() => {}}>
                       <Routes>
                         <Route index element={<Home session={session} />} />
                         <Route path="content" element={<Content session={session} />} />
