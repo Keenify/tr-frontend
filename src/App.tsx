@@ -28,7 +28,10 @@ const App: React.FC = () => {
   const { session, signOut } = useSession();
 
   return (
-    <Router>
+    <Router future={{ 
+      v7_startTransition: true,
+      v7_relativeSplatPath: true 
+    }}>
       <Suspense fallback={<ClipLoader color="#36d7b7" />}>
         <Routes>
           {/* Default Redirect to User-Specific Route */}
