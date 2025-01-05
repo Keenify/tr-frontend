@@ -38,9 +38,11 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
   const [treeData, setTreeData] = useState<TreeNode | null>(null);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | undefined>(undefined);
   const [isEmployeePanelOpen, setIsEmployeePanelOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchEmployees = useCallback(async () => {
     try {
+      setIsLoading(true);
       const employeesData = await directoryService.fetchEmployees(companyId);
       setEmployees(employeesData);
 
@@ -53,6 +55,8 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
       }
     } catch (error) {
       console.error("Failed to fetch employees", error);
+    } finally {
+      setIsLoading(false);
     }
   }, [companyId]);
 
@@ -124,7 +128,11 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
       </div>
 
       {/* Org Chart Tree */}
-      {treeData ? (
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-500 border-t-transparent"></div>
+        </div>
+      ) : treeData ? (
         <OrgChartTree node={treeData} onNodeClick={handleNodeClick} />
       ) : (
         <div className="flex flex-col items-center justify-center py-16">

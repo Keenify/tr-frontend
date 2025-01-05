@@ -62,7 +62,9 @@ export const Directory = ({ companyId }: { companyId: string }) => {
 
         {/* Employee Grid */}
         {isLoading ? (
-          <div className="text-center py-8">Loading...</div>
+          <div className="flex items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-500 border-t-transparent"></div>
+          </div>
         ) : error ? (
           <div className="text-center py-8 text-red-600">{error}</div>
         ) : (
