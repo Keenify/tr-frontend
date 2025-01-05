@@ -89,7 +89,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           <ToastContainer />
           {/* Fixed header section */}
           <div className="fixed top-0 left-64 right-0 z-50 bg-gray-100 pt-8">
-            <div className="max-w-4xl mx-auto px-4" style={{ paddingRight: "calc(1rem + 8px)" }}>
+            <div className="mx-auto px-4" style={{ width: '90%', paddingRight: "calc(1rem + 8px)" }}>
               {/* Title section */}
               <div className="bg-white shadow-lg rounded-lg p-6 relative">
                 {isEditingTitle ? (
@@ -150,7 +150,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           </div>
           {/* Scrollable content section with same container structure */}
           <div className="pt-64 w-full">
-            <div className="max-w-4xl mx-auto px-4" style={{ paddingRight: "calc(1rem + 8px)" }}>
+            <div className="mx-auto px-4" style={{ width: '90%', paddingRight: "calc(1rem + 8px)" }}>
               {steps && steps.length > 0 && (
                 <div className="bg-white shadow-lg rounded-lg mb-4 w-full">
                   <div className="p-4">
