@@ -123,7 +123,7 @@ const Editor: React.FC = () => {
       }),
       CustomLineHeight,
       Image,
-      ResizableImage,
+      ResizableImage
     ],
     content: content,
   });
