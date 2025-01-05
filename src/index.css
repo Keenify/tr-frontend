@@ -1,5 +1,6 @@
 @import './shared/styles/animations.css'; /* Place all @import statements at the top */
 
+/* @tailwind base; */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
