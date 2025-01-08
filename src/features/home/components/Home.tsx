@@ -1,7 +1,8 @@
 import React from 'react';
+import { Session } from '@supabase/supabase-js';
 
 interface HomeProps {
-  session: any; // Adjust the type according to your session type
+  session: Session;
 }
 
 const Home: React.FC<HomeProps> = ({ session }) => {

@@ -1,12 +1,29 @@
 // Access environment variables from .env
 const API_DOMAIN = import.meta.env.VITE_BACKEND_API_DOMAIN;
 
+// Define an interface for the user data
+export interface UserData {
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string | null;
+    role: string;
+    user_id: string;
+    completed_sign_up_sequence: boolean;
+    profile_pic_url: string;
+    company_id: string;
+    reports_to: string | null;
+    highest_rank: boolean;
+    id: string;
+    created_at: string;
+}
+
 /**
  * Fetches user data by user ID.
  * @param {string} userId - The ID of the user.
- * @returns {Promise<any>} - A promise that resolves to the user data.
+ * @returns {Promise<UserData>} - A promise that resolves to the user data.
  */
-export async function getUserData(userId: string): Promise<any> {
+export async function getUserData(userId: string): Promise<UserData> {
     const endpoint = `${API_DOMAIN}/employees/${encodeURIComponent(userId)}`;
 
     const response = await fetch(endpoint, {
@@ -27,7 +44,7 @@ export async function getUserData(userId: string): Promise<any> {
         throw new Error('Failed to fetch user data');
     }
 
-    return data;
+    return data as UserData; // Cast the response to UserData
 } 
 
 /**
@@ -62,4 +79,33 @@ export async function getUserOnboardingStatus(userId: string): Promise<boolean> 
 export async function doesUserExist(userId: string): Promise<boolean> {
     const userData = await getUserData(userId);
     return userData.id !== null;
+}
+
+/**
+ * Fetches all employees of a company by company ID.
+ * @param {string} companyId - The ID of the company.
+ * @returns {Promise<UserData[]>} - A promise that resolves to an array of user data.
+ */
+export async function getAllEmployees(companyId: string): Promise<UserData[]> {
+    const endpoint = `${API_DOMAIN}/employees/company/${encodeURIComponent(companyId)}`;
+
+    const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+        },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        console.error('❌ API request failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            data
+        });
+        throw new Error('Failed to fetch employees data');
+    }
+
+    return data as UserData[]; // Cast the response to an array of UserData
 }

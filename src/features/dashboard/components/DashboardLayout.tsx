@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Power, ThumbsUp, Clock } from 'react-feather'; // Import Power, ThumbsUp, and Clock icons from react-feather
+import { Power, ThumbsUp, Clock, Calendar } from 'react-feather'; // Import Power, ThumbsUp, and Clock icons from react-feather
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase'; // Import supabase client
 import { useNavigate, useParams } from 'react-router-dom';
@@ -16,8 +16,8 @@ import { useNavigate, useParams } from 'react-router-dom';
  * @property {function} onSubTabChange - Callback function to change the active subtab.
  */
 
-// Define the possible tabs
-const tabs = ['home', 'content', 'people', 'groups', 'marketplaces', 'reports', 'account'] as const;
+// Define the possible tabs, including the new "Daily Huddle" tab
+const tabs = ['home', 'content', 'people', 'groups', 'marketplaces', 'reports', 'account', 'dailyHuddle'] as const;
 type TabType = typeof tabs[number];
 
 interface LayoutProps {
@@ -154,8 +154,10 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
                       }`}
                     >
                       <span>{tab.charAt(0).toUpperCase() + tab.slice(1)}</span>
-                      {(tab === 'content' || tab === 'people') && <ThumbsUp size={16} className="text-gray-400" />}
+                      {tab === 'content' && <ThumbsUp size={16} className="text-gray-400" />}
+                      {tab === 'people' && <ThumbsUp size={16} className="text-gray-400" />}
                       {['groups', 'marketplaces', 'reports', 'account'].includes(tab) && <Clock size={16} className="text-gray-400" />}
+                      {tab === 'dailyHuddle' && <Calendar size={16} className="text-gray-400" />}
                     </button>
                     {tab === 'people' && isPeopleSubmenuOpen && (
                       <div className="pl-4 space-y-1">
