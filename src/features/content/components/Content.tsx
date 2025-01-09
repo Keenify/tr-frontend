@@ -12,6 +12,7 @@ import DeleteSubjectModal from '../modals/DeleteSubjectModal';
 
 // Define or update the Document type or interface
 import { Document } from '../types/document';
+import { useUserAndCompanyData } from '../../../hooks/useUserAndCompanyData';
 
 interface ContentProps {
   session: Session;
@@ -25,6 +26,10 @@ interface ContentProps {
  */
 const Content: React.FC<ContentProps> = ({ session }) => {
   
+  // Load user and company data
+  const { userInfo } = useUserAndCompanyData(session.user.id);
+  const companyId = userInfo?.company_id;
+
   // State for controlling create subject modal visibility
   const [isModalOpen, setIsModalOpen] = useState(false);
   // State to store fetched documents
@@ -37,9 +42,13 @@ const Content: React.FC<ContentProps> = ({ session }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    // Fetch all documents when the component mounts
-    fetchDocuments('none');
-  }, []);
+    if (companyId) {
+      // Fetch all documents when the component mounts
+      fetchDocuments('none', companyId);
+    } else {
+      console.warn('Company ID is undefined');
+    }
+  }, [companyId]);
 
   /**
    * Handles creation of a new subject
@@ -54,11 +63,11 @@ const Content: React.FC<ContentProps> = ({ session }) => {
   };
 
   // Function to fetch documents by type
-  const fetchDocuments = async (type: string) => {
+  const fetchDocuments = async (type: string, companyId: string) => {
     setIsLoading(true);
     try {
       setActiveContentType(type);
-      const data = await getDocumentsByType(type);
+      const data = await getDocumentsByType(type, companyId);
       setDocuments(data || []); // Use the data directly without modifying type
       if (data.length === 0) {
         console.log(`ℹ️ No documents found for type: ${type}`);
@@ -80,7 +89,11 @@ const Content: React.FC<ContentProps> = ({ session }) => {
     try {
       await deleteDocument(selectedDoc.id);
       // Refresh documents list
-      fetchDocuments(activeContentType);
+      if (companyId) {
+        fetchDocuments(activeContentType, companyId);
+      } else {
+        console.warn('Company ID is undefined');
+      }
       setShowDeleteModal(false);
       setSelectedDoc(null);
       console.log('✅ Document deleted successfully');
@@ -111,7 +124,13 @@ const Content: React.FC<ContentProps> = ({ session }) => {
                 ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600'
                 : 'hover:bg-gray-50'
             }`}
-            onClick={() => fetchDocuments(type)}
+            onClick={() => {
+              if (companyId) {
+                fetchDocuments(type, companyId);
+              } else {
+                console.warn('Company ID is undefined');
+              }
+            }}
           >
             <div className="flex items-center gap-2">
               <span className={`text-${type === 'none' ? 'purple' : type === 'Company' ? 'yellow' : type === 'Policies' ? 'pink' : 'blue'}-500`}>
