@@ -2,7 +2,9 @@ import React from 'react';
 import { Session } from '@supabase/supabase-js';
 import { useUserAndCompanyData } from '../../../hooks/useUserAndCompanyData';
 import { useEmployeeResponses } from '../hooks/useEmployeeResponses';
+import { fetchQuestions } from '../services/huddleService';
 import { ClipLoader } from 'react-spinners';
+import { Question } from '../types/huddle.types';
 
 interface DailyHuddleResponseProps {
   session: Session;
@@ -10,13 +12,25 @@ interface DailyHuddleResponseProps {
 
 const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) => {
   const [loading, setLoading] = React.useState(true);
+  const [questions, setQuestions] = React.useState<Question[]>([]);
   const { companyInfo, error: dataError } = useUserAndCompanyData(session.user.id);
   const { employeeResponses, error } = useEmployeeResponses(companyInfo?.id);
 
   React.useEffect(() => {
-    if (companyInfo && employeeResponses) {
-      setLoading(false);
-    }
+    const initialize = async () => {
+      try {
+        const fetchedQuestions = await fetchQuestions();
+        setQuestions(fetchedQuestions);
+      } catch (error) {
+        console.error("Failed to fetch questions:", error);
+      } finally {
+        if (companyInfo && employeeResponses) {
+          setLoading(false);
+        }
+      }
+    };
+
+    initialize();
   }, [companyInfo, employeeResponses]);
 
   if (loading) {
@@ -31,9 +45,10 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
     return <div>Error loading employee responses: {error?.message || dataError?.message}</div>;
   }
 
-  // Separate submitted and not submitted responses
-  const submittedResponses = employeeResponses.filter(emp => emp.response !== null);
-  const notSubmittedResponses = employeeResponses.filter(emp => emp.response === null);
+  const allResponses = employeeResponses.map(emp => ({
+    ...emp,
+    response: emp.response || { questions: [] }
+  }));
 
   return (
     <div>
@@ -42,29 +57,24 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
         <thead>
           <tr>
             <th style={{ border: '1px solid black' }}>Employee Name</th>
-            {submittedResponses[0]?.response?.questions.map((q, index) => (
+            {questions.map((q, index) => (
               <th key={index} style={{ border: '1px solid black' }}>{q.question_text}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {submittedResponses.map(({ id, name, response }) => (
+          {allResponses.map(({ id, name, response }) => (
             <tr key={id}>
               <td style={{ border: '1px solid black' }}>{name}</td>
-              {response?.questions.map((q, index) => (
-                <td key={index} style={{ border: '1px solid black' }}>{q.answer_text}</td>
+              {questions.map((q, index) => (
+                <td key={index} style={{ border: '1px solid black' }}>
+                  {response.questions.find(rq => rq.question_id === q.id)?.answer_text || ''}
+                </td>
               ))}
             </tr>
           ))}
         </tbody>
       </table>
-      <div style={{ borderTop: '2px solid grey', margin: '20px 0' }}></div>
-      <h3 style={{ fontWeight: 'bold', fontSize: '1.5em', marginBottom: '10px' }}>Employees Who Have Not Submitted</h3>
-      <ul style={{ textAlign: 'left' }}>
-        {notSubmittedResponses.map(({ id, name }) => (
-          <li key={id}>{name}</li>
-        ))}
-      </ul>
     </div>
   );
 };
