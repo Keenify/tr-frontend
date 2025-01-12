@@ -56,6 +56,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
       <table style={{ border: '1px solid black', borderCollapse: 'collapse', width: '100%' }}>
         <thead>
           <tr>
+            <th style={{ border: '1px solid black' }}>No.</th>
             <th style={{ border: '1px solid black' }}>Employee Name</th>
             {questions.map((q, index) => (
               <th key={index} style={{ border: '1px solid black' }}>{q.question_text}</th>
@@ -63,11 +64,12 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
           </tr>
         </thead>
         <tbody>
-          {allResponses.map(({ id, name, response }) => (
+          {allResponses.map(({ id, name, response }, index) => (
             <tr key={id}>
+              <td style={{ border: '1px solid black' }}>{index + 1}</td>
               <td style={{ border: '1px solid black' }}>{name}</td>
-              {questions.map((q, index) => (
-                <td key={index} style={{ border: '1px solid black' }}>
+              {questions.map((q, qIndex) => (
+                <td key={qIndex} style={{ border: '1px solid black' }}>
                   {response.questions.find(rq => rq.question_id === q.id)?.answer_text || ''}
                 </td>
               ))}
