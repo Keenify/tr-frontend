@@ -23,9 +23,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Session } from '@supabase/supabase-js';
-import { getUserData } from '../../../services/userService';
 import { createDocument } from '../../../services/docService';
 import { Document } from '../types/document';
+import { useUserAndCompanyData } from '../../../hooks/useUserAndCompanyData';
 
 /**
  * Props for the CreateSubjectModal component.
@@ -46,6 +46,7 @@ interface CreateSubjectModalProps {
 const CreateSubjectModal: React.FC<CreateSubjectModalProps> = ({ isOpen, onClose, onSubmit, session }) => {
   const [subjectName, setSubjectName] = useState<string>('');
   const [selectedType, setSelectedType] = useState<'Company' | 'Policies' | 'Processes' | null>(null);
+  const { userInfo, companyInfo } = useUserAndCompanyData(session.user.id);
   const navigate = useNavigate();
 
   if (!isOpen) return null;
@@ -59,8 +60,10 @@ const CreateSubjectModal: React.FC<CreateSubjectModalProps> = ({ isOpen, onClose
   const handleSubmit = async () => {
     if (subjectName && selectedType) {
       try {
-        const userData = await getUserData(session.user.id);
-        const documentData = await createDocument(subjectName, 'draft', userData.id, selectedType);
+        if (!userInfo?.id || !companyInfo?.id) {
+          throw new Error('User or company info not found');
+        }
+        const documentData = await createDocument(subjectName, 'draft', userInfo.id, selectedType, companyInfo.id);
 
         // Call the onSubmit prop with the new subject data
         onSubmit({ name: subjectName, types: [selectedType], documentData });
