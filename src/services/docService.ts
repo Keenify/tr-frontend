@@ -26,7 +26,8 @@ export async function createDocument(
   title: string,
   status: string,
   employeeId: string,
-  type: string
+  type: string,
+  companyId: string
 ): Promise<{ id: string; title: string; position: number }> {
   const endpoint = `${API_DOMAIN}/documents/`;
 
@@ -40,6 +41,8 @@ export async function createDocument(
       title,
       status,
       employee_id: employeeId,
+      company_id: companyId,
+      description: '',
       type,
     }),
   });
