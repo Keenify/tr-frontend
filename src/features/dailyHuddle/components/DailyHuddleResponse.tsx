@@ -10,12 +10,26 @@ interface DailyHuddleResponseProps {
   session: Session;
 }
 
+/**
+ * DailyHuddleResponse Component
+ * 
+ * This component displays the responses submitted by employees for the daily huddle questions.
+ * It fetches the questions and employee responses, and displays them in a tabular format.
+ * 
+ * @component
+ * @param {DailyHuddleResponseProps} props - Component props
+ * @param {Session} props.session - User session object containing authentication details
+ * @returns {JSX.Element} Rendered Daily Huddle Response component
+ */
 const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) => {
   const [loading, setLoading] = React.useState(true);
   const [questions, setQuestions] = React.useState<Question[]>([]);
   const { companyInfo, error: dataError } = useUserAndCompanyData(session.user.id);
   const { employeeResponses, error } = useEmployeeResponses(companyInfo?.id);
 
+  /**
+   * Initializes the component by fetching questions and employee responses.
+   */
   React.useEffect(() => {
     const initialize = async () => {
       try {
