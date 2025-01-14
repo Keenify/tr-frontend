@@ -57,7 +57,6 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
             
             if (todayResponses) {
               const typedResponse = todayResponses as ResponseData;
-              console.log('typedResponse:', typedResponse);
               setResponseId(typedResponse.response_id);
               const previousAnswers = typedResponse.questions.reduce((acc, response) => ({
                 ...acc,
