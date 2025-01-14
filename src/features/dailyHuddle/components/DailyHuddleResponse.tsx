@@ -4,7 +4,7 @@ import { useUserAndCompanyData } from '../../../hooks/useUserAndCompanyData';
 import { useEmployeeResponses } from '../hooks/useEmployeeResponses';
 import { fetchQuestions } from '../services/huddleService';
 import { ClipLoader } from 'react-spinners';
-import { Question } from '../types/huddle.types';
+import { Question, QuestionResponse } from '../types/huddle.types';
 
 interface DailyHuddleResponseProps {
   session: Session;
@@ -84,7 +84,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
               <td style={{ border: '1px solid black' }}>{name}</td>
               {questions.map((q, qIndex) => (
                 <td key={qIndex} style={{ border: '1px solid black' }}>
-                  {response.questions.find(rq => rq.question_id === q.id)?.answer_text || ''}
+                  {response.questions.find((rq: QuestionResponse) => rq.question_id === q.id)?.answer_text || ''}
                 </td>
               ))}
             </tr>
