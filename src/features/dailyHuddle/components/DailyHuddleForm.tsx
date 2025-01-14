@@ -11,6 +11,17 @@ interface DailyHuddleFormProps {
   session: Session;
 }
 
+/**
+ * DailyHuddleForm Component
+ * 
+ * A form component that displays daily huddle questions for employees to answer.
+ * It handles fetching questions, managing form state, and submitting responses.
+ * 
+ * @component
+ * @param {DailyHuddleFormProps} props - Component props
+ * @param {Session} props.session - User session object containing authentication details
+ * @returns {JSX.Element} Rendered form component
+ */
 const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -18,6 +29,12 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
   const [employeeId, setEmployeeId] = useState<string | null>(null);
 
+  /**
+   * Initializes the form by fetching necessary data
+   * - Retrieves user data
+   * - Fetches questions
+   * - Checks if user has already submitted today
+   */
   useEffect(() => {
     const initializeForm = async () => {
       setLoading(true);
@@ -42,6 +59,12 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
     initializeForm();
   }, [session.user.id]);
 
+  /**
+   * Updates the answers state when user inputs change
+   * 
+   * @param {string} questionId - The ID of the question being answered
+   * @param {string} answerText - The text input by the user
+   */
   const handleInputChange = (questionId: string, answerText: string) => {
     setAnswers((prevAnswers) => ({
       ...prevAnswers,
@@ -49,6 +72,12 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
     }));
   };
 
+  /**
+   * Handles form submission
+   * Constructs response data and submits it to the server
+   * 
+   * @param {React.FormEvent} event - Form submission event
+   */
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!employeeId) {
