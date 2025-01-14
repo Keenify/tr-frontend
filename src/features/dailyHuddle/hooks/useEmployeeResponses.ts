@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getAllEmployees } from '../../../services/userService';
-import { fetchResponse, ResponseData } from '../services/huddleService';
+import { fetchResponse } from '../services/huddleService';
+import { ResponseData } from '../types/huddle.types';
 
 interface EmployeeResponse {
   id: string;
@@ -8,7 +9,7 @@ interface EmployeeResponse {
   response: ResponseData | null;
 }
 
-export function useEmployeeResponses(companyId: string | undefined) {
+export function useEmployeeResponses(companyId: string | undefined, selectedDate: string) {
   const [employeeResponses, setEmployeeResponses] = useState<EmployeeResponse[]>([]);
   const [error, setError] = useState<Error | null>(null);
 
@@ -18,10 +19,9 @@ export function useEmployeeResponses(companyId: string | undefined) {
     const fetchAllResponses = async () => {
       try {
         const employeeData = await getAllEmployees(companyId);
-        const today = new Date().toISOString().split('T')[0];
-
+        
         const responses = await Promise.all(employeeData.map(async (employee) => {
-          const response = await fetchResponse(today, employee.id);
+          const response = await fetchResponse(selectedDate, employee.id);
           return {
             id: employee.id,
             name: `${employee.first_name} ${employee.last_name}`,
@@ -37,7 +37,7 @@ export function useEmployeeResponses(companyId: string | undefined) {
     };
 
     fetchAllResponses();
-  }, [companyId]);
+  }, [companyId, selectedDate]);
 
   return { employeeResponses, error };
 }
