@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { fetchQuestions, submitResponse } from "../services/huddleService";
+import { fetchQuestions, submitResponse, fetchResponse, updateResponse } from "../services/huddleService";
 import { hasSubmittedResponseToday } from "../services/huddleService";
 import { getUserData } from "../../../services/userService";
-import { Question } from "../types/huddle.types";
+import { Question, ResponseData } from "../types/huddle.types";
 import { Session } from "@supabase/supabase-js";
 import { FORM_ID } from "../constants";
 import { ClipLoader } from "react-spinners";
@@ -28,6 +28,8 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
   const [hasSubmitted, setHasSubmitted] = useState<boolean>(false);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
   const [employeeId, setEmployeeId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [responseId, setResponseId] = useState<string | null>(null);
 
   /**
    * Initializes the form by fetching necessary data
@@ -48,6 +50,22 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
         if (userData.id) {
           const submitted = await hasSubmittedResponseToday(userData.id);
           setHasSubmitted(submitted);
+
+          if (submitted) {
+            const today = new Date().toISOString().split('T')[0];
+            const todayResponses = await fetchResponse(today, userData.id);
+            
+            if (todayResponses) {
+              const typedResponse = todayResponses as ResponseData;
+              console.log('typedResponse:', typedResponse);
+              setResponseId(typedResponse.response_id);
+              const previousAnswers = typedResponse.questions.reduce((acc, response) => ({
+                ...acc,
+                [response.question_id]: response.answer_text,
+              }), {});
+              setAnswers(previousAnswers);
+            }
+          }
         }
       } catch (error) {
         console.error("Initialization failed:", error);
@@ -97,8 +115,19 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
     };
 
     try {
-      await submitResponse(responseData);
+      if (isEditing && responseId) {
+        const updateData = questions.map((question) => ({
+          answer_text: answers[question.id] || "",
+          question_id: question.id
+        }));
+        await updateResponse(responseId, updateData);
+      } else {
+        // Use submitResponse for new submissions
+        await submitResponse(responseData);
+      }
+      
       setHasSubmitted(true);
+      setIsEditing(false); // Reset editing state after successful submission
     } catch (error) {
       console.error("Submission failed:", error);
     }
@@ -119,8 +148,26 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
     );
   }
 
-  if (hasSubmitted) {
-    return <div>You have already submitted your response for today.</div>;
+  if (hasSubmitted && !isEditing) {
+    return (
+      <div style={{ textAlign: "center", padding: "20px" }}>
+        <div>You have already submitted your response for today.</div>
+        <button
+          onClick={() => setIsEditing(true)}
+          style={{
+            marginTop: "10px",
+            padding: "8px 16px",
+            backgroundColor: "#007BFF",
+            color: "#fff",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}
+        >
+          Edit Response
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -136,7 +183,7 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
       }}
     >
       <h1 style={{ textAlign: "center", color: "#333" }}>
-        Daily Huddle Questionnaire
+        {isEditing ? "Edit Daily Huddle Response" : "Daily Huddle Questionnaire"}
       </h1>
       <form onSubmit={handleSubmit}>
         {questions.map((question) => (
