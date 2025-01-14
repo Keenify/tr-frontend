@@ -25,3 +25,28 @@ export interface SubmitResponseResult {
     status: string;
     response_id: string;
 }
+
+export interface ResponseData {
+    response_id: string;
+    submitted_date: string;
+    questions: Array<{
+        question_id: string;
+        answer_text: string;
+    }>;
+}
+
+export interface QuestionResponse {
+  question_id: string;
+  question_text: string;
+  answer_text: string;
+}
+
+export interface UpdateAnswerData {
+  answer_text: string;
+  question_id: string;
+}
+
+export interface UpdateResponseResult {
+  status: string;
+  response_id: string;
+}
