@@ -199,6 +199,7 @@ const Content: React.FC<ContentProps> = ({ session }) => {
         await fetchDocuments(activeContentType, companyInfo.id);
       }
       
+      // Clear form and close modal
       handleCloseUploadModal();
     } catch (error) {
       setUploadProgress(0);

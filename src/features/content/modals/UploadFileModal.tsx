@@ -1,10 +1,10 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 interface UploadFileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { file: File; type: string; title: string }) => void;
+  onSubmit: (data: { file: File; type: string; title: string }) => Promise<void>;
   uploadProgress: number;
 }
 
@@ -14,20 +14,20 @@ const UploadFileModal: React.FC<UploadFileModalProps> = ({
   onSubmit,
   uploadProgress 
 }) => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedType, setSelectedType] = useState<string>('Company');
-  const [title, setTitle] = useState<string>('');
+  const [file, setFile] = useState<File | null>(null);
+  const [title, setTitle] = useState('');
+  const [type, setType] = useState('');
 
   const handleClose = () => {
-    setSelectedFile(null);
-    setSelectedType('Company');
+    setFile(null);
     setTitle('');
+    setType('');
     onClose();
   };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles[0]) {
-      setSelectedFile(acceptedFiles[0]);
+      setFile(acceptedFiles[0]);
     }
   }, []);
 
@@ -41,12 +41,23 @@ const UploadFileModal: React.FC<UploadFileModalProps> = ({
     multiple: false
   });
 
+  useEffect(() => {
+    if (!isOpen) {
+      setFile(null);
+      setTitle('');
+      setType('');
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  const handleSubmit = () => {
-    if (selectedFile && title) {
-      onSubmit({ file: selectedFile, type: selectedType, title });
-      onClose();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (file && title && type) {
+      await onSubmit({ file, type, title });
+      setFile(null);
+      setTitle('');
+      setType('');
     }
   };
 
@@ -78,16 +89,16 @@ const UploadFileModal: React.FC<UploadFileModalProps> = ({
               Document Type <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-3 gap-4">
-              {['Company', 'Policies', 'Processes'].map((type) => (
+              {['Company', 'Policies', 'Processes'].map((docType) => (
                 <button
-                  key={type}
-                  onClick={() => setSelectedType(type)}
+                  key={docType}
+                  onClick={() => setType(docType)}
                   className={`flex items-center justify-center gap-2 p-3 rounded-lg border ${
-                    selectedType === type ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'
+                    docType === type ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'
                   }`}
                 >
-                  <span>{type === 'Company' ? '📄' : type === 'Policies' ? '📝' : '📊'}</span>
-                  <span>{type}</span>
+                  <span>{docType === 'Company' ? '📄' : docType === 'Policies' ? '📝' : '📊'}</span>
+                  <span>{docType}</span>
                 </button>
               ))}
             </div>
@@ -99,10 +110,10 @@ const UploadFileModal: React.FC<UploadFileModalProps> = ({
               ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}`}
           >
             <input {...getInputProps()} />
-            {selectedFile ? (
+            {file ? (
               <div>
                 <p className="text-sm font-medium">Selected file:</p>
-                <p className="text-gray-600">{selectedFile.name}</p>
+                <p className="text-gray-600">{file.name}</p>
               </div>
             ) : (
               <div>
@@ -142,9 +153,9 @@ const UploadFileModal: React.FC<UploadFileModalProps> = ({
             </button>
             <button
               onClick={handleSubmit}
-              disabled={!selectedFile || !title || uploadProgress > 0}
+              disabled={!file || !title || uploadProgress > 0}
               className={`px-4 py-2 text-sm font-medium text-white rounded-md
-                ${(!selectedFile || !title || uploadProgress > 0)
+                ${(!file || !title || uploadProgress > 0)
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-red-500 hover:bg-red-600'}`}
             >
