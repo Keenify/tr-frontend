@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tooltip } from 'react-tooltip';
+import { toast } from 'react-hot-toast';
 
 import { Session } from '@supabase/supabase-js';
 import { deleteDocument, getDocumentsByType } from "../../../services/docService";
@@ -9,10 +10,13 @@ import { FaEllipsisV } from 'react-icons/fa';
 // Modals
 import CreateSubjectModal from '../modals/CreateSubjectModal';
 import DeleteSubjectModal from '../modals/DeleteSubjectModal';
+import UploadFileModal from '../modals/UploadFileModal';
+
 
 // Define or update the Document type or interface
 import { Document } from '../types/document';
 import { useUserAndCompanyData } from '../../../hooks/useUserAndCompanyData';
+import { uploadFile } from '../services/uploadFileService';
 
 interface ContentProps {
   session: Session;
@@ -27,8 +31,7 @@ interface ContentProps {
 const Content: React.FC<ContentProps> = ({ session }) => {
   
   // Load user and company data
-  const { userInfo } = useUserAndCompanyData(session.user.id);
-  const companyId = userInfo?.company_id;
+  const { userInfo, companyInfo } = useUserAndCompanyData(session.user.id);
 
   // State for controlling create subject modal visibility
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,15 +43,17 @@ const Content: React.FC<ContentProps> = ({ session }) => {
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [showMenu, setShowMenu] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
 
   useEffect(() => {
-    if (companyId) {
+    if (companyInfo?.id) {
       // Fetch all documents when the component mounts
-      fetchDocuments('none', companyId);
+      fetchDocuments('none', companyInfo.id);
     } else {
       console.warn('Company ID is undefined');
     }
-  }, [companyId]);
+  }, [companyInfo?.id]);
 
   /**
    * Handles creation of a new subject
@@ -89,8 +94,8 @@ const Content: React.FC<ContentProps> = ({ session }) => {
     try {
       await deleteDocument(selectedDoc.id);
       // Refresh documents list
-      if (companyId) {
-        fetchDocuments(activeContentType, companyId);
+      if (companyInfo?.id) {
+        fetchDocuments(activeContentType, companyInfo.id);
       } else {
         console.warn('Company ID is undefined');
       }
@@ -102,16 +107,63 @@ const Content: React.FC<ContentProps> = ({ session }) => {
     }
   };
 
+  const handleFileUpload = async (data: { file: File; type: string; title: string }) => {
+    try {
+      if (!userInfo?.id || !companyInfo?.id) {
+        throw new Error('User or company info not found');
+      }
+
+      await uploadFile({
+        file: data.file,
+        title: data.title,
+        documentType: data.type,
+        employeeId: userInfo.id,
+        companyId: companyInfo.id,
+        onProgress: (progress: number) => {
+          setUploadProgress(progress);
+        }
+      });
+
+      // Reset progress and show success toast
+      setUploadProgress(0);
+      toast.success('File uploaded successfully!');
+
+      // Refresh documents list
+      if (companyInfo?.id) {
+        await fetchDocuments(activeContentType, companyInfo.id);
+      }
+      
+      handleCloseUploadModal();
+    } catch (error) {
+      setUploadProgress(0);
+      console.error('Error uploading file:', error);
+      toast.error('Failed to upload file');
+    }
+  };
+
+  const handleCloseUploadModal = () => {
+    setIsUploadModalOpen(false);
+    setUploadProgress(0); // Reset progress when modal closes
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-semibold">Content</h1>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="bg-red-500 text-white px-4 py-2 rounded-lg"
-        >
-          Create subject
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg"
+          >
+            Create subject
+          </button>
+          <button 
+            onClick={() => setIsUploadModalOpen(true)}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg"
+          >
+            Upload
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
@@ -125,8 +177,8 @@ const Content: React.FC<ContentProps> = ({ session }) => {
                 : 'hover:bg-gray-50'
             }`}
             onClick={() => {
-              if (companyId) {
-                fetchDocuments(type, companyId);
+              if (companyInfo?.id) {
+                fetchDocuments(type, companyInfo.id);
               } else {
                 console.warn('Company ID is undefined');
               }
@@ -218,6 +270,13 @@ const Content: React.FC<ContentProps> = ({ session }) => {
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleCreateSubject}
         session={session}
+      />
+      {/* Upload File Modal */}
+      <UploadFileModal
+        isOpen={isUploadModalOpen}
+        onClose={handleCloseUploadModal}
+        onSubmit={handleFileUpload}
+        uploadProgress={uploadProgress}
       />
     </div>
   );
