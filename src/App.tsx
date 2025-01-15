@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
+import { Toaster } from 'react-hot-toast';
 
 // Hooks for session
 import { useSession } from './shared/hooks/useSession';
@@ -26,36 +27,39 @@ const App: React.FC = () => {
   const { session, signOut } = useSession();
 
   return (
-    <Router future={{ 
-      v7_startTransition: true,
-      v7_relativeSplatPath: true 
-    }}>
-      <Suspense fallback={<ClipLoader color="#36d7b7" />}>
-        <Routes>
-          {/* Default Redirect to User-Specific Route */}
-          <Route path="/" element={<Navigate to={session ? `/${session.user.id}/home` : "/login"} replace />} />
+    <>
+      <Toaster position="top-right" />
+      <Router future={{ 
+        v7_startTransition: true,
+        v7_relativeSplatPath: true 
+      }}>
+        <Suspense fallback={<ClipLoader color="#36d7b7" />}>
+          <Routes>
+            {/* Default Redirect to User-Specific Route */}
+            <Route path="/" element={<Navigate to={session ? `/${session.user.id}/home` : "/login"} replace />} />
 
-          {/* Public Routes */}
-          <Route path="/login" element={<AuthForm />} />
+            {/* Public Routes */}
+            <Route path="/login" element={<AuthForm />} />
 
-          {/* Protected Routes */}
-          {session && (
-            <>
-              <Route path="/:userId" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="home" onTabChange={() => {}}><Home session={session} /></DashboardLayout>} />} />
-              <Route path="/:userId/content" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="content" onTabChange={() => {}}><Content session={session} /></DashboardLayout>} />} />
-              <Route path="/:userId/people" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="directory" onTabChange={() => {}}><DirectoryPage session={session} /></DashboardLayout>} />} />
-              <Route path="/:userId/org_chart" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="orgChart" onTabChange={() => {}}><OrgChartPage session={session} /></DashboardLayout>} />} />
-              <Route path="/:userId/content/:subjectId" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="content" onTabChange={() => {}}><SubjectDetail /></DashboardLayout>} />} />
-              <Route path="/:userId/steps/:tabId/editor" element={<Editor />} />
-              <Route path="/:userId/dailyhuddle" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="dailyHuddle" onTabChange={() => {}}><DailyHuddle session={session} /></DashboardLayout>} />} />
-            </>
-          )}
+            {/* Protected Routes */}
+            {session && (
+              <>
+                <Route path="/:userId" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="home" onTabChange={() => {}}><Home session={session} /></DashboardLayout>} />} />
+                <Route path="/:userId/content" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="content" onTabChange={() => {}}><Content session={session} /></DashboardLayout>} />} />
+                <Route path="/:userId/people" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="directory" onTabChange={() => {}}><DirectoryPage session={session} /></DashboardLayout>} />} />
+                <Route path="/:userId/org_chart" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="orgChart" onTabChange={() => {}}><OrgChartPage session={session} /></DashboardLayout>} />} />
+                <Route path="/:userId/content/:subjectId" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="content" onTabChange={() => {}}><SubjectDetail /></DashboardLayout>} />} />
+                <Route path="/:userId/steps/:tabId/editor" element={<Editor />} />
+                <Route path="/:userId/dailyhuddle" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="dailyHuddle" onTabChange={() => {}}><DailyHuddle session={session} /></DashboardLayout>} />} />
+              </>
+            )}
 
-          {/* Catch-all for anything else */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
-    </Router>
+            {/* Catch-all for anything else */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </Router>
+    </>
   );
 };
 
