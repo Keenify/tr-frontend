@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { createClient } from '@supabase/supabase-js';
 
 interface UploadResponse {
   file_name: string;
@@ -71,4 +72,49 @@ export const uploadFile = async ({
     console.error('Error uploading file:', error);
     throw error;
   }
+};
+
+/**
+ * Fetches all uploaded documents for a specific company
+ * 
+ * @param {string} companyId - The ID of the company to fetch documents for
+ * @returns {Promise<UploadResponse[]>} Array of uploaded documents
+ * @throws {Error} When the fetch operation fails
+ */
+export const fetchCompanyDocuments = async (companyId: string): Promise<UploadResponse[]> => {
+  try {
+    const response = await axios.get<UploadResponse[]>(
+      `${import.meta.env.VITE_BACKEND_API_DOMAIN}/upload_documents/company/${companyId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching company documents:', error);
+    throw error;
+  }
+};
+
+/**
+ * Gets a signed URL for a file stored in Supabase Storage
+ * 
+ * @param {string} filePath - The storage path of the file
+ * @returns {Promise<string>} Signed URL of the file
+ * @throws {Error} When unable to generate signed URL
+ */
+export const getFileUrl = async (filePath: string): Promise<string> => {
+  const supabase = createClient(
+    import.meta.env.VITE_SUPABASE_URL,
+    import.meta.env.VITE_SUPABASE_ANON_KEY
+  );
+
+  const { data, error } = await supabase
+    .storage
+    .from('documents')
+    .createSignedUrl(filePath, 604800); // URL expires in 1 week
+
+  if (error) {
+    console.error('Error creating signed URL:', error);
+    throw error;
+  }
+
+  return data.signedUrl;
 };
