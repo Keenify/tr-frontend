@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../../../lib/supabase';
 
 interface UploadResponse {
   file_name: string;
@@ -101,15 +101,10 @@ export const fetchCompanyDocuments = async (companyId: string): Promise<UploadRe
  * @throws {Error} When unable to generate signed URL
  */
 export const getFileUrl = async (filePath: string): Promise<string> => {
-  const supabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL,
-    import.meta.env.VITE_SUPABASE_ANON_KEY
-  );
-
   const { data, error } = await supabase
     .storage
     .from('documents')
-    .createSignedUrl(filePath, 604800); // URL expires in 1 week
+    .createSignedUrl(filePath, 604800);
 
   if (error) {
     console.error('Error creating signed URL:', error);
