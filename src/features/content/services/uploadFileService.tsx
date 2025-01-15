@@ -118,3 +118,22 @@ export const getFileUrl = async (filePath: string): Promise<string> => {
 
   return data.signedUrl;
 };
+
+/**
+ * Deletes a document from the server
+ * 
+ * @param {string} documentId - The ID of the document to delete
+ * @returns {Promise<{ status: string }>} Success status of the deletion
+ * @throws {Error} When the deletion fails
+ */
+export const deleteDocument = async (documentId: string): Promise<{ status: string }> => {
+  try {
+    const response = await axios.delete<{ status: string }>(
+      `${import.meta.env.VITE_BACKEND_API_DOMAIN}/upload_documents/${documentId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting document:', error);
+    throw error;
+  }
+};

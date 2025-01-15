@@ -4,7 +4,8 @@ import { Tooltip } from 'react-tooltip';
 import { toast } from 'react-hot-toast';
 
 import { Session } from '@supabase/supabase-js';
-import { deleteDocument, getDocumentsByType } from "../../../services/docService";
+import { deleteDocument as deleteRegularDocument } from "../../../services/docService";
+import { getDocumentsByType } from "../../../services/docService";
 import { FaEllipsisV } from 'react-icons/fa';
 
 // Modals
@@ -16,7 +17,7 @@ import UploadFileModal from '../modals/UploadFileModal';
 // Define or update the Document type or interface
 import { Document } from '../types/document';
 import { useUserAndCompanyData } from '../../../hooks/useUserAndCompanyData';
-import { uploadFile, fetchCompanyDocuments, getFileUrl } from '../services/uploadFileService';
+import { uploadFile, fetchCompanyDocuments, getFileUrl, deleteDocument as deleteUploadedDocument } from '../services/uploadFileService';
 
 interface ContentProps {
   session: Session;
@@ -27,6 +28,7 @@ type CombinedDocument = Document & {
   isUploadedFile?: boolean;
   file_type?: string;
   file_path?: string;
+  document_id?: string;
 };
 
 /**
@@ -138,7 +140,14 @@ const Content: React.FC<ContentProps> = ({ session }) => {
     if (!selectedDoc) return;
     
     try {
-      await deleteDocument(selectedDoc.id);
+      if (selectedDoc.isUploadedFile) {
+        // Use the document_id or id for uploaded files
+        const docId = selectedDoc.document_id || selectedDoc.id;
+        await deleteUploadedDocument(docId);
+      } else {
+        await deleteRegularDocument(selectedDoc.id);
+      }
+
       // Refresh documents list
       if (companyInfo?.id) {
         fetchDocuments(activeContentType, companyInfo.id);
@@ -147,9 +156,10 @@ const Content: React.FC<ContentProps> = ({ session }) => {
       }
       setShowDeleteModal(false);
       setSelectedDoc(null);
-      console.log('✅ Document deleted successfully');
+      toast.success('Document deleted successfully');
     } catch (error) {
       console.error('❌ Failed to delete document:', error);
+      toast.error('Failed to delete document');
     }
   };
 
@@ -304,32 +314,30 @@ const Content: React.FC<ContentProps> = ({ session }) => {
                   </span>
                 )}
                 <span className="text-sm text-gray-500">{doc.type}</span>
-                {!doc.isUploadedFile && ( // Only show menu for regular documents
-                  <div className="relative">
-                    <button
-                      title="Edit"
-                      onClick={() => setShowMenu(showMenu === doc.id ? null : doc.id)}
-                      className="p-2 hover:bg-gray-100 rounded-full"
-                    >
-                      <FaEllipsisV className="text-gray-500" />
-                    </button>
-                    
-                    {showMenu === doc.id && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border">
-                        <button
-                          onClick={() => {
-                            setSelectedDoc(doc);
-                            setShowDeleteModal(true);
-                            setShowMenu(null);
-                          }}
-                          className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 rounded-lg"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
+                <div className="relative">
+                  <button
+                    title="Edit"
+                    onClick={() => setShowMenu(showMenu === doc.id ? null : doc.id)}
+                    className="p-2 hover:bg-gray-100 rounded-full"
+                  >
+                    <FaEllipsisV className="text-gray-500" />
+                  </button>
+                  
+                  {showMenu === doc.id && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border">
+                      <button
+                        onClick={() => {
+                          setSelectedDoc(doc);
+                          setShowDeleteModal(true);
+                          setShowMenu(null);
+                        }}
+                        className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 rounded-lg"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))
