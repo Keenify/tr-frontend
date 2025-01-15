@@ -302,7 +302,7 @@ const Content: React.FC<ContentProps> = ({ session }) => {
                   {docs.map((doc) => (
                     <div
                       key={doc.id}
-                      className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                      className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md hover:bg-yellow-200 transition-all cursor-pointer"
                       onClick={() => handleDocumentClick(doc)}
                     >
                       <div className="flex justify-between items-start">
