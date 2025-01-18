@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { updateDocument, createDocumentTab, getDocumentTabs, deleteDocumentTab } from '../../../services/docService';
+import { updateDocument } from '../services/docServices';
+import { createDocumentTab, getDocumentTabs, deleteDocumentTab } from '../../../services/docService';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaEllipsisV } from 'react-icons/fa';

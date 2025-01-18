@@ -23,7 +23,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Session } from '@supabase/supabase-js';
-import { createDocument } from '../../../services/docService';
+import { createDocument } from '../services/docServices';
 import { Document } from '../types/document';
 import { useUserAndCompanyData } from '../../../hooks/useUserAndCompanyData';
 
