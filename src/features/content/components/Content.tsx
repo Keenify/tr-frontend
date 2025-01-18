@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { FaEllipsisV } from 'react-icons/fa';
 
 import { Session } from '@supabase/supabase-js';
-import { deleteDocument as deleteRegularDocument } from "../../../services/docService";
-import { getDocumentsByType } from "../../../services/docService";
-import { FaEllipsisV } from 'react-icons/fa';
+
+// Services
+import { deleteDocument as deleteRegularDocument } from "../services/docServices";
+import { getDocumentsByType } from "../services/docServices";
+import { uploadFile, fetchCompanyDocuments, getFileUrl, deleteDocument as deleteUploadedDocument } from '../services/uploadFileService';
 
 // Modals
 import CreateSubjectModal from '../modals/CreateSubjectModal';
@@ -16,7 +19,7 @@ import UploadFileModal from '../modals/UploadFileModal';
 // Define or update the Document type or interface
 import { Document } from '../types/document';
 import { useUserAndCompanyData } from '../../../hooks/useUserAndCompanyData';
-import { uploadFile, fetchCompanyDocuments, getFileUrl, deleteDocument as deleteUploadedDocument } from '../services/uploadFileService';
+
 
 interface ContentProps {
   session: Session;
