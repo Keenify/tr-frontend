@@ -48,8 +48,7 @@ export async function createDocument(
     return data;
   }
   
-  
-  
+
   /**
    * Fetches a document by its ID.
    * @param {string} documentId - The ID of the document to fetch.
