@@ -63,7 +63,7 @@ const CreateSubjectModal: React.FC<CreateSubjectModalProps> = ({ isOpen, onClose
         if (!userInfo?.id || !companyInfo?.id) {
           throw new Error('User or company info not found');
         }
-        const documentData = await createDocument(subjectName, 'draft', userInfo.id, selectedType, companyInfo.id);
+        const documentData = await createDocument(subjectName, 'draft', userInfo.id, selectedType.toLowerCase(), companyInfo.id);
 
         // Call the onSubmit prop with the new subject data
         onSubmit({ name: subjectName, types: [selectedType], documentData });
