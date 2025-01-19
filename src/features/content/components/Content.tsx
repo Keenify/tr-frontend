@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { FaEllipsisV } from 'react-icons/fa';
@@ -9,6 +9,7 @@ import { Session } from '@supabase/supabase-js';
 import { deleteDocument as deleteRegularDocument } from "../services/docServices";
 import { getDocumentsByType } from "../services/docServices";
 import { uploadFile, fetchCompanyDocuments, getFileUrl, deleteDocument as deleteUploadedDocument } from '../services/uploadFileService';
+import { documentTypeService } from '../services/docTypeServices';
 
 // Modals
 import CreateSubjectModal from '../modals/CreateSubjectModal';
@@ -19,6 +20,7 @@ import UploadFileModal from '../modals/UploadFileModal';
 // Define or update the Document type or interface
 import { Document } from '../types/document';
 import { useUserAndCompanyData } from '../../../hooks/useUserAndCompanyData';
+import { DocumentType } from '../types/documentType';
 
 
 interface ContentProps {
@@ -71,15 +73,7 @@ const Content: React.FC<ContentProps> = ({ session }) => {
   // State for controlling create subject modal visibility
   const [isModalOpen, setIsModalOpen] = useState(false);
   // State to store fetched documents
-  const [organizedDocs, setOrganizedDocs] = useState<{
-    Company: CombinedDocument[];
-    Policies: CombinedDocument[];
-    Processes: CombinedDocument[];
-  }>({
-    Company: [],
-    Policies: [],
-    Processes: [],
-  });
+  const [organizedDocs, setOrganizedDocs] = useState<Record<string, CombinedDocument[]>>({});
   const navigate = useNavigate();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
@@ -88,36 +82,10 @@ const Content: React.FC<ContentProps> = ({ session }) => {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
 
-  useEffect(() => {
-    if (companyInfo?.id) {
-      fetchDocuments(companyInfo.id);
-    }
-  }, [companyInfo?.id]);
+  // Add new state for document types
+  const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
 
-  /**
-   * Handles the creation of a new subject and navigates to its detail view
-   * 
-   * @param {Object} data - Subject creation data
-   * @param {string} data.name - Name of the subject
-   * @param {string[]} data.types - Content types associated with the subject
-   * @param {Document} data.documentData - Complete document data
-   */
-  const handleCreateSubject = (data: { name: string; types: string[]; documentData: Document }) => {
-    // Navigate to SubjectDetail with the response and session
-    navigate(`/${session.user.id}/content/${data.documentData.id}`, {
-      state: { subject: data.documentData, session }
-    });
-    setIsModalOpen(false);
-  };
-
-  /**
-   * Fetches both regular documents and uploaded files based on content type
-   * 
-   * @param {string} type - Content type filter ('none', 'Company', 'Policies', 'Processes')
-   * @param {string} companyId - ID of the current company
-   * @returns {Promise<void>}
-   */
-  const fetchDocuments = async (companyId: string) => {
+  const fetchDocuments = useCallback(async (companyId: string) => {
     setIsLoading(true);
     try {
       const [docs, uploadedDocs] = await Promise.all([
@@ -125,7 +93,7 @@ const Content: React.FC<ContentProps> = ({ session }) => {
         fetchCompanyDocuments(companyId)
       ]);
 
-      // Combine and organize documents by type
+      // Combine documents
       const combined: CombinedDocument[] = [
         ...docs.map((doc: BaseDocument) => ({ 
           ...doc, 
@@ -142,12 +110,14 @@ const Content: React.FC<ContentProps> = ({ session }) => {
         }))
       ];
 
-      // Organize documents by type
-      const organized = {
-        Company: combined.filter(doc => doc.type === 'Company'),
-        Policies: combined.filter(doc => doc.type === 'Policies'),
-        Processes: combined.filter(doc => doc.type === 'Processes'),
-      };
+      // Organize documents by type dynamically
+      const organized: Record<string, CombinedDocument[]> = {};
+      documentTypes.forEach(type => {
+        const typeName = type.type_name.charAt(0).toUpperCase() + type.type_name.slice(1);
+        organized[typeName] = combined.filter(doc => 
+          doc.type?.toLowerCase() === type.type_name.toLowerCase()
+        );
+      });
 
       setOrganizedDocs(organized);
     } catch (error) {
@@ -155,6 +125,52 @@ const Content: React.FC<ContentProps> = ({ session }) => {
     } finally {
       setIsLoading(false);
     }
+  }, [documentTypes]);
+
+  useEffect(() => {
+    if (companyInfo?.id) {
+      fetchDocuments(companyInfo.id);
+    }
+  }, [companyInfo?.id, fetchDocuments]);
+
+  // Add useEffect to fetch document types
+  useEffect(() => {
+    const fetchDocumentTypes = async () => {
+      if (companyInfo?.id) {
+        try {
+          const types = await documentTypeService.getDocumentTypes(companyInfo.id);
+          setDocumentTypes(types);
+          
+          // Initialize organizedDocs with fetched types
+          const initialOrganizedDocs: Record<string, CombinedDocument[]> = {};
+          types.forEach(type => {
+            initialOrganizedDocs[type.type_name.charAt(0).toUpperCase() + type.type_name.slice(1)] = [];
+          });
+          setOrganizedDocs(initialOrganizedDocs);
+        } catch (error) {
+          console.error('Failed to fetch document types:', error);
+          toast.error('Failed to load document types');
+        }
+      }
+    };
+
+    fetchDocumentTypes();
+  }, [companyInfo?.id]);
+
+  /**
+   * Handles the creation of a new subject and navigates to its detail view
+   * 
+   * @param {Object} data - Subject creation data
+   * @param {string} data.name - Name of the subject
+   * @param {string[]} data.types - Content types associated with the subject
+   * @param {Document} data.documentData - Complete document data
+   */
+  const handleCreateSubject = (data: { name: string; types: string[]; documentData: Document }) => {
+    // Navigate to SubjectDetail with the response and session
+    navigate(`/${session.user.id}/content/${data.documentData.id}`, {
+      state: { subject: data.documentData, session }
+    });
+    setIsModalOpen(false);
   };
 
   /**
