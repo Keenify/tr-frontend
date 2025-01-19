@@ -350,6 +350,21 @@ const Content: React.FC<ContentProps> = ({ session }) => {
               </div>
             </div>
           ))}
+
+          {/* Add new document type card */}
+          <div className="flex-1 min-w-[300px]">
+            <button 
+              className="min-h-[88px] w-full bg-gray-100 rounded-lg p-4 hover:bg-gray-200 transition-all flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300"
+              onClick={() => {/* TODO: Implement add document type functionality */}}
+            >
+              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <span className="text-gray-500 font-medium">Add another Document Type</span>
+            </button>
+          </div>
         </div>
       )}
 
