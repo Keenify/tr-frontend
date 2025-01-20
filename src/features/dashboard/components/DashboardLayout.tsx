@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Power, ThumbsUp, Calendar } from 'react-feather'; // Import Power, ThumbsUp, and Clock icons from react-feather
+import { Calendar, Power, ThumbsUp } from 'react-feather'; // Import Power, ThumbsUp, and Clock icons from react-feather
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase'; // Import supabase client
 import { useNavigate, useParams } from 'react-router-dom';
@@ -49,23 +49,6 @@ interface LayoutProps {
 }
 
 /**
- * Animation styles for the blinking thumb icon.
- * Creates a pulsing effect with opacity and scale changes.
- * @constant {string}
- */
-const blinkingThumbStyle = `
-  @keyframes blink {
-    0% { opacity: 0.4; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.1); }
-    100% { opacity: 0.4; transform: scale(1); }
-  }
-  .blinking-thumb {
-    animation: blink 2s infinite;
-    color: #10B981; /* Emerald-500 color */
-  }
-`;
-
-/**
  * Layout component for the dashboard, including sidebar and main content area.
  * 
  * This component provides a structured layout for the dashboard, featuring a sidebar
@@ -76,11 +59,11 @@ const blinkingThumbStyle = `
  * @returns {JSX.Element} The rendered layout component.
  */
 export function DashboardLayout({ children, activeTab, onTabChange, session, signOut, activeSubTab, onSubTabChange }: LayoutProps) {
-  const email = session.user.email || 'user@example.com';
-  const [isPeopleSubmenuOpen, setIsPeopleSubmenuOpen] = React.useState(activeTab === 'people');
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
+  const email = session.user.email || 'user@example.com';
   const [activeTabState, setActiveTabState] = React.useState<TabType>(activeTab);
+  const [isPeopleSubmenuOpen, setIsPeopleSubmenuOpen] = React.useState(activeTab === 'people');
   const [localActiveSubTab, setLocalActiveSubTab] = useState<'directory' | 'orgChart' | undefined>(activeSubTab);
 
   // Update state when props change
@@ -159,7 +142,6 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
    */
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      <style>{blinkingThumbStyle}</style>
       {/* Top Bar Section */}
       {/* @section Contains company logo, user profile, and sign out button */}
       <div className="flex justify-between items-center bg-white border-b border-gray-200 px-4 py-2">
