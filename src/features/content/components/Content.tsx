@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { FaEllipsisV } from 'react-icons/fa';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
 import { Session } from '@supabase/supabase-js';
 
@@ -283,8 +283,31 @@ const Content: React.FC<ContentProps> = ({ session }) => {
     }
   };
 
-  const handleDragEnd = () => {
-    // Implement drag and drop logic here
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+
+    const sourceType = result.source.droppableId.replace('droppable-', '');
+    const destType = result.destination.droppableId.replace('droppable-', '');
+    
+    const newOrganizedDocs = { ...organizedDocs };
+    
+    // Remove from source array
+    const [movedDoc] = newOrganizedDocs[sourceType].splice(result.source.index, 1);
+    
+    // Update document type
+    movedDoc.type = destType as 'Company' | 'Policies' | 'Processes';
+    
+    // Add to destination array
+    newOrganizedDocs[destType].splice(result.destination.index, 0, movedDoc);
+    
+    setOrganizedDocs(newOrganizedDocs);
+
+    // TODO: Update document type in backend
+    console.log('Document moved:', {
+      documentId: movedDoc.id,
+      newType: destType,
+      newPosition: result.destination.index
+    });
   };
 
   return (
@@ -312,40 +335,57 @@ const Content: React.FC<ContentProps> = ({ session }) => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-full auto-rows-min">
-          {Object.entries(organizedDocs).map(([columnType, docs]) => (
-            <div key={columnType} className="w-full">
-              <div className="bg-gray-100 rounded-lg p-4 h-full">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">{columnType}</h2>
-                  <span className="bg-gray-200 px-2 py-1 rounded-full text-sm">
-                    {docs.length}
-                  </span>
-                </div>
-                <DragDropContext onDragEnd={handleDragEnd}>
-                  <Droppable droppableId={`droppable-${columnType}`}>
-                    {(provided) => (
-                      <div 
-                        {...provided.droppableProps}
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-full auto-rows-min">
+            {Object.entries(organizedDocs).map(([columnType, docs]) => (
+              <Droppable droppableId={`droppable-${columnType}`} key={columnType}>
+                {(provided, snapshot) => (
+                  <div className="w-full">
+                    <div 
+                      className={`bg-gray-100 rounded-lg p-4 h-full ${
+                        snapshot.isDraggingOver ? 'bg-gray-200' : ''
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-lg font-semibold">{columnType}</h2>
+                        <span className="bg-gray-200 px-2 py-1 rounded-full text-sm">
+                          {docs.length}
+                        </span>
+                      </div>
+                      <div
                         ref={provided.innerRef}
+                        {...provided.droppableProps}
                         className="space-y-3"
                       >
                         {docs.map((doc, index) => (
-                          <Draggable
-                            key={doc.id}
-                            draggableId={doc.id}
-                            index={index}
-                          >
-                            {(provided) => (
+                          <Draggable key={doc.id} draggableId={doc.id} index={index}>
+                            {(provided, snapshot) => (
                               <div
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md hover:bg-yellow-200 transition-all cursor-pointer"
-                                onClick={() => handleDocumentClick(doc)}
+                                className={`bg-white p-4 rounded-lg shadow-sm transition-all
+                                  ${snapshot.isDragging ? 'shadow-lg bg-yellow-100' : 'hover:shadow-md hover:bg-yellow-50'}`}
                               >
                                 <div className="flex justify-between items-start">
-                                  <h3 className="font-medium">{doc.title}</h3>
+                                  <div className="flex items-center gap-2">
+                                    <div className="cursor-grab active:cursor-grabbing p-1">
+                                      <svg 
+                                        xmlns="http://www.w3.org/2000/svg" 
+                                        className={`h-5 w-5 ${snapshot.isDragging ? 'text-gray-600' : 'text-gray-400'}`}
+                                        viewBox="0 0 20 20" 
+                                        fill="currentColor"
+                                      >
+                                        <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z" />
+                                      </svg>
+                                    </div>
+                                    <div 
+                                      onClick={() => handleDocumentClick(doc)}
+                                      className="cursor-pointer"
+                                    >
+                                      <h3 className="font-medium">{doc.title}</h3>
+                                    </div>
+                                  </div>
                                   <div className="relative">
                                     <button
                                       title="More options"
@@ -386,28 +426,28 @@ const Content: React.FC<ContentProps> = ({ session }) => {
                         ))}
                         {provided.placeholder}
                       </div>
-                    )}
-                  </Droppable>
-                </DragDropContext>
-              </div>
+                    </div>
+                  </div>
+                )}
+              </Droppable>
+            ))}
+            
+            {/* Add new document type card */}
+            <div className="col-span-1">
+              <button 
+                className="min-h-[88px] w-full bg-gray-100 rounded-lg p-4 hover:bg-gray-200 transition-all flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300"
+                onClick={() => {/* TODO: Implement add document type functionality */}}
+              >
+                <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </div>
+                <span className="text-gray-500 font-medium">Add another Document Type</span>
+              </button>
             </div>
-          ))}
-          
-          {/* Add new document type card */}
-          <div className="col-span-1">
-            <button 
-              className="min-h-[88px] w-full bg-gray-100 rounded-lg p-4 hover:bg-gray-200 transition-all flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300"
-              onClick={() => {/* TODO: Implement add document type functionality */}}
-            >
-              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-              </div>
-              <span className="text-gray-500 font-medium">Add another Document Type</span>
-            </button>
           </div>
-        </div>
+        </DragDropContext>
       )}
 
       {/* Delete Subject Modal */}
