@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Power, ThumbsUp, Clock, Calendar } from 'react-feather'; // Import Power, ThumbsUp, and Clock icons from react-feather
+import { Power, ThumbsUp, Calendar } from 'react-feather'; // Import Power, ThumbsUp, and Clock icons from react-feather
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase'; // Import supabase client
 import { useNavigate, useParams } from 'react-router-dom';
@@ -16,9 +16,27 @@ import { useNavigate, useParams } from 'react-router-dom';
  * @property {function} onSubTabChange - Callback function to change the active subtab.
  */
 
-// Define the possible tabs, including the new "Daily Huddle" tab
-const tabs = ['home', 'content', 'people', 'groups', 'marketplaces', 'reports', 'account', 'dailyHuddle'] as const;
-type TabType = typeof tabs[number];
+/**
+ * Defines the available navigation tabs in the dashboard.
+ * @constant {Object[]}
+ */
+const navigationConfig = [
+  { id: 'home', label: 'Home', icon: null },
+  { id: 'content', label: 'Content', icon: ThumbsUp },
+  { id: 'people', label: 'People', icon: ThumbsUp, 
+    subTabs: [
+      { id: 'directory', label: 'Directory', icon: ThumbsUp },
+      { id: 'orgChart', label: 'Org Chart', icon: ThumbsUp }
+    ]
+  },
+  { id: 'dailyHuddle', label: 'Daily Huddle', icon: Calendar }
+] as const;
+
+/**
+ * Type representing the possible tab values.
+ * @typedef {string} TabType
+ */
+type TabType = typeof navigationConfig[number]['id'];
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -30,7 +48,11 @@ interface LayoutProps {
   onSubTabChange?: (subTab: 'directory' | 'orgChart') => void;
 }
 
-// Add this CSS to your global styles or add it inline with a style tag
+/**
+ * Animation styles for the blinking thumb icon.
+ * Creates a pulsing effect with opacity and scale changes.
+ * @constant {string}
+ */
 const blinkingThumbStyle = `
   @keyframes blink {
     0% { opacity: 0.4; transform: scale(1); }
@@ -71,14 +93,28 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
     setLocalActiveSubTab(activeSubTab);
   }, [activeSubTab]);
 
-  // Function to handle sign out using Supabase
+  /**
+   * Handles the sign out process for the user.
+   * - Signs out from Supabase
+   * - Calls the parent signOut function
+   * - Navigates to login page
+   * @async
+   * @function handleSignOut
+   */
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     signOut(); // Call the passed signOut function to update the state
     navigate('/login');
   };
 
-  // Function to handle tab change
+  /**
+   * Handles tab changes in the navigation.
+   * - Updates the active tab state
+   * - Toggles people submenu if applicable
+   * - Updates URL based on selected tab
+   * @function handleTabChange
+   * @param {TabType} tab - The selected tab
+   */
   const handleTabChange = (tab: TabType) => {
     setActiveTabState(tab);
     if (tab === 'people') {
@@ -93,7 +129,14 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
     }
   };
 
-  // Function to handle subtab click
+  /**
+   * Handles subtab selection within the People section.
+   * - Updates local subtab state
+   * - Calls parent subtab change handler
+   * - Updates URL based on selected subtab
+   * @function handleSubTabClick
+   * @param {'directory' | 'orgChart'} subTab - The selected subtab
+   */
   const handleSubTabClick = (subTab: 'directory' | 'orgChart') => {
     setLocalActiveSubTab(subTab);
     if (onSubTabChange) {
@@ -108,10 +151,17 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
     }
   };
 
+  /**
+   * Main layout structure:
+   * 1. Top Bar - Contains company logo and user profile
+   * 2. Sidebar - Navigation menu with tabs and subtabs
+   * 3. Main Content - Displays the active component
+   */
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       <style>{blinkingThumbStyle}</style>
-      {/* Top Bar */}
+      {/* Top Bar Section */}
+      {/* @section Contains company logo, user profile, and sign out button */}
       <div className="flex justify-between items-center bg-white border-b border-gray-200 px-4 py-2">
         <div className="flex items-center">
           <span role="img" aria-label="Company Logo" className="text-2xl">🏢</span>
@@ -137,42 +187,40 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
+        {/* Sidebar Navigation Section */}
+        {/* @section Contains main navigation tabs and people subtabs */}
         <div className="w-64 bg-white border-r border-gray-200 flex-shrink-0">
           <div className="flex flex-col h-full">
             {/* Navigation */}
             <div className="flex-1 py-6 px-4">
               <div className="space-y-1">
-                {tabs.map((tab) => (
-                  <React.Fragment key={tab}>
+                {navigationConfig.map((tab) => (
+                  <React.Fragment key={tab.id}>
                     <button
-                      onClick={() => handleTabChange(tab)}
+                      onClick={() => handleTabChange(tab.id)}
                       className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        activeTabState === tab
+                        activeTabState === tab.id
                           ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
-                      <span>{tab.charAt(0).toUpperCase() + tab.slice(1)}</span>
-                      {tab === 'content' && <ThumbsUp size={16} className="text-gray-400" />}
-                      {tab === 'people' && <ThumbsUp size={16} className="text-gray-400" />}
-                      {['groups', 'marketplaces', 'reports', 'account'].includes(tab) && <Clock size={16} className="text-gray-400" />}
-                      {tab === 'dailyHuddle' && <Calendar size={16} className="text-gray-400" />}
+                      <span>{tab.label}</span>
+                      {tab.icon && <tab.icon size={16} className="text-gray-400" />}
                     </button>
-                    {tab === 'people' && isPeopleSubmenuOpen && (
+                    {tab.id === 'people' && isPeopleSubmenuOpen && tab.subTabs && (
                       <div className="pl-4 space-y-1">
-                        {['directory', 'orgChart'].map((subTab) => (
+                        {tab.subTabs.map((subTab) => (
                           <button
-                            key={subTab}
-                            onClick={() => handleSubTabClick(subTab as 'directory' | 'orgChart')}
+                            key={subTab.id}
+                            onClick={() => handleSubTabClick(subTab.id as 'directory' | 'orgChart')}
                             className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                              localActiveSubTab === subTab
+                              localActiveSubTab === subTab.id
                                 ? 'bg-red-50 text-red-600 border-l-4 border-red-600'
                                 : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
                             }`}
                           >
-                            <span>{subTab === 'orgChart' ? 'Org Chart' : 'Directory'}</span>
-                            <ThumbsUp size={16} className="text-gray-400" />
+                            <span>{subTab.label}</span>
+                            {subTab.icon && <subTab.icon size={16} className="text-gray-400" />}
                           </button>
                         ))}
                       </div>
@@ -184,7 +232,8 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Main Content Section */}
+        {/* @section Displays the active component passed as children */}
         <div className="flex-1 overflow-auto">
           <div className="w-full h-full flex flex-col">
             {/* Content */}
