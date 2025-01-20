@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { FaEllipsisV } from 'react-icons/fa';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 import { Session } from '@supabase/supabase-js';
 
@@ -282,6 +283,10 @@ const Content: React.FC<ContentProps> = ({ session }) => {
     }
   };
 
+  const handleDragEnd = () => {
+    // Implement drag and drop logic here
+  };
+
   return (
     <div className="h-full">
       <div className="flex justify-between items-center mb-4">
@@ -307,81 +312,105 @@ const Content: React.FC<ContentProps> = ({ session }) => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
         </div>
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {Object.entries(organizedDocs).map(([columnType, docs]) => (
-            <div key={columnType} className="flex-1 min-w-[300px]">
-              <div className="bg-gray-100 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">{columnType}</h2>
-                  <span className="bg-gray-200 px-2 py-1 rounded-full text-sm">
-                    {docs.length}
-                  </span>
-                </div>
-                <div className="space-y-3">
-                  {docs.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md hover:bg-yellow-200 transition-all cursor-pointer"
-                      onClick={() => handleDocumentClick(doc)}
-                    >
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-medium">{doc.title}</h3>
-                        <div className="relative">
-                          <button
-                            title="More options"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setShowMenu(showMenu === doc.id ? null : doc.id?.toString() || null);
-                            }}
-                            className="p-1 hover:bg-gray-100 rounded-full"
-                          >
-                            <FaEllipsisV className="text-gray-500" />
-                          </button>
-                          
-                          {showMenu === doc.id && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedDoc(doc as Document);
-                                  setShowDeleteModal(true);
-                                  setShowMenu(null);
-                                }}
-                                className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 rounded-lg"
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="columns">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-full auto-rows-min"
+              >
+                {Object.entries(organizedDocs).map(([columnType, docs]) => (
+                  <Draggable
+                    key={columnType}
+                    draggableId={columnType}
+                    index={Object.keys(organizedDocs).indexOf(columnType)}
+                  >
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        className={`w-full ${(docs.length === 0 ? 'col-span-1' : '')}`}
+                      >
+                        <div className="bg-gray-100 rounded-lg p-4 h-full">
+                          <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold">{columnType}</h2>
+                            <span className="bg-gray-200 px-2 py-1 rounded-full text-sm">
+                              {docs.length}
+                            </span>
+                          </div>
+                          <div className="space-y-3">
+                            {docs.map((doc) => (
+                              <div
+                                key={doc.id}
+                                className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md hover:bg-yellow-200 transition-all cursor-pointer"
+                                onClick={() => handleDocumentClick(doc)}
                               >
-                                Delete
-                              </button>
-                            </div>
-                          )}
+                                <div className="flex justify-between items-start">
+                                  <h3 className="font-medium">{doc.title}</h3>
+                                  <div className="relative">
+                                    <button
+                                      title="More options"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowMenu(showMenu === doc.id ? null : doc.id?.toString() || null);
+                                      }}
+                                      className="p-1 hover:bg-gray-100 rounded-full"
+                                    >
+                                      <FaEllipsisV className="text-gray-500" />
+                                    </button>
+                                    
+                                    {showMenu === doc.id && (
+                                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border">
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedDoc(doc as Document);
+                                            setShowDeleteModal(true);
+                                            setShowMenu(null);
+                                          }}
+                                          className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 rounded-lg"
+                                        >
+                                          Delete
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                {doc.isUploadedFile && (
+                                  <span className="text-xs bg-gray-100 px-2 py-1 rounded mt-2 inline-block">
+                                    {doc.file_type?.split('/').pop()?.toUpperCase()}
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                      {doc.isUploadedFile && (
-                        <span className="text-xs bg-gray-100 px-2 py-1 rounded mt-2 inline-block">
-                          {doc.file_type?.split('/').pop()?.toUpperCase()}
-                        </span>
-                      )}
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+                
+                {/* Add new document type card */}
+                <div className="col-span-1">
+                  <button 
+                    className="min-h-[88px] w-full bg-gray-100 rounded-lg p-4 hover:bg-gray-200 transition-all flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300"
+                    onClick={() => {/* TODO: Implement add document type functionality */}}
+                  >
+                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
                     </div>
-                  ))}
+                    <span className="text-gray-500 font-medium">Add another Document Type</span>
+                  </button>
                 </div>
               </div>
-            </div>
-          ))}
-
-          {/* Add new document type card */}
-          <div className="flex-1 min-w-[300px]">
-            <button 
-              className="min-h-[88px] w-full bg-gray-100 rounded-lg p-4 hover:bg-gray-200 transition-all flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300"
-              onClick={() => {/* TODO: Implement add document type functionality */}}
-            >
-              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-              </div>
-              <span className="text-gray-500 font-medium">Add another Document Type</span>
-            </button>
-          </div>
-        </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       )}
 
       {/* Delete Subject Modal */}
