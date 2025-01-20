@@ -21,15 +21,15 @@ import { useNavigate, useParams } from 'react-router-dom';
  * @constant {Object[]}
  */
 const navigationConfig = [
-  { id: 'home', label: 'Home', icon: null },
-  { id: 'content', label: 'Content', icon: ThumbsUp },
-  { id: 'people', label: 'People', icon: ThumbsUp, 
+  { id: 'home', label: 'Home', shortForm: 'H', icon: null },
+  { id: 'content', label: 'Content', shortForm: 'C', icon: ThumbsUp },
+  { id: 'people', label: 'People', shortForm: 'Pe', icon: ThumbsUp, 
     subTabs: [
-      { id: 'directory', label: 'Directory', icon: ThumbsUp },
-      { id: 'orgChart', label: 'Org Chart', icon: ThumbsUp }
+      { id: 'directory', label: 'Directory', shortForm: 'Di', icon: ThumbsUp },
+      { id: 'orgChart', label: 'Org Chart', shortForm: 'OC', icon: ThumbsUp }
     ]
   },
-  { id: 'dailyHuddle', label: 'Daily Huddle', icon: Calendar }
+  { id: 'dailyHuddle', label: 'Daily Huddle', shortForm: 'Dh', icon: Calendar }
 ] as const;
 
 /**
@@ -65,6 +65,7 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
   const [activeTabState, setActiveTabState] = React.useState<TabType>(activeTab);
   const [isPeopleSubmenuOpen, setIsPeopleSubmenuOpen] = React.useState(activeTab === 'people');
   const [localActiveSubTab, setLocalActiveSubTab] = useState<'directory' | 'orgChart' | undefined>(activeSubTab);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Update state when props change
   React.useEffect(() => {
@@ -170,10 +171,26 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar Navigation Section */}
-        {/* @section Contains main navigation tabs and people subtabs */}
-        <div className="w-64 bg-white border-r border-gray-200 flex-shrink-0">
+        <div className={`bg-white border-r border-gray-200 flex-shrink-0 transition-all duration-300 ${
+          isSidebarCollapsed ? 'w-16' : 'w-64'
+        } relative`}>
+          {/* Collapse Toggle Button */}
+          <button
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="absolute -right-3 top-4 bg-white border border-gray-200 rounded-full p-1 shadow-sm hover:bg-gray-50"
+            aria-label="Toggle sidebar"
+          >
+            <svg
+              className={`w-4 h-4 transform transition-transform ${isSidebarCollapsed ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
           <div className="flex flex-col h-full">
-            {/* Navigation */}
             <div className="flex-1 py-6 px-4">
               <div className="space-y-1">
                 {navigationConfig.map((tab) => (
@@ -186,10 +203,14 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
-                      <span>{tab.label}</span>
-                      {tab.icon && <tab.icon size={16} className="text-gray-400" />}
+                      <span className="flex items-center">
+                        {isSidebarCollapsed ? tab.shortForm : tab.label}
+                      </span>
+                      {tab.icon && !isSidebarCollapsed && (
+                        <tab.icon size={16} className="text-gray-400" />
+                      )}
                     </button>
-                    {tab.id === 'people' && isPeopleSubmenuOpen && tab.subTabs && (
+                    {tab.id === 'people' && isPeopleSubmenuOpen && tab.subTabs && !isSidebarCollapsed && (
                       <div className="pl-4 space-y-1">
                         {tab.subTabs.map((subTab) => (
                           <button
@@ -201,8 +222,10 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
                                 : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
                             }`}
                           >
-                            <span>{subTab.label}</span>
-                            {subTab.icon && <subTab.icon size={16} className="text-gray-400" />}
+                            <span>{isSidebarCollapsed ? subTab.shortForm : subTab.label}</span>
+                            {subTab.icon && !isSidebarCollapsed && (
+                              <subTab.icon size={16} className="text-gray-400" />
+                            )}
                           </button>
                         ))}
                       </div>
