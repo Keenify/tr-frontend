@@ -312,38 +312,35 @@ const Content: React.FC<ContentProps> = ({ session }) => {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
         </div>
       ) : (
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="columns">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-full auto-rows-min"
-              >
-                {Object.entries(organizedDocs).map(([columnType, docs]) => (
-                  <Draggable
-                    key={columnType}
-                    draggableId={columnType}
-                    index={Object.keys(organizedDocs).indexOf(columnType)}
-                  >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-full auto-rows-min">
+          {Object.entries(organizedDocs).map(([columnType, docs]) => (
+            <div key={columnType} className="w-full">
+              <div className="bg-gray-100 rounded-lg p-4 h-full">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold">{columnType}</h2>
+                  <span className="bg-gray-200 px-2 py-1 rounded-full text-sm">
+                    {docs.length}
+                  </span>
+                </div>
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId={`droppable-${columnType}`}>
                     {(provided) => (
-                      <div
+                      <div 
+                        {...provided.droppableProps}
                         ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        className={`w-full ${(docs.length === 0 ? 'col-span-1' : '')}`}
+                        className="space-y-3"
                       >
-                        <div className="bg-gray-100 rounded-lg p-4 h-full">
-                          <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-semibold">{columnType}</h2>
-                            <span className="bg-gray-200 px-2 py-1 rounded-full text-sm">
-                              {docs.length}
-                            </span>
-                          </div>
-                          <div className="space-y-3">
-                            {docs.map((doc) => (
+                        {docs.map((doc, index) => (
+                          <Draggable
+                            key={doc.id}
+                            draggableId={doc.id}
+                            index={index}
+                          >
+                            {(provided) => (
                               <div
-                                key={doc.id}
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
                                 className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md hover:bg-yellow-200 transition-all cursor-pointer"
                                 onClick={() => handleDocumentClick(doc)}
                               >
@@ -384,33 +381,33 @@ const Content: React.FC<ContentProps> = ({ session }) => {
                                   </span>
                                 )}
                               </div>
-                            ))}
-                          </div>
-                        </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
                       </div>
                     )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-                
-                {/* Add new document type card */}
-                <div className="col-span-1">
-                  <button 
-                    className="min-h-[88px] w-full bg-gray-100 rounded-lg p-4 hover:bg-gray-200 transition-all flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300"
-                    onClick={() => {/* TODO: Implement add document type functionality */}}
-                  >
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                    </div>
-                    <span className="text-gray-500 font-medium">Add another Document Type</span>
-                  </button>
-                </div>
+                  </Droppable>
+                </DragDropContext>
               </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+            </div>
+          ))}
+          
+          {/* Add new document type card */}
+          <div className="col-span-1">
+            <button 
+              className="min-h-[88px] w-full bg-gray-100 rounded-lg p-4 hover:bg-gray-200 transition-all flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300"
+              onClick={() => {/* TODO: Implement add document type functionality */}}
+            >
+              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <span className="text-gray-500 font-medium">Add another Document Type</span>
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Delete Subject Modal */}
