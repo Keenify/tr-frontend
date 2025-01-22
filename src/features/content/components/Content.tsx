@@ -20,7 +20,7 @@ import UploadFileModal from '../modals/UploadFileModal';
 
 // Define or update the Document type or interface
 import { Document } from '../types/document';
-import { useUserAndCompanyData } from '../../../hooks/useUserAndCompanyData';
+import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import { DocumentType } from '../types/documentType';
 
 

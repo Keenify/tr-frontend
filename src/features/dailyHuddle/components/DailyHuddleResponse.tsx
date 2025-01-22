@@ -1,6 +1,6 @@
 import React from 'react';
 import { Session } from '@supabase/supabase-js';
-import { useUserAndCompanyData } from '../../../hooks/useUserAndCompanyData';
+import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import { useEmployeeResponses } from '../hooks/useEmployeeResponses';
 import { fetchQuestions } from '../services/huddleService';
 import { ClipLoader } from 'react-spinners';

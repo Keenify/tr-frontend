@@ -25,7 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import { Session } from '@supabase/supabase-js';
 import { createDocument } from '../services/docServices';
 import { Document } from '../types/document';
-import { useUserAndCompanyData } from '../../../hooks/useUserAndCompanyData';
+import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 
 /**
  * Props for the CreateSubjectModal component.

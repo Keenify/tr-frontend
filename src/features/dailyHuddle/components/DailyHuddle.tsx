@@ -5,7 +5,7 @@ import 'react-tabs/style/react-tabs.css';
 import '../styles/DailyHuddle.css';
 import DailyHuddleForm from './DailyHuddleForm';
 import DailyHuddleResponse from './DailyHuddleResponse';
-import { useUserAndCompanyData } from '../../../hooks/useUserAndCompanyData';
+import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 
 /**
  * Props for the DailyHuddle component.

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getUserData, UserData } from '../services/userService';
-import { getCompanyData, CompanyData } from '../services/companyService';
+import { getUserData, UserData } from '../../services/userService';
+import { getCompanyData, CompanyData } from '../../services/companyService';
 
 export function useUserAndCompanyData(userId: string) {
   const [userInfo, setUserInfo] = useState<UserData | null>(null);
