@@ -22,6 +22,7 @@ import Editor from './features/content/components/Editor';
 import DirectoryPage from './features/directory/routes/DirectoryPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 import DailyHuddle from './features/dailyHuddle/components/DailyHuddle';
+import Sales from './features/sales/components/Sales';
 
 const App: React.FC = () => {
   const { session, signOut } = useSession();
@@ -50,7 +51,8 @@ const App: React.FC = () => {
                 <Route path="/:userId/org_chart" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="orgChart" onTabChange={() => {}}><OrgChartPage session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/content/:subjectId" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="content" onTabChange={() => {}}><SubjectDetail /></DashboardLayout>} />} />
                 <Route path="/:userId/steps/:tabId/editor" element={<Editor />} />
-                <Route path="/:userId/dailyhuddle" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="dailyHuddle" onTabChange={() => {}}><DailyHuddle session={session} /></DashboardLayout>} />} />
+                <Route path="/:userId/dailyhuddle" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="dailyHuddle" onTabChange={() => { }}><DailyHuddle session={session} /></DashboardLayout>} />} />
+                <Route path="/:userId/sales" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="sales" onTabChange={() => { }}><Sales session={session} /></DashboardLayout>} />} />
               </>
             )}
 
