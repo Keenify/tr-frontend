@@ -30,7 +30,8 @@ const navigationConfig = [
       { id: 'orgChart', label: 'Org Chart', shortForm: 'OC', icon: ThumbsUp }
     ]
   },
-  { id: 'dailyHuddle', label: 'Daily Huddle', shortForm: 'Dh', icon: Calendar }
+  { id: 'dailyHuddle', label: 'Daily Huddle', shortForm: 'Dh', icon: Calendar },
+  { id: 'sales', label: 'Sales', shortForm: 'S', icon: ThumbsUp }
 ] as const;
 
 /**
