@@ -8,6 +8,7 @@ import { getTrelloCards } from '../services/useTrelloCards';
 import { useTrelloCardUpdate } from '../services/useTrelloCards';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import NewCardModal from './NewCardModal';
+import Button from '@mui/material/Button';
 
 /**
  * Sales component displays a Trello-style board for managing sales pipeline
@@ -19,6 +20,7 @@ const Sales = ({ session }: { session: Session }) => {
   const { data: lists, isLoading: listsLoading, error: listsError } = useTrelloList();
   const [selectedCard, setSelectedCard] = useState<TrelloCard | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedListId, setSelectedListId] = useState<string | null>(null);
 
   const { data: allCards, refetch: refetchCards } = getTrelloCards(lists?.map(list => list.id));
 
@@ -107,12 +109,6 @@ const Sales = ({ session }: { session: Session }) => {
         {companyInfo && (
           <h2 className="text-lg text-gray-600">Company: {companyInfo.name}</h2>
         )}
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-        >
-          New Lead
-        </button>
       </div>
       <h1 className="text-2xl font-bold mb-6">Sales Pipeline</h1>
       <DragDropContext onDragEnd={onDragEnd}>
@@ -125,7 +121,8 @@ const Sales = ({ session }: { session: Session }) => {
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className="bg-gray-100 rounded-lg p-4 min-h-[200px]"
+                    className="bg-gray-100 rounded-lg p-4"
+                    style={{ height: 'auto' }}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <h2 className="font-semibold capitalize">{list.name.toLowerCase()}</h2>
@@ -133,7 +130,7 @@ const Sales = ({ session }: { session: Session }) => {
                         {cardsByList[list.id]?.length || 0}
                       </span>
                     </div>
-                    <div className="min-h-[200px]">
+                    <div>
                       {cardsByList[list.id]?.filter(Boolean).map((card, index) => {
                         const draggableId = card.id;
                         return (
@@ -162,6 +159,16 @@ const Sales = ({ session }: { session: Session }) => {
                       })}
                       {provided.placeholder}
                     </div>
+                    <Button
+                      onClick={() => {
+                        setIsModalOpen(true);
+                        setSelectedListId(list.id);
+                      }}
+                      startIcon={<span>+</span>}
+                      style={{ color: '#6b7280' }}
+                    >
+                      Add a Lead
+                    </Button>
                   </div>
                 )}
               </Droppable>
@@ -185,6 +192,7 @@ const Sales = ({ session }: { session: Session }) => {
         onClose={() => setIsModalOpen(false)}
         onSave={handleNewLead}
         lists={lists || []}
+        selectedListId={selectedListId}
       />
     </div>
   );

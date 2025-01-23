@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TrelloCard } from '../types/TrelloCard.types';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
@@ -9,14 +9,21 @@ interface NewCardModalProps {
   onClose: () => void;
   onSave: (newCardData: Omit<TrelloCard, 'id' | 'created_at'>) => void;
   lists: { id: string; name: string }[];
+  selectedListId: string | null;
 }
 
-const NewCardModal = ({ isOpen, onClose, onSave, lists }: NewCardModalProps) => {
+const NewCardModal = ({ isOpen, onClose, onSave, lists, selectedListId }: NewCardModalProps) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [colorCode, setColorCode] = useState('#ffffff');
-  const [selectedListId, setSelectedListId] = useState(lists[0]?.id || '');
+  const [listId, setListId] = useState(selectedListId || lists[0]?.id || '');
+
+  useEffect(() => {
+    if (selectedListId) {
+      setListId(selectedListId);
+    }
+  }, [selectedListId]);
 
   if (!isOpen) return null;
 
@@ -27,7 +34,7 @@ const NewCardModal = ({ isOpen, onClose, onSave, lists }: NewCardModalProps) => 
       description,
       due_date: dueDate?.toISOString() || null,
       color_code: colorCode,
-      list_id: selectedListId,
+      list_id: listId,
       position: 0,
     };
 
@@ -107,21 +114,6 @@ const NewCardModal = ({ isOpen, onClose, onSave, lists }: NewCardModalProps) => 
                   placeholder="#000000"
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">List</label>
-              <select
-                value={selectedListId}
-                onChange={(e) => setSelectedListId(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 p-2"
-              >
-                {lists.map((list) => (
-                  <option key={list.id} value={list.id}>
-                    {list.name}
-                  </option>
-                ))}
-              </select>
             </div>
           </div>
 
