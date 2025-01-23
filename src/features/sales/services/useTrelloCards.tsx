@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { TrelloCard } from '../types/TrelloCard.types';
 
@@ -20,5 +20,31 @@ export const getTrelloCards = (listIds: string[] | undefined) => {
       return results;
     },
     enabled: !!listIds
+  });
+};
+
+/**
+ * Updates a Trello card with the provided data
+ * @param {string} cardId - The ID of the card to update
+ * @param {Partial<TrelloCard>} updateData - The data to update (any card fields can be modified)
+ * @returns {Promise<TrelloCard>} The updated card data
+ */
+const updateTrelloCard = async (cardId: string, updateData: Partial<TrelloCard>): Promise<TrelloCard> => {
+  const { data } = await axios.patch<TrelloCard>(
+    `${import.meta.env.VITE_BACKEND_API_DOMAIN}/trello/cards/${cardId}`,
+    updateData
+  );
+  return data;
+};
+
+export const useTrelloCardUpdate = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ cardId, updateData }: { cardId: string; updateData: Partial<TrelloCard> }) =>
+      updateTrelloCard(cardId, updateData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trello-cards'] });
+    },
   });
 }; 
