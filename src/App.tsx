@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ClipLoader } from 'react-spinners';
 import { Toaster } from 'react-hot-toast';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Hooks for session
 import { useSession } from './shared/hooks/useSession';
@@ -24,11 +25,14 @@ import ProtectedRoute from './routes/ProtectedRoute';
 import DailyHuddle from './features/dailyHuddle/components/DailyHuddle';
 import Sales from './features/sales/components/Sales';
 
+// Create a client
+const queryClient = new QueryClient();
+
 const App: React.FC = () => {
   const { session, signOut } = useSession();
 
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       <Toaster position="top-right" />
       <Router future={{ 
         v7_startTransition: true,
@@ -61,7 +65,7 @@ const App: React.FC = () => {
           </Routes>
         </Suspense>
       </Router>
-    </>
+    </QueryClientProvider>
   );
 };
 
