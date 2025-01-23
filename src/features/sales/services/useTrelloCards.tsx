@@ -47,4 +47,17 @@ export const useTrelloCardUpdate = () => {
       queryClient.invalidateQueries({ queryKey: ['trello-cards'] });
     },
   });
+};
+
+/**
+ * Creates a new Trello card with the provided data
+ * @param {Omit<TrelloCard, 'id' | 'created_at'>} newCardData - The data for the new card (excluding id and created_at)
+ * @returns {Promise<TrelloCard>} The created card data
+ */
+export const createTrelloCard = async (newCardData: Omit<TrelloCard, 'id' | 'created_at'>): Promise<TrelloCard> => {
+  const { data } = await axios.post<TrelloCard>(
+    `${import.meta.env.VITE_BACKEND_API_DOMAIN}/trello/cards`,
+    newCardData
+  );
+  return data;
 }; 
