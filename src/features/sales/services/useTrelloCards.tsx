@@ -94,8 +94,6 @@ export const createTrelloCardAttachment = async (
 
   const formData = new FormData();
   formData.append('file', file);
-
-  console.log('formData', formData);
   const { data } = await axios.post<TrelloCardAttachment>(
     `${import.meta.env.VITE_BACKEND_API_DOMAIN}/trello/attachments?card_id=${cardId}&is_thumbnail=${isThumbnail}`,
     formData,
@@ -104,6 +102,18 @@ export const createTrelloCardAttachment = async (
         'Content-Type': 'multipart/form-data',
       },
     }
+  );
+  return data;
+};
+
+/**
+ * Fetches all attachments for a given Trello card by its ID
+ * @param {string} cardId - The ID of the card to fetch attachments for
+ * @returns {Promise<TrelloCardAttachment[]>} The list of attachments for the card
+ */
+export const getTrelloCardAttachments = async (cardId: string): Promise<TrelloCardAttachment[]> => {
+  const { data } = await axios.get<TrelloCardAttachment[]>(
+    `${import.meta.env.VITE_BACKEND_API_DOMAIN}/trello/cards/${cardId}/attachments`
   );
   return data;
 }; 
