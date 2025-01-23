@@ -120,7 +120,12 @@ const Sales = ({ session }: { session: Session }) => {
                     {...provided.droppableProps}
                     className="bg-gray-100 rounded-lg p-4 min-h-[200px]"
                   >
-                    <h2 className="font-semibold mb-4 capitalize">{list.name.toLowerCase()}</h2>
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="font-semibold capitalize">{list.name.toLowerCase()}</h2>
+                      <span className="bg-gray-200 px-2 py-1 rounded-full text-sm">
+                        {cardsByList[list.id]?.length || 0}
+                      </span>
+                    </div>
                     <div className="min-h-[200px]">
                       {cardsByList[list.id]?.filter(Boolean).map((card, index) => {
                         const draggableId = card.id;
