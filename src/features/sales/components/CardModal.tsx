@@ -1,7 +1,10 @@
-import { useState } from 'react';
-import { TrelloCard } from '../types/TrelloCard.types';
-import { deleteTrelloCard } from '../services/useTrelloCards';
-import DatePicker from 'react-datepicker';
+import { useState } from "react";
+import { TrelloCard, TrelloCardAttachment } from "../types/TrelloCard.types";
+import {
+  deleteTrelloCard,
+  createTrelloCardAttachment,
+} from "../services/useTrelloCards";
+import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 interface CardModalProps {
@@ -13,7 +16,11 @@ interface CardModalProps {
 }
 
 // New ConfirmationModal component
-const ConfirmationModal: React.FC<{ isOpen: boolean; onConfirm: () => void; onCancel: () => void }> = ({ isOpen, onConfirm, onCancel }) => {
+const ConfirmationModal: React.FC<{
+  isOpen: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}> = ({ isOpen, onConfirm, onCancel }) => {
   if (!isOpen) return null;
 
   return (
@@ -40,13 +47,24 @@ const ConfirmationModal: React.FC<{ isOpen: boolean; onConfirm: () => void; onCa
   );
 };
 
-const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onSave, onDeleteSuccess }) => {
+const CardModal: React.FC<CardModalProps> = ({
+  card,
+  isOpen,
+  onClose,
+  onSave,
+  onDeleteSuccess,
+}) => {
   const [title, setTitle] = useState(card.title);
-  const [description, setDescription] = useState(card.description || '');
-  const [dueDate, setDueDate] = useState(card.due_date ? new Date(card.due_date) : null);
-  const [colorCode, setColorCode] = useState(card.color_code || '#ffffff');
+  const [description, setDescription] = useState(card.description || "");
+  const [dueDate, setDueDate] = useState(
+    card.due_date ? new Date(card.due_date) : null
+  );
+  const [colorCode, setColorCode] = useState(card.color_code || "#ffffff");
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isThumbnail, setIsThumbnail] = useState(false);
 
   if (!isOpen) return null;
 
@@ -69,14 +87,42 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onSave, on
     setIsDeleting(true);
     const success = await deleteTrelloCard(card.id);
     if (success) {
-      console.log('Card deleted successfully');
+      console.log("Card deleted successfully");
       onDeleteSuccess();
       onClose();
     } else {
-      console.error('Failed to delete card');
+      console.error("Failed to delete card");
     }
     setIsDeleting(false);
     setShowConfirmModal(false);
+  };
+
+  const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setAttachmentFile(e.target.files[0]);
+    }
+  };
+
+  const handleUploadAttachment = async () => {
+    if (!attachmentFile) return;
+    setIsUploading(true);
+    try {
+      const attachment: TrelloCardAttachment = await createTrelloCardAttachment(
+        card.id,
+        attachmentFile,
+        isThumbnail
+      );
+      console.log("Attachment uploaded:", attachment);
+      alert("Attachment uploaded successfully!");
+      // Optionally, update the card state with the new attachment
+    } catch (error) {
+      console.error("Failed to upload attachment:", error);
+      alert("Failed to upload attachment. Please try again.");
+    } finally {
+      setIsUploading(false);
+      // Allow user to upload again without resetting isThumbnail
+      setAttachmentFile(null);
+    }
   };
 
   return (
@@ -97,7 +143,9 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onSave, on
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Title</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Title
+                </label>
                 <input
                   type="text"
                   value={title}
@@ -108,7 +156,9 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onSave, on
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Description
+                </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -118,7 +168,9 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onSave, on
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Due Date</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Due Date
+                </label>
                 <DatePicker
                   selected={dueDate}
                   onChange={(date) => setDueDate(date)}
@@ -129,7 +181,9 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onSave, on
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Color</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Color
+                </label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
@@ -147,6 +201,38 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onSave, on
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Attachment
+                </label>
+                <input
+                  type="file"
+                  onChange={handleAttachmentChange}
+                  className="mt-1 block w-full"
+                />
+                {attachmentFile && attachmentFile.type.startsWith("image/") && (
+                  <div className="mt-2 flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={isThumbnail}
+                      onChange={(e) => setIsThumbnail(e.target.checked)}
+                      className="mr-2"
+                    />
+                    <label className="text-sm text-gray-700">
+                      Set as thumbnail
+                    </label>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={handleUploadAttachment}
+                  className="mt-2 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                  disabled={isUploading || !attachmentFile}
+                >
+                  {isUploading ? "Uploading..." : "Upload Attachment"}
+                </button>
+              </div>
             </div>
 
             <div className="mt-6 flex justify-end gap-2">
@@ -156,7 +242,7 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onSave, on
                 className="px-4 py-2 bg-red-500 text-white rounded"
                 disabled={isDeleting}
               >
-                {isDeleting ? 'Deleting...' : 'Delete'}
+                {isDeleting ? "Deleting..." : "Delete"}
               </button>
               <button
                 type="submit"
@@ -177,4 +263,4 @@ const CardModal: React.FC<CardModalProps> = ({ card, isOpen, onClose, onSave, on
   );
 };
 
-export default CardModal; 
+export default CardModal;

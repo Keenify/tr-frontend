@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
-import { TrelloCard } from '../types/TrelloCard.types';
+import { TrelloCard, TrelloCardAttachment } from '../types/TrelloCard.types';
 
 const fetchTrelloCards = async (listId: string): Promise<TrelloCard[]> => {
   const { data } = await axios.get<TrelloCard[]>(
@@ -77,4 +77,33 @@ export const deleteTrelloCard = async (cardId: string): Promise<boolean> => {
     console.error('Failed to delete card:', error);
     return false;
   }
+};
+
+/**
+ * Creates an attachment for a Trello card
+ * @param {string} cardId - The ID of the card to attach the file to
+ * @param {File} file - The file to attach
+ * @param {boolean} isThumbnail - Whether the file is a thumbnail
+ * @returns {Promise<TrelloCardAttachment>} The created attachment data
+ */
+export const createTrelloCardAttachment = async (
+  cardId: string,
+  file: File,
+  isThumbnail: boolean
+): Promise<TrelloCardAttachment> => {
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  console.log('formData', formData);
+  const { data } = await axios.post<TrelloCardAttachment>(
+    `${import.meta.env.VITE_BACKEND_API_DOMAIN}/trello/attachments?card_id=${cardId}&is_thumbnail=${isThumbnail}`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+  return data;
 }; 
