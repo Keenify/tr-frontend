@@ -4,7 +4,7 @@ import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyDa
 import { useState, useMemo } from 'react';
 import CardModal from './CardModal';
 import { TrelloCard } from '../types/TrelloCard.types';
-import { useTrelloCards } from '../services/useTrelloCards';
+import { getTrelloCards } from '../services/useTrelloCards';
 
 /**
  * Sales component displays a Trello-style board for managing sales pipeline
@@ -15,7 +15,7 @@ const Sales = ({ session }: { session: Session }) => {
   const { data: lists, isLoading: listsLoading, error: listsError } = useTrelloList();
   const [selectedCard, setSelectedCard] = useState<TrelloCard | null>(null);
 
-  const { data: allCards } = useTrelloCards(lists?.map(list => list.id));
+  const { data: allCards } = getTrelloCards(lists?.map(list => list.id));
 
   // Group cards by list
   const cardsByList = useMemo(() => {

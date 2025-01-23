@@ -9,7 +9,7 @@ const fetchTrelloCards = async (listId: string): Promise<TrelloCard[]> => {
   return data;
 };
 
-export const useTrelloCards = (listIds: string[] | undefined) => {
+export const getTrelloCards = (listIds: string[] | undefined) => {
   return useQuery({
     queryKey: ['trello-cards', listIds],
     queryFn: async () => {
