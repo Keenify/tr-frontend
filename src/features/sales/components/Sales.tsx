@@ -7,6 +7,7 @@ import { TrelloCard } from '../types/TrelloCard.types';
 import { getTrelloCards } from '../services/useTrelloCards';
 import { useTrelloCardUpdate } from '../services/useTrelloCards';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import NewCardModal from './NewCardModal';
 
 /**
  * Sales component displays a Trello-style board for managing sales pipeline
@@ -17,6 +18,7 @@ const Sales = ({ session }: { session: Session }) => {
   const { companyInfo, error: companyError, isLoading: companyLoading } = useUserAndCompanyData(session.user.id);
   const { data: lists, isLoading: listsLoading, error: listsError } = useTrelloList();
   const [selectedCard, setSelectedCard] = useState<TrelloCard | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: allCards } = getTrelloCards(lists?.map(list => list.id));
 
@@ -82,16 +84,29 @@ const Sales = ({ session }: { session: Session }) => {
     setSelectedCard(card);
   };
 
+  const handleNewLead = (newCardData: Omit<TrelloCard, 'id' | 'created_at'>) => {
+    // Logic to save the new card, e.g., calling an API or updating state
+    // For now, just log the new card data
+    console.log('New Lead Created:', newCardData);
+    setIsModalOpen(false);
+  };
+
   if (listsLoading || companyLoading) return <div>Loading...</div>;
   if (listsError || companyError) return <div>Error loading data</div>;
 
   return (
     <div className="p-6">
-      {companyInfo && (
-        <div className="mb-4">
+      <div className="flex justify-between items-center mb-4">
+        {companyInfo && (
           <h2 className="text-lg text-gray-600">Company: {companyInfo.name}</h2>
-        </div>
-      )}
+        )}
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        >
+          New Lead
+        </button>
+      </div>
       <h1 className="text-2xl font-bold mb-6">Sales Pipeline</h1>
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -151,6 +166,13 @@ const Sales = ({ session }: { session: Session }) => {
           onSave={handleCardUpdate}
         />
       )}
+
+      <NewCardModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleNewLead}
+        lists={lists || []}
+      />
     </div>
   );
 };
