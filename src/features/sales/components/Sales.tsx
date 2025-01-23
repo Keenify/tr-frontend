@@ -1,7 +1,7 @@
 import { Session } from '@supabase/supabase-js';
 import { useTrelloList } from '../services/useTrelloList';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import CardModal from './CardModal';
 import { TrelloCard } from '../types/TrelloCard.types';
 import { getTrelloCards } from '../services/useTrelloCards';
