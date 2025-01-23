@@ -20,12 +20,6 @@ const Sales = ({ session }: { session: Session }) => {
 
   const { data: allCards } = getTrelloCards(lists?.map(list => list.id));
 
-  // Log lists and cards to ensure they are loaded correctly
-  useEffect(() => {
-    console.log('Lists:', lists);
-    console.log('All Cards:', allCards);
-  }, [lists, allCards]);
-
   // Ensure cardsByList is only computed when lists and allCards are available
   const cardsByList = useMemo(() => {
     if (!lists || !allCards) return {};
@@ -36,11 +30,6 @@ const Sales = ({ session }: { session: Session }) => {
       return acc;
     }, {} as Record<string, TrelloCard[]>);
   }, [lists, allCards]);
-
-  // Log the cardsByList to verify the grouping
-  useEffect(() => {
-    console.log('Cards by List:', cardsByList);
-  }, [cardsByList]);
 
   // Update the handleCardUpdate function to use the mutation
   const cardUpdateMutation = useTrelloCardUpdate();
