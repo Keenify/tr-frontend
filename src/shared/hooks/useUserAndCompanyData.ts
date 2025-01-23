@@ -6,10 +6,12 @@ export function useUserAndCompanyData(userId: string) {
   const [userInfo, setUserInfo] = useState<UserData | null>(null);
   const [companyInfo, setCompanyInfo] = useState<CompanyData | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true);
         const userData = await getUserData(userId);
         setUserInfo(userData);
         const companyData = await getCompanyData(userData.company_id);
@@ -17,11 +19,13 @@ export function useUserAndCompanyData(userId: string) {
       } catch (err) {
         setError(err as Error);
         console.error('Error fetching data:', err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchData();
   }, [userId]);
 
-  return { userInfo, companyInfo, error };
+  return { userInfo, companyInfo, error, isLoading };
 } 
