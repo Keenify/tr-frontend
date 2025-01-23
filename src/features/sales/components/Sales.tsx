@@ -20,7 +20,7 @@ const Sales = ({ session }: { session: Session }) => {
   const [selectedCard, setSelectedCard] = useState<TrelloCard | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data: allCards } = getTrelloCards(lists?.map(list => list.id));
+  const { data: allCards, refetch: refetchCards } = getTrelloCards(lists?.map(list => list.id));
 
   // Ensure cardsByList is only computed when lists and allCards are available
   const cardsByList = useMemo(() => {
@@ -84,11 +84,18 @@ const Sales = ({ session }: { session: Session }) => {
     setSelectedCard(card);
   };
 
-  const handleNewLead = (newCardData: Omit<TrelloCard, 'id' | 'created_at'>) => {
-    // Logic to save the new card, e.g., calling an API or updating state
-    // For now, just log the new card data
-    console.log('New Lead Created:', newCardData);
-    setIsModalOpen(false);
+  const handleNewLead = async (newCardData: Omit<TrelloCard, 'id' | 'created_at'>) => {
+    try {
+      // Logic to handle new lead without creating the Trello card directly
+      console.log('New Lead Data:', newCardData);
+      
+      // Refresh the cards after handling a new lead
+      refetchCards();
+    } catch (error) {
+      console.error('Error handling new lead:', error);
+    } finally {
+      setIsModalOpen(false);
+    }
   };
 
   if (listsLoading || companyLoading) return <div>Loading...</div>;
