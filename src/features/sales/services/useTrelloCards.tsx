@@ -60,4 +60,21 @@ export const createTrelloCard = async (newCardData: Omit<TrelloCard, 'id' | 'cre
     newCardData
   );
   return data;
+};
+
+/**
+ * Deletes a Trello card by its ID
+ * @param {string} cardId - The ID of the card to delete
+ * @returns {Promise<boolean>} True if the card was successfully deleted, otherwise false
+ */
+export const deleteTrelloCard = async (cardId: string): Promise<boolean> => {
+  try {
+    await axios.delete(
+      `${import.meta.env.VITE_BACKEND_API_DOMAIN}/trello/cards/${cardId}`
+    );
+    return true;
+  } catch (error) {
+    console.error('Failed to delete card:', error);
+    return false;
+  }
 }; 

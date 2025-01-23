@@ -176,6 +176,7 @@ const Sales = ({ session }: { session: Session }) => {
           isOpen={!!selectedCard}
           onClose={() => setSelectedCard(null)}
           onSave={handleCardUpdate}
+          onDeleteSuccess={refetchCards}
         />
       )}
 
