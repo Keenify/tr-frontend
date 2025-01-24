@@ -81,12 +81,16 @@ const Sales = ({ session }: { session: Session }) => {
    * @param {DropResult} result - The result of the drag operation
    */
   const onDragEnd = (result: DropResult) => {
-    const { destination, source, draggableId } = result;
+    const { destination, source } = result;
 
     // Return if dropped outside a droppable area
     if (!destination) {
       return;
     }
+
+    // Log the source and destination positions along with the card name
+    const cardToMove = cardsByList[source.droppableId][source.index];
+    console.log(`Card: ${cardToMove.title}, Source Position: ${source.index}, Destination Position: ${destination.index}`);
 
     // Optimistically update the UI
     const sourceList = cardsByList[source.droppableId];
@@ -106,21 +110,34 @@ const Sales = ({ session }: { session: Session }) => {
     }
 
     // Update the positions of the affected cards
-    sourceList.forEach((card, index) => {
-      card.position = index;
-    });
-    destinationList.forEach((card, index) => {
-      card.position = index;
-    });
+    const updateCardPositions = (list: TrelloCard[]) => {
+      list.forEach((card, index) => {
+        card.position = index;
+        console.log(`Card: ${card.title}, New Position: ${card.position}`);
+        // Trigger the mutation to update the server for each card
+        cardUpdateMutation.mutate({
+          cardId: card.id,
+          updateData: {
+            position: index,
+            list_id: card.list_id,
+          },
+        }, {
+          onSuccess: () => {
+            console.log('Card update successful');
+          },
+          onError: (error) => {
+            console.error('Error updating card:', error);
+          }
+        });
+      });
+    };
 
-    // Trigger the mutation to update the server
-    cardUpdateMutation.mutate({
-      cardId: draggableId,
-      updateData: {
-        list_id: destination.droppableId,
-        position: destination.index
-      }
-    });
+    updateCardPositions(sourceList);
+    if (source.droppableId !== destination.droppableId) {
+      updateCardPositions(destinationList);
+    }
+
+    refetchCards(); // Ensure the cards are refetched after updates
   };
 
   // Function to handle card click
