@@ -4,6 +4,7 @@ import {
   deleteTrelloCard,
   getTrelloCardAttachments,
   getTrelloCardAttachmentUrl,
+  deleteTrelloCardAttachment,
 } from "../services/useTrelloCards";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -129,6 +130,20 @@ const CardModal: React.FC<CardModalProps> = ({
     }
   };
 
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    try {
+      const success = await deleteTrelloCardAttachment(attachmentId);
+      if (success) {
+        console.log("Attachment deleted successfully");
+        updateAttachments();
+      } else {
+        console.error("Failed to delete attachment");
+      }
+    } catch (error) {
+      console.error("Error deleting attachment", error);
+    }
+  };
+
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -215,13 +230,19 @@ const CardModal: React.FC<CardModalProps> = ({
                   <h3 className="text-lg font-bold mb-2">Attachments</h3>
                   <ul>
                     {attachments.map((attachment) => (
-                      <li key={attachment.id}>
+                      <li key={attachment.id} className="flex justify-between items-center">
                         <span
                           onClick={() => handleAttachmentClick(attachment.id)}
                           className="cursor-pointer text-blue-500 hover:underline"
                         >
                           {attachment.file_url.split('/').pop()}
                         </span>
+                        <button
+                          onClick={() => handleDeleteAttachment(attachment.id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          🗑️
+                        </button>
                       </li>
                     ))}
                   </ul>

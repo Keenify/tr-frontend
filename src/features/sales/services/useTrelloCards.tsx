@@ -128,4 +128,21 @@ export const getTrelloCardAttachmentUrl = async (attachmentId: string): Promise<
     `${import.meta.env.VITE_BACKEND_API_DOMAIN}/trello/attachments/${attachmentId}/url`
   );
   return data;
+};
+
+/**
+ * Deletes a Trello card attachment by its ID
+ * @param {string} attachmentId - The ID of the attachment to delete
+ * @returns {Promise<boolean>} True if the attachment was successfully deleted, otherwise false
+ */
+export const deleteTrelloCardAttachment = async (attachmentId: string): Promise<boolean> => {
+  try {
+    await axios.delete(
+      `${import.meta.env.VITE_BACKEND_API_DOMAIN}/trello/attachments/${attachmentId}`
+    );
+    return true;
+  } catch (error) {
+    console.error('Failed to delete attachment:', error);
+    return false;
+  }
 }; 
