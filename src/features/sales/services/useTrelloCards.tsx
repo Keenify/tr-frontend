@@ -167,4 +167,16 @@ export const updateTrelloCardAttachment = async (
     }
   );
   return data;
-}; 
+};
+
+/**
+ * Fetches the thumbnail URL for a given Trello card by its ID
+ * @param {string} cardId - The ID of the card to fetch the thumbnail for
+ * @returns {Promise<string>} The URL of the thumbnail
+ */
+export const getTrelloCardThumbnailUrl = async (cardId: string): Promise<string> => {
+  const { data } = await axios.get<string>(
+    `${import.meta.env.VITE_BACKEND_API_DOMAIN}/trello/cards/${cardId}/thumbnail`
+  );
+  return data;
+};

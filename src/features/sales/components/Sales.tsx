@@ -1,10 +1,10 @@
 import { Session } from '@supabase/supabase-js';
 import { useTrelloList } from '../services/useTrelloList';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import CardModal from './CardModal';
 import { TrelloCard } from '../types/TrelloCard.types';
-import { getTrelloCards } from '../services/useTrelloCards';
+import { getTrelloCards, getTrelloCardThumbnailUrl } from '../services/useTrelloCards';
 import { useTrelloCardUpdate } from '../services/useTrelloCards';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import NewCardModal from './NewCardModal';
@@ -23,6 +23,31 @@ const Sales = ({ session }: { session: Session }) => {
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
 
   const { data: allCards, refetch: refetchCards } = getTrelloCards(lists?.map(list => list.id));
+
+  const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
+
+  // Function to fetch and set thumbnails for a card
+  const fetchThumbnails = async (cardId: string) => {
+    try {
+      const thumbnailUrl = await getTrelloCardThumbnailUrl(cardId);
+      if (thumbnailUrl) {
+        setThumbnails(prev => ({ ...prev, [cardId]: thumbnailUrl }));
+      }
+    } catch (error) {
+    //   console.error('Error fetching thumbnails:', error);
+    }
+  };
+
+  // Fetch thumbnails after cards are loaded
+  useEffect(() => {
+    if (allCards) {
+      allCards.flat().forEach(card => {
+        if (card && card.id) {
+          fetchThumbnails(card.id);
+        }
+      });
+    }
+  }, [allCards]);
 
   // Ensure cardsByList is only computed when lists and allCards are available
   const cardsByList = useMemo(() => {
@@ -168,6 +193,9 @@ const Sales = ({ session }: { session: Session }) => {
                                 }}
                                 onClick={() => handleCardClick(card)}
                               >
+                                {thumbnails[card.id] && (
+                                  <img src={thumbnails[card.id]} alt="Thumbnail" className="w-full h-32 object-cover mb-2 rounded" />
+                                )}
                                 {card.title}
                               </div>
                             )}
