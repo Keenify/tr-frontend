@@ -239,7 +239,18 @@ const CardModal: React.FC<CardModalProps> = ({
                         </span>
                         <button
                           onClick={() => handleDeleteAttachment(attachment.id)}
-                          className="text-red-500 hover:text-red-700"
+                          style={{
+                            color: '#f56565',
+                            transition: 'transform 0.2s, color 0.2s',
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.color = '#c53030';
+                            e.currentTarget.style.transform = 'scale(1.2)'; // Increased scale for better visibility
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.color = '#f56565';
+                            e.currentTarget.style.transform = 'scale(1)';
+                          }}
                         >
                           🗑️
                         </button>
