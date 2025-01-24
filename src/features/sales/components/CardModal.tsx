@@ -3,6 +3,7 @@ import { TrelloCard, TrelloCardAttachment } from "../types/TrelloCard.types";
 import {
   deleteTrelloCard,
   getTrelloCardAttachments,
+  getTrelloCardAttachmentUrl,
 } from "../services/useTrelloCards";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -119,6 +120,15 @@ const CardModal: React.FC<CardModalProps> = ({
     setAttachments(fetchedAttachments);
   };
 
+  const handleAttachmentClick = async (attachmentId: string) => {
+    try {
+      const url = await getTrelloCardAttachmentUrl(attachmentId);
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error("Failed to fetch attachment URL", error);
+    }
+  };
+
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -206,7 +216,10 @@ const CardModal: React.FC<CardModalProps> = ({
                   <ul>
                     {attachments.map((attachment) => (
                       <li key={attachment.id}>
-                        <span>
+                        <span
+                          onClick={() => handleAttachmentClick(attachment.id)}
+                          className="cursor-pointer text-blue-500 hover:underline"
+                        >
                           {attachment.file_url.split('/').pop()}
                         </span>
                       </li>

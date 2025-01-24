@@ -116,4 +116,16 @@ export const getTrelloCardAttachments = async (cardId: string): Promise<TrelloCa
     `${import.meta.env.VITE_BACKEND_API_DOMAIN}/trello/cards/${cardId}/attachments`
   );
   return data;
+};
+
+/**
+ * Fetches the URL of a Trello card attachment by its ID
+ * @param {string} attachmentId - The ID of the attachment
+ * @returns {Promise<string>} The URL of the attachment
+ */
+export const getTrelloCardAttachmentUrl = async (attachmentId: string): Promise<string> => {
+  const { data } = await axios.get<string>(
+    `${import.meta.env.VITE_BACKEND_API_DOMAIN}/trello/attachments/${attachmentId}/url`
+  );
+  return data;
 }; 
