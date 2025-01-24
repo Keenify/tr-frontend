@@ -145,4 +145,26 @@ export const deleteTrelloCardAttachment = async (attachmentId: string): Promise<
     console.error('Failed to delete attachment:', error);
     return false;
   }
+};
+
+/**
+ * Updates a Trello card attachment with the provided data
+ * @param {string} attachmentId - The ID of the attachment to update
+ * @param {Partial<TrelloCardAttachment>} updateData - The data to update (any attachment fields can be modified)
+ * @returns {Promise<TrelloCardAttachment>} The updated attachment data
+ */
+export const updateTrelloCardAttachment = async (
+  attachmentId: string,
+  updateData: Partial<TrelloCardAttachment>
+): Promise<TrelloCardAttachment> => {
+  const { data } = await axios.patch<TrelloCardAttachment>(
+    `${import.meta.env.VITE_BACKEND_API_DOMAIN}/trello/attachments/${attachmentId}`,
+    updateData,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  return data;
 }; 
