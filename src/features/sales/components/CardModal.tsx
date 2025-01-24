@@ -5,6 +5,7 @@ import {
   getTrelloCardAttachments,
   getTrelloCardAttachmentUrl,
   deleteTrelloCardAttachment,
+  updateTrelloCardAttachment,
 } from "../services/useTrelloCards";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -144,10 +145,29 @@ const CardModal: React.FC<CardModalProps> = ({
     }
   };
 
+  const toggleThumbnail = async (attachmentId: string) => {
+    try {
+      const attachment = attachments.find(att => att.id === attachmentId);
+      if (!attachment) return;
+
+      const updatedAttachment = await updateTrelloCardAttachment(attachmentId, {
+        is_thumbnail: !attachment.is_thumbnail,
+      });
+
+      setAttachments(prevAttachments =>
+        prevAttachments.map(att =>
+          att.id === attachmentId ? updatedAttachment : att
+        )
+      );
+    } catch (error) {
+      console.error("Error updating thumbnail status", error);
+    }
+  };
+
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div className="bg-white rounded-lg p-6 w-full max-w-2xl relative">
+        <div className="bg-white rounded-lg p-6 w-full max-w-3xl relative">
           {loadingAttachments ? (
             <div className="flex justify-center items-center h-full">
               <div className="loader">Loading...</div>
@@ -226,17 +246,27 @@ const CardModal: React.FC<CardModalProps> = ({
                   </div>
                 </div>
 
-                <div className="mt-6">
+                <div className="mt-6 border-t border-gray-300 pt-4">
                   <h3 className="text-lg font-bold mb-2">Attachments</h3>
                   <ul>
                     {attachments.map((attachment) => (
                       <li key={attachment.id} className="flex justify-between items-center">
-                        <span
-                          onClick={() => handleAttachmentClick(attachment.id)}
-                          className="cursor-pointer text-blue-500 hover:underline"
-                        >
-                          {attachment.file_url.split('/').pop()}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span
+                            onClick={() => handleAttachmentClick(attachment.id)}
+                            className="cursor-pointer text-blue-500 hover:underline"
+                          >
+                            {attachment.file_url.split('/').pop()}
+                          </span>
+                          {attachment.file_type.startsWith('image/') && (
+                            <input
+                              type="checkbox"
+                              checked={attachment.is_thumbnail}
+                              onChange={() => toggleThumbnail(attachment.id)}
+                              title="Is Thumbnail"
+                            />
+                          )}
+                        </div>
                         <button
                           onClick={() => handleDeleteAttachment(attachment.id)}
                           style={{
@@ -245,7 +275,7 @@ const CardModal: React.FC<CardModalProps> = ({
                           }}
                           onMouseOver={(e) => {
                             e.currentTarget.style.color = '#c53030';
-                            e.currentTarget.style.transform = 'scale(1.2)'; // Increased scale for better visibility
+                            e.currentTarget.style.transform = 'scale(1.2)';
                           }}
                           onMouseOut={(e) => {
                             e.currentTarget.style.color = '#f56565';
