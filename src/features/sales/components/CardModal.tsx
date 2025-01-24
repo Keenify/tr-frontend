@@ -247,50 +247,71 @@ const CardModal: React.FC<CardModalProps> = ({
                 </div>
 
                 <div className="mt-6 border-t border-gray-300 pt-4">
-                  <h3 className="text-lg font-bold mb-2">Attachments</h3>
-                  <ul>
-                    {attachments.map((attachment) => (
-                      <li key={attachment.id} className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <span
-                            onClick={() => handleAttachmentClick(attachment.id)}
-                            className="cursor-pointer text-blue-500 hover:underline"
-                          >
-                            {attachment.file_url.split('/').pop()}
-                          </span>
-                          {attachment.file_type.startsWith('image/') && (
-                            <input
-                              type="checkbox"
-                              checked={attachment.is_thumbnail}
-                              onChange={() => toggleThumbnail(attachment.id)}
-                              title="Is Thumbnail"
-                            />
-                          )}
-                        </div>
-                        <button
-                          onClick={() => handleDeleteAttachment(attachment.id)}
-                          style={{
-                            color: '#f56565',
-                            transition: 'transform 0.2s, color 0.2s',
-                          }}
-                          onMouseOver={(e) => {
-                            e.currentTarget.style.color = '#c53030';
-                            e.currentTarget.style.transform = 'scale(1.2)';
-                          }}
-                          onMouseOut={(e) => {
-                            e.currentTarget.style.color = '#f56565';
-                            e.currentTarget.style.transform = 'scale(1)';
-                          }}
-                        >
-                          🗑️
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                  <h3 className="text-lg font-bold mb-2">
+                    Attachments ({attachments.length})
+                  </h3>
+                  <div className="border rounded-md p-4 overflow-x-auto max-h-64 overflow-y-auto">
+                    <table className="w-full table-fixed">
+                      <thead>
+                        <tr>
+                          <th className="text-left p-2 w-2/3">File</th>
+                          <th className="text-left p-2 w-1/6">Thumbnail</th>
+                          <th className="text-left p-2 w-1/6">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {attachments.map((attachment) => (
+                          <tr key={attachment.id} className="border-t">
+                            <td className="p-2 break-words">
+                              <span
+                                onClick={() => handleAttachmentClick(attachment.id)}
+                                className="cursor-pointer text-blue-500 hover:underline"
+                              >
+                                {attachment.file_url.split('/').pop()}
+                              </span>
+                            </td>
+                            <td className="p-2 text-center">
+                              {attachment.file_type.startsWith('image/') && (
+                                <input
+                                  type="checkbox"
+                                  checked={attachment.is_thumbnail}
+                                  onChange={() => toggleThumbnail(attachment.id)}
+                                  title="Is Thumbnail"
+                                />
+                              )}
+                            </td>
+                            <td className="p-2 text-center">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteAttachment(attachment.id);
+                                }}
+                                style={{
+                                  color: '#f56565',
+                                  transition: 'transform 0.2s, color 0.2s',
+                                }}
+                                onMouseOver={(e) => {
+                                  e.currentTarget.style.color = '#c53030';
+                                  e.currentTarget.style.transform = 'scale(1.2)';
+                                }}
+                                onMouseOut={(e) => {
+                                  e.currentTarget.style.color = '#f56565';
+                                  e.currentTarget.style.transform = 'scale(1)';
+                                }}
+                              >
+                                🗑️
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   <button
                     type="button"
                     onClick={handleAddAttachment}
-                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                   >
                     Add
                   </button>
