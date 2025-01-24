@@ -63,38 +63,39 @@ const Sales = ({ session }: { session: Session }) => {
       return;
     }
 
-    // Find the card that was dragged
-    const card = cardsByList[source.droppableId]?.find(
-      card => card.id === draggableId
-    );
+    // Optimistically update the UI
+    const sourceList = cardsByList[source.droppableId];
+    const destinationList = cardsByList[destination.droppableId];
 
-    if (!card) return;
+    if (!sourceList || !destinationList) return;
 
-    // Check if the card is moved within the same list
+    const [movedCard] = sourceList.splice(source.index, 1);
+
     if (source.droppableId === destination.droppableId) {
-      const listCards = cardsByList[source.droppableId];
-      const [movedCard] = listCards.splice(source.index, 1);
-      listCards.splice(destination.index, 0, movedCard);
-
-      // Update the positions of the affected cards
-      listCards.forEach((card, index) => {
-        cardUpdateMutation.mutate({
-          cardId: card.id,
-          updateData: {
-            position: index
-          }
-        });
-      });
+      // Move within the same list
+      sourceList.splice(destination.index, 0, movedCard);
     } else {
-      // Update the card with the new list ID and position using the mutation
-      cardUpdateMutation.mutate({
-        cardId: draggableId,
-        updateData: {
-          list_id: destination.droppableId,
-          position: destination.index
-        }
-      });
+      // Move to a different list
+      destinationList.splice(destination.index, 0, movedCard);
+      movedCard.list_id = destination.droppableId; // Update the list ID
     }
+
+    // Update the positions of the affected cards
+    sourceList.forEach((card, index) => {
+      card.position = index;
+    });
+    destinationList.forEach((card, index) => {
+      card.position = index;
+    });
+
+    // Trigger the mutation to update the server
+    cardUpdateMutation.mutate({
+      cardId: draggableId,
+      updateData: {
+        list_id: destination.droppableId,
+        position: destination.index
+      }
+    });
   };
 
   // Function to handle card click
@@ -155,12 +156,12 @@ const Sales = ({ session }: { session: Session }) => {
                             draggableId={draggableId} 
                             index={index}
                           >
-                            {(provided) => (
+                            {(provided, snapshot) => (
                               <div
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                className="bg-white rounded p-3 mb-2 shadow-sm cursor-pointer hover:bg-gray-50"
+                                className={`bg-white rounded p-3 mb-2 shadow-sm cursor-pointer hover:bg-gray-50 draggable-card ${snapshot.isDragging ? 'dragging' : ''}`}
                                 style={{
                                   backgroundColor: card.color_code || 'white',
                                   ...provided.draggableProps.style
