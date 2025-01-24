@@ -69,6 +69,8 @@ const CardModal: React.FC<CardModalProps> = ({
   const [showAttachmentModal, setShowAttachmentModal] = useState(false);
   const [attachments, setAttachments] = useState<TrelloCardAttachment[]>([]);
   const [loadingAttachments, setLoadingAttachments] = useState(false);
+  const [showAttachmentConfirmModal, setShowAttachmentConfirmModal] = useState(false);
+  const [attachmentToDelete, setAttachmentToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -132,8 +134,14 @@ const CardModal: React.FC<CardModalProps> = ({
   };
 
   const handleDeleteAttachment = async (attachmentId: string) => {
+    setShowAttachmentConfirmModal(true);
+    setAttachmentToDelete(attachmentId);
+  };
+
+  const confirmDeleteAttachment = async () => {
+    if (!attachmentToDelete) return;
     try {
-      const success = await deleteTrelloCardAttachment(attachmentId);
+      const success = await deleteTrelloCardAttachment(attachmentToDelete);
       if (success) {
         console.log("Attachment deleted successfully");
         updateAttachments();
@@ -142,6 +150,9 @@ const CardModal: React.FC<CardModalProps> = ({
       }
     } catch (error) {
       console.error("Error deleting attachment", error);
+    } finally {
+      setShowAttachmentConfirmModal(false);
+      setAttachmentToDelete(null);
     }
   };
 
@@ -354,6 +365,12 @@ const CardModal: React.FC<CardModalProps> = ({
         isOpen={showConfirmModal}
         onConfirm={confirmDelete}
         onCancel={() => setShowConfirmModal(false)}
+      />
+
+      <ConfirmationModal
+        isOpen={showAttachmentConfirmModal}
+        onConfirm={confirmDeleteAttachment}
+        onCancel={() => setShowAttachmentConfirmModal(false)}
       />
     </>
   );
