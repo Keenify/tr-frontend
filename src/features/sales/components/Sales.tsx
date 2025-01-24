@@ -28,9 +28,9 @@ const Sales = ({ session }: { session: Session }) => {
   const cardsByList = useMemo(() => {
     if (!lists || !allCards) return {};
     return lists.reduce((acc, list) => {
-      acc[list.id] = (allCards.flat() || []).filter(card => 
-        card && card.id && card.list_id === list.id
-      );
+      acc[list.id] = (allCards.flat() || [])
+        .filter(card => card && card.id && card.list_id === list.id)
+        .sort((a, b) => a.position - b.position);
       return acc;
     }, {} as Record<string, TrelloCard[]>);
   }, [lists, allCards]);
@@ -58,10 +58,8 @@ const Sales = ({ session }: { session: Session }) => {
   const onDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
 
-    // Return if dropped outside a droppable area or in the same position
-    if (!destination || 
-        (destination.droppableId === source.droppableId && 
-         destination.index === source.index)) {
+    // Return if dropped outside a droppable area
+    if (!destination) {
       return;
     }
 
@@ -72,13 +70,31 @@ const Sales = ({ session }: { session: Session }) => {
 
     if (!card) return;
 
-    // Update the card with the new list ID
-    cardUpdateMutation.mutate({
-      cardId: draggableId,
-      updateData: {
-        list_id: destination.droppableId
-      }
-    });
+    // Check if the card is moved within the same list
+    if (source.droppableId === destination.droppableId) {
+      const listCards = cardsByList[source.droppableId];
+      const [movedCard] = listCards.splice(source.index, 1);
+      listCards.splice(destination.index, 0, movedCard);
+
+      // Update the positions of the affected cards
+      listCards.forEach((card, index) => {
+        cardUpdateMutation.mutate({
+          cardId: card.id,
+          updateData: {
+            position: index
+          }
+        });
+      });
+    } else {
+      // Update the card with the new list ID and position using the mutation
+      cardUpdateMutation.mutate({
+        cardId: draggableId,
+        updateData: {
+          list_id: destination.droppableId,
+          position: destination.index
+        }
+      });
+    }
   };
 
   // Function to handle card click
