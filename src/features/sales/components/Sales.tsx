@@ -167,7 +167,7 @@ const Sales = ({ session }: { session: Session }) => {
                       startIcon={<span>+</span>}
                       style={{ color: '#6b7280' }}
                     >
-                      Add a Lead
+                      Add a Card
                     </Button>
                   </div>
                 )}
