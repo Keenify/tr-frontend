@@ -13,6 +13,16 @@ const fetchTrelloLists = async (): Promise<TrelloList[]> => {
   return data;
 };
 
+// Edit Trello List
+export const editTrelloList = async (listId: string, updatedData: Partial<TrelloList>): Promise<TrelloList> => {
+  const { data } = await axios.patch<TrelloList>(
+    `${import.meta.env.VITE_BACKEND_API_DOMAIN}/trello/lists/${listId}`,
+    updatedData
+  );
+  return data;
+};
+
+// Use Trello List
 export const useTrelloList = () => {
   return useQuery({
     queryKey: ['trello-lists', BOARD_ID],
