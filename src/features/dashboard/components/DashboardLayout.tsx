@@ -31,7 +31,8 @@ const navigationConfig = [
     ]
   },
   { id: 'dailyHuddle', label: 'Daily Huddle', shortForm: 'Dh', icon: Calendar },
-  { id: 'sales', label: 'Sales', shortForm: 'S', icon: ThumbsUp }
+  { id: 'sales', label: 'Sales', shortForm: 'S', icon: ThumbsUp },
+  { id: 'products', label: 'Products', shortForm: 'Pr', icon: ThumbsUp }
 ] as const;
 
 /**
@@ -40,14 +41,16 @@ const navigationConfig = [
  */
 type TabType = typeof navigationConfig[number]['id'];
 
+type SubTabType = 'directory' | 'orgChart';
+
 interface LayoutProps {
   children: React.ReactNode;
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
   session: Session;
   signOut: () => void;
-  activeSubTab?: 'directory' | 'orgChart';
-  onSubTabChange?: (subTab: 'directory' | 'orgChart') => void;
+  activeSubTab?: SubTabType;
+  onSubTabChange?: (subTab: SubTabType) => void;
 }
 
 /**
@@ -66,7 +69,7 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
   const email = session.user.email || 'user@example.com';
   const [activeTabState, setActiveTabState] = React.useState<TabType>(activeTab);
   const [isPeopleSubmenuOpen, setIsPeopleSubmenuOpen] = React.useState(activeTab === 'people');
-  const [localActiveSubTab, setLocalActiveSubTab] = useState<'directory' | 'orgChart' | undefined>(activeSubTab);
+  const [localActiveSubTab, setLocalActiveSubTab] = useState<SubTabType | undefined>(activeSubTab);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Update state when props change
@@ -123,7 +126,7 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
    * @function handleSubTabClick
    * @param {'directory' | 'orgChart'} subTab - The selected subtab
    */
-  const handleSubTabClick = (subTab: 'directory' | 'orgChart') => {
+  const handleSubTabClick = (subTab: SubTabType) => {
     setLocalActiveSubTab(subTab);
     if (onSubTabChange) {
       onSubTabChange(subTab);
@@ -217,7 +220,7 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
                         {tab.subTabs.map((subTab) => (
                           <button
                             key={subTab.id}
-                            onClick={() => handleSubTabClick(subTab.id as 'directory' | 'orgChart')}
+                            onClick={() => handleSubTabClick(subTab.id as SubTabType)}
                             className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                               localActiveSubTab === subTab.id
                                 ? 'bg-red-50 text-red-600 border-l-4 border-red-600'
