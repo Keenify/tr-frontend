@@ -24,7 +24,7 @@ import DirectoryPage from './features/directory/routes/DirectoryPage';
 import ProtectedRoute from './routes/ProtectedRoute';
 import DailyHuddle from './features/dailyHuddle/components/DailyHuddle';
 import Sales from './features/sales/components/Sales';
-import Products from './features/products/components/Products';
+import Quotation from './features/quotation/components/Quotation';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -58,7 +58,7 @@ const App: React.FC = () => {
                 <Route path="/:userId/steps/:tabId/editor" element={<Editor />} />
                 <Route path="/:userId/dailyhuddle" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="dailyHuddle" onTabChange={() => { }}><DailyHuddle session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/sales" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="sales" onTabChange={() => { }}><Sales session={session} /></DashboardLayout>} />} />
-                <Route path="/:userId/products" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="products" onTabChange={() => {}}><Products session={session} /></DashboardLayout>} />} />
+                <Route path="/:userId/quotation" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="quotation" onTabChange={() => { }}><Quotation session={session} /></DashboardLayout>} />} />
               </>
             )}
 

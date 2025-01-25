@@ -201,7 +201,11 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
 
     return (
         <div style={{ position: 'relative', padding: '20px' }}>
-            {companyInfo && <CompanyHeader companyInfo={companyInfo} />}
+            {companyInfo && (
+                <div style={{ border: '1px solid #ccc', padding: '5px 0', borderRadius: '5px', marginBottom: '10px', width: '100%' }}>
+                    <CompanyHeader companyInfo={companyInfo} />
+                </div>
+            )}
             <div style={{ marginBottom: '10px', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '5px', width: 'fit-content' }}>
                     <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
