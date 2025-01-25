@@ -21,6 +21,13 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
     const [selectedProducts, setSelectedProducts] = React.useState<Set<number>>(new Set());
     const [selectedFlavors, setSelectedFlavors] = React.useState<{ [key: number]: Set<string> }>({});
 
+    // State to manage column visibility
+    const [showPackCount, setShowPackCount] = React.useState<boolean>(true);
+    const [showRetailPrice, setShowRetailPrice] = React.useState<boolean>(true);
+
+    // State to manage visible carton columns
+    const [visibleCartonColumns, setVisibleCartonColumns] = React.useState<Set<number>>(new Set());
+
     React.useEffect(() => {
         if (companyInfo?.id) {
             setLoadingProducts(true);
@@ -70,14 +77,19 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
         }
     }, [companyInfo?.id]);
 
-    // Get unique price tier headers for the table
+    // Function to get unique price tier headers for the table
     const getPriceTierHeaders = () => {
         const allTiers = Object.values(productPriceTiers).flat();
         const uniqueCartons = Array.from(new Set(allTiers.map(tier => tier.min_cartons)));
         return uniqueCartons.sort((a, b) => a - b);
     };
 
-    const priceTierHeaders = getPriceTierHeaders();
+    const priceTierHeaders = React.useMemo(() => getPriceTierHeaders(), [productPriceTiers]);
+
+    // Initialize visible carton columns
+    React.useEffect(() => {
+        setVisibleCartonColumns(new Set(priceTierHeaders));
+    }, [priceTierHeaders]);
 
     // Function to toggle product selection
     const toggleProductSelection = (productId: number) => {
@@ -120,6 +132,19 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
         });
     };
 
+    // Function to toggle carton column visibility
+    const toggleCartonColumn = (carton: number) => {
+        setVisibleCartonColumns(prev => {
+            const newVisibleCartonColumns = new Set(prev);
+            if (newVisibleCartonColumns.has(carton)) {
+                newVisibleCartonColumns.delete(carton);
+            } else {
+                newVisibleCartonColumns.add(carton);
+            }
+            return newVisibleCartonColumns;
+        });
+    };
+
     if (loadingProducts) {
         return <div>Loading products...</div>;
     }
@@ -130,6 +155,37 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
 
     return (
         <div style={{ position: 'relative', padding: '20px' }}>
+            <div style={{ marginBottom: '10px', display: 'flex', flexDirection: 'column' }}>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                    <input
+                        type="checkbox"
+                        checked={showPackCount}
+                        onChange={() => setShowPackCount(prev => !prev)}
+                        style={{ marginRight: '8px' }}
+                    />
+                    Show Pack Count Per Box
+                </label>
+                {priceTierHeaders.map(carton => (
+                    <label key={carton} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginTop: '10px' }}>
+                        <input
+                            type="checkbox"
+                            checked={visibleCartonColumns.has(carton)}
+                            onChange={() => toggleCartonColumn(carton)}
+                            style={{ marginRight: '8px' }}
+                        />
+                        {`Show ≥${carton} Carton`}
+                    </label>
+                ))}
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginTop: '10px' }}>
+                    <input
+                        type="checkbox"
+                        checked={showRetailPrice}
+                        onChange={() => setShowRetailPrice(prev => !prev)}
+                        style={{ marginRight: '8px' }}
+                    />
+                    Show Recommended Retail Price
+                </label>
+            </div>
             <Button
                 variant="contained"
                 color="primary"
@@ -149,13 +205,19 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                         <TableRow>
                             <TableCell align="center" rowSpan={2} style={{ backgroundColor: '#f57c00', color: '#fff', border: '1px solid #ccc' }}>Select</TableCell>
                             <TableCell align="center" rowSpan={2} style={{ backgroundColor: '#f57c00', color: '#fff', border: '1px solid #ccc' }}>Product Name</TableCell>
-                            <TableCell align="center" rowSpan={2} style={{ backgroundColor: '#f57c00', color: '#fff', border: '1px solid #ccc' }}>Pack Count Per Box</TableCell>
+                            {showPackCount && (
+                                <TableCell align="center" rowSpan={2} style={{ backgroundColor: '#f57c00', color: '#fff', border: '1px solid #ccc' }}>Pack Count Per Box</TableCell>
+                            )}
                             <TableCell align="center" rowSpan={2} style={{ backgroundColor: '#f57c00', color: '#fff', border: '1px solid #ccc' }}>Flavour</TableCell>
-                            <TableCell align="center" colSpan={priceTierHeaders.length} style={{ backgroundColor: '#f57c00', color: '#fff', border: '1px solid #ccc' }}>Price per unit (SGD)</TableCell>
-                            <TableCell align="center" rowSpan={2} style={{ backgroundColor: '#f57c00', color: '#fff', border: '1px solid #ccc' }}>Recommended Retail Price</TableCell>
+                            {visibleCartonColumns.size > 0 && (
+                                <TableCell align="center" colSpan={visibleCartonColumns.size} style={{ backgroundColor: '#f57c00', color: '#fff', border: '1px solid #ccc' }}>Price per unit (SGD)</TableCell>
+                            )}
+                            {showRetailPrice && (
+                                <TableCell align="center" rowSpan={2} style={{ backgroundColor: '#f57c00', color: '#fff', border: '1px solid #ccc' }}>Recommended Retail Price</TableCell>
+                            )}
                         </TableRow>
                         <TableRow>
-                            {priceTierHeaders.map(carton => (
+                            {Array.from(visibleCartonColumns).map(carton => (
                                 <TableCell key={carton} align="center" style={{ backgroundColor: '#f57c00', color: '#fff', border: '1px solid #ccc' }}>{`≥${carton} carton`}</TableCell>
                             ))}
                         </TableRow>
@@ -171,7 +233,9 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                                     />
                                 </TableCell>
                                 <TableCell align="center" style={{ whiteSpace: 'pre-wrap', border: '1px solid #ccc' }}>{product.name.replace(/-/g, '\n')}</TableCell>
-                                <TableCell align="center" style={{ border: '1px solid #ccc' }}>{product.pack_count_per_box}</TableCell>
+                                {showPackCount && (
+                                    <TableCell align="center" style={{ border: '1px solid #ccc' }}>{product.pack_count_per_box}</TableCell>
+                                )}
                                 <TableCell align="center" style={{ whiteSpace: 'nowrap', border: '1px solid #ccc', textAlign: 'center' }}>
                                     {productVariants[product.id]?.map(flavor => (
                                         <div key={flavor} style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', whiteSpace: 'nowrap' }}>
@@ -191,14 +255,16 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                                         </div>
                                     )) || 'N/A'}
                                 </TableCell>
-                                {priceTierHeaders.map(carton => (
+                                {Array.from(visibleCartonColumns).map(carton => (
                                     <TableCell key={carton} align="center" style={{ border: '1px solid #ccc' }}>
                                         {productPriceTiers[product.id]?.find(tier => tier.min_cartons === carton)?.price_per_unit || 'N/A'}
                                     </TableCell>
                                 ))}
-                                <TableCell align="center" style={{ border: '1px solid #ccc' }}>
-                                    {product.recommended_retail_price ? `$${parseFloat(product.recommended_retail_price).toFixed(2)}` : 'N/A'}
-                                </TableCell>
+                                {showRetailPrice && (
+                                    <TableCell align="center" style={{ border: '1px solid #ccc' }}>
+                                        {product.recommended_retail_price ? `$${parseFloat(product.recommended_retail_price).toFixed(2)}` : 'N/A'}
+                                    </TableCell>
+                                )}
                             </TableRow>
                         ))}
                     </TableBody>
