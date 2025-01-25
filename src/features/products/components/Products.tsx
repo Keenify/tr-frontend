@@ -183,50 +183,39 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
     return (
         <div style={{ position: 'relative', padding: '20px' }}>
             <div style={{ marginBottom: '10px', display: 'flex', flexDirection: 'column' }}>
-                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                    <input
-                        type="checkbox"
-                        checked={showPackCount}
-                        onChange={() => setShowPackCount(prev => !prev)}
-                        style={{ marginRight: '8px' }}
-                    />
-                    Show Pack Count Per Box
-                </label>
-                {priceTierHeaders.map(carton => (
-                    <label key={carton} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginTop: '10px' }}>
+                <div style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '5px', width: 'fit-content' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                         <input
                             type="checkbox"
-                            checked={visibleCartonColumns.has(carton)}
-                            onChange={() => toggleCartonColumn(carton)}
+                            checked={showPackCount}
+                            onChange={() => setShowPackCount(prev => !prev)}
                             style={{ marginRight: '8px' }}
                         />
-                        {`Show ≥${carton} Carton`}
+                        Show Pack Count Per Box
                     </label>
-                ))}
-                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginTop: '10px' }}>
-                    <input
-                        type="checkbox"
-                        checked={showRetailPrice}
-                        onChange={() => setShowRetailPrice(prev => !prev)}
-                        style={{ marginRight: '8px' }}
-                    />
-                    Show Recommended Retail Price
-                </label>
+                    {priceTierHeaders.map(carton => (
+                        <label key={carton} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginTop: '10px' }}>
+                            <input
+                                type="checkbox"
+                                checked={visibleCartonColumns.has(carton)}
+                                onChange={() => toggleCartonColumn(carton)}
+                                style={{ marginRight: '8px' }}
+                            />
+                            {`Show ≥${carton} Carton`}
+                        </label>
+                    ))}
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginTop: '10px' }}>
+                        <input
+                            type="checkbox"
+                            checked={showRetailPrice}
+                            onChange={() => setShowRetailPrice(prev => !prev)}
+                            style={{ marginRight: '8px' }}
+                        />
+                        Show Recommended Retail Price
+                    </label>
+                </div>
             </div>
-            <Button
-                variant="contained"
-                color="primary"
-                onClick={() => generatePDF(selectedProducts, selectedFlavors)}
-                style={{
-                    position: 'absolute',
-                    top: '10px',
-                    right: '10px',
-                    zIndex: 1,
-                }}
-            >
-                Generate PDF
-            </Button>
-            <TableContainer component={Paper} id="products-table" style={{ marginTop: '60px' }}>
+            <TableContainer component={Paper} id="products-table" style={{ marginTop: '20px' }}>
                 <Table>
                     <TableHead>
                         <TableRow>
@@ -342,6 +331,18 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                     </TableBody>
                 </Table>
             </TableContainer>
+            <Button
+                variant="contained"
+                color="primary"
+                onClick={() => generatePDF(selectedProducts, selectedFlavors)}
+                style={{
+                    marginTop: '20px',
+                    marginLeft: 'auto',
+                    display: 'block'
+                }}
+            >
+                Generate PDF
+            </Button>
         </div>
     );
 };
