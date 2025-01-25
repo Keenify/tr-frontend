@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getUserData, UserData } from '../../services/userService';
-import { getCompanyData, CompanyData } from '../../services/companyService';
+import { getCompanyData } from '../../services/companyService';
+import { CompanyData } from '../types/companyType';
 
 export function useUserAndCompanyData(userId: string) {
   const [userInfo, setUserInfo] = useState<UserData | null>(null);
@@ -14,11 +15,7 @@ export function useUserAndCompanyData(userId: string) {
         setIsLoading(true);
         const userData = await getUserData(userId);
         setUserInfo(userData);
-
-        // Log the company ID
-        console.log('Company ID:', userData.company_id);
-
-        const companyData = await getCompanyData(userData.company_id);
+        const companyData = await getCompanyData(userData.company_id) as CompanyData;
         setCompanyInfo(companyData);
       } catch (err) {
         setError(err as Error);

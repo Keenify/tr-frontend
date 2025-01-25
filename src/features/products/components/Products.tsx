@@ -5,6 +5,8 @@ import { getProductsByCompany, getProductVariants, getProductPriceTiers } from '
 import { Product, ProductPriceTier } from '../types/Product';
 import { generatePDF } from '../utils/pdfUtils';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button } from '@mui/material';
+import CompanyHeader from './CompanyHeader';
+import { CompanyData } from '../../../shared/types/companyType';
 
 interface ProductsProps {
     session: Session;
@@ -199,6 +201,7 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
 
     return (
         <div style={{ position: 'relative', padding: '20px' }}>
+            {companyInfo && <CompanyHeader companyInfo={companyInfo} />}
             <div style={{ marginBottom: '10px', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '5px', width: 'fit-content' }}>
                     <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
@@ -354,7 +357,7 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
             <Button
                 variant="contained"
                 color="primary"
-                onClick={() => generatePDF(selectedProducts, selectedFlavors)}
+                onClick={() => generatePDF(selectedProducts, selectedFlavors, companyInfo as CompanyData)}
                 style={{
                     marginTop: '20px',
                     marginLeft: 'auto',
