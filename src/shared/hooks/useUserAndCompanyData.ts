@@ -14,6 +14,10 @@ export function useUserAndCompanyData(userId: string) {
         setIsLoading(true);
         const userData = await getUserData(userId);
         setUserInfo(userData);
+
+        // Log the company ID
+        console.log('Company ID:', userData.company_id);
+
         const companyData = await getCompanyData(userData.company_id);
         setCompanyInfo(companyData);
       } catch (err) {
