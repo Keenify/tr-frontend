@@ -1,14 +1,16 @@
 import { Session } from '@supabase/supabase-js';
 import { useTrelloList } from '../services/useTrelloList';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
-import { useState, useMemo, useEffect } from 'react';
-import CardModal from './CardModal';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { TrelloCard } from '../types/TrelloCard.types';
 import { getTrelloCards, getTrelloCardThumbnailUrl } from '../services/useTrelloCards';
 import { useTrelloCardUpdate } from '../services/useTrelloCards';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
-import NewCardModal from './NewCardModal';
 import Button from '@mui/material/Button';
+
+// Lazy load modals to reduce initial bundle size
+const CardModal = lazy(() => import('./CardModal'));
+const NewCardModal = lazy(() => import('./NewCardModal'));
 
 /**
  * Sales component displays a Trello-style board for managing sales pipeline
@@ -16,17 +18,40 @@ import Button from '@mui/material/Button';
  * @returns {JSX.Element} A Trello-style board interface for sales pipeline management
  */
 const Sales = ({ session }: { session: Session }) => {
+  /**
+   * Custom hook to fetch user and company data
+   * @param {string} userId - The ID of the current user
+   * @returns {Object} Contains company information, error, and loading state
+   */
   const { companyInfo, error: companyError, isLoading: companyLoading } = useUserAndCompanyData(session.user.id);
+
+  /**
+   * Custom hook to fetch Trello lists
+   * @returns {Object} Contains lists data, error, and loading state
+   */
   const { data: lists, isLoading: listsLoading, error: listsError } = useTrelloList();
   const [selectedCard, setSelectedCard] = useState<TrelloCard | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
 
+  /**
+   * Custom hook to fetch Trello cards
+   * @param {Array<string>} listIds - Array of list IDs to fetch cards for
+   * @returns {Object} Contains all cards data and a refetch function
+   */
   const { data: allCards, refetch: refetchCards } = getTrelloCards(lists?.map(list => list.id));
-
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
 
-  // Function to fetch and set thumbnails for a card
+  /**
+   * Custom hook to update Trello cards
+   * @returns {Object} Contains a mutation function to update cards
+   */
+  const cardUpdateMutation = useTrelloCardUpdate();
+
+  /**
+   * Fetches and sets thumbnails for a card
+   * @param {string} cardId - The ID of the card
+   */
   const fetchThumbnails = async (cardId: string) => {
     try {
       const thumbnailUrl = await getTrelloCardThumbnailUrl(cardId);
@@ -34,11 +59,10 @@ const Sales = ({ session }: { session: Session }) => {
         setThumbnails(prev => ({ ...prev, [cardId]: thumbnailUrl }));
       }
     } catch (error) {
-    //   console.error('Error fetching thumbnails:', error);
+      // console.error('Error fetching thumbnails:', error);
     }
   };
 
-  // Fetch thumbnails after cards are loaded
   useEffect(() => {
     if (allCards) {
       allCards.flat().forEach(card => {
@@ -49,7 +73,10 @@ const Sales = ({ session }: { session: Session }) => {
     }
   }, [allCards]);
 
-  // Ensure cardsByList is only computed when lists and allCards are available
+  /**
+   * Memoized function to organize cards by their list
+   * @returns {Object} A record of list IDs to arrays of Trello cards
+   */
   const cardsByList = useMemo(() => {
     if (!lists || !allCards) return {};
     return lists.reduce((acc, list) => {
@@ -60,13 +87,9 @@ const Sales = ({ session }: { session: Session }) => {
     }, {} as Record<string, TrelloCard[]>);
   }, [lists, allCards]);
 
-  // Update the handleCardUpdate function to use the mutation
-  const cardUpdateMutation = useTrelloCardUpdate();
-
   /**
    * Handles updates to a Trello card
    * @param {Partial<TrelloCard>} updatedCard - The updated card data
-   * @returns {void}
    */
   const handleCardUpdate = (updatedCard: Partial<TrelloCard>) => {
     if (!selectedCard) return;
@@ -83,16 +106,11 @@ const Sales = ({ session }: { session: Session }) => {
   const onDragEnd = (result: DropResult) => {
     const { destination, source } = result;
 
-    // Return if dropped outside a droppable area
-    if (!destination) {
-      return;
-    }
+    if (!destination) return;
 
-    // Log the source and destination positions along with the card name
     const cardToMove = cardsByList[source.droppableId][source.index];
     console.log(`Card: ${cardToMove.title}, Source Position: ${source.index}, Destination Position: ${destination.index}`);
 
-    // Optimistically update the UI
     const sourceList = cardsByList[source.droppableId];
     const destinationList = cardsByList[destination.droppableId];
 
@@ -101,20 +119,16 @@ const Sales = ({ session }: { session: Session }) => {
     const [movedCard] = sourceList.splice(source.index, 1);
 
     if (source.droppableId === destination.droppableId) {
-      // Move within the same list
       sourceList.splice(destination.index, 0, movedCard);
     } else {
-      // Move to a different list
       destinationList.splice(destination.index, 0, movedCard);
-      movedCard.list_id = destination.droppableId; // Update the list ID
+      movedCard.list_id = destination.droppableId;
     }
 
-    // Update the positions of the affected cards
     const updateCardPositions = (list: TrelloCard[]) => {
       list.forEach((card, index) => {
         card.position = index;
         console.log(`Card: ${card.title}, New Position: ${card.position}`);
-        // Trigger the mutation to update the server for each card
         cardUpdateMutation.mutate({
           cardId: card.id,
           updateData: {
@@ -137,20 +151,24 @@ const Sales = ({ session }: { session: Session }) => {
       updateCardPositions(destinationList);
     }
 
-    refetchCards(); // Ensure the cards are refetched after updates
+    refetchCards();
   };
 
-  // Function to handle card click
+  /**
+   * Handles card click event
+   * @param {TrelloCard} card - The card that was clicked
+   */
   const handleCardClick = (card: TrelloCard) => {
     setSelectedCard(card);
   };
 
+  /**
+   * Handles the creation of a new lead
+   * @param {Omit<TrelloCard, 'id' | 'created_at'>} newCardData - The data for the new card
+   */
   const handleNewLead = async (newCardData: Omit<TrelloCard, 'id' | 'created_at'>) => {
     try {
-      // Logic to handle new lead without creating the Trello card directly
       console.log('New Lead Data:', newCardData);
-      
-      // Refresh the cards after handling a new lead
       refetchCards();
     } catch (error) {
       console.error('Error handling new lead:', error);
@@ -239,23 +257,25 @@ const Sales = ({ session }: { session: Session }) => {
         </div>
       </DragDropContext>
 
-      {selectedCard && (
-        <CardModal
-          card={selectedCard}
-          isOpen={!!selectedCard}
-          onClose={() => setSelectedCard(null)}
-          onSave={handleCardUpdate}
-          onDeleteSuccess={refetchCards}
-        />
-      )}
+      <Suspense fallback={<div>Loading...</div>}>
+        {selectedCard && (
+          <CardModal
+            card={selectedCard}
+            isOpen={!!selectedCard}
+            onClose={() => setSelectedCard(null)}
+            onSave={handleCardUpdate}
+            onDeleteSuccess={refetchCards}
+          />
+        )}
 
-      <NewCardModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleNewLead}
-        lists={lists || []}
-        selectedListId={selectedListId}
-      />
+        <NewCardModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleNewLead}
+          lists={lists || []}
+          selectedListId={selectedListId}
+        />
+      </Suspense>
     </div>
   );
 };
