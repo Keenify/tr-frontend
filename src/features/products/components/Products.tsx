@@ -3,8 +3,7 @@ import { Session } from '@supabase/supabase-js';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import { getProductsByCompany, getProductVariants, getProductPriceTiers } from '../services/useProducts';
 import { Product, ProductPriceTier } from '../types/Product';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { generatePDF } from '../utils/pdfUtils';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button } from '@mui/material';
 
 interface ProductsProps {
@@ -121,60 +120,6 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
         });
     };
 
-    // Function to generate a PDF of the products table
-    const generatePDF = () => {
-        const input = document.getElementById('products-table');
-        if (input) {
-            // Clone the table and filter out unselected products and flavors
-            const clonedTable = input.cloneNode(true) as HTMLElement;
-            
-            // Remove the "Select" column from the cloned table
-            const headerCells = clonedTable.querySelectorAll('thead tr th');
-            if (headerCells.length > 0) {
-                headerCells[0].remove(); // Remove the "Select" header cell
-            }
-            
-            const rows = clonedTable.querySelectorAll('tbody tr');
-            rows.forEach(row => {
-                const productId = parseInt(row.getAttribute('data-product-id') || '', 10);
-                if (!selectedProducts.has(productId)) {
-                    row.remove();
-                } else {
-                    const flavorCells = row.querySelectorAll('td:nth-child(4) div');
-                    flavorCells.forEach(flavorDiv => {
-                        const flavor = flavorDiv.textContent || '';
-                        if (!selectedFlavors[productId]?.has(flavor)) {
-                            flavorDiv.remove();
-                        }
-                    });
-                    // Remove the "Select" cell from each row
-                    const selectCell = row.querySelector('td');
-                    if (selectCell) {
-                        selectCell.remove();
-                    }
-                }
-            });
-
-            // Remove all checkboxes from the cloned table
-            clonedTable.querySelectorAll('input[type="checkbox"]').forEach(checkbox => checkbox.remove());
-
-            // Ensure the cloned table is appended to the document for html2canvas to work
-            document.body.appendChild(clonedTable);
-            html2canvas(clonedTable, { scale: 2 }).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const pdfWidth = pdf.internal.pageSize.getWidth() - 20;
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth, pdfHeight);
-                pdf.save('products.pdf');
-                // Remove the cloned table after generating the PDF
-                document.body.removeChild(clonedTable);
-            }).catch(error => {
-                console.error('Error generating PDF:', error);
-            });
-        }
-    };
-
     if (loadingProducts) {
         return <div>Loading products...</div>;
     }
@@ -188,7 +133,7 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
             <Button
                 variant="contained"
                 color="primary"
-                onClick={generatePDF}
+                onClick={() => generatePDF(selectedProducts, selectedFlavors)}
                 style={{
                     position: 'absolute',
                     top: '10px',
