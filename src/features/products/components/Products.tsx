@@ -163,13 +163,30 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
 
     // Function to handle input blur (save changes)
     const handleBlur = (productId: number, field: string) => {
-        // Update the product data with the new value
         setProducts(prevProducts =>
-            prevProducts.map(product =>
-                product.id === productId ? { ...product, [field]: editValue } : product
-            )
+            prevProducts.map(product => {
+                if (product.id === productId) {
+                    if (field.startsWith('price_')) {
+                        const carton = parseInt(field.split('_')[1], 10);
+                        const updatedPriceTiers = productPriceTiers[productId].map(tier =>
+                            tier.min_cartons === carton ? { ...tier, price_per_unit: editValue } : tier
+                        );
+                        setProductPriceTiers(prev => ({ ...prev, [productId]: updatedPriceTiers }));
+                    } else {
+                        return { ...product, [field]: editValue };
+                    }
+                }
+                return product;
+            })
         );
         setEditingCell(null);
+    };
+
+    // Function to handle input key down (save changes on Enter key)
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, productId: number, field: string) => {
+        if (e.key === 'Enter') {
+            handleBlur(productId, field);
+        }
     };
 
     if (loadingProducts) {
@@ -261,6 +278,7 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                                                 value={editValue}
                                                 onChange={handleInputChange}
                                                 onBlur={() => handleBlur(product.id, 'pack_count_per_box')}
+                                                onKeyDown={(e) => handleKeyDown(e, product.id, 'pack_count_per_box')}
                                                 autoFocus
                                             />
                                         ) : (
@@ -300,6 +318,7 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                                                 value={editValue}
                                                 onChange={handleInputChange}
                                                 onBlur={() => handleBlur(product.id, `price_${carton}`)}
+                                                onKeyDown={(e) => handleKeyDown(e, product.id, `price_${carton}`)}
                                                 autoFocus
                                             />
                                         ) : (
@@ -319,6 +338,7 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                                                 value={editValue}
                                                 onChange={handleInputChange}
                                                 onBlur={() => handleBlur(product.id, 'recommended_retail_price')}
+                                                onKeyDown={(e) => handleKeyDown(e, product.id, 'recommended_retail_price')}
                                                 autoFocus
                                             />
                                         ) : (
