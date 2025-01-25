@@ -12,6 +12,7 @@ import Button from '@mui/material/Button';
 import { editTrelloList } from '../services/useTrelloList';
 import { toast } from 'react-toastify';
 import { TrelloList } from '../types/TrelloList.types';
+import EditIcon from '@mui/icons-material/Edit';
 
 /**
  * Sales component displays a Trello-style board for managing sales pipeline
@@ -233,12 +234,15 @@ const Sales = ({ session }: { session: Session }) => {
                           autoFocus
                         />
                       ) : (
-                        <h2
-                          className="font-semibold capitalize"
-                          onDoubleClick={() => handleListTitleDoubleClick(list.id, list.name)}
-                        >
-                          {list.name.toLowerCase()}
-                        </h2>
+                        <div className="flex items-center">
+                          <h2 className="font-semibold capitalize">
+                            {list.name.toLowerCase()}
+                          </h2>
+                          <EditIcon
+                            className="ml-2 cursor-pointer"
+                            onClick={() => handleListTitleDoubleClick(list.id, list.name)}
+                          />
+                        </div>
                       )}
                       <span className="bg-gray-200 px-2 py-1 rounded-full text-sm">
                         {cardsByList[list.id]?.length || 0}
