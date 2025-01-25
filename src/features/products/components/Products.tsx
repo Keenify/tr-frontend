@@ -12,6 +12,7 @@ interface ProductsProps {
 }
 
 const Products: React.FC<ProductsProps> = ({ session }) => {
+    // Fetch company information and handle errors
     const { companyInfo, error } = useUserAndCompanyData(session.user.id);
     const [products, setProducts] = React.useState<Product[]>([]);
     const [loadingProducts, setLoadingProducts] = React.useState<boolean>(true);
@@ -54,6 +55,11 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                     results.forEach(([variantsData, priceTiersData]) => {
                         productVariants[variantsData.productId] = variantsData.variantNames;
                         productPriceTiers[priceTiersData.productId] = priceTiersData.priceTiers;
+                        // Ensure all flavors are selected for each product
+                        setSelectedFlavors(prevFlavors => ({
+                            ...prevFlavors,
+                            [variantsData.productId]: new Set(variantsData.variantNames),
+                        }));
                     });
                     setProductVariants(productVariants);
                     setProductPriceTiers(productPriceTiers);
@@ -65,6 +71,7 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
         }
     }, [companyInfo?.id]);
 
+    // Get unique price tier headers for the table
     const getPriceTierHeaders = () => {
         const allTiers = Object.values(productPriceTiers).flat();
         const uniqueCartons = Array.from(new Set(allTiers.map(tier => tier.min_cartons)));
@@ -96,24 +103,25 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
         });
     };
 
-    // Function to toggle flavor selection
+    // Function to toggle flavor selection for a given product
     const toggleFlavorSelection = (productId: number, flavor: string) => {
-        if (selectedProducts.has(productId)) { // Only allow flavor selection if product is selected
-            setSelectedFlavors(prev => {
-                const newFlavors = { ...prev };
-                if (!newFlavors[productId]) {
-                    newFlavors[productId] = new Set();
-                }
-                if (newFlavors[productId].has(flavor)) {
-                    newFlavors[productId].delete(flavor);
-                } else {
-                    newFlavors[productId].add(flavor);
-                }
-                return newFlavors;
-            });
-        }
+        setSelectedFlavors(prev => {
+            const newFlavors = { ...prev };
+            if (!newFlavors[productId]) {
+                newFlavors[productId] = new Set();
+            }
+            if (newFlavors[productId].has(flavor)) {
+                newFlavors[productId] = new Set(newFlavors[productId]); // Create a new Set to ensure state change
+                newFlavors[productId].delete(flavor); // Uncheck flavor
+            } else {
+                newFlavors[productId] = new Set(newFlavors[productId]); // Create a new Set to ensure state change
+                newFlavors[productId].add(flavor); // Check flavor
+            }
+            return newFlavors;
+        });
     };
 
+    // Function to generate a PDF of the products table
     const generatePDF = () => {
         const input = document.getElementById('products-table');
         if (input) {
@@ -224,10 +232,17 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                                         <div key={flavor} style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', whiteSpace: 'nowrap' }}>
                                             <input
                                                 type="checkbox"
+                                                id={`flavor-checkbox-${product.id}-${flavor}`}
                                                 checked={selectedFlavors[product.id]?.has(flavor) || false}
                                                 onChange={() => toggleFlavorSelection(product.id, flavor)}
+                                                disabled={!selectedProducts.has(product.id)} // Disable if product is not selected
                                             />
-                                            <span style={{ marginLeft: '8px' }}>{flavor}</span>
+                                            <label
+                                                htmlFor={`flavor-checkbox-${product.id}-${flavor}`}
+                                                style={{ marginLeft: '8px', cursor: 'pointer' }}
+                                            >
+                                                {flavor}
+                                            </label>
                                         </div>
                                     )) || 'N/A'}
                                 </TableCell>
