@@ -7,6 +7,7 @@ import { getTrelloCards, getTrelloCardThumbnailUrl } from '../services/useTrello
 import { useTrelloCardUpdate } from '../services/useTrelloCards';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import Button from '@mui/material/Button';
+import UpdateList from './UpdateList';
 
 // Lazy load modals to reduce initial bundle size
 const CardModal = lazy(() => import('./CardModal'));
@@ -29,7 +30,7 @@ const Sales = ({ session }: { session: Session }) => {
    * Custom hook to fetch Trello lists
    * @returns {Object} Contains lists data, error, and loading state
    */
-  const { data: lists, isLoading: listsLoading, error: listsError } = useTrelloList();
+  const { data: lists, isLoading: listsLoading, error: listsError, refetch: refetchLists } = useTrelloList();
   const [selectedCard, setSelectedCard] = useState<TrelloCard | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
@@ -202,7 +203,12 @@ const Sales = ({ session }: { session: Session }) => {
                     style={{ height: 'auto' }}
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <h2 className="font-semibold capitalize">{list.name.toLowerCase()}</h2>
+                      <UpdateList
+                        list={list}
+                        onUpdateSuccess={() => {
+                          refetchLists();
+                        }}
+                      />
                       <span className="bg-gray-200 px-2 py-1 rounded-full text-sm">
                         {cardsByList[list.id]?.length || 0}
                       </span>
