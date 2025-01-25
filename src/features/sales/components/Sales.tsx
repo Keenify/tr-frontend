@@ -9,10 +9,6 @@ import { useTrelloCardUpdate } from '../services/useTrelloCards';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import NewCardModal from './NewCardModal';
 import Button from '@mui/material/Button';
-import { editTrelloList } from '../services/useTrelloList';
-import { toast } from 'react-toastify';
-import { TrelloList } from '../types/TrelloList.types';
-import EditIcon from '@mui/icons-material/Edit';
 
 /**
  * Sales component displays a Trello-style board for managing sales pipeline
@@ -21,8 +17,7 @@ import EditIcon from '@mui/icons-material/Edit';
  */
 const Sales = ({ session }: { session: Session }) => {
   const { companyInfo, error: companyError, isLoading: companyLoading } = useUserAndCompanyData(session.user.id);
-  const { data: initialLists, isLoading: listsLoading, error: listsError } = useTrelloList();
-  const [lists, setLists] = useState<TrelloList[]>(initialLists || []);
+  const { data: lists, isLoading: listsLoading, error: listsError } = useTrelloList();
   const [selectedCard, setSelectedCard] = useState<TrelloCard | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
@@ -30,9 +25,6 @@ const Sales = ({ session }: { session: Session }) => {
   const { data: allCards, refetch: refetchCards } = getTrelloCards(lists?.map(list => list.id));
 
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
-
-  const [editableListId, setEditableListId] = useState<string | null>(null);
-  const [editableListTitle, setEditableListTitle] = useState<string>('');
 
   // Function to fetch and set thumbnails for a card
   const fetchThumbnails = async (cardId: string) => {
@@ -167,33 +159,6 @@ const Sales = ({ session }: { session: Session }) => {
     }
   };
 
-  const handleListTitleDoubleClick = (listId: string, currentTitle: string) => {
-    setEditableListId(listId);
-    setEditableListTitle(currentTitle);
-  };
-
-  const handleListTitleChange = async (listId: string) => {
-    // Optimistically update the list title in the UI
-    const updatedLists = (lists ?? []).map(list => 
-      list.id === listId ? { ...list, name: editableListTitle } : list
-    );
-    setLists(updatedLists);
-
-    try {
-      await editTrelloList(listId, { name: editableListTitle });
-      toast.success('List title updated successfully');
-    } catch (error) {
-      toast.error('Failed to update list title');
-      // Revert the change if the API call fails
-      const revertedLists = (lists ?? []).map(list => 
-        list.id === listId ? { ...list, name: list.name } : list
-      );
-      setLists(revertedLists);
-    } finally {
-      setEditableListId(null);
-    }
-  };
-
   if (listsLoading || companyLoading) return <div>Loading...</div>;
   if (listsError || companyError) return <div>Error loading data</div>;
 
@@ -219,31 +184,7 @@ const Sales = ({ session }: { session: Session }) => {
                     style={{ height: 'auto' }}
                   >
                     <div className="flex items-center justify-between mb-4">
-                      {editableListId === list.id ? (
-                        <input
-                          type="text"
-                          value={editableListTitle}
-                          onChange={(e) => setEditableListTitle(e.target.value)}
-                          onBlur={() => handleListTitleChange(list.id)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              handleListTitleChange(list.id);
-                            }
-                          }}
-                          className="font-semibold capitalize"
-                          autoFocus
-                        />
-                      ) : (
-                        <div className="flex items-center">
-                          <h2 className="font-semibold capitalize">
-                            {list.name.toLowerCase()}
-                          </h2>
-                          <EditIcon
-                            className="ml-2 cursor-pointer"
-                            onClick={() => handleListTitleDoubleClick(list.id, list.name)}
-                          />
-                        </div>
-                      )}
+                      <h2 className="font-semibold capitalize">{list.name.toLowerCase()}</h2>
                       <span className="bg-gray-200 px-2 py-1 rounded-full text-sm">
                         {cardsByList[list.id]?.length || 0}
                       </span>
