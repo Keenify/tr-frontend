@@ -1,12 +1,14 @@
 import React from 'react';
 import { Session } from '@supabase/supabase-js';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
-import { getProductsByCompany, getProductVariants, getProductPriceTiers } from '../services/useProducts';
+import { getProductsByCompany, getProductVariants } from '../services/useProducts';
+import { getProductPriceTiers } from '../services/useProductsPriceTier';
 import { Product, ProductPriceTier } from '../types/Product';
 import { generatePDF } from '../utils/pdfUtils';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, TextField, Grid } from '@mui/material';
 import CompanyHeader from './CompanyHeader';
 import { CompanyData } from '../../../shared/types/companyType';
+import PriceTierModal from './PriceTierModal';
 
 interface ProductsProps {
     session: Session;
@@ -37,6 +39,9 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
     // State for customer company name
     const [customerCompanyName, setCustomerCompanyName] = React.useState<string>('');
     const currentDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    // State to manage modal visibility
+    const [isPriceTierModalOpen, setIsPriceTierModalOpen] = React.useState<boolean>(false);
 
     React.useEffect(() => {
         if (companyInfo?.id) {
@@ -385,12 +390,23 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
             </TableContainer>
             <Button
                 variant="contained"
+                color="secondary"
+                onClick={() => setIsPriceTierModalOpen(true)}
+                style={{
+                    marginTop: '20px',
+                    marginRight: '10px',
+                    display: 'inline-block'
+                }}
+            >
+                Price Tier
+            </Button>
+            <Button
+                variant="contained"
                 color="primary"
                 onClick={() => generatePDF(selectedProducts, selectedFlavors, companyInfo as CompanyData, customerCompanyName, currentDate)}
                 style={{
                     marginTop: '20px',
-                    marginLeft: 'auto',
-                    display: 'block',
+                    display: 'inline-block',
                     opacity: customerCompanyName ? 1 : 0.5,
                     pointerEvents: customerCompanyName ? 'auto' : 'none'
                 }}
@@ -398,6 +414,12 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
             >
                 Generate PDF
             </Button>
+            <PriceTierModal
+                open={isPriceTierModalOpen}
+                onClose={() => setIsPriceTierModalOpen(false)}
+                products={products}
+                productPriceTiers={productPriceTiers}
+            />
         </div>
     );
 };

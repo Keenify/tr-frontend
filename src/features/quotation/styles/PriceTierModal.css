@@ -1,0 +1,150 @@
+.price-tier-modal {
+    padding: 20px;
+    background-color: white;
+    margin: 50px auto;
+    max-width: 80%;
+    width: 90%;
+    border-radius: 8px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.side-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    z-index: 1000;
+}
+
+.side-modal h3 {
+    margin-top: 0;
+    font-size: 1.5em;
+    color: #333;
+}
+
+.side-modal input {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.side-modal button {
+    padding: 10px 15px;
+    margin-right: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.side-modal button:hover {
+    background-color: #0056b3;
+}
+
+.confirmation-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    text-align: center;
+}
+
+.confirmation-modal h3 {
+    margin-top: 0;
+    font-size: 1.6em;
+    color: #333;
+}
+
+.confirmation-modal p {
+    font-size: 1em;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.confirmation-modal button {
+    padding: 10px 20px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px;
+    background-color: #dc3545;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.confirmation-modal button:hover {
+    background-color: #c82333;
+}
+
+.confirmation-modal button.cancel {
+    background-color: #6c757d;
+}
+
+.confirmation-modal button.cancel:hover {
+    background-color: #5a6268;
+}
+
+.edit-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    z-index: 1000;
+}
+
+.edit-modal h3 {
+    margin-top: 0;
+    font-size: 1.5em;
+    color: #333;
+}
+
+.edit-modal input {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.edit-modal button {
+    padding: 10px 15px;
+    margin-right: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.edit-modal button:hover {
+    background-color: #0056b3;
+}
