@@ -28,6 +28,10 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
     // State to manage visible carton columns
     const [visibleCartonColumns, setVisibleCartonColumns] = React.useState<Set<number>>(new Set());
 
+    // State to manage editing
+    const [editingCell, setEditingCell] = React.useState<{ productId: number; field: string } | null>(null);
+    const [editValue, setEditValue] = React.useState<string>('');
+
     React.useEffect(() => {
         if (companyInfo?.id) {
             setLoadingProducts(true);
@@ -145,6 +149,28 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
         });
     };
 
+    // Function to handle double-click to edit
+    const handleDoubleClick = (productId: number, field: string, value: string) => {
+        setEditingCell({ productId, field });
+        setEditValue(value);
+    };
+
+    // Function to handle input change
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setEditValue(e.target.value);
+    };
+
+    // Function to handle input blur (save changes)
+    const handleBlur = (productId: number, field: string) => {
+        // Update the product data with the new value
+        setProducts(prevProducts =>
+            prevProducts.map(product =>
+                product.id === productId ? { ...product, [field]: editValue } : product
+            )
+        );
+        setEditingCell(null);
+    };
+
     if (loadingProducts) {
         return <div>Loading products...</div>;
     }
@@ -234,7 +260,23 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                                 </TableCell>
                                 <TableCell align="center" style={{ whiteSpace: 'pre-wrap', border: '1px solid #ccc' }}>{product.name.replace(/-/g, '\n')}</TableCell>
                                 {showPackCount && (
-                                    <TableCell align="center" style={{ border: '1px solid #ccc' }}>{product.pack_count_per_box}</TableCell>
+                                    <TableCell
+                                        align="center"
+                                        style={{ border: '1px solid #ccc' }}
+                                        onDoubleClick={() => handleDoubleClick(product.id, 'pack_count_per_box', product.pack_count_per_box.toString())}
+                                    >
+                                        {editingCell?.productId === product.id && editingCell.field === 'pack_count_per_box' ? (
+                                            <input
+                                                type="text"
+                                                value={editValue}
+                                                onChange={handleInputChange}
+                                                onBlur={() => handleBlur(product.id, 'pack_count_per_box')}
+                                                autoFocus
+                                            />
+                                        ) : (
+                                            product.pack_count_per_box
+                                        )}
+                                    </TableCell>
                                 )}
                                 <TableCell align="center" style={{ whiteSpace: 'nowrap', border: '1px solid #ccc', textAlign: 'center' }}>
                                     {productVariants[product.id]?.map(flavor => (
@@ -256,13 +298,42 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                                     )) || 'N/A'}
                                 </TableCell>
                                 {Array.from(visibleCartonColumns).map(carton => (
-                                    <TableCell key={carton} align="center" style={{ border: '1px solid #ccc' }}>
-                                        {productPriceTiers[product.id]?.find(tier => tier.min_cartons === carton)?.price_per_unit || 'N/A'}
+                                    <TableCell
+                                        key={carton}
+                                        align="center"
+                                        style={{ border: '1px solid #ccc' }}
+                                        onDoubleClick={() => handleDoubleClick(product.id, `price_${carton}`, productPriceTiers[product.id]?.find(tier => tier.min_cartons === carton)?.price_per_unit.toString() || '')}
+                                    >
+                                        {editingCell?.productId === product.id && editingCell.field === `price_${carton}` ? (
+                                            <input
+                                                type="text"
+                                                value={editValue}
+                                                onChange={handleInputChange}
+                                                onBlur={() => handleBlur(product.id, `price_${carton}`)}
+                                                autoFocus
+                                            />
+                                        ) : (
+                                            productPriceTiers[product.id]?.find(tier => tier.min_cartons === carton)?.price_per_unit || 'N/A'
+                                        )}
                                     </TableCell>
                                 ))}
                                 {showRetailPrice && (
-                                    <TableCell align="center" style={{ border: '1px solid #ccc' }}>
-                                        {product.recommended_retail_price ? `$${parseFloat(product.recommended_retail_price).toFixed(2)}` : 'N/A'}
+                                    <TableCell
+                                        align="center"
+                                        style={{ border: '1px solid #ccc' }}
+                                        onDoubleClick={() => handleDoubleClick(product.id, 'recommended_retail_price', product.recommended_retail_price.toString())}
+                                    >
+                                        {editingCell?.productId === product.id && editingCell.field === 'recommended_retail_price' ? (
+                                            <input
+                                                type="text"
+                                                value={editValue}
+                                                onChange={handleInputChange}
+                                                onBlur={() => handleBlur(product.id, 'recommended_retail_price')}
+                                                autoFocus
+                                            />
+                                        ) : (
+                                            product.recommended_retail_price ? `$${parseFloat(product.recommended_retail_price).toFixed(2)}` : 'N/A'
+                                        )}
                                     </TableCell>
                                 )}
                             </TableRow>
