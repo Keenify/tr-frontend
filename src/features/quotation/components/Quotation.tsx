@@ -4,7 +4,7 @@ import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyDa
 import { getProductsByCompany, getProductVariants, getProductPriceTiers } from '../services/useProducts';
 import { Product, ProductPriceTier } from '../types/Product';
 import { generatePDF } from '../utils/pdfUtils';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, TextField, Grid } from '@mui/material';
 import CompanyHeader from './CompanyHeader';
 import { CompanyData } from '../../../shared/types/companyType';
 
@@ -33,6 +33,10 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
     // State to manage editing
     const [editingCell, setEditingCell] = React.useState<{ productId: number; field: string } | null>(null);
     const [editValue, setEditValue] = React.useState<string>('');
+
+    // State for customer company name
+    const [customerCompanyName, setCustomerCompanyName] = React.useState<string>('');
+    const currentDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
     React.useEffect(() => {
         if (companyInfo?.id) {
@@ -201,44 +205,65 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
 
     return (
         <div style={{ position: 'relative', padding: '20px' }}>
+            {/* Move CompanyHeader to the top */}
             {companyInfo && (
                 <div style={{ border: '1px solid #ccc', padding: '5px 0', borderRadius: '5px', marginBottom: '10px', width: '100%' }}>
                     <CompanyHeader companyInfo={companyInfo} />
                 </div>
             )}
-            <div style={{ marginBottom: '10px', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '5px', width: 'fit-content' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                        <input
-                            type="checkbox"
-                            checked={showPackCount}
-                            onChange={() => setShowPackCount(prev => !prev)}
-                            style={{ marginRight: '8px' }}
-                        />
-                        Show Pack Count Per Box
-                    </label>
-                    {priceTierHeaders.map(carton => (
-                        <label key={carton} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginTop: '10px' }}>
+
+            <Grid container spacing={2} style={{ marginBottom: '10px' }}>
+                <Grid item xs={6}>
+                    {/* Updated section for customer company name with MUI TextField */}
+                    <TextField
+                        label="Customer Company Name"
+                        variant="outlined"
+                        fullWidth
+                        value={customerCompanyName}
+                        onChange={(e) => setCustomerCompanyName(e.target.value)}
+                        placeholder="Enter client company name"
+                    />
+                    <div style={{ marginTop: '10px' }}>
+                        Updated At: {currentDate}
+                    </div>
+                </Grid>
+
+                <Grid item xs={6}>
+                    {/* Toggle checkboxes */}
+                    <div style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '5px', width: 'fit-content' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                             <input
                                 type="checkbox"
-                                checked={visibleCartonColumns.has(carton)}
-                                onChange={() => toggleCartonColumn(carton)}
+                                checked={showPackCount}
+                                onChange={() => setShowPackCount(prev => !prev)}
                                 style={{ marginRight: '8px' }}
                             />
-                            {`Show ≥${carton} Carton`}
+                            Show Pack Count Per Box
                         </label>
-                    ))}
-                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginTop: '10px' }}>
-                        <input
-                            type="checkbox"
-                            checked={showRetailPrice}
-                            onChange={() => setShowRetailPrice(prev => !prev)}
-                            style={{ marginRight: '8px' }}
-                        />
-                        Show Recommended Retail Price
-                    </label>
-                </div>
-            </div>
+                        {priceTierHeaders.map(carton => (
+                            <label key={carton} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginTop: '10px' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={visibleCartonColumns.has(carton)}
+                                    onChange={() => toggleCartonColumn(carton)}
+                                    style={{ marginRight: '8px' }}
+                                />
+                                {`Show ≥${carton} Carton`}
+                            </label>
+                        ))}
+                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginTop: '10px' }}>
+                            <input
+                                type="checkbox"
+                                checked={showRetailPrice}
+                                onChange={() => setShowRetailPrice(prev => !prev)}
+                                style={{ marginRight: '8px' }}
+                            />
+                            Show Recommended Retail Price
+                        </label>
+                    </div>
+                </Grid>
+            </Grid>
+
             <TableContainer component={Paper} id="products-table" style={{ marginTop: '20px' }}>
                 <Table>
                     <TableHead>
@@ -361,12 +386,15 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
             <Button
                 variant="contained"
                 color="primary"
-                onClick={() => generatePDF(selectedProducts, selectedFlavors, companyInfo as CompanyData)}
+                onClick={() => generatePDF(selectedProducts, selectedFlavors, companyInfo as CompanyData, customerCompanyName, currentDate)}
                 style={{
                     marginTop: '20px',
                     marginLeft: 'auto',
-                    display: 'block'
+                    display: 'block',
+                    opacity: customerCompanyName ? 1 : 0.5,
+                    pointerEvents: customerCompanyName ? 'auto' : 'none'
                 }}
+                disabled={!customerCompanyName}
             >
                 Generate PDF
             </Button>
