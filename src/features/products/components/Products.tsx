@@ -145,7 +145,8 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
             } else {
                 newVisibleCartonColumns.add(carton);
             }
-            return newVisibleCartonColumns;
+            // Convert to array, sort, and convert back to set
+            return new Set(Array.from(newVisibleCartonColumns).sort((a, b) => a - b));
         });
     };
 
