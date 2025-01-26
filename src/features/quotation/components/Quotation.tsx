@@ -10,6 +10,7 @@ import { Product, ProductPriceTier } from '../../../shared/types/Product';
 import CompanyHeader from './CompanyHeader';
 import PriceTierModal from './PriceTierModal';
 import { generatePDF } from '../utils/pdfUtils';
+import '../styles/Quotation.css';
 
 interface ProductsProps {
     session: Session;
@@ -21,7 +22,7 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
     const [products, setProducts] = React.useState<Product[]>([]);
     const [loadingProducts, setLoadingProducts] = React.useState<boolean>(true);
     const [fetchError, setFetchError] = React.useState<string | null>(null);
-    const [productVariants, setProductVariants] = React.useState<{ [key: number]: string[] }>({});
+    const [productVariants, setProductVariants] = React.useState<{ [key: number]: Array<{id: number, name: string, image_url: string | null}> }>({});
     const [productPriceTiers, setProductPriceTiers] = React.useState<{ [key: number]: ProductPriceTier[] }>({});
     const [selectedProducts, setSelectedProducts] = React.useState<Set<number>>(new Set());
     const [selectedFlavors, setSelectedFlavors] = React.useState<{ [key: number]: Set<string> }>({});
@@ -60,10 +61,12 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                                 .then(variants => ({
                                     productId: product.id,
                                     variantNames: variants.map(variant => variant.name),
+                                    variants: variants
                                 }))
                                 .catch(() => ({
                                     productId: product.id,
-                                    variantNames: [], // Empty array for products with no variants
+                                    variantNames: [],
+                                    variants: []
                                 }));
                                 
                             const priceTiersPromise = getProductPriceTiers(product.id.toString())
@@ -81,12 +84,12 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                     );
                 })
                 .then(results => {
-                    const newProductVariants: { [key: number]: string[] } = {};
+                    const newProductVariants: { [key: number]: Array<{id: number, name: string, image_url: string | null}> } = {};
                     const newProductPriceTiers: { [key: number]: ProductPriceTier[] } = {};
                     const initialSelectedFlavors: { [key: number]: Set<string> } = {};
 
                     results.forEach(([variantsData, priceTiersData]) => {
-                        newProductVariants[variantsData.productId] = variantsData.variantNames;
+                        newProductVariants[variantsData.productId] = variantsData.variants;
                         newProductPriceTiers[priceTiersData.productId] = priceTiersData.priceTiers;
                         // Initialize selected flavors only if variants exist
                         initialSelectedFlavors[variantsData.productId] = new Set(variantsData.variantNames);
@@ -132,7 +135,7 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                 newSelection.add(productId);
                 setSelectedFlavors(prevFlavors => {
                     const newFlavors = { ...prevFlavors };
-                    newFlavors[productId] = new Set(productVariants[productId] || []); // Select all flavors
+                    newFlavors[productId] = new Set(productVariants[productId]?.map(variant => variant.name) || []); // Select all flavors
                     return newFlavors;
                 });
             }
@@ -220,17 +223,15 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
     }
 
     return (
-        <div style={{ position: 'relative', padding: '20px' }}>
-            {/* Move CompanyHeader to the top */}
+        <div className="quotation-container">
             {companyInfo && (
-                <div style={{ border: '1px solid #ccc', padding: '5px 0', borderRadius: '5px', marginBottom: '10px', width: '100%' }}>
+                <div className="company-header-container">
                     <CompanyHeader companyInfo={companyInfo} />
                 </div>
             )}
 
-            <Grid container spacing={2} style={{ marginBottom: '10px' }}>
+            <Grid container spacing={2} className="customer-info-container">
                 <Grid item xs={6}>
-                    {/* Updated section for customer company name with MUI TextField */}
                     <TextField
                         label="Customer Company Name"
                         variant="outlined"
@@ -239,40 +240,36 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                         onChange={(e) => setCustomerCompanyName(e.target.value)}
                         placeholder="Enter client company name"
                     />
-                    <div style={{ marginTop: '10px' }}>
+                    <div className="date-container">
                         Updated At: {currentDate}
                     </div>
                 </Grid>
 
                 <Grid item xs={6}>
-                    {/* Toggle checkboxes */}
-                    <div style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '5px', width: 'fit-content' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                    <div className="toggle-container">
+                        <label className="toggle-label">
                             <input
                                 type="checkbox"
                                 checked={showPackCount}
                                 onChange={() => setShowPackCount(prev => !prev)}
-                                style={{ marginRight: '8px' }}
                             />
                             Show Pack Count Per Box
                         </label>
                         {priceTierHeaders.map(carton => (
-                            <label key={carton} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginTop: '10px' }}>
+                            <label key={carton} className="toggle-label">
                                 <input
                                     type="checkbox"
                                     checked={visibleCartonColumns.has(carton)}
                                     onChange={() => toggleCartonColumn(carton)}
-                                    style={{ marginRight: '8px' }}
                                 />
                                 {`Show ≥${carton} Carton`}
                             </label>
                         ))}
-                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', marginTop: '10px' }}>
+                        <label className="toggle-label">
                             <input
                                 type="checkbox"
                                 checked={showRetailPrice}
                                 onChange={() => setShowRetailPrice(prev => !prev)}
-                                style={{ marginRight: '8px' }}
                             />
                             Show Recommended Retail Price
                         </label>
@@ -280,44 +277,84 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                 </Grid>
             </Grid>
 
-            <TableContainer component={Paper} id="products-table" style={{ marginTop: '20px' }}>
+            <TableContainer component={Paper} id="products-table" className="products-table">
                 <Table>
                     <TableHead>
                         <TableRow>
-                            <TableCell align="center" rowSpan={2} style={{ backgroundColor: '#f57c00', color: '#fff', border: '1px solid #ccc' }}>Select</TableCell>
-                            <TableCell align="center" rowSpan={2} style={{ backgroundColor: '#f57c00', color: '#fff', border: '1px solid #ccc' }}>Product Name</TableCell>
+                            <TableCell align="center" rowSpan={2} className="table-header-cell" style={{ width: '60px' }}>Select</TableCell>
+                            <TableCell align="center" rowSpan={2} className="table-header-cell" style={{ width: '15%' }}>Product Name</TableCell>
+                            <TableCell align="center" rowSpan={2} className="table-header-cell" style={{ width: '120px' }}>Packaging</TableCell>
                             {showPackCount && (
-                                <TableCell align="center" rowSpan={2} style={{ backgroundColor: '#f57c00', color: '#fff', border: '1px solid #ccc' }}>Pack Count Per Box</TableCell>
+                                <TableCell align="center" rowSpan={2} className="table-header-cell" style={{ width: '80px' }}>Pack Count Per Box</TableCell>
                             )}
-                            <TableCell align="center" rowSpan={2} style={{ backgroundColor: '#f57c00', color: '#fff', border: '1px solid #ccc' }}>Flavour</TableCell>
+                            <TableCell align="center" rowSpan={2} className="table-header-cell" style={{ width: '15%' }}>Flavour</TableCell>
                             {visibleCartonColumns.size > 0 && (
-                                <TableCell align="center" colSpan={visibleCartonColumns.size} style={{ backgroundColor: '#f57c00', color: '#fff', border: '1px solid #ccc' }}>Price per unit (SGD)</TableCell>
+                                <TableCell align="center" colSpan={visibleCartonColumns.size} className="table-header-cell">Price per unit (SGD)</TableCell>
                             )}
                             {showRetailPrice && (
-                                <TableCell align="center" rowSpan={2} style={{ backgroundColor: '#f57c00', color: '#fff', border: '1px solid #ccc' }}>Recommended Retail Price</TableCell>
+                                <TableCell align="center" rowSpan={2} className="table-header-cell" style={{ width: '100px' }}>Recommended Retail Price</TableCell>
                             )}
                         </TableRow>
                         <TableRow>
                             {Array.from(visibleCartonColumns).map(carton => (
-                                <TableCell key={carton} align="center" style={{ backgroundColor: '#f57c00', color: '#fff', border: '1px solid #ccc' }}>{`≥${carton} carton`}</TableCell>
+                                <TableCell key={carton} align="center" className="table-header-cell" style={{ width: '65px' }}>{`≥${carton} carton`}</TableCell>
                             ))}
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {products.map(product => (
                             <TableRow key={product.id} hover data-product-id={product.id}>
-                                <TableCell align="center" style={{ border: '1px solid #ccc' }}>
+                                <TableCell align="center" className="table-cell">
                                     <input
                                         type="checkbox"
                                         checked={selectedProducts.has(product.id)}
                                         onChange={() => toggleProductSelection(product.id)}
                                     />
                                 </TableCell>
-                                <TableCell align="center" style={{ whiteSpace: 'pre-wrap', border: '1px solid #ccc' }}>{product.name.replace(/-/g, '\n')}</TableCell>
+                                <TableCell align="center" className="product-name-cell table-cell">{product.name.replace(/-/g, '\n')}</TableCell>
+                                <TableCell align="center" className="table-cell">
+                                    {(() => {
+                                        if (!selectedProducts.has(product.id)) {
+                                            return null;
+                                        }
+
+                                        // Get all selected variants for this product
+                                        const selectedVariants = productVariants[product.id]?.filter(variant => 
+                                            selectedFlavors[product.id]?.has(variant.name)
+                                        ) || [];
+
+                                        return (
+                                            <div className="variant-images-container">
+                                                {selectedVariants.map(variant => (
+                                                    variant.image_url && (
+                                                        <img 
+                                                            key={variant.id}
+                                                            src={variant.image_url}
+                                                            alt={`${variant.name} packaging`}
+                                                            className="variant-image"
+                                                            style={{ 
+                                                                width: '50px',
+                                                                height: '50px',
+                                                                display: 'block',
+                                                                margin: '2px auto'
+                                                            }}
+                                                            crossOrigin="anonymous"
+                                                            loading="eager"
+                                                            onError={(e) => {
+                                                                console.error('Image failed to load:', e.currentTarget.src);
+                                                                e.currentTarget.style.display = 'none';
+                                                            }}
+                                                        />
+                                                    )
+                                                ))}
+                                            </div>
+                                        );
+                                    })()}
+                                </TableCell>
                                 {showPackCount && (
                                     <TableCell
                                         align="center"
-                                        style={{ border: '1px solid #ccc' }}
+                                        className="table-cell"
                                         onDoubleClick={() => handleDoubleClick(product.id, 'pack_count_per_box', product.pack_count_per_box.toString())}
                                     >
                                         {editingCell?.productId === product.id && editingCell.field === 'pack_count_per_box' ? (
@@ -334,22 +371,23 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                                         )}
                                     </TableCell>
                                 )}
-                                <TableCell align="center" style={{ whiteSpace: 'nowrap', border: '1px solid #ccc', textAlign: 'center' }}>
+                                <TableCell align="center" className="table-cell">
                                     {(productVariants[product.id]?.length > 0) ? (
                                         productVariants[product.id].map(flavor => (
-                                            <div key={flavor} style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', whiteSpace: 'nowrap' }}>
+                                            <div key={flavor.name} className="flavor-checkbox-container" style={{ whiteSpace: 'nowrap' }}>
                                                 <input
                                                     type="checkbox"
-                                                    id={`flavor-checkbox-${product.id}-${flavor}`}
-                                                    checked={selectedFlavors[product.id]?.has(flavor) || false}
-                                                    onChange={() => toggleFlavorSelection(product.id, flavor)}
+                                                    id={`flavor-checkbox-${product.id}-${flavor.name}`}
+                                                    checked={selectedFlavors[product.id]?.has(flavor.name) || false}
+                                                    onChange={() => toggleFlavorSelection(product.id, flavor.name)}
                                                     disabled={!selectedProducts.has(product.id)}
                                                 />
                                                 <label
-                                                    htmlFor={`flavor-checkbox-${product.id}-${flavor}`}
-                                                    style={{ marginLeft: '8px', cursor: 'pointer' }}
+                                                    htmlFor={`flavor-checkbox-${product.id}-${flavor.name}`}
+                                                    className="flavor-label"
+                                                    style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
                                                 >
-                                                    {flavor}
+                                                    {flavor.name}
                                                 </label>
                                             </div>
                                         ))
@@ -361,7 +399,7 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                                     <TableCell
                                         key={carton}
                                         align="center"
-                                        style={{ border: '1px solid #ccc' }}
+                                        className="table-cell"
                                         onDoubleClick={() => handleDoubleClick(product.id, `price_${carton}`, productPriceTiers[product.id]?.find(tier => tier.min_cartons === carton)?.price_per_unit.toString() || '')}
                                     >
                                         {editingCell?.productId === product.id && editingCell.field === `price_${carton}` ? (
@@ -381,7 +419,7 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                                 {showRetailPrice && (
                                     <TableCell
                                         align="center"
-                                        style={{ border: '1px solid #ccc' }}
+                                        className="table-cell"
                                         onDoubleClick={() => handleDoubleClick(product.id, 'recommended_retail_price', product.recommended_retail_price.toString())}
                                     >
                                         {editingCell?.productId === product.id && editingCell.field === 'recommended_retail_price' ? (
@@ -403,32 +441,25 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                     </TableBody>
                 </Table>
             </TableContainer>
-            <Button
-                variant="contained"
-                color="secondary"
-                onClick={() => setIsPriceTierModalOpen(true)}
-                style={{
-                    marginTop: '20px',
-                    marginRight: '10px',
-                    display: 'inline-block'
-                }}
-            >
-                Price Tier
-            </Button>
-            <Button
-                variant="contained"
-                color="primary"
-                onClick={() => generatePDF(selectedProducts, selectedFlavors, companyInfo as CompanyData, customerCompanyName, currentDate)}
-                style={{
-                    marginTop: '20px',
-                    display: 'inline-block',
-                    opacity: customerCompanyName ? 1 : 0.5,
-                    pointerEvents: customerCompanyName ? 'auto' : 'none'
-                }}
-                disabled={!customerCompanyName}
-            >
-                Generate PDF
-            </Button>
+            <div className="button-container">
+                <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => setIsPriceTierModalOpen(true)}
+                    className="action-button price-tier-button"
+                >
+                    Price Tier
+                </Button>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => generatePDF(selectedProducts, selectedFlavors, companyInfo as CompanyData, customerCompanyName, currentDate)}
+                    className={`action-button generate-pdf-button ${!customerCompanyName ? 'disabled' : ''}`}
+                    disabled={!customerCompanyName}
+                >
+                    Generate PDF
+                </Button>
+            </div>
             <PriceTierModal
                 open={isPriceTierModalOpen}
                 onClose={() => setIsPriceTierModalOpen(false)}

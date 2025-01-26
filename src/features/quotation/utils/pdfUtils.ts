@@ -64,42 +64,77 @@ function generateProductTable(
   if (input) {
     const clonedTable = input.cloneNode(true) as HTMLElement;
 
+    // Remove the select column header
     const headerCells = clonedTable.querySelectorAll("thead tr th");
     if (headerCells.length > 0) {
       headerCells[0].remove();
     }
 
+    // Process each row
     const rows = clonedTable.querySelectorAll("tbody tr");
     rows.forEach((row) => {
       const productId = parseInt(row.getAttribute("data-product-id") || "", 10);
       if (!selectedProducts.has(productId)) {
         row.remove();
       } else {
-        const flavorCells = row.querySelectorAll("td:nth-child(4) div");
+        // Keep variant images for selected products
+        const packagingCell = row.querySelector("td:nth-child(3)");
+        if (packagingCell) {
+          const variantImages = packagingCell.querySelectorAll("img");
+          variantImages.forEach(img => {
+            // Ensure images are visible
+            img.style.display = "block";
+            img.style.width = "50px"; // Set a consistent size
+            img.style.height = "50px";
+            img.style.margin = "2px auto";
+          });
+        }
+
+        // Process flavor cells
+        const flavorCells = row.querySelectorAll("td:nth-child(5) div");
         flavorCells.forEach((flavorDiv) => {
-          const flavor = flavorDiv.textContent || "";
+          const flavor = flavorDiv.textContent?.trim() || "";
           if (!selectedFlavors[productId]?.has(flavor)) {
             flavorDiv.remove();
           }
         });
-        const selectCell = row.querySelector("td");
+
+        // Remove the select column
+        const selectCell = row.querySelector("td:first-child");
         if (selectCell) {
           selectCell.remove();
         }
       }
     });
 
+    // Remove all checkboxes
     clonedTable
       .querySelectorAll('input[type="checkbox"]')
       .forEach((checkbox) => checkbox.remove());
 
+    // Temporarily append the cloned table to the document
     document.body.appendChild(clonedTable);
-    html2canvas(clonedTable, { scale: 2 })
+
+    // Use html2canvas with improved settings
+    html2canvas(clonedTable, {
+      scale: 2,
+      logging: false,
+      useCORS: true, // Enable CORS for images
+      allowTaint: true, // Allow cross-origin images
+      imageTimeout: 15000, // Increase timeout for image loading
+      onclone: (clonedDoc) => {
+        // Additional processing of the cloned document if needed
+        const images = clonedDoc.getElementsByTagName('img');
+        for (let img of images) {
+          img.crossOrigin = "anonymous";
+        }
+      }
+    })
       .then((canvas) => {
         const imgData = canvas.toDataURL("image/png");
         const pdfWidth = doc.internal.pageSize.getWidth() - 20;
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        doc.addImage(imgData, "PNG", 10, 60, pdfWidth, pdfHeight); // Adjust Y position to avoid overlap
+        doc.addImage(imgData, "PNG", 10, 60, pdfWidth, pdfHeight);
 
         // Format the current date and time
         const now = new Date();
@@ -115,13 +150,15 @@ function generateProductTable(
           .toString()
           .padStart(2, "0")}-${now.getSeconds().toString().padStart(2, "0")}`;
 
-        // Save the PDF with the target company name
+        // Save the PDF
         doc.save(`${customerCompanyName}_${formattedDate}.pdf`);
 
+        // Clean up
         document.body.removeChild(clonedTable);
       })
       .catch((error) => {
         console.error("Error generating PDF:", error);
+        document.body.removeChild(clonedTable);
       });
   }
 }

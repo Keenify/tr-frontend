@@ -1,0 +1,143 @@
+.quotation-container {
+    position: relative;
+    padding: 20px;
+}
+
+.company-header-container {
+    border: 1px solid #ccc;
+    padding: 5px 0;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+.customer-info-container {
+    margin-bottom: 10px;
+}
+
+.date-container {
+    margin-top: 10px;
+}
+
+.toggle-container {
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+    width: fit-content;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.toggle-label:first-child {
+    margin-top: 0;
+}
+
+.toggle-label input {
+    margin-right: 8px;
+}
+
+.products-table {
+    margin-top: 20px;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.table-header-cell {
+    background-color: #f57c00;
+    color: #fff;
+    border: 1px solid #ccc;
+    padding: 8px !important;
+    font-weight: bold !important;
+}
+
+.table-cell {
+    border: 1px solid #ccc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 8px !important;
+}
+
+.variant-image {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+}
+
+.flavor-checkbox-container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.flavor-label {
+    margin-left: 8px;
+    cursor: pointer;
+}
+
+.action-button {
+    margin-top: 20px;
+    display: inline-block;
+}
+
+.price-tier-button {
+    margin-right: 10px;
+}
+
+.generate-pdf-button.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Table specific styles */
+.product-name-cell {
+    white-space: pre-line !important;
+}
+
+.variant-images-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    padding: 4px;
+}
+
+/* Update these styles */
+.carton-price-cell {
+    width: 65px !important;
+    min-width: 65px !important;
+    max-width: 65px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 4px !important;
+}
+
+.carton-header-cell {
+    width: 65px !important;
+    min-width: 65px !important;
+    max-width: 65px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 4px !important;
+}
+
+.button-container {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding: 0 16px;
+}
+
+.action-button {
+    min-width: 120px;
+}
