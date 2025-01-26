@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
-import { Product, ProductPriceTier } from '../types/Product';
+import { Product, ProductPriceTier } from '../../../shared/types/Product';
 import CloseIcon from '@mui/icons-material/Close';
 import { AddCircle, Edit, Delete } from '@mui/icons-material';
 import '../styles/PriceTierModal.css';

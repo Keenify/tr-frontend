@@ -1,4 +1,4 @@
-import { ProductPriceTier } from '../types/Product'; // Import the ProductPriceTier type
+import { ProductPriceTier } from '../../../shared/types/Product'; // Import the ProductPriceTier type
 import { BACKEND_API_DOMAIN } from '../../../config'; // Import the BACKEND_API_DOMAIN
 
 export const getProductPriceTiers = async (productId: string): Promise<ProductPriceTier[]> => {

@@ -1,14 +1,15 @@
-import React from 'react';
+import { Button, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from '@mui/material';
 import { Session } from '@supabase/supabase-js';
-import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
-import { getProductsByCompany, getProductVariants } from '../../../services/useProducts';
-import { getProductPriceTiers } from '../services/useProductsPriceTier';
-import { Product, ProductPriceTier } from '../types/Product';
-import { generatePDF } from '../utils/pdfUtils';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, TextField, Grid } from '@mui/material';
-import CompanyHeader from './CompanyHeader';
+import React from 'react';
 import { CompanyData } from '../../../shared/types/companyType';
+import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
+import { getProductsByCompany } from '../../../services/useProducts';
+import { getProductPriceTiers } from '../services/useProductsPriceTier';
+import { getProductVariants } from '../../../services/useProductVariants';
+import { Product, ProductPriceTier } from '../../../shared/types/Product';
+import CompanyHeader from './CompanyHeader';
 import PriceTierModal from './PriceTierModal';
+import { generatePDF } from '../utils/pdfUtils';
 
 interface ProductsProps {
     session: Session;
