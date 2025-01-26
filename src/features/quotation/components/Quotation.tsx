@@ -50,41 +50,51 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
             getProductsByCompany(companyInfo.id)
                 .then(products => {
                     setProducts(products);
-                    // Initialize all products and flavors as selected
+                    // Initialize all products as selected
                     const initialSelectedProducts = new Set(products.map(product => product.id));
-                    const initialSelectedFlavors: { [key: number]: Set<string> } = {};
-                    products.forEach(product => {
-                        initialSelectedFlavors[product.id] = new Set(productVariants[product.id] || []);
-                    });
                     setSelectedProducts(initialSelectedProducts);
-                    setSelectedFlavors(initialSelectedFlavors);
+                    
                     return Promise.all(
                         products.map(product => {
-                            const variantsPromise = getProductVariants(product.id.toString()).then(variants => ({
-                                productId: product.id,
-                                variantNames: variants.map(variant => variant.name),
-                            }));
-                            const priceTiersPromise = getProductPriceTiers(product.id.toString()).then(priceTiers => ({
-                                productId: product.id,
-                                priceTiers,
-                            }));
+                            const variantsPromise = getProductVariants(product.id.toString())
+                                .then(variants => ({
+                                    productId: product.id,
+                                    variantNames: variants.map(variant => variant.name),
+                                }))
+                                .catch(() => ({
+                                    productId: product.id,
+                                    variantNames: [], // Empty array for products with no variants
+                                }));
+                                
+                            const priceTiersPromise = getProductPriceTiers(product.id.toString())
+                                .then(priceTiers => ({
+                                    productId: product.id,
+                                    priceTiers,
+                                }))
+                                .catch(() => ({
+                                    productId: product.id,
+                                    priceTiers: [], // Empty array for products with no price tiers
+                                }));
+                                
                             return Promise.all([variantsPromise, priceTiersPromise]);
                         })
                     );
                 })
                 .then(results => {
-                    const productPriceTiers: { [key: number]: ProductPriceTier[] } = {};
+                    const newProductVariants: { [key: number]: string[] } = {};
+                    const newProductPriceTiers: { [key: number]: ProductPriceTier[] } = {};
+                    const initialSelectedFlavors: { [key: number]: Set<string> } = {};
+
                     results.forEach(([variantsData, priceTiersData]) => {
-                        productVariants[variantsData.productId] = variantsData.variantNames;
-                        productPriceTiers[priceTiersData.productId] = priceTiersData.priceTiers;
-                        // Ensure all flavors are selected for each product
-                        setSelectedFlavors(prevFlavors => ({
-                            ...prevFlavors,
-                            [variantsData.productId]: new Set(variantsData.variantNames),
-                        }));
+                        newProductVariants[variantsData.productId] = variantsData.variantNames;
+                        newProductPriceTiers[priceTiersData.productId] = priceTiersData.priceTiers;
+                        // Initialize selected flavors only if variants exist
+                        initialSelectedFlavors[variantsData.productId] = new Set(variantsData.variantNames);
                     });
-                    setProductVariants(productVariants);
-                    setProductPriceTiers(productPriceTiers);
+
+                    setProductVariants(newProductVariants);
+                    setProductPriceTiers(newProductPriceTiers);
+                    setSelectedFlavors(initialSelectedFlavors);
                 })
                 .catch(() => {
                     setFetchError('Failed to load products, variants, or price tiers');
@@ -325,23 +335,27 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                                     </TableCell>
                                 )}
                                 <TableCell align="center" style={{ whiteSpace: 'nowrap', border: '1px solid #ccc', textAlign: 'center' }}>
-                                    {productVariants[product.id]?.map(flavor => (
-                                        <div key={flavor} style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', whiteSpace: 'nowrap' }}>
-                                            <input
-                                                type="checkbox"
-                                                id={`flavor-checkbox-${product.id}-${flavor}`}
-                                                checked={selectedFlavors[product.id]?.has(flavor) || false}
-                                                onChange={() => toggleFlavorSelection(product.id, flavor)}
-                                                disabled={!selectedProducts.has(product.id)} // Disable if product is not selected
-                                            />
-                                            <label
-                                                htmlFor={`flavor-checkbox-${product.id}-${flavor}`}
-                                                style={{ marginLeft: '8px', cursor: 'pointer' }}
-                                            >
-                                                {flavor}
-                                            </label>
-                                        </div>
-                                    )) || 'N/A'}
+                                    {(productVariants[product.id]?.length > 0) ? (
+                                        productVariants[product.id].map(flavor => (
+                                            <div key={flavor} style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', whiteSpace: 'nowrap' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    id={`flavor-checkbox-${product.id}-${flavor}`}
+                                                    checked={selectedFlavors[product.id]?.has(flavor) || false}
+                                                    onChange={() => toggleFlavorSelection(product.id, flavor)}
+                                                    disabled={!selectedProducts.has(product.id)}
+                                                />
+                                                <label
+                                                    htmlFor={`flavor-checkbox-${product.id}-${flavor}`}
+                                                    style={{ marginLeft: '8px', cursor: 'pointer' }}
+                                                >
+                                                    {flavor}
+                                                </label>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <span>No variants</span>
+                                    )}
                                 </TableCell>
                                 {Array.from(visibleCartonColumns).map(carton => (
                                     <TableCell

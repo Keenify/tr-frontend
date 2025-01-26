@@ -22,4 +22,19 @@ export interface ProductPriceTier {
     id: number;
     product_id: number;
     created_at: string;
+}
+
+export interface CreateProductRequest {
+    name: string;
+    description?: string;
+    pack_count_per_box: number;
+    recommended_retail_price: number;
+    company_id: string;
+}
+
+export interface UpdateProductRequest {
+    name?: string;
+    description?: string;
+    pack_count_per_box?: number;
+    recommended_retail_price?: number;
 } 
