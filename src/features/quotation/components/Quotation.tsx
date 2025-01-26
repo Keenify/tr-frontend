@@ -374,18 +374,32 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                                 <TableCell align="center" className="table-cell">
                                     {(productVariants[product.id]?.length > 0) ? (
                                         productVariants[product.id].map(flavor => (
-                                            <div key={flavor.name} className="flavor-checkbox-container" style={{ whiteSpace: 'nowrap' }}>
+                                            <div 
+                                                key={flavor.name} 
+                                                className="flavor-checkbox-container" 
+                                                style={{ 
+                                                    whiteSpace: 'normal',  // Changed from 'nowrap'
+                                                    display: 'flex',
+                                                    alignItems: 'flex-start',
+                                                    margin: '4px 0'
+                                                }}
+                                            >
                                                 <input
                                                     type="checkbox"
                                                     id={`flavor-checkbox-${product.id}-${flavor.name}`}
                                                     checked={selectedFlavors[product.id]?.has(flavor.name) || false}
                                                     onChange={() => toggleFlavorSelection(product.id, flavor.name)}
                                                     disabled={!selectedProducts.has(product.id)}
+                                                    style={{ marginTop: '3px' }}
                                                 />
                                                 <label
                                                     htmlFor={`flavor-checkbox-${product.id}-${flavor.name}`}
                                                     className="flavor-label"
-                                                    style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+                                                    style={{ 
+                                                        marginLeft: '4px',
+                                                        wordBreak: 'break-word',
+                                                        textAlign: 'left'
+                                                    }}
                                                 >
                                                     {flavor.name}
                                                 </label>
