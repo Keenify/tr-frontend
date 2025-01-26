@@ -4,10 +4,12 @@ import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyDa
 import { ClipLoader } from 'react-spinners';
 import { Product as ProductType, ProductVariant, CreateProductRequest, UpdateProductRequest } from '../../../shared/types/Product';
 import { createProduct, getProductsByCompany, updateProduct, deleteProduct } from '../../../services/useProducts';
-import { getProductVariants } from '../../../services/useProductVariants';
+import { getProductVariants, createProductVariant } from '../../../services/useProductVariants';
 import CreateProductModal from './CreateProductModal';
 import EditProductModal from './EditProductModal';
 import DeleteProductModal from './DeleteProductModal';
+import CreateVariantModal from './CreateVariantModal';
+import VariantGrid from './VariantGrid';
 
 interface ProductProps {
   session: Session;
@@ -22,6 +24,7 @@ const Product: React.FC<ProductProps> = ({ session }) => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingProduct, setEditingProduct] = React.useState<ProductType | null>(null);
   const [deletingProduct, setDeletingProduct] = React.useState<ProductType | null>(null);
+  const [creatingVariantForProduct, setCreatingVariantForProduct] = React.useState<ProductType | null>(null);
 
   const fetchProducts = React.useCallback(async () => {
     if (!companyInfo?.id) return;
@@ -91,6 +94,34 @@ const Product: React.FC<ProductProps> = ({ session }) => {
     }
   };
 
+  const handleCreateVariant = async (productId: number, data: { name: string; image?: File }) => {
+    try {
+      await createProductVariant({
+        name: data.name,
+        image: data.image,
+        product_id: productId
+      });
+      await fetchProducts(); // Refresh the products list
+      setCreatingVariantForProduct(null);
+    } catch (error) {
+      console.error('Failed to create variant:', error);
+      setFetchError('Failed to create variant');
+    }
+  };
+
+  const refreshVariants = React.useCallback(async (productId: number) => {
+    try {
+      const variants = await getProductVariants(productId.toString());
+      setProductVariants(prev => ({
+        ...prev,
+        [productId]: variants
+      }));
+    } catch (error) {
+      console.error('Failed to refresh variants:', error);
+      setFetchError('Failed to refresh variants');
+    }
+  }, []);
+
   if (isLoading || loadingProducts) {
     return (
       <div className="flex justify-center items-center h-full">
@@ -153,18 +184,25 @@ const Product: React.FC<ProductProps> = ({ session }) => {
           <p className="text-gray-600">Pack Count: {product.pack_count_per_box}</p>
           <p className="text-gray-600">Retail Price: ${product.recommended_retail_price}</p>
           
-          {productVariants[product.id] && productVariants[product.id].length > 0 && (
-            <div className="mt-2">
-              <h3 className="font-medium mb-1">Variants:</h3>
-              <ul className="list-disc pl-5">
-                {productVariants[product.id].map(variant => (
-                  <li key={variant.id} className="text-gray-600">
-                    {variant.name}
-                  </li>
-                ))}
-              </ul>
+          <div className="mt-2">
+            <div className="flex justify-between items-center">
+              <h3 className="font-medium">Variants:</h3>
+              <button
+                onClick={() => setCreatingVariantForProduct(product)}
+                className="text-sm bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+              >
+                New Variant
+              </button>
             </div>
-          )}
+            {productVariants[product.id]?.length > 0 ? (
+              <VariantGrid 
+                variants={productVariants[product.id]} 
+                onVariantUpdate={() => refreshVariants(product.id)}
+              />
+            ) : (
+              <p className="text-gray-500 mt-1">No variants available</p>
+            )}
+          </div>
         </div>
       ))}
 
@@ -183,6 +221,14 @@ const Product: React.FC<ProductProps> = ({ session }) => {
           onClose={() => setDeletingProduct(null)}
           onConfirm={() => handleDeleteProduct(deletingProduct.id)}
           productName={deletingProduct.name}
+        />
+      )}
+
+      {creatingVariantForProduct && (
+        <CreateVariantModal
+          isOpen={!!creatingVariantForProduct}
+          onClose={() => setCreatingVariantForProduct(null)}
+          onSubmit={(data) => handleCreateVariant(creatingVariantForProduct.id, data)}
         />
       )}
     </div>

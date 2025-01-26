@@ -37,4 +37,19 @@ export interface UpdateProductRequest {
     description?: string;
     pack_count_per_box?: number;
     recommended_retail_price?: number;
+}
+
+export interface CreateProductVariantRequest {
+    name: string;
+    image?: File;
+    product_id: number;
 } 
+
+export interface UpdateProductVariantRequest {
+    name?: string;
+    image?: File;
+}
+
+export interface DeleteProductVariantRequest {
+    variant_id: number;
+}
