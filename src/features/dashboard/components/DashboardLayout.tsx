@@ -32,7 +32,8 @@ const navigationConfig = [
   },
   { id: 'dailyHuddle', label: 'Daily Huddle', shortForm: 'Dh', icon: Calendar },
   { id: 'sales', label: 'Sales', shortForm: 'S', icon: ThumbsUp },
-  { id: 'quotation', label: 'Quotation', shortForm: 'Qu', icon: ThumbsUp }
+  { id: 'quotation', label: 'Quotation', shortForm: 'Qu', icon: ThumbsUp },
+  { id: 'product', label: 'Product', shortForm: 'P', icon: ThumbsUp }
 ] as const;
 
 /**

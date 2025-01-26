@@ -25,6 +25,7 @@ import ProtectedRoute from './routes/ProtectedRoute';
 import DailyHuddle from './features/dailyHuddle/components/DailyHuddle';
 import Sales from './features/sales/components/Sales';
 import Quotation from './features/quotation/components/Quotation';
+import Product from './features/product/components/Product';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -59,6 +60,7 @@ const App: React.FC = () => {
                 <Route path="/:userId/dailyhuddle" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="dailyHuddle" onTabChange={() => { }}><DailyHuddle session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/sales" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="sales" onTabChange={() => { }}><Sales session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/quotation" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="quotation" onTabChange={() => { }}><Quotation session={session} /></DashboardLayout>} />} />
+                <Route path="/:userId/product" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="product" onTabChange={() => { }}><Product session={session} /></DashboardLayout>} />} />
               </>
             )}
 
