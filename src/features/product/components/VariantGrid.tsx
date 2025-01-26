@@ -23,6 +23,7 @@ const VariantGrid: React.FC<VariantGridProps> = ({ variants, onVariantUpdate }) 
       await updateProductVariant(selectedVariant.id, data);
       onVariantUpdate?.();
       setIsEditModalOpen(false);
+      setSelectedVariant(null);
     } catch (error) {
       console.error('Failed to update variant:', error);
     }

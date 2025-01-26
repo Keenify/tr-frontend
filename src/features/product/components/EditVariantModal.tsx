@@ -16,6 +16,12 @@ const EditVariantModal: React.FC<EditVariantModalProps> = ({ isOpen, onClose, on
     const [isDragging, setIsDragging] = React.useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+    // Reset form state when variant changes
+    React.useEffect(() => {
+        setName(variant.name);
+        setImage(null);
+    }, [variant]);
+
     const handleDragEnter = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -49,7 +55,6 @@ const EditVariantModal: React.FC<EditVariantModalProps> = ({ isOpen, onClose, on
             await updateProductVariant(variant.id, { name, image: image || undefined });
             onSubmit({ name, image: image || undefined });
             setImage(null);
-            setName(variant.name);
             onClose();
         } catch (error) {
             console.error('Failed to update variant:', error);
