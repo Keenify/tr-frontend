@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getUserData, UserData } from '../../services/userService';
-import { getCompanyData } from '../../services/companyService';
+import { getUserData, UserData } from '../../services/useUser';
+import { getCompanyData } from '../../services/useCompany';
 import { CompanyData } from '../types/companyType';
 
 export function useUserAndCompanyData(userId: string) {

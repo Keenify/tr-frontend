@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useEditor, EditorContent } from "@tiptap/react";
-import { updateDocumentTab } from "../../../services/docService";
+import { updateDocumentTab } from "../../../services/useDocument";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { EditorLayout } from './EditorLayout';
-import { DocumentContent, Step, upsertDocumentContent, getDocumentContent } from '../../../services/docService';
+import { DocumentContent, Step, upsertDocumentContent, getDocumentContent } from '../../../services/useDocument';
 
 // Extensions
 import StarterKit from "@tiptap/starter-kit";

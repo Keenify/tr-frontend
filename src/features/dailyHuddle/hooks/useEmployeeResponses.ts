@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAllEmployees } from '../../../services/userService';
+import { getAllEmployees } from '../../../services/useUser';
 import { fetchResponse } from '../services/huddleService';
 import { ResponseData } from '../types/huddle.types';
 

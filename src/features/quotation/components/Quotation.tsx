@@ -1,7 +1,7 @@
 import React from 'react';
 import { Session } from '@supabase/supabase-js';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
-import { getProductsByCompany, getProductVariants } from '../services/useProducts';
+import { getProductsByCompany, getProductVariants } from '../../../services/useProducts';
 import { getProductPriceTiers } from '../services/useProductsPriceTier';
 import { Product, ProductPriceTier } from '../types/Product';
 import { generatePDF } from '../utils/pdfUtils';

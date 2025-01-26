@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { fetchQuestions, submitResponse, fetchResponse, updateResponse } from "../services/huddleService";
 import { hasSubmittedResponseToday } from "../services/huddleService";
-import { getUserData } from "../../../services/userService";
+import { getUserData } from "../../../services/useUser";
 import { Question, ResponseData } from "../types/huddle.types";
 import { Session } from "@supabase/supabase-js";
 import { FORM_ID } from "../constants";

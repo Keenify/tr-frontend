@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { Step } from '../../../services/docService';
+import { Step } from '../../../services/useDocument';
 
 interface EditorLayoutProps {
   children: React.ReactNode;
