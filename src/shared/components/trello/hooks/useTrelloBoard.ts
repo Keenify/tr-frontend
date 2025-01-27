@@ -34,6 +34,7 @@ interface TrelloBoardHookProps {
   onListTitleChange?: (listId: string, newTitle: string) => Promise<void>;
   onCardAdd?: (listId: string, title: string) => Promise<void>;
   onListAdd?: (title: string) => Promise<void>;
+  onCardDelete?: (listId: string, cardId: string) => Promise<void>;
 }
 
 export const useTrelloBoard = (
@@ -44,7 +45,8 @@ export const useTrelloBoard = (
     onCardUpdate,
     onListTitleChange,
     onCardAdd,
-    onListAdd
+    onListAdd,
+    onCardDelete
   }: TrelloBoardHookProps = {}
 ) => {
   const [lists, setLists] = useState(initialLists);
@@ -214,6 +216,29 @@ export const useTrelloBoard = (
     }
   }, [lists, initialLists, onListAdd]);
 
+  const handleCardDelete = useCallback(async (listId: string, cardId: string) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Optimistic update
+      setLists(lists.map(list => 
+        list.id === listId 
+          ? { ...list, cards: list.cards.filter(card => card.id !== cardId) }
+          : list
+      ));
+
+      if (onCardDelete) {
+        await onCardDelete(listId, cardId);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      setLists(initialLists);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [lists, initialLists, onCardDelete]);
+
   return {
     lists,
     isLoading,
@@ -222,6 +247,7 @@ export const useTrelloBoard = (
     handleCardUpdate,
     handleTitleChange,
     handleAddCard,
-    handleAddList
+    handleAddList,
+    handleCardDelete
   };
 }; 

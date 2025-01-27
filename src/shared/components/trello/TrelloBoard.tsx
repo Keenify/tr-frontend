@@ -29,6 +29,7 @@ interface TrelloBoardProps {
   onListTitleChange?: (listId: string, newTitle: string) => Promise<void>;
   onCardAdd?: (listId: string, title: string) => Promise<void>;
   onListAdd?: (title: string) => Promise<void>;
+  onCardDelete?: (listId: string, cardId: string) => Promise<void>;
 }
 
 export const TrelloBoard: React.FC<TrelloBoardProps> = ({ 
@@ -38,7 +39,8 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   onCardUpdate,
   onListTitleChange,
   onCardAdd,
-  onListAdd
+  onListAdd,
+  onCardDelete
 }) => {
   const { 
     lists, 
@@ -46,7 +48,8 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
     handleCardUpdate, 
     handleTitleChange, 
     handleAddCard,
-    handleAddList 
+    handleAddList,
+    handleCardDelete
   } = useTrelloBoard(
     initialLists,
     {
@@ -55,7 +58,8 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
       onCardUpdate,
       onListTitleChange,
       onCardAdd,
-      onListAdd
+      onListAdd,
+      onCardDelete
     }
   );
 
@@ -128,6 +132,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
                   onCardClick={(cardId) => handleCardClick(list.id, cardId)}
                   onTitleChange={(newTitle) => handleTitleChange(list.id, newTitle)}
                   onAddCard={(title) => handleAddCard(list.id, title)}
+                  onCardDelete={(cardId) => handleCardDelete(list.id, cardId)}
                 />
               ))}
               {provided.placeholder}
