@@ -57,7 +57,6 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   const [attachments, setAttachments] = useState<CardAttachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Fetch attachments when modal opens
   useEffect(() => {
     const fetchAttachments = async () => {
       setIsUploading(true);
@@ -75,10 +74,13 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setIsUploading(true);
+    console.log('Card ID:', card.id);
+    console.log('Files to upload:', acceptedFiles);
+    
     try {
-      const uploadPromises = acceptedFiles.map(file => 
-        createCardAttachment(card.id, file, false)
-      );
+      const uploadPromises = acceptedFiles.map(file => {
+        return createCardAttachment(card.id, file, false);
+      });
       const newAttachments = await Promise.all(uploadPromises);
       setAttachments(prev => [...prev, ...newAttachments]);
     } catch (error) {
@@ -106,6 +108,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       colorCode,
       attachments
     });
+    onClose();
   };
 
   const handleRemoveAttachment = async (attachmentId: string) => {

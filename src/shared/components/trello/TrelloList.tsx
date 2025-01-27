@@ -18,6 +18,7 @@ interface TrelloListProps {
   onAddCard?: (title: string) => void;
   onCardDelete?: (cardId: string) => void;
   onDelete?: () => void;
+  onCardUpdate?: (cardId: string, updates: any) => void;
 }
 
 /**
@@ -46,6 +47,7 @@ interface TrelloListProps {
  * @param {Function} onAddCard - Handler for add card button click
  * @param {Function} onCardDelete - Handler for card delete events
  * @param {Function} onDelete - Handler for list delete events
+ * @param {Function} onCardUpdate - Handler for card update events
  */
 
 export const TrelloList: React.FC<TrelloListProps> = ({
@@ -57,6 +59,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   onAddCard,
   onCardDelete,
   onDelete,
+  onCardUpdate,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [listTitle, setListTitle] = useState(title);
@@ -196,6 +199,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                       {...card}
                       index={cardIndex}
                       onDelete={() => onCardDelete?.(card.id)}
+                      onUpdate={(updatedCard) => onCardUpdate?.(card.id, updatedCard)}
                     />
                   ))}
                   {dropProvided.placeholder}

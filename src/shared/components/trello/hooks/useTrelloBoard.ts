@@ -163,9 +163,14 @@ export const useTrelloBoard = (
     setError(null);
 
     try {
-      // Optimistic update
+      if (onCardAdd) {
+        // Wait for the API response to get the real card ID
+        await onCardAdd(listId, title);
+      }
+
+      // Update the lists after API call succeeds
       const newCard = {
-        id: `temp-${Date.now()}`,
+        id: `${Date.now()}`, // Remove 'temp-' prefix
         title,
         description: ''
       };
@@ -175,11 +180,6 @@ export const useTrelloBoard = (
           ? { ...list, cards: [...list.cards, newCard] }
           : list
       ));
-
-      // API call
-      if (onCardAdd) {
-        await onCardAdd(listId, title);
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setLists(initialLists);

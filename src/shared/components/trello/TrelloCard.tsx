@@ -13,6 +13,13 @@ interface TrelloCardProps {
   thumbnailUrl?: string;
   onClick?: () => void;
   onDelete?: () => void;
+  onUpdate?: (updatedCard: {
+    id: string;
+    title: string;
+    description?: string;
+    colorCode?: string;
+    attachments?: CardAttachment[];
+  }) => void;
 }
 
 /**
@@ -40,6 +47,7 @@ interface TrelloCardProps {
  * @param {string} thumbnailUrl - Optional thumbnail image URL
  * @param {Function} onClick - Handler for card click
  * @param {Function} onDelete - Handler for card deletion
+ * @param {Function} onUpdate - Handler for card update
  */
 export const TrelloCard: React.FC<TrelloCardProps> = ({
   id,
@@ -49,6 +57,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   colorCode,
   thumbnailUrl,
   onDelete,
+  onUpdate
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPosition, setDragStartPosition] = useState({ x: 0, y: 0 });
@@ -244,6 +253,15 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
           onClose={() => setIsModalOpen(false)}
           onSave={(updatedCard) => {
             setCardAttachments(updatedCard.attachments || []);
+            if (onUpdate) {
+              onUpdate({
+                id,
+                title: updatedCard.title,
+                description: updatedCard.description,
+                colorCode: updatedCard.colorCode,
+                attachments: updatedCard.attachments
+              });
+            }
             setIsModalOpen(false);
           }}
           card={{

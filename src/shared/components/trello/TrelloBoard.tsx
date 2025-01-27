@@ -129,6 +129,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
                   onAddCard={(title) => handleAddCard(list.id, title)}
                   onCardDelete={(cardId) => handleCardDelete(list.id, cardId)}
                   onDelete={() => handleListDelete(list.id)}
+                  onCardUpdate={(cardId, updates) => handleCardUpdate(list.id, cardId, updates)}
                 />
               ))}
               {provided.placeholder}
