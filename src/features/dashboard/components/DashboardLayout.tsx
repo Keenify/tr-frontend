@@ -24,7 +24,6 @@ const navigationConfig = [
   { id: 'home', label: 'Home', shortForm: 'H', icon: null },
   { id: 'content', label: 'Content', shortForm: 'C', icon: ThumbsUp },
   { id: 'resources', label: 'Resources', shortForm: 'R', icon: ThumbsUp },
-  { id: 'process', label: 'Process', shortForm: 'Pro', icon: Calendar },
   { id: 'people', label: 'People', shortForm: 'Pe', icon: ThumbsUp, 
     subTabs: [
       { id: 'directory', label: 'Directory', shortForm: 'Di', icon: ThumbsUp },
