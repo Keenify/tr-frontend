@@ -5,6 +5,7 @@ import { createList, updateList, deleteList } from "../../../shared/components/t
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { getBoardDetails, HARDCODED_BOARD_ID } from "../services/useBoard";
 import { List } from "../types/board";
+import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 
 interface ResourcesProps {
   session: Session;
@@ -34,6 +35,9 @@ const Resources: React.FC<ResourcesProps> = ({
   const [lists, setLists] = useState<List[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Add the useUserAndCompanyData hook
+  const { companyInfo, isLoading: isLoadingCompany } = useUserAndCompanyData(session.user.id);
 
   useEffect(() => {
     const fetchBoardDetails = async () => {
@@ -61,7 +65,7 @@ const Resources: React.FC<ResourcesProps> = ({
     fetchBoardDetails();
   }, [boardId]);
 
-  if (isLoading) {
+  if (isLoading || isLoadingCompany) {
     return <div>Loading...</div>;
   }
 
@@ -248,10 +252,14 @@ const Resources: React.FC<ResourcesProps> = ({
     }
   };
 
-  console.log(session);
   return (
     <div className="min-h-screen p-6 flex flex-col">
-      <h1 className="text-2xl font-bold mb-6">Resources</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Resources</h1>
+        {companyInfo?.name && (
+          <span className="text-lg text-gray-600">{companyInfo.name}</span>
+        )}
+      </div>
       <TrelloBoard 
         initialLists={lists}
         onListMove={handleListMove}
