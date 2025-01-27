@@ -149,10 +149,8 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
               className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100"
               onClick={handleMenuClick}
             >
-              <svg className="w-4 h-4 text-gray-500" viewBox="0 0 16 16">
-                <circle cx="8" cy="2" r="1.5" />
-                <circle cx="8" cy="8" r="1.5" />
-                <circle cx="8" cy="14" r="1.5" />
+              <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
               </svg>
             </button>
 
