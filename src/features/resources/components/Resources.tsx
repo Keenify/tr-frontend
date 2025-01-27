@@ -1,9 +1,14 @@
-import React from "react";
-import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { Session } from "@supabase/supabase-js";
+import React, { useEffect, useState } from "react";
+import { createCard, updateCard } from "../../../shared/components/trello/services/useCard";
+import { createList, updateList } from "../../../shared/components/trello/services/useList";
+import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
+import { getBoardDetails, HARDCODED_BOARD_ID } from "../services/useBoard";
+import { List } from "../types/board";
 
 interface ResourcesProps {
   session: Session;
+  boardId?: string;
 }
 
 /**
@@ -20,44 +25,49 @@ interface ResourcesProps {
  * 
  * @component
  * @param {Session} session - User session information for API authentication
+ * @param {string} [boardId] - Optional ID of the board to load, uses hardcoded ID if not provided
  */
-const Resources: React.FC<ResourcesProps> = ({ session }) => {
-  const initialLists = [
-    {
-      id: "1",
-      title: "Documents",
-      cards: [
-        {
-          id: "card-1",
-          title: "Company Profile",
-          description: "Overview of company structure and services",
-          thumbnailUrl: "https://example.com/thumbnail1.jpg",
-        },
-        {
-          id: "card-2",
-          title: "Employee Handbook",
-          description: "Guidelines and policies for employees",
-        },
-      ],
-    },
-    {
-      id: "2",
-      title: "Training Materials",
-      cards: [
-        {
-          id: "card-3",
-          title: "Sales Training",
-          description: "Sales techniques and best practices",
-          colorCode: "#f0f9ff",
-        },
-        {
-          id: "card-4",
-          title: "Product Knowledge",
-          description: "Detailed product information and specs",
-        },
-      ],
-    },
-  ];
+const Resources: React.FC<ResourcesProps> = ({ 
+  session, 
+  boardId = HARDCODED_BOARD_ID
+}) => {
+  const [lists, setLists] = useState<List[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchBoardDetails = async () => {
+      try {
+        setIsLoading(true);
+        const boardDetails = await getBoardDetails(boardId);
+        // Keep all original properties while transforming what TrelloBoard needs
+        const transformedLists = boardDetails.map(list => ({
+          ...list,
+          title: list.name, // Add title alias for TrelloBoard
+          cards: list.cards.map(card => ({
+            ...card,
+            thumbnailUrl: card.thumbnail_url,
+            colorCode: card.color_code,
+          })),
+        }));
+        setLists(transformedLists);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load board details');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBoardDetails();
+  }, [boardId]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   /**
    * API Integration Points:
@@ -71,12 +81,21 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
    * @param destinationIndex - New position of the list
    */
   const handleListMove = async (sourceIndex: number, destinationIndex: number) => {
-    // TODO: Implement API call
-    // Example:
-    // await supabase
-    //   .from('lists')
-    //   .update({ position: destinationIndex })
-    //   .eq('id', listId);
+    try {
+        // Get the lists that need to be updated
+        const sourceList = lists[sourceIndex];
+        const destinationList = lists[destinationIndex];
+
+        // Update both lists with their new positions
+        await Promise.all([
+            updateList(sourceList.id, { position: destinationIndex }),
+            updateList(destinationList.id, { position: sourceIndex })
+        ]);
+
+    } catch (error) {
+        console.error('Failed to update list positions:', error);
+        // You might want to add error handling here (e.g., showing a toast notification)
+    }
   };
 
   /**
@@ -88,21 +107,21 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
    * @param cardId - ID of the card being moved
    */
   const handleCardMove = async (
-    sourceListId: string,
+    _sourceListId: string,
     destinationListId: string,
-    sourceIndex: number,
+    _sourceIndex: number,
     destinationIndex: number,
     cardId: string
   ) => {
-    // TODO: Implement API call
-    // Example:
-    // await supabase
-    //   .from('cards')
-    //   .update({ 
-    //     list_id: destinationListId,
-    //     position: destinationIndex 
-    //   })
-    //   .eq('id', cardId);
+    try {
+      await updateCard(cardId, {
+        list_id: destinationListId,
+        position: destinationIndex
+      });
+    } catch (error) {
+      console.error('Failed to move card:', error);
+      // You might want to add error handling here (e.g., showing a toast notification)
+    }
   };
 
   /**
@@ -112,12 +131,21 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
    * @param updates - Object containing the updated card properties
    */
   const handleCardUpdate = async (listId: string, cardId: string, updates: any) => {
-    // TODO: Implement API call
-    // Example:
-    // await supabase
-    //   .from('cards')
-    //   .update(updates)
-    //   .eq('id', cardId);
+    try {
+      // Transform colorCode to color_code for API compatibility
+      const apiUpdates = {
+        ...updates,
+        list_id: listId,
+        color_code: updates.colorCode,
+      };
+      // Remove the camelCase version to avoid duplicate fields
+      delete apiUpdates.colorCode;
+      
+      await updateCard(cardId, apiUpdates);
+    } catch (error) {
+      console.error('Failed to update card:', error);
+      // You might want to add error handling here (e.g., showing a toast notification)
+    }
   };
 
   /**
@@ -126,28 +154,54 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
    * @param newTitle - New title for the list
    */
   const handleListTitleChange = async (listId: string, newTitle: string) => {
-    // TODO: Implement API call
-    // Example:
-    // await supabase
-    //   .from('lists')
-    //   .update({ title: newTitle })
-    //   .eq('id', listId);
+    try {
+      await updateList(listId, { name: newTitle });
+    } catch (error) {
+      console.error('Failed to update list title:', error);
+      // You might want to add error handling here (e.g., showing a toast notification)
+    }
   };
 
   /**
    * Creates a new card in the specified list
    * @param listId - ID of the list to add the card to
+   * @param title - Title of the new card from UI input
    */
-  const handleCardAdd = async (listId: string) => {
-    // TODO: Implement API call
-    // Example:
-    // await supabase
-    //   .from('cards')
-    //   .insert({
-    //     list_id: listId,
-    //     title: 'New Card',
-    //     position: lastPosition + 1
-    //   });
+  const handleCardAdd = async (listId: string, title: string) => {
+    try {
+      if (!title) {
+        throw new Error('Card title is required');
+      }
+
+      // Find the list and get the position for the new card
+      const list = lists.find(l => l.id === listId);
+      const position = list?.cards.length ?? 0;
+
+      const newCard = await createCard({
+        list_id: listId,
+        title,
+        position,
+      });
+
+      // Update the local state
+      setLists(currentLists => 
+        currentLists.map(list => {
+          if (list.id === listId) {
+            return {
+              ...list,
+              cards: [...list.cards, {
+                ...newCard,
+                thumbnailUrl: null,
+                colorCode: newCard.color_code,
+              }]
+            };
+          }
+          return list;
+        })
+      );
+    } catch (error) {
+      console.error('Failed to create card:', error);
+    }
   };
 
   /**
@@ -155,14 +209,34 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
    * @param title - Title of the new list
    */
   const handleListAdd = async (title: string) => {
-    // TODO: Implement API call
-    // Example:
-    // await supabase
-    //   .from('lists')
-    //   .insert({
-    //     title,
-    //     position: lastPosition + 1
-    //   });
+    try {
+      if (!title) {
+        throw new Error('List title is required');
+      }
+
+      // Calculate the highest position value
+      const maxPosition = lists.reduce((max, list) => 
+        Math.max(max, list.position || 0), -1);
+      const position = maxPosition + 1;
+
+      // Create the new list
+      const newList = await createList({
+        name: title,
+        position,
+        board_id: HARDCODED_BOARD_ID
+      });
+        
+
+      // Update the local state with the new list
+      setLists(currentLists => [...currentLists, {
+        ...newList,
+        title: newList.name, // Add title alias for TrelloBoard
+        cards: [] // Initialize with empty cards array
+      }]);
+    } catch (error) {
+      console.error('Failed to create list:', error);
+      // You might want to add error handling here (e.g., showing a toast notification)
+    }
   };
 
   console.log(session);
@@ -170,7 +244,7 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
     <div className="min-h-screen p-6 flex flex-col">
       <h1 className="text-2xl font-bold mb-6">Resources</h1>
       <TrelloBoard 
-        initialLists={initialLists}
+        initialLists={lists}
         onListMove={handleListMove}
         onCardMove={handleCardMove}
         onCardUpdate={handleCardUpdate}

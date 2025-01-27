@@ -2,6 +2,12 @@ const API_DOMAIN = import.meta.env.VITE_BACKEND_API_DOMAIN;
 
 import { ListResponse, UpdateListRequest } from '../types/list.types';
 
+interface CreateListRequest {
+    name: string;
+    position: number;
+    board_id: string;
+}
+
 /**
  * Updates a Trello list by ID
  * @param {string} listId - The ID of the list to update
@@ -29,6 +35,36 @@ export async function updateList(listId: string, updateData: UpdateListRequest):
             data
         });
         throw new Error('Failed to update list');
+    }
+
+    return data as ListResponse;
+}
+
+/**
+ * Creates a new Trello list
+ * @param {CreateListRequest} createData - The data for the new list (name, position, and board_id)
+ * @returns {Promise<ListResponse>} - A promise that resolves to the created list data
+ */
+export async function createList(createData: CreateListRequest): Promise<ListResponse> {
+    const endpoint = `${API_DOMAIN}/trello/lists`;
+
+    const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(createData),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+        console.error('❌ API request failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            data
+        });
+        throw new Error('Failed to create list');
     }
 
     return data as ListResponse;
