@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 import { deleteCard } from './services/useCard';
+import { getCardAttachments, CardAttachment } from './services/useCardAttachment';
+import { TrelloCardModal } from './TrelloCardModal';
 
 interface TrelloCardProps {
   id: string;
@@ -46,13 +48,15 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   description,
   colorCode,
   thumbnailUrl,
-  onClick,
   onDelete,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPosition, setDragStartPosition] = useState({ x: 0, y: 0 });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [isLoadingAttachments, setIsLoadingAttachments] = useState(false);
+  const [cardAttachments, setCardAttachments] = useState<CardAttachment[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Prevent page scroll when dragging
   useEffect(() => {
@@ -116,8 +120,26 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   };
 
   const handleMenuClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation();  // Stop event from bubbling up
     setShowMenu(!showMenu);
+  };
+
+  const handleCardClick = async () => {
+    if (!isDragging) {
+      setIsModalOpen(true);
+      setIsLoadingAttachments(true);
+      try {
+        if (!id.startsWith('temp-')) {
+          const attachments = await getCardAttachments(id);
+          setCardAttachments(attachments);
+        }
+      } catch (error) {
+        console.error('Failed to fetch attachments:', error);
+        setCardAttachments([]);
+      } finally {
+        setIsLoadingAttachments(false);
+      }
+    }
   };
 
   return (
@@ -142,12 +164,13 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
               transformOrigin: 'center',
               touchAction: 'none',
             }}
-            onClick={!isDragging ? onClick : undefined}
+            onClick={!isDragging ? handleCardClick : undefined}
           >
             {/* Add menu button */}
             <button
               className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100"
               onClick={handleMenuClick}
+              onMouseDown={(e) => e.stopPropagation()}  // Prevent drag start
             >
               <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
@@ -213,6 +236,25 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {isModalOpen && (
+        <TrelloCardModal
+          isOpen={true}
+          onClose={() => setIsModalOpen(false)}
+          onSave={(updatedCard) => {
+            setCardAttachments(updatedCard.attachments || []);
+            setIsModalOpen(false);
+          }}
+          card={{
+            id,
+            title,
+            description,
+            colorCode,
+            attachments: cardAttachments
+          }}
+          isLoadingAttachments={isLoadingAttachments}
+        />
       )}
     </>
   );

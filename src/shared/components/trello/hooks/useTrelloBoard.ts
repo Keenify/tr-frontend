@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { DropResult } from 'react-beautiful-dnd';
+import { CardAttachment } from '../services/useCardAttachment';
 
 interface TrelloList {
   id: string;
@@ -13,12 +14,7 @@ interface TrelloCard {
   description?: string;
   colorCode?: string;
   thumbnailUrl?: string;
-  attachments?: Array<{
-    id: string;
-    name: string;
-    url: string;
-    type: string;
-  }>;
+  attachments?: CardAttachment[];
 }
 
 interface TrelloBoardHookProps {

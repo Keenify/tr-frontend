@@ -14,7 +14,6 @@ interface TrelloListProps {
     colorCode?: string;
     thumbnailUrl?: string;
   }>;
-  onCardClick?: (cardId: string) => void;
   onTitleChange?: (newTitle: string) => void;
   onAddCard?: (title: string) => void;
   onCardDelete?: (cardId: string) => void;
@@ -43,7 +42,6 @@ interface TrelloListProps {
  * @param {number} index - Index of the list in the board
  * @param {string} title - List title
  * @param {Array} cards - Array of card objects
- * @param {Function} onCardClick - Handler for card click events
  * @param {Function} onTitleChange - Handler for title change events
  * @param {Function} onAddCard - Handler for add card button click
  * @param {Function} onCardDelete - Handler for card delete events
@@ -55,7 +53,6 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   index,
   title,
   cards,
-  onCardClick,
   onTitleChange,
   onAddCard,
   onCardDelete,
@@ -198,7 +195,6 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                       key={card.id}
                       {...card}
                       index={cardIndex}
-                      onClick={() => onCardClick?.(card.id)}
                       onDelete={() => onCardDelete?.(card.id)}
                     />
                   ))}

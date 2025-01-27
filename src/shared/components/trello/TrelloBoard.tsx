@@ -80,14 +80,6 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   const [isAddingList, setIsAddingList] = useState(false);
   const [newListTitle, setNewListTitle] = useState('');
 
-  const handleCardClick = (listId: string, cardId: string) => {
-    const list = lists.find(l => l.id === listId);
-    const card = list?.cards.find(c => c.id === cardId);
-    if (card) {
-      setSelectedCard({ listId, card });
-    }
-  };
-
   const handleAddListSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newListTitle.trim()) {
@@ -133,7 +125,6 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
                   index={index}
                   title={list.title}
                   cards={list.cards}
-                  onCardClick={(cardId) => handleCardClick(list.id, cardId)}
                   onTitleChange={(newTitle) => handleTitleChange(list.id, newTitle)}
                   onAddCard={(title) => handleAddCard(list.id, title)}
                   onCardDelete={(cardId) => handleCardDelete(list.id, cardId)}
@@ -194,6 +185,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
             setSelectedCard(null);
           }}
           card={selectedCard.card}
+          isLoadingAttachments={false}
         />
       )}
     </div>

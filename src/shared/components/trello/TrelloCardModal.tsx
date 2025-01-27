@@ -1,5 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { createCardAttachment, deleteAttachment, getCardAttachments, getAttachmentUrl, CardAttachment } from './services/useCardAttachment';
 
 interface TrelloCardModalProps {
   isOpen: boolean;
@@ -8,25 +9,16 @@ interface TrelloCardModalProps {
     title: string;
     description: string;
     colorCode?: string;
-    attachments?: Array<{
-      id: string;
-      name: string;
-      url: string;
-      type: string;
-    }>;
+    attachments?: CardAttachment[];
   }) => void;
   card: {
     id: string;
     title: string;
     description?: string;
     colorCode?: string;
-    attachments?: Array<{
-      id: string;
-      name: string;
-      url: string;
-      type: string;
-    }>;
+    attachments?: CardAttachment[];
   };
+  isLoadingAttachments: boolean;
 }
 
 /**
@@ -56,23 +48,45 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   isOpen,
   onClose,
   onSave,
-  card
+  card,
+  isLoadingAttachments
 }) => {
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description || '');
   const [colorCode, setColorCode] = useState(card.colorCode || '#ffffff');
-  const [attachments, setAttachments] = useState(card.attachments || []);
+  const [attachments, setAttachments] = useState<CardAttachment[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const newAttachments = acceptedFiles.map(file => ({
-      id: `attachment-${Date.now()}-${Math.random()}`,
-      name: file.name,
-      url: URL.createObjectURL(file),
-      type: file.type
-    }));
+  // Fetch attachments when modal opens
+  useEffect(() => {
+    const fetchAttachments = async () => {
+      setIsUploading(true);
+      try {
+        const fetchedAttachments = await getCardAttachments(card.id);
+        setAttachments(fetchedAttachments);
+      } catch (error) {
+        console.error('Failed to fetch attachments:', error);
+      } finally {
+        setIsUploading(false);
+      }
+    };
+    fetchAttachments();
+  }, [card.id]);
 
-    setAttachments(prev => [...prev, ...newAttachments]);
-  }, []);
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    setIsUploading(true);
+    try {
+      const uploadPromises = acceptedFiles.map(file => 
+        createCardAttachment(card.id, file, false)
+      );
+      const newAttachments = await Promise.all(uploadPromises);
+      setAttachments(prev => [...prev, ...newAttachments]);
+    } catch (error) {
+      console.error('Failed to upload attachments:', error);
+    } finally {
+      setIsUploading(false);
+    }
+  }, [card.id]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,
@@ -94,11 +108,40 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
     });
   };
 
-  const handleRemoveAttachment = (attachmentId: string) => {
-    setAttachments(attachments.filter(a => a.id !== attachmentId));
+  const handleRemoveAttachment = async (attachmentId: string) => {
+    try {
+      await deleteAttachment(attachmentId);
+      setAttachments(prev => prev.filter(a => a.id !== attachmentId));
+    } catch (error) {
+      console.error('Failed to delete attachment:', error);
+    }
+  };
+
+  const handleOpenAttachment = async (attachmentId: string) => {
+    try {
+      const url = await getAttachmentUrl(attachmentId);
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error('Failed to get attachment URL:', error);
+    }
   };
 
   if (!isOpen) return null;
+
+  if (isLoadingAttachments) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg w-full max-w-2xl p-6">
+          <div className="flex justify-center py-8">
+            <svg className="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -158,21 +201,18 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
             <label className="block text-gray-700 text-sm font-bold mb-2">
               Attachments
             </label>
-            <div className="space-y-2">
+            <div className="space-y-2 mb-4">
               {attachments.map((attachment) => (
                 <div 
                   key={attachment.id}
                   className="flex items-center justify-between p-2 border rounded-md"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-600">{attachment.name}</span>
-                    <a 
-                      href={attachment.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:text-blue-600"
+                    <a
+                      onClick={() => handleOpenAttachment(attachment.id)}
+                      className="text-blue-500 hover:text-blue-600 cursor-pointer"
                     >
-                      View
+                      {attachment.file_url}
                     </a>
                   </div>
                   <button
@@ -184,7 +224,6 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                   </button>
                 </div>
               ))}
-              
               <div
                 {...getRootProps()}
                 className={`
@@ -194,19 +233,26 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                     ? 'border-blue-500 bg-blue-50' 
                     : 'border-gray-300 hover:border-gray-400'
                   }
+                  ${isUploading ? 'opacity-50 cursor-wait' : ''}
                 `}
               >
                 <input {...getInputProps()} />
                 <div className="text-center">
-                  <p className="text-gray-600">
-                    {isDragActive
-                      ? 'Drop files here...'
-                      : 'Drag & drop files here, or click to select files'
-                    }
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Supports images, PDFs, and documents
-                  </p>
+                  {isUploading ? (
+                    <p className="text-gray-600">Uploading...</p>
+                  ) : (
+                    <>
+                      <p className="text-gray-600">
+                        {isDragActive
+                          ? 'Drop files here...'
+                          : 'Drag & drop files here, or click to select files'
+                        }
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Supports images, PDFs, and documents
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
