@@ -71,10 +71,10 @@ export const TrelloList: React.FC<TrelloListProps> = ({
     setIsAddingCard(true);
   };
 
-  const handleCardSubmit = (e: React.FormEvent) => {
+  const handleCardSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newCardTitle.trim() && onAddCard) {
-      onAddCard(newCardTitle);
+     onAddCard(newCardTitle);
       setNewCardTitle('');
     }
     setIsAddingCard(false);

@@ -32,7 +32,7 @@ interface TrelloBoardHookProps {
   ) => Promise<void>;
   onCardUpdate?: (listId: string, cardId: string, updates: Partial<TrelloCard>) => Promise<void>;
   onListTitleChange?: (listId: string, newTitle: string) => Promise<void>;
-  onCardAdd?: (listId: string) => Promise<void>;
+  onCardAdd?: (listId: string, title: string) => Promise<void>;
   onListAdd?: (title: string) => Promise<void>;
 }
 
@@ -178,7 +178,7 @@ export const useTrelloBoard = (
 
       // API call
       if (onCardAdd) {
-        await onCardAdd(listId);
+        await onCardAdd(listId, title);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
