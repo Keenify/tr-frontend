@@ -11,12 +11,13 @@ export interface Card {
 }
 
 export interface List {
+    id: string;
     name: string;
+    title: string;
     position: number;
     board_id: string;
-    id: string;
-    created_at: string;
     cards: Card[];
+    created_at?: string;
 }
 
 export type BoardDetails = List[]; 
