@@ -58,8 +58,7 @@ export const useTrelloBoard = (
 
     try {
       if (type === 'list') {
-        // Remove 'list-' prefix for list IDs
-        const listId = draggableId.replace('list-', '');
+
         
         if (onListMove) {
           await onListMove(source.index, destination.index);
