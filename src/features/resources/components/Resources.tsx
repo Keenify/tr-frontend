@@ -1,7 +1,7 @@
 import { Session } from "@supabase/supabase-js";
 import React, { useEffect, useState } from "react";
 import { createCard, updateCard } from "../../../shared/components/trello/services/useCard";
-import { createList, updateList } from "../../../shared/components/trello/services/useList";
+import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { getBoardDetails, HARDCODED_BOARD_ID } from "../services/useBoard";
 import { List } from "../types/board";
@@ -239,6 +239,15 @@ const Resources: React.FC<ResourcesProps> = ({
     }
   };
 
+  const handleListDelete = async (listId: string) => {
+    try {
+      await deleteList(listId);
+      // Refresh board data if needed
+    } catch (error) {
+      console.error('Error deleting list:', error);
+    }
+  };
+
   console.log(session);
   return (
     <div className="min-h-screen p-6 flex flex-col">
@@ -251,6 +260,7 @@ const Resources: React.FC<ResourcesProps> = ({
         onListTitleChange={handleListTitleChange}
         onCardAdd={handleCardAdd}
         onListAdd={handleListAdd}
+        onListDelete={handleListDelete}
       />
     </div>
   );

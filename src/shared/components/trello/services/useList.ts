@@ -69,3 +69,29 @@ export async function createList(createData: CreateListRequest): Promise<ListRes
 
     return data as ListResponse;
 }
+
+/**
+ * Deletes a Trello list by ID
+ * @param {string} listId - The ID of the list to delete
+ * @returns {Promise<boolean>} - A promise that resolves to true if deletion was successful
+ */
+export async function deleteList(listId: string): Promise<boolean> {
+    const endpoint = `${API_DOMAIN}/trello/lists/${encodeURIComponent(listId)}`;
+
+    const response = await fetch(endpoint, {
+        method: 'DELETE',
+        headers: {
+            'Accept': 'application/json',
+        },
+    });
+
+    if (!response.ok) {
+        console.error('❌ API request failed:', {
+            status: response.status,
+            statusText: response.statusText,
+        });
+        throw new Error('Failed to delete list');
+    }
+
+    return true;
+}

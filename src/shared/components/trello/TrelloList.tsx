@@ -18,6 +18,7 @@ interface TrelloListProps {
   onTitleChange?: (newTitle: string) => void;
   onAddCard?: (title: string) => void;
   onCardDelete?: (cardId: string) => void;
+  onDelete?: () => void;
 }
 
 /**
@@ -46,6 +47,7 @@ interface TrelloListProps {
  * @param {Function} onTitleChange - Handler for title change events
  * @param {Function} onAddCard - Handler for add card button click
  * @param {Function} onCardDelete - Handler for card delete events
+ * @param {Function} onDelete - Handler for list delete events
  */
 
 export const TrelloList: React.FC<TrelloListProps> = ({
@@ -56,12 +58,15 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   onCardClick,
   onTitleChange,
   onAddCard,
-  onCardDelete
+  onCardDelete,
+  onDelete,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [listTitle, setListTitle] = useState(title);
   const [isAddingCard, setIsAddingCard] = useState(false);
   const [newCardTitle, setNewCardTitle] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   const handleTitleSubmit = () => {
     if (onTitleChange) {
@@ -83,6 +88,24 @@ export const TrelloList: React.FC<TrelloListProps> = ({
     setIsAddingCard(false);
   };
 
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowMenu(false);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      if (onDelete) {
+        await onDelete();
+      }
+      setShowDeleteModal(false);
+    } catch (error) {
+      console.error('Error deleting list:', error);
+      // Optionally show an error message to the user
+    }
+  };
+
   return (
     <Draggable draggableId={`list-${id}`} index={index}>
       {(provided) => (
@@ -92,10 +115,10 @@ export const TrelloList: React.FC<TrelloListProps> = ({
           className="flex-shrink-0 w-80"
         >
           <div className="bg-gray-100 rounded-lg p-4 flex flex-col h-full min-h-[150px]">
-            {/* List Header with Drag Handle */}
+            {/* List Header with Drag Handle and Menu */}
             <div 
               {...provided.dragHandleProps}
-              className="flex items-center justify-between mb-4 cursor-grab active:cursor-grabbing select-none"
+              className="flex items-center justify-between mb-4 cursor-grab active:cursor-grabbing select-none relative"
             >
               <div className="flex items-center gap-2 flex-1">
                 <div className="flex-shrink-0 text-gray-400">
@@ -120,9 +143,37 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                   </h2>
                 )}
               </div>
-              <span className="bg-gray-200 px-2 py-1 rounded-full text-sm ml-2">
-                {cards.length}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="bg-gray-200 px-2 py-1 rounded-full text-sm">
+                  {cards.length}
+                </span>
+                <div className="relative">
+                  <button
+                    className="p-1 rounded-full hover:bg-gray-200"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMenu(!showMenu);
+                    }}
+                  >
+                    <svg className="w-4 h-4 text-gray-500" viewBox="0 0 16 4">
+                      <circle cx="2" cy="2" r="1.5" />
+                      <circle cx="8" cy="2" r="1.5" />
+                      <circle cx="14" cy="2" r="1.5" />
+                    </svg>
+                  </button>
+
+                  {showMenu && (
+                    <div className="absolute right-0 top-full mt-1 bg-white shadow-lg rounded-md py-1 z-50 min-w-[100px]">
+                      <button
+                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                        onClick={handleDeleteClick}
+                      >
+                        Delete List
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Cards Container */}
@@ -208,6 +259,32 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                 <span>+</span>
                 Add a Card
               </button>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
+                  <h3 className="text-lg font-medium mb-4">Delete List</h3>
+                  <p className="text-gray-600 mb-6">
+                    Are you sure you want to delete this list and all its cards? This action cannot be undone.
+                  </p>
+                  <div className="flex justify-end space-x-3">
+                    <button
+                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                      onClick={() => setShowDeleteModal(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                      onClick={handleConfirmDelete}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>
