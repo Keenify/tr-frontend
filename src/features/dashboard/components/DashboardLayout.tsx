@@ -30,6 +30,7 @@ const navigationConfig = [
       { id: 'orgChart', label: 'Org Chart', shortForm: 'OC', icon: ThumbsUp }
     ]
   },
+  { id: 'projects', label: 'Projects', shortForm: 'P', icon: ThumbsUp },
   { id: 'dailyHuddle', label: 'Daily Huddle', shortForm: 'Dh', icon: Calendar },
   { id: 'sales', label: 'Sales', shortForm: 'S', icon: ThumbsUp },
   { id: 'quotation', label: 'Quotation', shortForm: 'Qu', icon: ThumbsUp },
