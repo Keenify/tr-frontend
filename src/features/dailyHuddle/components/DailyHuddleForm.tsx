@@ -223,9 +223,6 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
   return (
     <div className="daily-huddle-container">
       <div className="form-container">
-        <h1 style={{ textAlign: "center", color: "#333" }}>
-          {isEditing ? "Edit Daily Huddle Response" : "Daily Huddle Questionnaire"}
-        </h1>
         <form onSubmit={handleSubmit}>
           {questions.map((question) => (
             <div key={question.id} style={{ marginBottom: "20px" }}>

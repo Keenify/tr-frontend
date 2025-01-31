@@ -3,10 +3,8 @@ import { Session } from '@supabase/supabase-js';
 import { Tabs, TabList, Tab, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import '../styles/DailyHuddle.css';
-import alignmentQuote from '../assets/percent_alignment.png';
 import DailyHuddleForm from './DailyHuddleForm';
 import DailyHuddleResponse from './DailyHuddleResponse';
-import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 
 /**
  * Props for the DailyHuddle component.
@@ -27,62 +25,37 @@ interface DailyHuddleProps {
  * @returns {JSX.Element} Rendered Daily Huddle component
  */
 const DailyHuddle: React.FC<DailyHuddleProps> = ({ session }) => {
-  const { userInfo, companyInfo, error } = useUserAndCompanyData(session.user.id);
 
-  if (error) {
-    return <div>Error loading data: {error.message}</div>;
-  }
 
   return (
     <div style={{ padding: '20px' }}>
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'flex-start',
-        gap: '30px',
-        marginBottom: '30px'
+      <h1 style={{ 
+        textAlign: 'center', 
+        fontSize: '2.5rem',
+        marginBottom: '20px',
+        fontFamily: '"Gill Sans", "Gill Sans MT", Calibri, sans-serif'
       }}>
-        {/* Quote Section - Left Side */}
-        <div style={{ flex: '2' }}>
-          <img 
-            src={alignmentQuote} 
-            alt="Vision and Alignment Quote"
-            style={{
-              width: "100%",
-              maxWidth: "400px",
-              display: "block",
-              margin: "20px auto",
-            }}
-          />
-        </div>
+        The Daily Huddle
+      </h1>
 
-        {/* Combined Info Section - Right Side */}
-        {(userInfo || companyInfo) && (
-          <div style={{ 
-            flex: '3',
-            border: '1px solid #ccc',
-            borderRadius: '8px',
-            padding: '30px',
-            backgroundColor: '#f9f9f9',
-            minHeight: '200px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center'
+      <div style={{ 
+        textAlign: 'center',
+        marginBottom: '40px',
+        fontFamily: '"Gill Sans", "Gill Sans MT", Calibri, sans-serif'
+      }}>
+        <p style={{ 
+          fontSize: '1.8rem',
+          lineHeight: '1.4',
+          margin: '0'
+        }}>
+          Becoming the Nestle of Asia through 1% Vision and 99% {' '}
+          <span style={{ 
+            fontWeight: 'bold',
+            fontStyle: 'italic'
           }}>
-            {userInfo && (
-              <div style={{ marginBottom: '20px' }}>
-                <p><strong>User ID:</strong> {userInfo.id}</p>
-                <p><strong>Email:</strong> {userInfo.email}</p>
-                <p style={{ marginBottom: 0 }}><strong>Name:</strong> {userInfo.first_name} {userInfo.last_name}</p>
-              </div>
-            )}
-            {companyInfo && (
-              <div>
-                <p><strong>Company Name:</strong> {companyInfo.name}</p>
-                <p style={{ marginBottom: 0 }}><strong>Company ID:</strong> {companyInfo.id}</p>
-              </div>
-            )}
-          </div>
-        )}
+            Alignment
+          </span>
+        </p>
       </div>
 
       <Tabs>
