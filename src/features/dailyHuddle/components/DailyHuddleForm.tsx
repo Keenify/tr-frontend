@@ -173,6 +173,16 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
     };
   }, [isDragging, startAngle]);
 
+  const formatQuestionText = (text: string) => {
+    const replacements: { [key: string]: string } = {
+      "One-word opener": "One Word Opener",
+      "Wins(1 work + 1 personal)": "Wins (1 Work + 1 Personal)",
+      "I need critical help on": "I Need Critical Help On"
+    };
+
+    return replacements[text] || text;
+  };
+
   if (loading) {
     return (
       <div
@@ -211,16 +221,8 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
   }
 
   return (
-    <div style={{ display: 'flex', gap: '40px', alignItems: 'flex-start' }}>
-      <div style={{
-        flex: '1',
-        padding: "20px",
-        maxWidth: "600px",
-        fontFamily: "Arial, sans-serif",
-        backgroundColor: "#f9f9f9",
-        borderRadius: "8px",
-        boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
-      }}>
+    <div className="daily-huddle-container">
+      <div className="form-container">
         <h1 style={{ textAlign: "center", color: "#333" }}>
           {isEditing ? "Edit Daily Huddle Response" : "Daily Huddle Questionnaire"}
         </h1>
@@ -235,7 +237,7 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
                   color: "#555",
                 }}
               >
-                {question.question_text}
+                {formatQuestionText(question.question_text)}
               </label>
               {question.question_text.includes("Today Goals and Targeted Results") ? (
                 <div>
@@ -297,34 +299,23 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
         </form>
       </div>
 
-      <div style={{ 
-        flex: '1', 
-        position: 'sticky', 
-        top: '20px',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: '20px',
-        minWidth: '600px'
-      }}>
-        <div className="wheel-container">
-          <div className="rotate-cursor">Rotate me! ↺</div>
-          <img
-            id="emotion-wheel"
-            src={wheelImage}
-            alt="Emotion Wheel"
-            style={{
-              width: '100%',
-              maxWidth: '600px',
-              cursor: 'grab',
-              transform: `rotate(${wheelRotation}deg)`,
-              transition: isDragging ? 'none' : 'transform 0.1s ease-out',
-              userSelect: 'none'
-            }}
-            onMouseDown={handleMouseDown}
-            draggable={false}
-          />
-        </div>
+      <div className="wheel-container">
+        <div className="rotate-cursor">Rotate Me to Get Inspiration on <span className="highlight">One Word Opener</span> ↺</div>
+        <img
+          id="emotion-wheel"
+          src={wheelImage}
+          alt="Emotion Wheel"
+          style={{
+            width: '100%',
+            maxWidth: '600px',
+            cursor: 'grab',
+            transform: `rotate(${wheelRotation}deg)`,
+            transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+            userSelect: 'none'
+          }}
+          onMouseDown={handleMouseDown}
+          draggable={false}
+        />
       </div>
     </div>
   );
