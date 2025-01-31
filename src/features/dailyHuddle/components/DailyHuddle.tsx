@@ -3,6 +3,7 @@ import { Session } from '@supabase/supabase-js';
 import { Tabs, TabList, Tab, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import '../styles/DailyHuddle.css';
+import alignmentQuote from '../assets/percent_alignment.png';
 import DailyHuddleForm from './DailyHuddleForm';
 import DailyHuddleResponse from './DailyHuddleResponse';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
@@ -33,23 +34,57 @@ const DailyHuddle: React.FC<DailyHuddleProps> = ({ session }) => {
   }
 
   return (
-    <div style={{ padding: '20px', textAlign: 'center' }}>
-      <div className="info-container" style={{ display: 'flex', justifyContent: 'space-between' }}>
-        {userInfo && (
-          <div className="info-card" style={{ textAlign: 'left', border: '1px solid #ccc', padding: '10px', width: '45%' }}>
-            <p><strong>User ID:</strong> {userInfo.id}</p>
-            <p><strong>Email:</strong> {userInfo.email}</p>
-            <p><strong>Name:</strong> {userInfo.first_name} {userInfo.last_name}</p>
-          </div>
-        )}
-        {companyInfo && (
-          <div className="info-card" style={{ textAlign: 'left', border: '1px solid #ccc', padding: '10px', width: '45%' }}>
-            <p><strong>Company Name:</strong> {companyInfo.name}</p>
-            <p><strong>Company ID:</strong> {companyInfo.id}</p>
+    <div style={{ padding: '20px' }}>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'flex-start',
+        gap: '30px',
+        marginBottom: '30px'
+      }}>
+        {/* Quote Section - Left Side */}
+        <div style={{ flex: '2' }}>
+          <img 
+            src={alignmentQuote} 
+            alt="Vision and Alignment Quote"
+            style={{
+              width: "100%",
+              maxWidth: "400px",
+              display: "block",
+              margin: "20px auto",
+            }}
+          />
+        </div>
+
+        {/* Combined Info Section - Right Side */}
+        {(userInfo || companyInfo) && (
+          <div style={{ 
+            flex: '3',
+            border: '1px solid #ccc',
+            borderRadius: '8px',
+            padding: '30px',
+            backgroundColor: '#f9f9f9',
+            minHeight: '200px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center'
+          }}>
+            {userInfo && (
+              <div style={{ marginBottom: '20px' }}>
+                <p><strong>User ID:</strong> {userInfo.id}</p>
+                <p><strong>Email:</strong> {userInfo.email}</p>
+                <p style={{ marginBottom: 0 }}><strong>Name:</strong> {userInfo.first_name} {userInfo.last_name}</p>
+              </div>
+            )}
+            {companyInfo && (
+              <div>
+                <p><strong>Company Name:</strong> {companyInfo.name}</p>
+                <p style={{ marginBottom: 0 }}><strong>Company ID:</strong> {companyInfo.id}</p>
+              </div>
+            )}
           </div>
         )}
       </div>
-      <br />
+
       <Tabs>
         <TabList>
           <Tab>Daily Huddle Form</Tab>
