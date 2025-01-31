@@ -85,19 +85,32 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
       <table style={{ border: '1px solid black', borderCollapse: 'collapse', width: '100%' }}>
         <thead>
           <tr>
-            <th style={{ border: '1px solid black' }}>No.</th>
-            <th style={{ border: '1px solid black' }}>Team Member</th>
+            <th style={{ border: '1px solid black', width: '5%' }}>No.</th>
+            <th style={{ border: '1px solid black', width: '15%' }}>Team Member</th>
             {questions.map((q, index) => {
               const replacements: { [key: string]: string } = {
-                "One-word opener": "One Word Opener",
+                "One-word opener": "One-Word Opener",
                 "Wins(1 work + 1 personal)": "Wins (1 Work + 1 Personal)",
-                "I need critical help on": "I Need Critical Help On"
+                "I need critical help on": "I Need Critical Help On",
+                "Main Priority": "Main Priority for Today"
               };
               
               const displayText = replacements[q.question_text] || q.question_text;
               
+              // Determine column width based on question type
+              let columnWidth = '18%';
+              if (q.question_text.includes('need critical help')) {
+                columnWidth = '25%';
+              } else if (q.question_text.includes('One-word opener')) {
+                columnWidth = '12%';
+              }
+              
               return (
-                <th key={index} style={{ border: '1px solid black' }}>{displayText}</th>
+                <th key={index} style={{ 
+                  border: '1px solid black',
+                  width: columnWidth,
+                  textAlign: 'center'
+                }}>{displayText}</th>
               );
             })}
           </tr>
@@ -105,10 +118,14 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
         <tbody>
           {allResponses.map(({ id, name, response }, index) => (
             <tr key={id}>
-              <td style={{ border: '1px solid black' }}>{index + 1}</td>
-              <td style={{ border: '1px solid black' }}>{name}</td>
+              <td style={{ border: '1px solid black', textAlign: 'center' }}>{index + 1}</td>
+              <td style={{ border: '1px solid black', textAlign: 'center' }}>{name}</td>
               {questions.map((q, qIndex) => (
-                <td key={qIndex} style={{ border: '1px solid black' }}>
+                <td key={qIndex} style={{ 
+                  border: '1px solid black', 
+                  textAlign: 'center',
+                  padding: '8px'
+                }}>
                   {response.questions.find((rq) => rq.question_id === q.id)?.answer_text?.split('\n').map((line, i) => {
                     const isGoalOrResult = q.question_text.includes('Today Goals') || q.question_text.includes('Targeted Results');
                     return (

@@ -175,9 +175,10 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
 
   const formatQuestionText = (text: string) => {
     const replacements: { [key: string]: string } = {
-      "One-word opener": "One Word Opener",
+      "One-word opener": "One-Word Opener",
       "Wins(1 work + 1 personal)": "Wins (1 Work + 1 Personal)",
-      "I need critical help on": "I Need Critical Help On"
+      "I need critical help on": "I Need Critical Help On",
+      "Main Priority": "Main Priority for Today"
     };
 
     return replacements[text] || text;
@@ -232,6 +233,7 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
                   marginBottom: "8px",
                   fontWeight: "bold",
                   color: "#555",
+                  textAlign: "center",
                 }}
               >
                 {formatQuestionText(question.question_text)}
@@ -255,7 +257,8 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
                         borderRadius: "4px",
                         border: "1px solid #ddd",
                         boxSizing: "border-box",
-                        marginBottom: "8px"
+                        marginBottom: "8px",
+                        textAlign: "center",
                       }}
                       placeholder={`Goal ${num}`}
                     />
@@ -273,6 +276,7 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
                     borderRadius: "4px",
                     border: "1px solid #ddd",
                     boxSizing: "border-box",
+                    textAlign: "center",
                   }}
                 />
               )}
