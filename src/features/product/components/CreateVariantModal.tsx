@@ -10,13 +10,19 @@ const CreateVariantModal: React.FC<CreateVariantModalProps> = ({ isOpen, onClose
     const [name, setName] = React.useState('');
     const [image, setImage] = React.useState<File | null>(null);
     const [isDragging, setIsDragging] = React.useState(false);
+    const [showError, setShowError] = React.useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit({ name, image: image || undefined });
+        if (!image) {
+            setShowError(true);
+            return;
+        }
+        onSubmit({ name, image });
         setName('');
         setImage(null);
+        setShowError(false);
         onClose();
     };
 
@@ -75,7 +81,7 @@ const CreateVariantModal: React.FC<CreateVariantModalProps> = ({ isOpen, onClose
                             onDragLeave={handleDragLeave}
                             onDrop={handleDrop}
                             className={`mt-1 border-2 border-dashed rounded-lg p-4 text-center cursor-pointer
-                                ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+                                ${isDragging ? 'border-blue-500 bg-blue-50' : showError ? 'border-red-500' : 'border-gray-300 hover:border-gray-400'}
                                 ${image ? 'bg-gray-50' : ''}`}
                         >
                             <input
@@ -106,6 +112,9 @@ const CreateVariantModal: React.FC<CreateVariantModalProps> = ({ isOpen, onClose
                                 </div>
                             )}
                         </div>
+                        {showError && (
+                            <p className="mt-1 text-sm text-red-600">Please upload an image to create a variant</p>
+                        )}
                     </div>
 
                     <div className="flex justify-end gap-2">
