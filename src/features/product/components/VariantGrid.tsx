@@ -50,7 +50,7 @@ const VariantGrid: React.FC<VariantGridProps> = ({ variants, onVariantUpdate }) 
                 className="w-full h-24 object-cover rounded-md mb-2"
               />
             )}
-            <p className="text-sm text-gray-700 text-center truncate">
+            <p className="text-sm text-gray-700 text-center break-word min-h-[2.5rem]">
               {variant.name}
             </p>
           </div>
