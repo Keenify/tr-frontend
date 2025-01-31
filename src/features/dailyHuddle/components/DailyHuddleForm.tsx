@@ -45,6 +45,7 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
         setEmployeeId(userData.id);
 
         const fetchedQuestions = await fetchQuestions();
+        console.log('Fetched questions:', fetchedQuestions);
         setQuestions(fetchedQuestions);
 
         if (userData.id) {
@@ -197,19 +198,46 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
             >
               {question.question_text}
             </label>
-            <input
-              title={question.question_text}
-              type="text"
-              value={answers[question.id] || ""}
-              onChange={(e) => handleInputChange(question.id, e.target.value)}
-              style={{
-                width: "100%",
-                padding: "10px",
-                borderRadius: "4px",
-                border: "1px solid #ddd",
-                boxSizing: "border-box",
-              }}
-            />
+            {question.question_text.includes("Today Goals and Targeted Results") ? (
+              <div>
+                {[1, 2, 3].map((num) => (
+                  <input
+                    key={`${question.id}-${num}`}
+                    title={`${question.question_text} #${num}`}
+                    type="text"
+                    value={(answers[question.id] || "").split('\n')[num - 1] || ""}
+                    onChange={(e) => {
+                      const currentAnswers = (answers[question.id] || "").split('\n');
+                      currentAnswers[num - 1] = e.target.value;
+                      handleInputChange(question.id, currentAnswers.join('\n'));
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      borderRadius: "4px",
+                      border: "1px solid #ddd",
+                      boxSizing: "border-box",
+                      marginBottom: "8px"
+                    }}
+                    placeholder={`Goal ${num}`}
+                  />
+                ))}
+              </div>
+            ) : (
+              <input
+                title={question.question_text}
+                type="text"
+                value={answers[question.id] || ""}
+                onChange={(e) => handleInputChange(question.id, e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  borderRadius: "4px",
+                  border: "1px solid #ddd",
+                  boxSizing: "border-box",
+                }}
+              />
+            )}
           </div>
         ))}
         <button
