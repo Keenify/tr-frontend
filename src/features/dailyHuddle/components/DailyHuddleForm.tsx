@@ -301,7 +301,7 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
       </div>
 
       <div className="wheel-container">
-        <div className="rotate-cursor">Rotate Me to Get Inspiration on One Word Opener ↺</div>
+        <div className="rotate-cursor">Rotate Me to Get Inspiration for One Word Opener ↺</div>
         <img
           id="emotion-wheel"
           src={wheelImage}
