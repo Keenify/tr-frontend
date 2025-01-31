@@ -87,9 +87,19 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
           <tr>
             <th style={{ border: '1px solid black' }}>No.</th>
             <th style={{ border: '1px solid black' }}>Team Member</th>
-            {questions.map((q, index) => (
-              <th key={index} style={{ border: '1px solid black' }}>{q.question_text}</th>
-            ))}
+            {questions.map((q, index) => {
+              const replacements: { [key: string]: string } = {
+                "One-word opener": "One Word Opener",
+                "Wins(1 work + 1 personal)": "Wins (1 Work + 1 Personal)",
+                "I need critical help on": "I Need Critical Help On"
+              };
+              
+              const displayText = replacements[q.question_text] || q.question_text;
+              
+              return (
+                <th key={index} style={{ border: '1px solid black' }}>{displayText}</th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
