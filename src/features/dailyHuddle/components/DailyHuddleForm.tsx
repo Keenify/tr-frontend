@@ -6,6 +6,8 @@ import { Question, ResponseData } from "../types/huddle.types";
 import { Session } from "@supabase/supabase-js";
 import { FORM_ID } from "../constants";
 import { ClipLoader } from "react-spinners";
+import wheelImage from '../assets/wheel.png';
+import '../styles/DailyHuddleForm.css';  // We'll create this file for the CSS
 
 interface DailyHuddleFormProps {
   session: Session;
@@ -30,6 +32,9 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
   const [employeeId, setEmployeeId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [responseId, setResponseId] = useState<string | null>(null);
+  const [wheelRotation, setWheelRotation] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startAngle, setStartAngle] = useState(0);
 
   /**
    * Initializes the form by fetching necessary data
@@ -133,6 +138,41 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
     }
   };
 
+  const handleMouseDown = (e: React.MouseEvent<HTMLImageElement>) => {
+    setIsDragging(true);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+    setStartAngle(angle - wheelRotation * Math.PI / 180);
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    const rect = (document.getElementById('emotion-wheel') as HTMLElement).getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+    const newRotation = (angle - startAngle) * 180 / Math.PI;
+    setWheelRotation(newRotation);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, startAngle]);
+
   if (loading) {
     return (
       <div
@@ -171,91 +211,121 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
   }
 
   return (
-    <div
-      style={{
+    <div style={{ display: 'flex', gap: '40px', alignItems: 'flex-start' }}>
+      <div style={{
+        flex: '1',
         padding: "20px",
         maxWidth: "600px",
-        margin: "0 auto",
         fontFamily: "Arial, sans-serif",
         backgroundColor: "#f9f9f9",
         borderRadius: "8px",
         boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
-      }}
-    >
-      <h1 style={{ textAlign: "center", color: "#333" }}>
-        {isEditing ? "Edit Daily Huddle Response" : "Daily Huddle Questionnaire"}
-      </h1>
-      <form onSubmit={handleSubmit}>
-        {questions.map((question) => (
-          <div key={question.id} style={{ marginBottom: "20px" }}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "8px",
-                fontWeight: "bold",
-                color: "#555",
-              }}
-            >
-              {question.question_text}
-            </label>
-            {question.question_text.includes("Today Goals and Targeted Results") ? (
-              <div>
-                {[1, 2, 3].map((num) => (
-                  <input
-                    key={`${question.id}-${num}`}
-                    title={`${question.question_text} #${num}`}
-                    type="text"
-                    value={(answers[question.id] || "").split('\n')[num - 1] || ""}
-                    onChange={(e) => {
-                      const currentAnswers = (answers[question.id] || "").split('\n');
-                      currentAnswers[num - 1] = e.target.value;
-                      handleInputChange(question.id, currentAnswers.join('\n'));
-                    }}
-                    style={{
-                      width: "100%",
-                      padding: "10px",
-                      borderRadius: "4px",
-                      border: "1px solid #ddd",
-                      boxSizing: "border-box",
-                      marginBottom: "8px"
-                    }}
-                    placeholder={`Goal ${num}`}
-                  />
-                ))}
-              </div>
-            ) : (
-              <input
-                title={question.question_text}
-                type="text"
-                value={answers[question.id] || ""}
-                onChange={(e) => handleInputChange(question.id, e.target.value)}
+      }}>
+        <h1 style={{ textAlign: "center", color: "#333" }}>
+          {isEditing ? "Edit Daily Huddle Response" : "Daily Huddle Questionnaire"}
+        </h1>
+        <form onSubmit={handleSubmit}>
+          {questions.map((question) => (
+            <div key={question.id} style={{ marginBottom: "20px" }}>
+              <label
                 style={{
-                  width: "100%",
-                  padding: "10px",
-                  borderRadius: "4px",
-                  border: "1px solid #ddd",
-                  boxSizing: "border-box",
+                  display: "block",
+                  marginBottom: "8px",
+                  fontWeight: "bold",
+                  color: "#555",
                 }}
-              />
-            )}
-          </div>
-        ))}
-        <button
-          type="submit"
-          style={{
-            padding: "12px 24px",
-            backgroundColor: "#007BFF",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-            display: "block",
-            margin: "0 auto",
-          }}
-        >
-          Submit
-        </button>
-      </form>
+              >
+                {question.question_text}
+              </label>
+              {question.question_text.includes("Today Goals and Targeted Results") ? (
+                <div>
+                  {[1, 2, 3].map((num) => (
+                    <input
+                      key={`${question.id}-${num}`}
+                      title={`${question.question_text} #${num}`}
+                      type="text"
+                      value={(answers[question.id] || "").split('\n')[num - 1] || ""}
+                      onChange={(e) => {
+                        const currentAnswers = (answers[question.id] || "").split('\n');
+                        currentAnswers[num - 1] = e.target.value;
+                        handleInputChange(question.id, currentAnswers.join('\n'));
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        borderRadius: "4px",
+                        border: "1px solid #ddd",
+                        boxSizing: "border-box",
+                        marginBottom: "8px"
+                      }}
+                      placeholder={`Goal ${num}`}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <input
+                  title={question.question_text}
+                  type="text"
+                  value={answers[question.id] || ""}
+                  onChange={(e) => handleInputChange(question.id, e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    borderRadius: "4px",
+                    border: "1px solid #ddd",
+                    boxSizing: "border-box",
+                  }}
+                />
+              )}
+            </div>
+          ))}
+          <button
+            type="submit"
+            style={{
+              padding: "12px 24px",
+              backgroundColor: "#007BFF",
+              color: "#fff",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              display: "block",
+              margin: "0 auto",
+            }}
+          >
+            Submit
+          </button>
+        </form>
+      </div>
+
+      <div style={{ 
+        flex: '1', 
+        position: 'sticky', 
+        top: '20px',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '20px',
+        minWidth: '600px'
+      }}>
+        <div className="wheel-container">
+          <div className="rotate-cursor">Rotate me! ↺</div>
+          <img
+            id="emotion-wheel"
+            src={wheelImage}
+            alt="Emotion Wheel"
+            style={{
+              width: '100%',
+              maxWidth: '600px',
+              cursor: 'grab',
+              transform: `rotate(${wheelRotation}deg)`,
+              transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+              userSelect: 'none'
+            }}
+            onMouseDown={handleMouseDown}
+            draggable={false}
+          />
+        </div>
+      </div>
     </div>
   );
 };

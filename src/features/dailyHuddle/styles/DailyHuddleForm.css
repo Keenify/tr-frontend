@@ -1,0 +1,40 @@
+.wheel-container {
+  position: relative;
+  display: inline-block;
+}
+
+.rotate-cursor {
+  position: absolute;
+  top: -40px;
+  right: 20%;
+  background-color: #333;
+  color: white;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-size: 14px;
+  animation: float 2s ease-in-out infinite;
+  z-index: 1;
+}
+
+.rotate-cursor::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 8px 8px 0;
+  border-style: solid;
+  border-color: #333 transparent transparent;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+} 
