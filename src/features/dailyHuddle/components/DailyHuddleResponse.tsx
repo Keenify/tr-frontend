@@ -99,7 +99,15 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
               <td style={{ border: '1px solid black' }}>{name}</td>
               {questions.map((q, qIndex) => (
                 <td key={qIndex} style={{ border: '1px solid black' }}>
-                  {response.questions.find((rq) => rq.question_id === q.id)?.answer_text || ''}
+                  {response.questions.find((rq) => rq.question_id === q.id)?.answer_text?.split('\n').map((line, i) => {
+                    const isGoalOrResult = q.question_text.includes('Today Goals') || q.question_text.includes('Targeted Results');
+                    return (
+                      <React.Fragment key={i}>
+                        {isGoalOrResult ? `• ${line}` : line}
+                        <br />
+                      </React.Fragment>
+                    );
+                  }) || ''}
                 </td>
               ))}
             </tr>
