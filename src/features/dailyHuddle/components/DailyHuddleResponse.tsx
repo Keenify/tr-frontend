@@ -86,7 +86,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
         <thead>
           <tr>
             <th style={{ border: '1px solid black' }}>No.</th>
-            <th style={{ border: '1px solid black' }}>Employee Name</th>
+            <th style={{ border: '1px solid black' }}>Team Member</th>
             {questions.map((q, index) => (
               <th key={index} style={{ border: '1px solid black' }}>{q.question_text}</th>
             ))}
