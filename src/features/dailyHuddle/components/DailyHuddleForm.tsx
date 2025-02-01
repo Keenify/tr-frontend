@@ -206,48 +206,14 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
     );
   }
 
-  if (hasSubmitted && !isEditing) {
+  if (isAfterCutoff && !hasSubmitted) {
     return (
       <div style={{ textAlign: "center", padding: "20px" }}>
-        <div>You have already submitted your response for today.</div>
-        {!isAfterCutoff ? (
-          <button
-            onClick={() => setIsEditing(true)}
-            style={{
-              marginTop: "10px",
-              padding: "8px 16px",
-              backgroundColor: "#007BFF",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer"
-            }}
-          >
-            Edit Response
-          </button>
-        ) : (
-          <div style={{ 
-            marginTop: "10px",
-            color: "#dc3545",
-            fontStyle: "italic"
-          }}>
-            Responses cannot be modified after 10 AM
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (isAfterCutoff && hasSubmitted) {
-    return (
-      <div style={{ textAlign: "center", padding: "20px" }}>
-        <div>You have already submitted your response for today.</div>
         <div style={{ 
-          marginTop: "10px",
           color: "#dc3545",
           fontStyle: "italic"
         }}>
-          Responses cannot be modified after 10 AM
+          Daily huddle submissions are closed after 10 AM. Please return tomorrow before 10 AM.
         </div>
       </div>
     );
@@ -316,19 +282,30 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
           ))}
           <button
             type="submit"
+            disabled={isAfterCutoff}
             style={{
               padding: "12px 24px",
-              backgroundColor: "#007BFF",
+              backgroundColor: isAfterCutoff ? "#ccc" : "#007BFF",
               color: "#fff",
               border: "none",
               borderRadius: "4px",
-              cursor: "pointer",
+              cursor: isAfterCutoff ? "not-allowed" : "pointer",
               display: "block",
               margin: "0 auto",
             }}
           >
             Submit
           </button>
+          {isAfterCutoff && (
+            <div style={{ 
+              marginTop: "10px",
+              color: "#dc3545",
+              fontStyle: "italic",
+              textAlign: "center"
+            }}>
+              Submissions are closed after 10 AM
+            </div>
+          )}
         </form>
       </div>
 
