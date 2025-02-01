@@ -58,8 +58,6 @@ export const useTrelloBoard = (
 
     try {
       if (type === 'list') {
-
-        
         if (onListMove) {
           await onListMove(source.index, destination.index);
         }
@@ -69,20 +67,9 @@ export const useTrelloBoard = (
         newLists.splice(destination.index, 0, removed);
         setLists(newLists);
       } else {
-        // Handle card moves
         const sourceListId = source.droppableId.replace('list-', '');
         const destListId = destination.droppableId.replace('list-', '');
         const cardId = draggableId.replace('card-', '');
-
-        if (onCardMove) {
-          await onCardMove(
-            sourceListId,
-            destListId,
-            source.index,
-            destination.index,
-            cardId
-          );
-        }
 
         const newLists = Array.from(lists);
         const sourceList = newLists.find(list => `list-${list.id}` === source.droppableId);
@@ -92,6 +79,22 @@ export const useTrelloBoard = (
           const [movedCard] = sourceList.cards.splice(source.index, 1);
           destList.cards.splice(destination.index, 0, movedCard);
           setLists(newLists);
+
+          if (onCardMove) {
+            try {
+              await onCardMove(
+                sourceListId,
+                destListId,
+                source.index,
+                destination.index,
+                cardId
+              );
+            } catch (error) {
+              console.error('Failed to move card:', error);
+              const originalLists = Array.from(lists);
+              setLists(originalLists);
+            }
+          }
         }
       }
     } catch (err) {
