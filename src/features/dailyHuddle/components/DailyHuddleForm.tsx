@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { fetchQuestions, submitResponse, fetchResponse, updateResponse } from "../services/huddleService";
 import { hasSubmittedResponseToday } from "../services/huddleService";
 import { getUserData } from "../../../services/useUser";
@@ -35,6 +35,7 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
   const [wheelRotation, setWheelRotation] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [startAngle, setStartAngle] = useState(0);
+  const [isAfterCutoff, setIsAfterCutoff] = useState<boolean>(false);
 
   /**
    * Initializes the form by fetching necessary data
@@ -46,6 +47,12 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
     const initializeForm = async () => {
       setLoading(true);
       try {
+        // Check if current time is after 10 AM
+        const now = new Date();
+        const cutoffTime = new Date();
+        cutoffTime.setHours(10, 0, 0, 0);
+        setIsAfterCutoff(now > cutoffTime);
+
         const userData = await getUserData(session.user.id);
         setEmployeeId(userData.id);
 
@@ -147,7 +154,7 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
     setStartAngle(angle - wheelRotation * Math.PI / 180);
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
     
     const rect = (document.getElementById('emotion-wheel') as HTMLElement).getBoundingClientRect();
@@ -156,7 +163,7 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
     const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
     const newRotation = (angle - startAngle) * 180 / Math.PI;
     setWheelRotation(newRotation);
-  };
+  }, [isDragging, startAngle]);
 
   const handleMouseUp = () => {
     setIsDragging(false);
@@ -171,7 +178,7 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, startAngle]);
+  }, [isDragging, handleMouseMove]);
 
   const formatQuestionText = (text: string) => {
     const replacements: { [key: string]: string } = {
@@ -203,20 +210,45 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
     return (
       <div style={{ textAlign: "center", padding: "20px" }}>
         <div>You have already submitted your response for today.</div>
-        <button
-          onClick={() => setIsEditing(true)}
-          style={{
+        {!isAfterCutoff ? (
+          <button
+            onClick={() => setIsEditing(true)}
+            style={{
+              marginTop: "10px",
+              padding: "8px 16px",
+              backgroundColor: "#007BFF",
+              color: "#fff",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer"
+            }}
+          >
+            Edit Response
+          </button>
+        ) : (
+          <div style={{ 
             marginTop: "10px",
-            padding: "8px 16px",
-            backgroundColor: "#007BFF",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer"
-          }}
-        >
-          Edit Response
-        </button>
+            color: "#dc3545",
+            fontStyle: "italic"
+          }}>
+            Responses cannot be modified after 10 AM
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (isAfterCutoff && hasSubmitted) {
+    return (
+      <div style={{ textAlign: "center", padding: "20px" }}>
+        <div>You have already submitted your response for today.</div>
+        <div style={{ 
+          marginTop: "10px",
+          color: "#dc3545",
+          fontStyle: "italic"
+        }}>
+          Responses cannot be modified after 10 AM
+        </div>
       </div>
     );
   }
