@@ -2,23 +2,43 @@ import { useState, useCallback } from 'react';
 import { DropResult } from 'react-beautiful-dnd';
 import { CardAttachment } from '../services/useCardAttachment';
 
+/**
+ * Represents a list in the Trello-like board
+ */
 interface TrelloList {
+  /** Unique identifier for the list */
   id: string;
+  /** Title of the list */
   title: string;
+  /** Array of cards contained in the list */
   cards: TrelloCard[];
 }
 
+/**
+ * Represents a card in the Trello-like board
+ */
 interface TrelloCard {
+  /** Unique identifier for the card */
   id: string;
+  /** Title of the card */
   title: string;
+  /** Optional description of the card */
   description?: string;
+  /** Optional color code for card styling */
   colorCode?: string;
+  /** Optional URL for card thumbnail */
   thumbnailUrl?: string;
+  /** Optional array of attachments associated with the card */
   attachments?: CardAttachment[];
 }
 
+/**
+ * Props for configuring the useTrelloBoard hook
+ */
 interface TrelloBoardHookProps {
+  /** Callback function when a list is moved to a new position */
   onListMove?: (sourceIndex: number, destinationIndex: number) => Promise<void>;
+  /** Callback function when a card is moved within or between lists */
   onCardMove?: (
     sourceListId: string,
     destinationListId: string,
@@ -26,14 +46,44 @@ interface TrelloBoardHookProps {
     destinationIndex: number,
     cardId: string
   ) => Promise<void>;
+  /** Callback function when a card's content is updated */
   onCardUpdate?: (listId: string, cardId: string, updates: Partial<TrelloCard>) => Promise<void>;
+  /** Callback function when a list's title is changed */
   onListTitleChange?: (listId: string, newTitle: string) => Promise<void>;
+  /** Callback function when a new card is added to a list */
   onCardAdd?: (listId: string, title: string) => Promise<void>;
+  /** Callback function when a new list is added to the board */
   onListAdd?: (title: string) => Promise<void>;
+  /** Callback function when a card is deleted */
   onCardDelete?: (listId: string, cardId: string) => Promise<void>;
+  /** Callback function when a list is deleted */
   onListDelete?: (listId: string) => Promise<void>;
 }
 
+/**
+ * A custom hook that manages the state and operations of a Trello-like board
+ * 
+ * @param initialLists - Initial array of lists to populate the board
+ * @param props - Configuration object containing callback functions for various board operations
+ * @returns An object containing the current board state and handler functions
+ * 
+ * @example
+ * ```tsx
+ * const {
+ *   lists,
+ *   isLoading,
+ *   error,
+ *   handleDragEnd,
+ *   handleCardUpdate,
+ *   // ... other handlers
+ * } = useTrelloBoard(initialLists, {
+ *   onCardMove: async (sourceListId, destListId, sourceIndex, destIndex, cardId) => {
+ *     // Handle card movement
+ *   },
+ *   // ... other callbacks
+ * });
+ * ```
+ */
 export const useTrelloBoard = (
   initialLists: TrelloList[],
   {
