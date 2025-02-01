@@ -58,14 +58,23 @@ export const useTrelloBoard = (
 
     try {
       if (type === 'list') {
-        if (onListMove) {
-          await onListMove(source.index, destination.index);
-        }
-        
+        // Perform optimistic update first for list movement
         const newLists = Array.from(lists);
         const [removed] = newLists.splice(source.index, 1);
         newLists.splice(destination.index, 0, removed);
         setLists(newLists);
+
+        // Then perform API update
+        if (onListMove) {
+          try {
+            await onListMove(source.index, destination.index);
+          } catch (error) {
+            // If API fails, revert the optimistic update
+            console.error('Failed to move list:', error);
+            const originalLists = Array.from(lists);
+            setLists(originalLists);
+          }
+        }
       } else {
         const sourceListId = source.droppableId.replace('list-', '');
         const destListId = destination.droppableId.replace('list-', '');
