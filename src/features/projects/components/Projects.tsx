@@ -10,14 +10,14 @@ const Project: React.FC<ProjectProps> = ({ title = 'Hello World', session }) => 
   const [plankaToken, setPlankaToken] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Function to log in to Planka using the shared binding account through proxy
+  // Function to log in to Planka using the shared binding account
   const loginToPlanka = async () => {
-    const proxyUrl = 'https://web-production-ca93.up.railway.app/';
-    const plankaApiUrl = 'https://planka.autolabkit.com/api/access-tokens';
+    const plankaBaseUrl = 'https://planka-production-de2c.up.railway.app';
+    const plankaApiUrl = `${plankaBaseUrl}/api/access-tokens`;
 
     console.log('Attempting to login to Planka...');
     try {
-      const response = await fetch(proxyUrl + plankaApiUrl, {
+      const response = await fetch(plankaApiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -62,11 +62,11 @@ const Project: React.FC<ProjectProps> = ({ title = 'Hello World', session }) => 
 
   // Add function to verify Planka access
   const verifyPlankaAccess = async (token: string) => {
-    const proxyUrl = 'https://web-production-ca93.up.railway.app/';
-    const plankaApiUrl = 'https://planka.autolabkit.com/api/projects';
+    const plankaBaseUrl = 'https://planka-production-de2c.up.railway.app';
+    const plankaApiUrl = `${plankaBaseUrl}/api/projects`;
     
     try {
-      const response = await fetch(proxyUrl + plankaApiUrl, {
+      const response = await fetch(plankaApiUrl, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ const Project: React.FC<ProjectProps> = ({ title = 'Hello World', session }) => 
       {plankaToken ? (
         <iframe
           ref={iframeRef}
-          src="https://web-production-ca93.up.railway.app/https://planka.autolabkit.com/boards/1434060322221589509"
+          src="https://planka-production-de2c.up.railway.app/boards/1434060322221589509"
           title="Planka Project Management"
           referrerPolicy="origin"
           style={{
