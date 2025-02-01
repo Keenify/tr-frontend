@@ -64,6 +64,7 @@ const CreateVariantModal: React.FC<CreateVariantModalProps> = ({ isOpen, onClose
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Variant Name</label>
                         <input
+                            title="Enter variant name"
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
@@ -85,6 +86,7 @@ const CreateVariantModal: React.FC<CreateVariantModalProps> = ({ isOpen, onClose
                                 ${image ? 'bg-gray-50' : ''}`}
                         >
                             <input
+                                title="Upload variant image"
                                 ref={fileInputRef}
                                 type="file"
                                 accept="image/*"

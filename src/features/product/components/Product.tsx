@@ -164,6 +164,7 @@ const Product: React.FC<ProductProps> = ({ session }) => {
               <h2 className="text-xl font-semibold mb-2">{product.name}</h2>
               <div className="flex gap-2">
                 <button
+                  title="Edit product"
                   onClick={() => setEditingProduct(product)}
                   className="text-gray-600 hover:text-gray-800"
                 >
@@ -173,6 +174,7 @@ const Product: React.FC<ProductProps> = ({ session }) => {
                   </svg>
                 </button>
                 <button
+                  title="Delete product"
                   onClick={() => setDeletingProduct(product)}
                   className="text-gray-600 hover:text-gray-800"
                 >
