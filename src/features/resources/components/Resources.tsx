@@ -181,30 +181,19 @@ const Resources: React.FC<ResourcesProps> = ({
       const list = lists.find(l => l.id === listId);
       const position = list?.cards.length ?? 0;
 
+      // Create the card in the backend first
       const newCard = await createCard({
         list_id: listId,
         title,
         position,
       });
 
-      // Update the local state
-      setLists(currentLists => 
-        currentLists.map(list => {
-          if (list.id === listId) {
-            return {
-              ...list,
-              cards: [...list.cards, {
-                ...newCard,
-                thumbnailUrl: null,
-                colorCode: newCard.color_code,
-              }]
-            };
-          }
-          return list;
-        })
-      );
+      // Return the real UUID from the backend
+      return newCard.id;
+
     } catch (error) {
       console.error('Failed to create card:', error);
+      throw error; // Propagate error to handle in UI
     }
   };
 

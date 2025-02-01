@@ -51,7 +51,7 @@ interface TrelloBoardHookProps {
   /** Callback function when a list's title is changed */
   onListTitleChange?: (listId: string, newTitle: string) => Promise<void>;
   /** Callback function when a new card is added to a list */
-  onCardAdd?: (listId: string, title: string) => Promise<void>;
+  onCardAdd?: (listId: string, title: string) => Promise<string>;
   /** Callback function when a new list is added to the board */
   onListAdd?: (title: string) => Promise<void>;
   /** Callback function when a card is deleted */
@@ -225,23 +225,39 @@ export const useTrelloBoard = (
     setError(null);
 
     try {
-      if (onCardAdd) {
-        // Wait for the API response to get the real card ID
-        await onCardAdd(listId, title);
-      }
-
-      // Update the lists after API call succeeds
+      // Create temporary card first
+      const tempId = `${Date.now()}`;
       const newCard = {
-        id: `${Date.now()}`, // Remove 'temp-' prefix
+        id: tempId,
         title,
         description: ''
       };
 
+      // Optimistic update with temp ID
       setLists(lists.map(list =>
         list.id === listId
           ? { ...list, cards: [...list.cards, newCard] }
           : list
       ));
+
+      // Get real UUID from server
+      if (onCardAdd) {
+        const realId = await onCardAdd(listId, title);
+        
+        // Update card with real UUID
+        setLists(currentLists => currentLists.map(list =>
+          list.id === listId
+            ? {
+                ...list,
+                cards: list.cards.map(card =>
+                  card.id === tempId
+                    ? { ...card, id: realId }
+                    : card
+                )
+              }
+            : list
+        ));
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setLists(initialLists);

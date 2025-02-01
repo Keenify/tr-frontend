@@ -27,7 +27,7 @@ interface TrelloBoardProps {
   ) => Promise<void>;
   onCardUpdate?: (listId: string, cardId: string, updates: any) => Promise<void>;
   onListTitleChange?: (listId: string, newTitle: string) => Promise<void>;
-  onCardAdd?: (listId: string, title: string) => Promise<void>;
+  onCardAdd?: (listId: string, title: string) => Promise<string>;
   onListAdd?: (title: string) => Promise<void>;
   onCardDelete?: (listId: string, cardId: string) => Promise<void>;
   onListDelete?: (listId: string) => Promise<void>;
