@@ -155,6 +155,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
               Title
             </label>
             <input
+              title="Enter card title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -168,6 +169,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
               Description
             </label>
             <textarea
+              title="Enter card description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full px-3 py-2 border rounded-md min-h-[100px]"
@@ -180,6 +182,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
             </label>
             <div className="flex items-center gap-4">
               <input
+                title="Select card color"
                 type="color"
                 value={colorCode}
                 onChange={(e) => setColorCode(e.target.value)}

@@ -177,6 +177,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
           >
             {/* Add menu button */}
             <button
+              title="Edit card"
               className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100"
               onClick={handleMenuClick}
               onMouseDown={(e) => e.stopPropagation()}  // Prevent drag start

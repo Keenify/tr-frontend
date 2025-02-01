@@ -126,6 +126,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                 </div>
                 {isEditing ? (
                   <input
+                    title="Enter list title"
                     type="text"
                     value={listTitle}
                     onChange={(e) => setListTitle(e.target.value)}
@@ -148,7 +149,8 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                   {cards.length}
                 </span>
                 <div className="relative">
-                  <button
+                    <button
+                    title="Open list menu"
                     className="p-1 rounded-full hover:bg-gray-200"
                     onClick={(e) => {
                       e.stopPropagation();
