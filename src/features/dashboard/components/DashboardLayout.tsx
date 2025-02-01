@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Power, ThumbsUp } from 'react-feather'; // Import Power, ThumbsUp, and Clock icons from react-feather
+import { Calendar, Power, ThumbsUp, ChevronDown, ChevronRight } from 'react-feather'; // Import Power, ThumbsUp, and Clock icons from react-feather
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase'; // Import supabase client
 import { useNavigate, useParams } from 'react-router-dom';
@@ -21,20 +21,22 @@ import { useNavigate, useParams } from 'react-router-dom';
  * @constant {Object[]}
  */
 const navigationConfig = [
-  { id: 'home', label: 'Home', shortForm: 'H', icon: null },
-  { id: 'content', label: 'Content', shortForm: 'C', icon: ThumbsUp },
-  { id: 'resources', label: 'Resources', shortForm: 'R', icon: ThumbsUp },
-  { id: 'people', label: 'People', shortForm: 'Pe', icon: ThumbsUp, 
+  { id: 'home', label: 'Home', shortForm: 'H', icon: null, isExpandable: false },
+  { id: 'content', label: 'Content', shortForm: 'C', icon: ThumbsUp, isExpandable: false },
+  { id: 'resources', label: 'Resources', shortForm: 'R', icon: ThumbsUp, isExpandable: false },
+  { id: 'people', label: 'People', shortForm: 'Pe', icon: ThumbsUp, isExpandable: true,
     subTabs: [
       { id: 'directory', label: 'Directory', shortForm: 'Di', icon: ThumbsUp },
-      { id: 'orgChart', label: 'Org Chart', shortForm: 'OC', icon: ThumbsUp }
+      { id: 'orgChart', label: 'Org Chart', shortForm: 'OC', icon: ThumbsUp },
+      { id: 'supplier', label: 'Supplier', shortForm: 'Su', icon: ThumbsUp },
+      { id: 'client', label: 'Client', shortForm: 'Cl', icon: ThumbsUp }
     ]
   },
-  { id: 'projects', label: 'Projects', shortForm: 'P', icon: ThumbsUp },
-  { id: 'dailyHuddle', label: 'Daily Huddle', shortForm: 'Dh', icon: Calendar },
-  { id: 'sales', label: 'Sales', shortForm: 'S', icon: ThumbsUp },
-  { id: 'quotation', label: 'Quotation', shortForm: 'Qu', icon: ThumbsUp },
-  { id: 'product', label: 'Product', shortForm: 'P', icon: ThumbsUp }
+  { id: 'projects', label: 'Projects', shortForm: 'P', icon: ThumbsUp, isExpandable: false },
+  { id: 'dailyHuddle', label: 'Daily Huddle', shortForm: 'Dh', icon: Calendar, isExpandable: false },
+  { id: 'sales', label: 'Sales', shortForm: 'S', icon: ThumbsUp, isExpandable: false },
+  { id: 'quotation', label: 'Quotation', shortForm: 'Qu', icon: ThumbsUp, isExpandable: false },
+  { id: 'product', label: 'Product', shortForm: 'P', icon: ThumbsUp, isExpandable: false }
 ] as const;
 
 /**
@@ -43,7 +45,7 @@ const navigationConfig = [
  */
 type TabType = typeof navigationConfig[number]['id'];
 
-type SubTabType = 'directory' | 'orgChart';
+type SubTabType = 'directory' | 'orgChart' | 'supplier' | 'client';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -137,8 +139,12 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
     
     if (subTab === 'directory') {
       navigate(`/${userId}/people`);
-    } else {
+    } else if (subTab === 'orgChart') {
       navigate(`/${userId}/org_chart`);
+    } else if (subTab === 'supplier') {
+      navigate(`/${userId}/supplier`);
+    } else if (subTab === 'client') {
+      navigate(`/${userId}/client`);
     }
   };
 
@@ -205,15 +211,24 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
                     <button
                       onClick={() => handleTabChange(tab.id)}
                       className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        activeTabState === tab.id
+                        activeTabState === tab.id && !tab.isExpandable
                           ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }`}
+                      } ${tab.isExpandable ? 'cursor-default' : ''}`}
                     >
-                      <span className="flex items-center">
-                        {isSidebarCollapsed ? tab.shortForm : tab.label}
+                      <span className="flex items-center gap-2">
+                        {isSidebarCollapsed ? tab.shortForm : (
+                          <>
+                            {tab.label}
+                            {tab.isExpandable && (
+                              isPeopleSubmenuOpen 
+                                ? <ChevronDown size={16} className="text-gray-400" />
+                                : <ChevronRight size={16} className="text-gray-400" />
+                            )}
+                          </>
+                        )}
                       </span>
-                      {tab.icon && !isSidebarCollapsed && (
+                      {tab.icon && !isSidebarCollapsed && !tab.isExpandable && (
                         <tab.icon size={16} className="text-gray-400" />
                       )}
                     </button>

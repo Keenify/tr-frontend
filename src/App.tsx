@@ -28,6 +28,8 @@ import Quotation from './features/quotation/components/Quotation';
 import Product from './features/product/components/Product';
 import Resources from './features/resources/components/Resources';
 import Projects from './features/projects/components/Projects';
+import Supplier from './features/people/supplier/components/Supplier';
+import Client from './features/people/client/components/Client';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -57,6 +59,8 @@ const App: React.FC = () => {
                 <Route path="/:userId/content" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="content" onTabChange={() => {}}><Content session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/people" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="directory" onTabChange={() => {}}><DirectoryPage session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/org_chart" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="orgChart" onTabChange={() => {}}><OrgChartPage session={session} /></DashboardLayout>} />} />
+                <Route path="/:userId/supplier" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="supplier" onTabChange={() => {}}><Supplier session={session} /></DashboardLayout>} />} />
+                <Route path="/:userId/client" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="client" onTabChange={() => {}}><Client session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/content/:subjectId" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="content" onTabChange={() => {}}><SubjectDetail /></DashboardLayout>} />} />
                 <Route path="/:userId/steps/:tabId/editor" element={<Editor />} />
                 <Route path="/:userId/dailyhuddle" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="dailyHuddle" onTabChange={() => { }}><DailyHuddle session={session} /></DashboardLayout>} />} />
