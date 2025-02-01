@@ -134,6 +134,7 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
                                         {productPriceTiers[product.id]?.sort((a, b) => a.min_cartons - b.min_cartons).map(tier => (
                                             <div key={tier.id}>
                                                 <input
+                                                    title={`Price tier for ${tier.min_cartons} cartons at $${tier.price_per_unit} per unit`}
                                                     type="radio"
                                                     name={`tier-${product.id}`}
                                                     checked={selectedTier.productId === product.id && selectedTier.tierId === tier.id}
