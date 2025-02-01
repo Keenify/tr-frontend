@@ -12,7 +12,7 @@ const Project: React.FC<ProjectProps> = ({ title = 'Hello World', session }) => 
 
   // Function to log in to Planka using the shared binding account
   const loginToPlanka = async () => {
-    const plankaBaseUrl = 'https://planka-production-de2c.up.railway.app';
+    const plankaBaseUrl = 'https://caddy-proxy-production-423e.up.railway.app';
     const plankaApiUrl = `${plankaBaseUrl}/api/access-tokens`;
 
     console.log('Attempting to login to Planka...');
@@ -62,7 +62,7 @@ const Project: React.FC<ProjectProps> = ({ title = 'Hello World', session }) => 
 
   // Add function to verify Planka access
   const verifyPlankaAccess = async (token: string) => {
-    const plankaBaseUrl = 'https://planka-production-de2c.up.railway.app';
+    const plankaBaseUrl = 'https://caddy-proxy-production-423e.up.railway.app';
     const plankaApiUrl = `${plankaBaseUrl}/api/projects`;
     
     try {
@@ -106,7 +106,7 @@ const Project: React.FC<ProjectProps> = ({ title = 'Hello World', session }) => 
       {plankaToken ? (
         <iframe
           ref={iframeRef}
-          src="https://planka-production-de2c.up.railway.app/boards/1434060322221589509"
+          src="https://caddy-proxy-production-423e.up.railway.app/boards/1434060322221589509"
           title="Planka Project Management"
           referrerPolicy="origin"
           style={{
