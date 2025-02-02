@@ -5,6 +5,13 @@ import { TrelloCardModal } from './TrelloCardModal';
 import { useTrelloBoard } from './hooks/useTrelloBoard';
 import { StrictModeDroppable } from './StrictModeDroppable';
 
+export interface CardUpdate {
+  title?: string;
+  description?: string;
+  colorCode?: string;
+  thumbnailUrl?: string;
+}
+
 interface TrelloBoardProps {
   initialLists: Array<{
     id: string;
@@ -25,7 +32,7 @@ interface TrelloBoardProps {
     destinationIndex: number,
     cardId: string
   ) => Promise<void>;
-  onCardUpdate?: (listId: string, cardId: string, updates: any) => Promise<void>;
+  onCardUpdate?: (listId: string, cardId: string, updates: CardUpdate) => Promise<void>;
   onListTitleChange?: (listId: string, newTitle: string) => Promise<void>;
   onCardAdd?: (listId: string, title: string) => Promise<string>;
   onListAdd?: (title: string) => Promise<void>;
