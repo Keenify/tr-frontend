@@ -26,6 +26,7 @@ interface TrelloListProps {
     colorCode?: string;
     attachments?: CardAttachment[];
   }) => void;
+  userRole: string;
 }
 
 /**
@@ -55,6 +56,7 @@ interface TrelloListProps {
  * @param {Function} onCardDelete - Handler for card delete events
  * @param {Function} onDelete - Handler for list delete events
  * @param {Function} onCardUpdate - Handler for card update events
+ * @param {string} userRole - User role for permissions
  */
 
 export const TrelloList: React.FC<TrelloListProps> = ({
@@ -67,6 +69,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   onCardDelete,
   onDelete,
   onCardUpdate,
+  userRole,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [listTitle, setListTitle] = useState(title);
@@ -74,6 +77,8 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   const [newCardTitle, setNewCardTitle] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+
+  const canManageList = userRole === 'manager';
 
   const handleTitleSubmit = () => {
     if (onTitleChange) {
@@ -143,45 +148,55 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                     autoFocus
                   />
                 ) : (
-                  <h2 
-                    className="font-semibold text-gray-700 cursor-pointer truncate"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    {listTitle}
-                  </h2>
+                  <div className="flex items-center gap-2 flex-1">
+                    <h2 
+                      className="font-semibold text-gray-700 cursor-pointer truncate"
+                      onClick={() => canManageList && setIsEditing(true)}
+                    >
+                      {listTitle}
+                    </h2>
+                    {!canManageList && (
+                      <svg className="w-3 h-3 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
+                    )}
+                  </div>
                 )}
               </div>
               <div className="flex items-center gap-2">
                 <span className="bg-gray-200 px-2 py-1 rounded-full text-sm">
                   {cards.length}
                 </span>
-                <div className="relative">
+                {canManageList && (
+                  <div className="relative">
                     <button
-                    title="Open list menu"
-                    className="p-1 rounded-full hover:bg-gray-200"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowMenu(!showMenu);
-                    }}
-                  >
-                    <svg className="w-4 h-4 text-gray-500" viewBox="0 0 16 4">
-                      <circle cx="2" cy="2" r="1.5" />
-                      <circle cx="8" cy="2" r="1.5" />
-                      <circle cx="14" cy="2" r="1.5" />
-                    </svg>
-                  </button>
+                      title="Open list menu"
+                      className="p-1 rounded-full hover:bg-gray-200"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowMenu(!showMenu);
+                      }}
+                    >
+                      <svg className="w-4 h-4 text-gray-500" viewBox="0 0 16 4">
+                        <circle cx="2" cy="2" r="1.5" />
+                        <circle cx="8" cy="2" r="1.5" />
+                        <circle cx="14" cy="2" r="1.5" />
+                      </svg>
+                    </button>
 
-                  {showMenu && (
-                    <div className="absolute right-0 top-full mt-1 bg-white shadow-lg rounded-md py-1 z-50 min-w-[100px]">
-                      <button
-                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-                        onClick={handleDeleteClick}
-                      >
-                        Delete List
-                      </button>
-                    </div>
-                  )}
-                </div>
+                    {showMenu && (
+                      <div className="absolute right-0 top-full mt-1 bg-white shadow-lg rounded-md py-1 z-50 min-w-[100px]">
+                        <button
+                          className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                          onClick={handleDeleteClick}
+                        >
+                          Delete List
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -209,6 +224,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                       index={cardIndex}
                       onDelete={() => onCardDelete?.(card.id)}
                       onUpdate={(updatedCard) => onCardUpdate?.(card.id, updatedCard)}
+                      userRole={userRole}
                     />
                   ))}
                   {dropProvided.placeholder}

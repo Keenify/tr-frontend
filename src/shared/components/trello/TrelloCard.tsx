@@ -20,6 +20,7 @@ interface TrelloCardProps {
     colorCode?: string;
     attachments?: CardAttachment[];
   }) => void;
+  userRole: string;
 }
 
 /**
@@ -48,6 +49,7 @@ interface TrelloCardProps {
  * @param {Function} onClick - Handler for card click
  * @param {Function} onDelete - Handler for card deletion
  * @param {Function} onUpdate - Handler for card update
+ * @param {string} userRole - User role for permissions
  */
 export const TrelloCard: React.FC<TrelloCardProps> = ({
   id,
@@ -57,7 +59,8 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   colorCode,
   thumbnailUrl,
   onDelete,
-  onUpdate
+  onUpdate,
+  userRole,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPosition, setDragStartPosition] = useState({ x: 0, y: 0 });
@@ -66,6 +69,8 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   const [isLoadingAttachments, setIsLoadingAttachments] = useState(false);
   const [cardAttachments, setCardAttachments] = useState<CardAttachment[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const canManageCard = userRole === 'manager';
 
   // Prevent page scroll when dragging
   useEffect(() => {
@@ -175,16 +180,23 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
             }}
             onClick={!isDragging ? handleCardClick : undefined}
           >
-            {/* Edit button - Moved outside of content area */}
+            {/* Replace edit button with role-based icon */}
             <button
-              title="Edit card"
+              title={canManageCard ? "Edit card" : "Read only"}
               className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100 z-10"
-              onClick={handleMenuClick}
+              onClick={canManageCard ? handleMenuClick : undefined}
               onMouseDown={(e) => e.stopPropagation()}
             >
-              <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-              </svg>
+              {canManageCard ? (
+                <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              )}
             </button>
 
             {/* Dropdown menu */}
@@ -273,6 +285,8 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
             attachments: cardAttachments
           }}
           isLoadingAttachments={isLoadingAttachments}
+          userRole={userRole}
+          readOnly={!canManageCard}
         />
       )}
     </>

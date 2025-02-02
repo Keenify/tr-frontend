@@ -19,6 +19,8 @@ interface TrelloCardModalProps {
     attachments?: CardAttachment[];
   };
   isLoadingAttachments: boolean;
+  userRole: string;
+  readOnly?: boolean;
 }
 
 /**
@@ -49,7 +51,9 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   onClose,
   onSave,
   card,
-  isLoadingAttachments
+  isLoadingAttachments,
+  userRole,
+  readOnly = userRole !== 'manager',
 }) => {
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description || '');
@@ -161,6 +165,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
               onChange={(e) => setTitle(e.target.value)}
               className="w-full px-3 py-2 border rounded-md"
               required
+              disabled={readOnly}
             />
           </div>
 
@@ -173,6 +178,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full px-3 py-2 border rounded-md min-h-[100px]"
+              disabled={readOnly}
             />
           </div>
 
@@ -270,14 +276,16 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
               onClick={onClose}
               className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
             >
-              Cancel
+              {readOnly ? 'Close' : 'Cancel'}
             </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-            >
-              Save
-            </button>
+            {!readOnly && (
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+              >
+                Save
+              </button>
+            )}
           </div>
         </form>
       </div>
