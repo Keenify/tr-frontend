@@ -1,7 +1,6 @@
 import { Button, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from '@mui/material';
 import { Session } from '@supabase/supabase-js';
 import React from 'react';
-import { CompanyData } from '../../../shared/types/companyType';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import { getProductsByCompany } from '../../../services/useProducts';
 import { getProductPriceTiers } from '../services/useProductsPriceTier';
@@ -9,9 +8,9 @@ import { getProductVariants } from '../../../services/useProductVariants';
 import { Product, ProductPriceTier } from '../../../shared/types/Product';
 import CompanyHeader from './CompanyHeader';
 import PriceTierModal from './PriceTierModal';
-import { generatePDF } from '../utils/pdfUtils';
+import { generateQuotationPDF } from '../services/useQuotationPDF';
 import '../styles/Quotation.css';
-
+import { QuotationPDFData } from '../types/QuotationPDF';
 interface ProductsProps {
     session: Session;
 }
@@ -44,6 +43,9 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
 
     // State to manage modal visibility
     const [isPriceTierModalOpen, setIsPriceTierModalOpen] = React.useState<boolean>(false);
+
+    // Add new loading state
+    const [isGeneratingPDF, setIsGeneratingPDF] = React.useState<boolean>(false);
 
     React.useEffect(() => {
         if (companyInfo?.id) {
@@ -461,17 +463,68 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                     color="secondary"
                     onClick={() => setIsPriceTierModalOpen(true)}
                     className="action-button price-tier-button"
+                    disabled={isGeneratingPDF}
                 >
                     Price Tier
                 </Button>
                 <Button
                     variant="contained"
                     color="primary"
-                    onClick={() => generatePDF(selectedProducts, selectedFlavors, companyInfo as CompanyData, customerCompanyName, currentDate)}
+                    onClick={async () => {
+                        try {
+                            setIsGeneratingPDF(true);
+                            // Create the data object for PDF generation
+                            const pdfData = {
+                                selectedProducts: Array.from(selectedProducts),
+                                selectedFlavors: Object.fromEntries(
+                                    Object.entries(selectedFlavors).map(([key, value]) => [key, Array.from(value)])
+                                ),
+                                products: products.map(product => ({
+                                    ...product,
+                                    variants: productVariants[product.id] || [],
+                                    priceTiers: productPriceTiers[product.id] || []
+                                })),
+                                companyInfo,
+                                customerCompanyName,
+                                currentDate,
+                                tableSettings: {
+                                    showPackCount,
+                                    showRetailPrice,
+                                    visibleCartonColumns: Array.from(visibleCartonColumns)
+                                }
+                            };
+
+                            // Call the backend service
+                            const pdfBlob = await generateQuotationPDF(pdfData as QuotationPDFData);
+                            console.log('PDF generated successfully');
+                            
+                            // Create a blob URL and trigger download
+                            const blobUrl = URL.createObjectURL(pdfBlob);
+                            const link = document.createElement('a');
+                            link.href = blobUrl;
+                            link.download = `quotation-${customerCompanyName}-${currentDate}.pdf`;
+                            link.click();
+                            
+                            // Clean up the blob URL after download
+                            URL.revokeObjectURL(blobUrl);
+                        } catch (error) {
+                            console.error('Error generating PDF:', error);
+                            // You might want to add some error handling UI here
+                        } finally {
+                            setIsGeneratingPDF(false);
+                        }
+                    }}
                     className={`action-button generate-pdf-button ${!customerCompanyName ? 'disabled' : ''}`}
-                    disabled={!customerCompanyName}
+                    disabled={!customerCompanyName || isGeneratingPDF}
                 >
-                    Generate PDF
+                    {isGeneratingPDF ? (
+                        <>
+                            <span className="loading-spinner"></span>
+                            Generating...
+                        </>
+                    ) : (
+                        'Generate PDF'
+                    )}
                 </Button>
             </div>
             <PriceTierModal
