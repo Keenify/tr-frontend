@@ -1,6 +1,7 @@
 // Access environment variables from .env
 const API_DOMAIN = import.meta.env.VITE_BACKEND_API_DOMAIN;
 export const HARDCODED_BOARD_ID = 'fe279d07-c6c4-42ac-bf6e-d36924dac4b1';
+export const PASSWORD_BOARD_ID = 'a4c660de-d84c-4b65-b2b2-eed47a9da30d'; // Replace with your actual password board ID
 
 import { BoardDetails } from '../types/board';
 

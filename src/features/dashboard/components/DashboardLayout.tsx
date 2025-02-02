@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Power, ThumbsUp, ChevronDown, ChevronRight } from 'react-feather'; // Import Power, ThumbsUp, and Clock icons from react-feather
+import { Calendar, Power, ThumbsUp, ChevronDown, ChevronRight, Shield, Home } from 'react-feather'; // Import Power, ThumbsUp, and Clock icons from react-feather
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase'; // Import supabase client
 import { useNavigate, useParams } from 'react-router-dom';
@@ -21,8 +21,8 @@ import { useNavigate, useParams } from 'react-router-dom';
  * @constant {Object[]}
  */
 const navigationConfig = [
-  { id: 'home', label: 'Home', shortForm: 'H', icon: null, isExpandable: false },
-  { id: 'content', label: 'Content', shortForm: 'C', icon: ThumbsUp, isExpandable: false },
+  { id: 'home', label: 'Home', shortForm: 'H', icon: Home, isExpandable: false },
+  { id: 'admin', label: 'Admin', shortForm: 'A', icon: Shield, isExpandable: false },
   { id: 'resources', label: 'Resources', shortForm: 'R', icon: ThumbsUp, isExpandable: false },
   { id: 'people', label: 'People', shortForm: 'Pe', icon: ThumbsUp, isExpandable: true,
     subTabs: [
@@ -228,7 +228,7 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
                           </>
                         )}
                       </span>
-                      {tab.icon && !isSidebarCollapsed && !tab.isExpandable && (
+                      {!isSidebarCollapsed && !tab.isExpandable && (
                         <tab.icon size={16} className="text-gray-400" />
                       )}
                     </button>

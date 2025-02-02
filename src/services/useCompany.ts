@@ -8,6 +8,10 @@ export interface CompanyData {
     company_brand_color: string | null;
     id: string;
     created_at: string;
+    address: string;
+    website_url: string;
+    phone: string;
+    logo_url: string;
 }
 
 /**

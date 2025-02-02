@@ -17,8 +17,6 @@ import OrgChartPage from './features/directory/components/OrgChart/OrgChartPage'
 // Import all components
 import AuthForm from './features/auth/components/Auth';
 import Home from './features/home/components/Home';
-import Content from './features/content/components/Content';
-import SubjectDetail from './features/content/components/SubjectDetail';
 import Editor from './features/content/components/Editor';
 import DirectoryPage from './features/directory/routes/DirectoryPage';
 import ProtectedRoute from './routes/ProtectedRoute';
@@ -30,6 +28,7 @@ import Resources from './features/resources/components/Resources';
 import Projects from './features/projects/components/Projects';
 import Supplier from './features/people/supplier/components/Supplier';
 import Client from './features/people/client/components/Client';
+import Admin from './features/admin/components/Admin';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -56,12 +55,10 @@ const App: React.FC = () => {
             {session && (
               <>
                 <Route path="/:userId" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="home" onTabChange={() => {}}><Home session={session} /></DashboardLayout>} />} />
-                <Route path="/:userId/content" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="content" onTabChange={() => {}}><Content session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/people" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="directory" onTabChange={() => {}}><DirectoryPage session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/org_chart" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="orgChart" onTabChange={() => {}}><OrgChartPage session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/supplier" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="supplier" onTabChange={() => {}}><Supplier session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/client" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="client" onTabChange={() => {}}><Client session={session} /></DashboardLayout>} />} />
-                <Route path="/:userId/content/:subjectId" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="content" onTabChange={() => {}}><SubjectDetail /></DashboardLayout>} />} />
                 <Route path="/:userId/steps/:tabId/editor" element={<Editor />} />
                 <Route path="/:userId/dailyhuddle" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="dailyHuddle" onTabChange={() => { }}><DailyHuddle session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/sales" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="sales" onTabChange={() => { }}><Sales session={session} /></DashboardLayout>} />} />
@@ -69,6 +66,7 @@ const App: React.FC = () => {
                 <Route path="/:userId/product" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="product" onTabChange={() => { }}><Product session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/resources" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="resources" onTabChange={() => { }}><Resources session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/projects" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="projects" onTabChange={() => { }}><Projects session={session} /></DashboardLayout>} />} />
+                <Route path="/:userId/admin" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="admin" onTabChange={() => { }}><Admin session={session} /></DashboardLayout>} />} />
               </>
             )}
 
