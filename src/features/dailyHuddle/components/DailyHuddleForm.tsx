@@ -206,6 +206,38 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
     );
   }
 
+  if (hasSubmitted) {
+    return (
+      <div style={{ textAlign: "center", padding: "20px" }}>
+        <div style={{ 
+          color: "#28a745",
+          fontSize: "1.1em",
+          marginBottom: "15px"
+        }}>
+          Thank you! Your daily huddle has been submitted for today.
+        </div>
+        {!isAfterCutoff && (
+          <button
+            onClick={() => {
+              setIsEditing(true);
+              setHasSubmitted(false);
+            }}
+            style={{
+              padding: "8px 16px",
+              backgroundColor: "#6c757d",
+              color: "#fff",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer"
+            }}
+          >
+            Edit Response
+          </button>
+        )}
+      </div>
+    );
+  }
+
   if (isAfterCutoff && !hasSubmitted) {
     return (
       <div style={{ textAlign: "center", padding: "20px" }}>
