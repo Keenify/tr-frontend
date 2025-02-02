@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { TrelloCard } from './TrelloCard';
 import { StrictModeDroppable } from './StrictModeDroppable';
 import { Draggable } from 'react-beautiful-dnd';
+import { CardAttachment } from './services/useCardAttachment';
 
 interface TrelloListProps {
   id: string;
@@ -18,7 +19,13 @@ interface TrelloListProps {
   onAddCard?: (title: string) => void;
   onCardDelete?: (cardId: string) => void;
   onDelete?: () => void;
-  onCardUpdate?: (cardId: string, updates: any) => void;
+  onCardUpdate?: (cardId: string, updates: {
+    id: string;
+    title: string;
+    description?: string;
+    colorCode?: string;
+    attachments?: CardAttachment[];
+  }) => void;
 }
 
 /**
