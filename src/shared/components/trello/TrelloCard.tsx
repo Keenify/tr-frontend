@@ -175,12 +175,12 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
             }}
             onClick={!isDragging ? handleCardClick : undefined}
           >
-            {/* Add menu button */}
+            {/* Edit button - Moved outside of content area */}
             <button
               title="Edit card"
-              className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100"
+              className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100 z-10"
               onClick={handleMenuClick}
-              onMouseDown={(e) => e.stopPropagation()}  // Prevent drag start
+              onMouseDown={(e) => e.stopPropagation()}
             >
               <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
@@ -205,7 +205,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
-              className="w-full h-full"
+              className="w-full h-full pr-6" // Added right padding for edit button
             >
               {thumbnailUrl && (
                 <img 
@@ -215,9 +215,9 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
                   draggable={false}
                 />
               )}
-              <h3 className="font-medium text-gray-900 select-none">{title}</h3>
+              <h3 className="font-medium text-gray-900 select-none truncate">{title}</h3>
               {description && (
-                <p className="text-sm text-gray-600 mt-1 select-none">{description}</p>
+                <p className="text-sm text-gray-600 mt-1 select-none line-clamp-2">{description}</p>
               )}
             </div>
           </div>

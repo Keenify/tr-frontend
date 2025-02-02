@@ -120,7 +120,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
               {...provided.dragHandleProps}
               className="flex items-center justify-between mb-4 cursor-grab active:cursor-grabbing select-none relative"
             >
-              <div className="flex items-center gap-2 flex-1">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
                 <div className="flex-shrink-0 text-gray-400">
                   ⋮⋮
                 </div>
@@ -137,7 +137,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                   />
                 ) : (
                   <h2 
-                    className="font-semibold text-gray-700 cursor-pointer"
+                    className="font-semibold text-gray-700 cursor-pointer truncate"
                     onClick={() => setIsEditing(true)}
                   >
                     {listTitle}
