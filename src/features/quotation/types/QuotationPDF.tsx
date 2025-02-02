@@ -13,4 +13,5 @@ export interface QuotationPDFData {
         showRetailPrice: boolean;
         visibleCartonColumns: number[];
     };
+    footer: string;
 }

@@ -1,16 +1,16 @@
 import { Button, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from '@mui/material';
 import { Session } from '@supabase/supabase-js';
 import React from 'react';
-import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
+import CompanyHeader from './CompanyHeader';
+import PriceTierModal from './PriceTierModal';
 import { getProductsByCompany } from '../../../services/useProducts';
 import { getProductPriceTiers } from '../services/useProductsPriceTier';
 import { getProductVariants } from '../../../services/useProductVariants';
-import { Product, ProductPriceTier } from '../../../shared/types/Product';
-import CompanyHeader from './CompanyHeader';
-import PriceTierModal from './PriceTierModal';
 import { generateQuotationPDF } from '../services/useQuotationPDF';
-import '../styles/Quotation.css';
+import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
+import { Product, ProductPriceTier } from '../../../shared/types/Product';
 import { QuotationPDFData } from '../types/QuotationPDF';
+import '../styles/Quotation.css';
 interface ProductsProps {
     session: Session;
 }
@@ -46,6 +46,17 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
 
     // Add new loading state
     const [isGeneratingPDF, setIsGeneratingPDF] = React.useState<boolean>(false);
+
+    // Add new state for footer text
+    const [footerText, setFooterText] = React.useState<string>(
+        `*Remarks:
+1. All prices above are subject to prevailing GST
+2. All goods sold are not returnable
+3. Mixing of products within the same carton is not allowed
+4. Discount is applicable to same product category
+5. FREE delivery to ONE location, $8 delivery fee to every subsequent location
+6. Validity of Quotation: 30 days`
+    );
 
     React.useEffect(() => {
         if (companyInfo?.id) {
@@ -457,6 +468,19 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            <div className="footer-container">
+                <TextField
+                    multiline
+                    fullWidth
+                    variant="outlined"
+                    value={footerText}
+                    onChange={(e) => setFooterText(e.target.value)}
+                    minRows={4}
+                    className="footer-text"
+                />
+            </div>
+
             <div className="button-container">
                 <Button
                     variant="contained"
@@ -491,8 +515,11 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                                     showPackCount,
                                     showRetailPrice,
                                     visibleCartonColumns: Array.from(visibleCartonColumns)
-                                }
+                                },
+                                footer: footerText
                             };
+
+                            console.log('PDF Data:', JSON.stringify(pdfData, null, 2));
 
                             // Call the backend service
                             const pdfBlob = await generateQuotationPDF(pdfData as QuotationPDFData);
