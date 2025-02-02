@@ -2,10 +2,11 @@ import { Session } from "@supabase/supabase-js";
 import React, { useEffect, useState } from "react";
 import { createCard, updateCard } from "../../../../shared/components/trello/services/useCard";
 import { createList, updateList, deleteList } from "../../../../shared/components/trello/services/useList";
-import { TrelloBoard } from "../../../../shared/components/trello/TrelloBoard";
+import { CardUpdate, TrelloBoard } from "../../../../shared/components/trello/TrelloBoard";
 import { getBoardDetails, HARDCODED_BOARD_ID } from "../services/useBoard";
 import { List } from "../types/board";
 import { useUserAndCompanyData } from "../../../../shared/hooks/useUserAndCompanyData";
+import { getUserData } from '../../../../services/useUser';
 
 interface SupplierProps {
   session: Session;
@@ -20,6 +21,7 @@ const Supplier: React.FC<SupplierProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { companyInfo, isLoading: isLoadingCompany } = useUserAndCompanyData(session.user.id);
+  const [userRole, setUserRole] = useState<string>('');
 
   useEffect(() => {
     const fetchBoardDetails = async () => {
@@ -45,6 +47,18 @@ const Supplier: React.FC<SupplierProps> = ({
 
     fetchBoardDetails();
   }, [boardId]);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const userData = await getUserData(session.user.id);
+        setUserRole(userData.role);
+      } catch (err) {
+        console.error('Failed to fetch user role:', err);
+      }
+    };
+    fetchUserRole();
+  }, [session.user.id]);
 
   if (isLoading || isLoadingCompany) {
     return <div>Loading...</div>;
@@ -84,7 +98,7 @@ const Supplier: React.FC<SupplierProps> = ({
     }
   };
 
-  const handleCardUpdate = async (listId: string, cardId: string, updates: any) => {
+  const handleCardUpdate = async (listId: string, cardId: string, updates: CardUpdate) => {
     try {
       const apiUpdates = {
         ...updates,
@@ -168,6 +182,7 @@ const Supplier: React.FC<SupplierProps> = ({
         onCardAdd={handleCardAdd}
         onListAdd={handleListAdd}
         onListDelete={handleListDelete}
+        userRole={userRole}
       />
     </div>
   );

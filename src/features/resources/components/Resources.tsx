@@ -2,27 +2,16 @@ import { Session } from "@supabase/supabase-js";
 import React, { useEffect, useState } from "react";
 import { createCard, updateCard } from "../../../shared/components/trello/services/useCard";
 import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
-import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
+import { CardUpdate, TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { getBoardDetails, HARDCODED_BOARD_ID } from "../services/useBoard";
 import { List } from "../types/board";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
+import { getUserData } from '../../../services/useUser';
 
 interface ResourcesProps {
   session: Session;
   boardId?: string;
 }
-
-interface CardUpdate {
-  title?: string;
-  description?: string;
-  colorCode?: string;
-  due_date?: string | undefined; // Changed from string | null
-  position?: number;
-  list_id?: string;
-  thumbnail_url?: string;
-}
-
-
 
 /**
  * Resources Component
@@ -47,6 +36,7 @@ const Resources: React.FC<ResourcesProps> = ({
   const [lists, setLists] = useState<List[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string>('');
   
   // Add the useUserAndCompanyData hook
   const { companyInfo, isLoading: isLoadingCompany } = useUserAndCompanyData(session.user.id);
@@ -76,6 +66,18 @@ const Resources: React.FC<ResourcesProps> = ({
 
     fetchBoardDetails();
   }, [boardId]);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const userData = await getUserData(session.user.id);
+        setUserRole(userData.role);
+      } catch (err) {
+        console.error('Failed to fetch user role:', err);
+      }
+    };
+    fetchUserRole();
+  }, [session.user.id]);
 
   if (isLoading || isLoadingCompany) {
     return <div>Loading...</div>;
@@ -270,6 +272,7 @@ const Resources: React.FC<ResourcesProps> = ({
         onCardAdd={handleCardAdd}
         onListAdd={handleListAdd}
         onListDelete={handleListDelete}
+        userRole={userRole}
       />
     </div>
   );
