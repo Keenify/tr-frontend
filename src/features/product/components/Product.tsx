@@ -10,6 +10,7 @@ import EditProductModal from './EditProductModal';
 import DeleteProductModal from './DeleteProductModal';
 import CreateVariantModal from './CreateVariantModal';
 import VariantGrid from './VariantGrid';
+import ProductRollOut from './ProductRollOut';
 
 interface ProductProps {
   session: Session;
@@ -25,6 +26,7 @@ const Product: React.FC<ProductProps> = ({ session }) => {
   const [editingProduct, setEditingProduct] = React.useState<ProductType | null>(null);
   const [deletingProduct, setDeletingProduct] = React.useState<ProductType | null>(null);
   const [creatingVariantForProduct, setCreatingVariantForProduct] = React.useState<ProductType | null>(null);
+  const [activeTab, setActiveTab] = React.useState('products');
 
   const fetchProducts = React.useCallback(async () => {
     if (!companyInfo?.id) return;
@@ -150,90 +152,123 @@ const Product: React.FC<ProductProps> = ({ session }) => {
         </button>
       </div>
       
-      <CreateProductModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreateProduct}
-        companyId={companyInfo?.id || ''}
-      />
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {products.map(product => (
-          <div key={product.id} className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex justify-between items-start">
-              <h2 className="text-xl font-semibold mb-2">{product.name}</h2>
-              <div className="flex gap-2">
-                <button
-                  title="Edit product"
-                  onClick={() => setEditingProduct(product)}
-                  className="text-gray-600 hover:text-gray-800"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-12 12a2 2 0 01-2.828 0 2 2 0 010-2.828l12-12z" />
-                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-12 12a2 2 0 01-2.828 0 2 2 0 010-2.828l12-12z" />
-                  </svg>
-                </button>
-                <button
-                  title="Delete product"
-                  onClick={() => setDeletingProduct(product)}
-                  className="text-gray-600 hover:text-gray-800"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <p className="text-gray-600">Pack Count: {product.pack_count_per_box}</p>
-            <p className="text-gray-600">Retail Price: ${product.recommended_retail_price}</p>
-            
-            <div className="mt-2">
-              <div className="flex justify-between items-center">
-                <h3 className="font-medium">Variants:</h3>
-                <button
-                  onClick={() => setCreatingVariantForProduct(product)}
-                  className="text-sm bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                >
-                  New Variant
-                </button>
-              </div>
-              {productVariants[product.id]?.length > 0 ? (
-                <VariantGrid 
-                  variants={productVariants[product.id]} 
-                  onVariantUpdate={() => refreshVariants(product.id)}
-                />
-              ) : (
-                <p className="text-gray-500 mt-1">No variants available</p>
-              )}
-            </div>
-          </div>
-        ))}
+      <div className="mb-4">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex">
+            <button
+              onClick={() => setActiveTab('products')}
+              className={`mr-8 py-2 px-1 ${
+                activeTab === 'products'
+                  ? 'border-b-2 border-blue-500 text-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Products
+            </button>
+            <button
+              onClick={() => setActiveTab('rollout')}
+              className={`py-2 px-1 ${
+                activeTab === 'rollout'
+                  ? 'border-b-2 border-blue-500 text-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Product Roll Out
+            </button>
+          </nav>
+        </div>
       </div>
 
-      {editingProduct && (
-        <EditProductModal
-          isOpen={!!editingProduct}
-          onClose={() => setEditingProduct(null)}
-          onSubmit={(data) => handleUpdateProduct(editingProduct.id, data)}
-          product={editingProduct}
-        />
-      )}
+      {activeTab === 'products' ? (
+        <>
+          <CreateProductModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onSubmit={handleCreateProduct}
+            companyId={companyInfo?.id || ''}
+          />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {products.map(product => (
+              <div key={product.id} className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex justify-between items-start">
+                  <h2 className="text-xl font-semibold mb-2">{product.name}</h2>
+                  <div className="flex gap-2">
+                    <button
+                      title="Edit product"
+                      onClick={() => setEditingProduct(product)}
+                      className="text-gray-600 hover:text-gray-800"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-12 12a2 2 0 01-2.828 0 2 2 0 010-2.828l12-12z" />
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-12 12a2 2 0 01-2.828 0 2 2 0 010-2.828l12-12z" />
+                      </svg>
+                    </button>
+                    <button
+                      title="Delete product"
+                      onClick={() => setDeletingProduct(product)}
+                      className="text-gray-600 hover:text-gray-800"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <p className="text-gray-600">Pack Count: {product.pack_count_per_box}</p>
+                <p className="text-gray-600">Retail Price: ${product.recommended_retail_price}</p>
+                
+                <div className="mt-2">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-medium">Variants:</h3>
+                    <button
+                      onClick={() => setCreatingVariantForProduct(product)}
+                      className="text-sm bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+                    >
+                      New Variant
+                    </button>
+                  </div>
+                  {productVariants[product.id]?.length > 0 ? (
+                    <VariantGrid 
+                      variants={productVariants[product.id]} 
+                      onVariantUpdate={() => refreshVariants(product.id)}
+                    />
+                  ) : (
+                    <p className="text-gray-500 mt-1">No variants available</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
 
-      {deletingProduct && (
-        <DeleteProductModal
-          isOpen={!!deletingProduct}
-          onClose={() => setDeletingProduct(null)}
-          onConfirm={() => handleDeleteProduct(deletingProduct.id)}
-          productName={deletingProduct.name}
-        />
-      )}
+          {editingProduct && (
+            <EditProductModal
+              isOpen={!!editingProduct}
+              onClose={() => setEditingProduct(null)}
+              onSubmit={(data) => handleUpdateProduct(editingProduct.id, data)}
+              product={editingProduct}
+            />
+          )}
 
-      {creatingVariantForProduct && (
-        <CreateVariantModal
-          isOpen={!!creatingVariantForProduct}
-          onClose={() => setCreatingVariantForProduct(null)}
-          onSubmit={(data) => handleCreateVariant(creatingVariantForProduct.id, data)}
-        />
+          {deletingProduct && (
+            <DeleteProductModal
+              isOpen={!!deletingProduct}
+              onClose={() => setDeletingProduct(null)}
+              onConfirm={() => handleDeleteProduct(deletingProduct.id)}
+              productName={deletingProduct.name}
+            />
+          )}
+
+          {creatingVariantForProduct && (
+            <CreateVariantModal
+              isOpen={!!creatingVariantForProduct}
+              onClose={() => setCreatingVariantForProduct(null)}
+              onSubmit={(data) => handleCreateVariant(creatingVariantForProduct.id, data)}
+            />
+          )}
+        </>
+      ) : (
+        <ProductRollOut session={session} />
       )}
     </div>
   );
