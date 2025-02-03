@@ -35,7 +35,6 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
   const [wheelRotation, setWheelRotation] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [startAngle, setStartAngle] = useState(0);
-  const [isAfterCutoff, setIsAfterCutoff] = useState<boolean>(false);
 
   /**
    * Initializes the form by fetching necessary data
@@ -47,12 +46,6 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
     const initializeForm = async () => {
       setLoading(true);
       try {
-        // Check if current time is after 10 AM
-        const now = new Date();
-        const cutoffTime = new Date();
-        cutoffTime.setHours(10, 0, 0, 0);
-        setIsAfterCutoff(now > cutoffTime);
-
         const userData = await getUserData(session.user.id);
         setEmployeeId(userData.id);
 
@@ -216,37 +209,22 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
         }}>
           Thank you! Your daily huddle has been submitted for today.
         </div>
-        {!isAfterCutoff && (
-          <button
-            onClick={() => {
-              setIsEditing(true);
-              setHasSubmitted(false);
-            }}
-            style={{
-              padding: "8px 16px",
-              backgroundColor: "#6c757d",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer"
-            }}
-          >
-            Edit Response
-          </button>
-        )}
-      </div>
-    );
-  }
-
-  if (isAfterCutoff && !hasSubmitted) {
-    return (
-      <div style={{ textAlign: "center", padding: "20px" }}>
-        <div style={{ 
-          color: "#dc3545",
-          fontStyle: "italic"
-        }}>
-          Daily huddle submissions are closed after 10 AM. Please return tomorrow before 10 AM.
-        </div>
+        <button
+          onClick={() => {
+            setIsEditing(true);
+            setHasSubmitted(false);
+          }}
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#6c757d",
+            color: "#fff",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}
+        >
+          Edit Response
+        </button>
       </div>
     );
   }
@@ -314,30 +292,19 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
           ))}
           <button
             type="submit"
-            disabled={isAfterCutoff}
             style={{
               padding: "12px 24px",
-              backgroundColor: isAfterCutoff ? "#ccc" : "#007BFF",
+              backgroundColor: "#007BFF",
               color: "#fff",
               border: "none",
               borderRadius: "4px",
-              cursor: isAfterCutoff ? "not-allowed" : "pointer",
+              cursor: "pointer",
               display: "block",
               margin: "0 auto",
             }}
           >
             Submit
           </button>
-          {isAfterCutoff && (
-            <div style={{ 
-              marginTop: "10px",
-              color: "#dc3545",
-              fontStyle: "italic",
-              textAlign: "center"
-            }}>
-              Submissions are closed after 10 AM
-            </div>
-          )}
         </form>
       </div>
 
