@@ -1,184 +1,353 @@
 import { Session } from "@supabase/supabase-js";
 import React, { useEffect, useState } from "react";
-import { createCard, updateCard } from "../../../shared/components/trello/services/useCard";
-import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
-import { CardUpdate, TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
-import { getBoardDetails, PASSWORD_BOARD_ID } from "../../resources/services/useBoard";
-import { List } from "../../resources/types/board";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
-import { getUserData } from '../../../services/useUser';
+import { 
+  getCompanyPasswords, 
+  createPassword, 
+  updatePassword, 
+  deletePassword,
+  getDecryptedPassword 
+} from '../services/usePassword';
+import { CreatePasswordPayload, PasswordData, UpdatePasswordPayload } from '../types/password';
+import { EyeIcon, EyeSlashIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 interface PasswordProps {
   session: Session;
-  boardId?: string;
 }
-  
-/**
- * Password Management Component
- * 
- * A Trello-like board implementation for managing company passwords and credentials.
- * Similar to Resources component but specifically for password management.
- * 
- * @component
- * @param {Session} session - User session information for API authentication
- * @param {string} [boardId] - Optional ID of the board to load, uses PASSWORD_BOARD_ID if not provided
- */
-const Password: React.FC<PasswordProps> = ({ 
-  session, 
-  boardId = PASSWORD_BOARD_ID
-}) => {
-  const [lists, setLists] = useState<List[]>([]);
+
+const Password: React.FC<PasswordProps> = ({ session }) => {
+  const [passwords, setPasswords] = useState<PasswordData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { companyInfo, isLoading: isLoadingCompany } = useUserAndCompanyData(session.user.id);
-  const [userRole, setUserRole] = useState<string>('');
+  const [decryptedPasswords, setDecryptedPasswords] = useState<Record<string, string>>({});
+  const [isEditing, setIsEditing] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState<Partial<PasswordData & { password?: string }>>({
+    name: '',
+    username: '',
+    password: '',
+    url: '',
+    notes: '',
+  });
+  const [passwordToDelete, setPasswordToDelete] = useState<PasswordData | null>(null);
 
+  // Fetch passwords
   useEffect(() => {
-    const fetchBoardDetails = async () => {
+    const fetchPasswords = async () => {
+      if (!companyInfo?.id) return;
       try {
         setIsLoading(true);
-        const boardDetails = await getBoardDetails(boardId);
-        const transformedLists = boardDetails.map(list => ({
-          ...list,
-          title: list.name,
-          cards: list.cards.map(card => ({
-            ...card,
-            thumbnailUrl: card.thumbnail_url,
-            colorCode: card.color_code,
-          })),
-        }));
-        setLists(transformedLists);
+        const data = await getCompanyPasswords(companyInfo.id);
+        setPasswords(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load password board details');
+        setError(err instanceof Error ? err.message : 'Failed to load passwords');
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchBoardDetails();
-  }, [boardId]);
+    fetchPasswords();
+  }, [companyInfo?.id]);
 
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      try {
-        const userData = await getUserData(session.user.id);
-        setUserRole(userData.role);
-      } catch (err) {
-        console.error('Failed to fetch user role:', err);
+  const handleTogglePassword = async (passwordId: string) => {
+    try {
+      if (decryptedPasswords[passwordId]) {
+        setDecryptedPasswords(prev => {
+          const newState = { ...prev };
+          delete newState[passwordId];
+          return newState;
+        });
+      } else {
+        const decryptedPassword = await getDecryptedPassword(passwordId);
+        setDecryptedPasswords(prev => ({
+          ...prev,
+          [passwordId]: decryptedPassword
+        }));
       }
-    };
-    fetchUserRole();
-  }, [session.user.id]);
+    } catch (error) {
+      console.error('Failed to decrypt password:', error);
+      setError('Failed to decrypt password');
+    }
+  };
+
+  const handleDelete = async (password: PasswordData) => {
+    setPasswordToDelete(password);
+  };
+
+  const confirmDelete = async () => {
+    if (!passwordToDelete) return;
+    
+    try {
+      await deletePassword(passwordToDelete.id);
+      setPasswords(prev => prev.filter(p => p.id !== passwordToDelete.id));
+      setPasswordToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete password:', error);
+      setError('Failed to delete password');
+    }
+  };
+
+  const handleEdit = async (password: PasswordData) => {
+    setIsEditing(password.id);
+    setNewPassword({
+      name: password.name,
+      username: password.username,
+      url: password.url,
+      notes: password.notes,
+    });
+  };
+
+  const handleSave = async () => {
+    try {
+      if (isEditing) {
+        const updateData: UpdatePasswordPayload = {
+          name: newPassword.name || '',
+          username: newPassword.username || '',
+          url: newPassword.url ? (newPassword.url.match(/^https?:\/\//) ? newPassword.url : `https://${newPassword.url}`) : '',
+          notes: newPassword.notes || '',
+        };
+        
+        if (newPassword.password && newPassword.password.trim() !== '') {
+          updateData.password = newPassword.password;
+        }
+
+        console.log('Updating password with data:', updateData);
+        const updated = await updatePassword(isEditing, updateData);
+        console.log('Password update response:', updated);
+        
+        setPasswords(prev => prev.map(p => p.id === isEditing ? updated : p));
+      } else {
+        if (!companyInfo?.id || !newPassword.name || !newPassword.username || !newPassword.password) return;
+        const created = await createPassword({
+          ...newPassword,
+          url: newPassword.url ? (newPassword.url.match(/^https?:\/\//) ? newPassword.url : `https://${newPassword.url}`) : '',
+          company_id: companyInfo.id,
+        } as CreatePasswordPayload);
+        setPasswords(prev => [...prev, created]);
+      }
+      setIsEditing(null);
+      setNewPassword({
+        name: '',
+        username: '',
+        password: '',
+        url: '',
+        notes: '',
+      });
+    } catch (error) {
+      console.error('Error in handleSave:', error);
+      setError(error instanceof Error ? error.message : 'Failed to save password');
+    }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(null);
+    setNewPassword({
+      name: '',
+      username: '',
+      password: '',
+      url: '',
+      notes: '',
+    });
+  };
+
+  const renderEditableRow = (password: Partial<PasswordData & { password?: string }>) => (
+    <tr className="bg-white hover:bg-gray-50 transition-colors">
+      <td className="px-6 py-4">
+        <input
+          type="text"
+          value={password.name || ''}
+          onChange={e => setNewPassword(prev => ({ ...prev, name: e.target.value }))}
+          className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
+          placeholder="Name"
+        />
+      </td>
+      <td className="px-6 py-4">
+        <input
+          type="text"
+          value={password.username || ''}
+          onChange={e => setNewPassword(prev => ({ ...prev, username: e.target.value }))}
+          className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
+          placeholder="Username"
+        />
+      </td>
+      <td className="px-6 py-4">
+        <input
+          type="password"
+          value={password.password || ''}
+          onChange={e => setNewPassword(prev => ({ ...prev, password: e.target.value }))}
+          className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
+          placeholder={isEditing ? "Leave empty to keep existing password" : "Password"}
+        />
+      </td>
+      <td className="px-6 py-4">
+        <input
+          type="text"
+          value={password.url || ''}
+          onChange={e => setNewPassword(prev => ({ ...prev, url: e.target.value }))}
+          className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
+          placeholder="URL"
+        />
+      </td>
+      <td className="px-6 py-4">
+        <input
+          type="text"
+          value={password.notes || ''}
+          onChange={e => setNewPassword(prev => ({ ...prev, notes: e.target.value }))}
+          className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
+          placeholder="Notes"
+        />
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex space-x-2">
+          <button
+            onClick={handleSave}
+            className="text-green-600 hover:text-green-800 px-3 py-1.5 rounded-lg hover:bg-green-50 transition-colors"
+          >
+            Save
+          </button>
+          <button
+            onClick={handleCancel}
+            className="text-gray-600 hover:text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+
+  const renderTableBody = () => (
+    <tbody className="divide-y divide-gray-200">
+      {!isEditing && renderEditableRow(newPassword)}
+      {passwords.map((password) => (
+        <tr key={password.id}>
+          {isEditing === password.id ? (
+            <>
+              <td className="px-6 py-4">
+                <input
+                  type="text"
+                  value={newPassword.name || ''}
+                  onChange={e => setNewPassword(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
+                  placeholder="Name"
+                />
+              </td>
+              <td className="px-6 py-4">
+                <input
+                  type="text"
+                  value={newPassword.username || ''}
+                  onChange={e => setNewPassword(prev => ({ ...prev, username: e.target.value }))}
+                  className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
+                  placeholder="Username"
+                />
+              </td>
+              <td className="px-6 py-4">
+                <input
+                  type="password"
+                  value={newPassword.password || ''}
+                  onChange={e => setNewPassword(prev => ({ ...prev, password: e.target.value }))}
+                  className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
+                  placeholder="Leave empty to keep existing password"
+                />
+              </td>
+              <td className="px-6 py-4">
+                <input
+                  type="text"
+                  value={newPassword.url || ''}
+                  onChange={e => setNewPassword(prev => ({ ...prev, url: e.target.value }))}
+                  className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
+                  placeholder="URL"
+                />
+              </td>
+              <td className="px-6 py-4">
+                <input
+                  type="text"
+                  value={newPassword.notes || ''}
+                  onChange={e => setNewPassword(prev => ({ ...prev, notes: e.target.value }))}
+                  className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
+                  placeholder="Notes"
+                />
+              </td>
+              <td className="px-6 py-4">
+                <div className="flex space-x-2">
+                  <button
+                    onClick={handleSave}
+                    className="text-green-600 hover:text-green-800 px-3 py-1.5 rounded-lg hover:bg-green-50 transition-colors"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="text-gray-600 hover:text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </td>
+            </>
+          ) : (
+            <>
+              <td className="px-6 py-4 whitespace-nowrap">{password.name}</td>
+              <td className="px-6 py-4 whitespace-nowrap">{password.username}</td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center justify-between">
+                  <div className="font-mono min-w-[120px]">
+                    {decryptedPasswords[password.id] || '•••••••'}
+                  </div>
+                  <button
+                    onClick={() => handleTogglePassword(password.id)}
+                    className="text-gray-600 hover:text-gray-900 flex-shrink-0 ml-2"
+                    title={decryptedPasswords[password.id] ? "Hide password" : "Show password"}
+                  >
+                    {decryptedPasswords[password.id] ? (
+                      <EyeSlashIcon className="h-5 w-5" />
+                    ) : (
+                      <EyeIcon className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+              </td>
+              <td className="px-6 py-4">
+                {password.url && (
+                  <a 
+                    href={password.url.startsWith('https://') ? password.url : `https://${password.url}`}
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    {password.url}
+                  </a>
+                )}
+              </td>
+              <td className="px-6 py-4">{password.notes}</td>
+              <td className="px-6 py-4">
+                <div className="flex space-x-2">
+                  <button 
+                    onClick={() => handleEdit(password)}
+                    className="text-blue-600 hover:text-blue-800"
+                    title="Edit password"
+                  >
+                    <PencilIcon className="h-5 w-5" />
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(password)}
+                    className="text-red-600 hover:text-red-800"
+                    title="Delete password"
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              </td>
+            </>
+          )}
+        </tr>
+      ))}
+    </tbody>
+  );
 
   if (isLoading || isLoadingCompany) {
     return <div>Loading...</div>;
   }
-
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
-
-  const handleListMove = async (sourceIndex: number, destinationIndex: number) => {
-    try {
-      const sourceList = lists[sourceIndex];
-      const destinationList = lists[destinationIndex];
-      await Promise.all([
-        updateList(sourceList.id, { position: destinationIndex }),
-        updateList(destinationList.id, { position: sourceIndex })
-      ]);
-    } catch (error) {
-      console.error('Failed to update list positions:', error);
-    }
-  };
-
-  const handleCardMove = async (
-    _sourceListId: string,
-    destinationListId: string,
-    _sourceIndex: number,
-    destinationIndex: number,
-    cardId: string
-  ) => {
-    try {
-      await updateCard(cardId, {
-        list_id: destinationListId,
-        position: destinationIndex
-      });
-    } catch (error) {
-      console.error('Failed to move card:', error);
-    }
-  };
-
-  const handleCardUpdate = async (listId: string, cardId: string, updates: CardUpdate) => {
-    try {
-      const apiUpdates = {
-        ...updates,
-        list_id: listId,
-        color_code: updates.colorCode,
-      };
-      delete apiUpdates.colorCode;
-      await updateCard(cardId, apiUpdates);
-    } catch (error) {
-      console.error('Failed to update card:', error);
-    }
-  };
-
-  const handleListTitleChange = async (listId: string, newTitle: string) => {
-    try {
-      await updateList(listId, { name: newTitle });
-    } catch (error) {
-      console.error('Failed to update list title:', error);
-    }
-  };
-
-  const handleCardAdd = async (listId: string, title: string) => {
-    try {
-      if (!title) {
-        throw new Error('Card title is required');
-      }
-      const list = lists.find(l => l.id === listId);
-      const position = list?.cards.length ?? 0;
-      const newCard = await createCard({
-        list_id: listId,
-        title,
-        position,
-      });
-      return newCard.id;
-    } catch (error) {
-      console.error('Failed to create card:', error);
-      throw error;
-    }
-  };
-
-  const handleListAdd = async (title: string) => {
-    try {
-      if (!title) {
-        throw new Error('List title is required');
-      }
-      const maxPosition = lists.reduce((max, list) => 
-        Math.max(max, list.position || 0), -1);
-      const position = maxPosition + 1;
-      const newList = await createList({
-        name: title,
-        position,
-        board_id: PASSWORD_BOARD_ID
-      });
-      setLists(currentLists => [...currentLists, {
-        ...newList,
-        title: newList.name,
-        cards: []
-      }]);
-    } catch (error) {
-      console.error('Failed to create list:', error);
-    }
-  };
-
-  const handleListDelete = async (listId: string) => {
-    try {
-      await deleteList(listId);
-    } catch (error) {
-      console.error('Error deleting list:', error);
-    }
-  };
 
   return (
     <div className="min-h-screen p-6 flex flex-col">
@@ -188,17 +357,59 @@ const Password: React.FC<PasswordProps> = ({
           <span className="text-lg text-gray-600">{companyInfo.name}</span>
         )}
       </div>
-      <TrelloBoard 
-        userRole={userRole}
-        initialLists={lists}
-        onListMove={handleListMove}
-        onCardMove={handleCardMove}
-        onCardUpdate={handleCardUpdate}
-        onListTitleChange={handleListTitleChange}
-        onCardAdd={handleCardAdd}
-        onListAdd={handleListAdd}
-        onListDelete={handleListDelete}
-      />
+
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+          <button 
+            className="float-right font-bold"
+            onClick={() => setError(null)}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      <div className="overflow-x-auto rounded-lg shadow-sm border border-gray-200">
+        <table className="min-w-full bg-white">
+          <thead>
+            <tr>
+              <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b w-[15%]">Name</th>
+              <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b w-[15%]">Username</th>
+              <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b w-[25%]">Password</th>
+              <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b w-[20%]">URL</th>
+              <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b w-[15%]">Notes</th>
+              <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b w-[10%]">Actions</th>
+            </tr>
+          </thead>
+          {renderTableBody()}
+        </table>
+      </div>
+
+      {passwordToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+            <h3 className="text-lg font-semibold mb-4">Confirm Deletion</h3>
+            <p className="mb-6">
+              Are you sure you want to delete the password for "{passwordToDelete.name}"? This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setPasswordToDelete(null)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
