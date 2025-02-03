@@ -38,6 +38,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Name</label>
             <input
+              title="Name"
+              placeholder="Name"
               type="text"
               className="w-full border rounded p-2"
               value={formData.name}
@@ -48,6 +50,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Pack Count per Box</label>
             <input
+              title="Pack Count per Box"
+              placeholder="Pack Count per Box"
               type="number"
               className="w-full border rounded p-2"
               value={formData.pack_count_per_box}
@@ -58,6 +62,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Recommended Retail Price</label>
             <input
+              title="Recommended Retail Price"
+              placeholder="Recommended Retail Price"
               type="number"
               step="0.01"
               className="w-full border rounded p-2"
