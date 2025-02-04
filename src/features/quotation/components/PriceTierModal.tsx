@@ -110,14 +110,20 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
                         className="close-button"
                         sx={{
                             position: 'absolute',
-                            right: '8px',
+                            right: '24px',
                             top: '8px'
                         }}
                     >
                         <CloseIcon />
                     </IconButton>
                 </div>
-                <TableContainer component={Paper}>
+                <TableContainer 
+                    component={Paper} 
+                    sx={{ 
+                        maxHeight: '60vh',
+                        overflow: 'auto'
+                    }}
+                >
                     <Table>
                         <TableHead>
                             <TableRow>

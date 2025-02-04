@@ -1,12 +1,13 @@
 .price-tier-modal {
-    padding: 20px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     background-color: white;
-    margin: 50px auto;
-    max-width: 80%;
-    width: 90%;
-    border-radius: 8px;
-    box-sizing: border-box;
-    position: relative;
+    padding: 20px;
+    max-width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
 }
 
 .close-button {
