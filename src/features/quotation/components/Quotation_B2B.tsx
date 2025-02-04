@@ -71,6 +71,9 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
   // Add new state for gift box
   const [isGiftBox, setIsGiftBox] = React.useState<boolean>(false);
 
+  // Add sales account manager state
+  const [salesAccountManager, setSalesAccountManager] = React.useState<string>("");
+
   // Update the initial footer text state to be a function that considers gift box status
   const getFooterText = (includeGiftBox: boolean) => {
     const giftBoxContent = `Content Per Gift Box:
@@ -327,6 +330,63 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
     }));
   };
 
+  const handleGeneratePDF = async () => {
+    // Check if more than 3 price columns are selected
+    if (visibleCartonColumns.size > 3) {
+      const confirm = window.confirm(
+        "Warning: Selecting more than 3 price columns may cause PDF layout issues. Do you want to continue?"
+      );
+      if (!confirm) {
+        return;
+      }
+    }
+
+    try {
+      setIsGeneratingPDF(true);
+      const pdfData = {
+        selectedProducts: Array.from(selectedProducts),
+        selectedFlavors: Object.fromEntries(
+          Object.entries(selectedFlavors).map(([key, value]) => [
+            key,
+            Array.from(value),
+          ])
+        ),
+        products: products.map((product) => ({
+          ...product,
+          variants: productVariants[product.id] || [],
+          priceTiers: productPriceTiers[product.id] || [],
+        })),
+        companyInfo,
+        customerCompanyName,
+        sales_account_manager: salesAccountManager, // Updated key name
+        currentDate,
+        tableSettings: {
+          showPackCount,
+          showRetailPrice,
+          visibleCartonColumns: Array.from(visibleCartonColumns),
+        },
+        footer: footerText,
+      };
+
+      console.log("PDF Data:", JSON.stringify(pdfData, null, 2));
+
+      const pdfBlob = await generateQuotationPDF(pdfData as QuotationPDFData);
+      console.log("PDF generated successfully");
+
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `quotation-${customerCompanyName}-${currentDate}.pdf`;
+      link.click();
+
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   if (loadingProducts) {
     return <div>Loading products...</div>;
   }
@@ -346,20 +406,21 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
             value={customerCompanyName}
             onChange={(e) => setCustomerCompanyName(e.target.value)}
             placeholder="Enter client company name"
+            style={{ marginBottom: '1rem' }}
+          />
+          <TextField
+            label="Sales Account Manager"
+            variant="outlined"
+            fullWidth
+            value={salesAccountManager}
+            onChange={(e) => setSalesAccountManager(e.target.value)}
+            placeholder="Enter sales account manager name"
           />
           <div className="date-container">Updated At: {currentDate}</div>
         </Grid>
 
         <Grid item xs={6}>
           <div className="toggle-container">
-            <label className="toggle-label">
-              <input
-                type="checkbox"
-                checked={isGiftBox}
-                onChange={() => setIsGiftBox(prev => !prev)}
-              />
-              Gift Box
-            </label>
             <label className="toggle-label">
               <input
                 type="checkbox"
@@ -709,58 +770,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
         <Button
           variant="contained"
           color="primary"
-          onClick={async () => {
-            try {
-              setIsGeneratingPDF(true);
-              // Create the data object for PDF generation
-              const pdfData = {
-                selectedProducts: Array.from(selectedProducts),
-                selectedFlavors: Object.fromEntries(
-                  Object.entries(selectedFlavors).map(([key, value]) => [
-                    key,
-                    Array.from(value),
-                  ])
-                ),
-                products: products.map((product) => ({
-                  ...product,
-                  variants: productVariants[product.id] || [],
-                  priceTiers: productPriceTiers[product.id] || [],
-                })),
-                companyInfo,
-                customerCompanyName,
-                currentDate,
-                tableSettings: {
-                  showPackCount,
-                  showRetailPrice,
-                  visibleCartonColumns: Array.from(visibleCartonColumns),
-                },
-                footer: footerText,
-              };
-
-              console.log("PDF Data:", JSON.stringify(pdfData, null, 2));
-
-              // Call the backend service
-              const pdfBlob = await generateQuotationPDF(
-                pdfData as QuotationPDFData
-              );
-              console.log("PDF generated successfully");
-
-              // Create a blob URL and trigger download
-              const blobUrl = URL.createObjectURL(pdfBlob);
-              const link = document.createElement("a");
-              link.href = blobUrl;
-              link.download = `quotation-${customerCompanyName}-${currentDate}.pdf`;
-              link.click();
-
-              // Clean up the blob URL after download
-              URL.revokeObjectURL(blobUrl);
-            } catch (error) {
-              console.error("Error generating PDF:", error);
-              // You might want to add some error handling UI here
-            } finally {
-              setIsGeneratingPDF(false);
-            }
-          }}
+          onClick={handleGeneratePDF}
           className={`action-button generate-pdf-button ${
             !customerCompanyName ? "disabled" : ""
           }`}
