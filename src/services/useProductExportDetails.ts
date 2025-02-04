@@ -1,5 +1,5 @@
 import { BACKEND_API_DOMAIN } from '../config';
-import { ProductExportDetails, UpdateProductExportDetails, CreateProductExportDetailsRequest} from '../shared/types/ProductExport';
+import { ProductExportDetails, UpdateProductExportDetails, CreateProductExportDetailsRequest, CompanyProductExportDetails, ProductExportSelection } from '../shared/types/ProductExport';
 
 /**
  * Fetches export details for a specific product from the backend
@@ -93,4 +93,56 @@ export const createProductExportDetails = async (
     }
 
     return response.json();
+};
+
+/**
+ * Fetches all product export details for a specific company
+ * @param companyId - The UUID of the company
+ * @returns Promise containing an array of company product export details
+ * @throws Error if the API request fails
+ */
+export const getCompanyProductExportDetails = async (
+    companyId: string
+): Promise<CompanyProductExportDetails[]> => {
+    const response = await fetch(
+        `${BACKEND_API_DOMAIN}/products/company/${companyId}/export-details`,
+        {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+            },
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch company product export details');
+    }
+
+    return response.json();
+};
+
+/**
+ * Transforms company product export details into a selectable format
+ * @param data - The raw company product export details
+ * @returns Array of product export selections with computed values
+ */
+export const transformToSelectableFormat = (
+    data: CompanyProductExportDetails[]
+): ProductExportSelection[] => {
+    return data.map(product => ({
+        product_id: product.product_id,
+        product_name: product.product_name,
+        isSelected: false,
+        variants: product.details.map(variant => ({
+            variant_id: variant.variant_id,
+            description: variant.product_description,
+            isSelected: false,
+            pack_size_per_carton: variant.pack_size_per_carton,
+            fob_price_per_carton: parseFloat(variant.fob_price_per_carton),
+            fob_price_per_unit: parseFloat(variant.fob_price_per_carton) / variant.pack_size_per_carton,
+            recommended_retail_price_usd: variant.recommended_retail_price_usd,
+            container_size: variant.container_size,
+            cartons_per_container: variant.cartons_per_container
+        }))
+    }));
 };

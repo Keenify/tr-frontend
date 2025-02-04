@@ -6,6 +6,7 @@ import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyDa
 import '../styles/Quotation.css';
 import { Tabs, Tab } from '@mui/material';
 import { QuotationB2B } from './Quotation_B2B';
+import { QuotationExport } from './Quotation_Export';
 
 interface QuotationProps {
     session: Session;
@@ -33,13 +34,11 @@ const Quotation: React.FC<QuotationProps> = ({ session }) => {
 
             <Tabs value={activeTab} onChange={handleTabChange} aria-label="quotation tabs">
                 <Tab label="B2B" />
-                <Tab label="B2B (Gift Box)" />
                 <Tab label="Export" />
             </Tabs>
 
             {activeTab === 0 && <QuotationB2B session={session} />}
-            {activeTab === 1 && <div>Gift Box Component (Coming Soon)</div>}
-            {activeTab === 2 && <div>Export Component (Coming Soon)</div>}
+            {activeTab === 1 && <QuotationExport session={session} />}
         </div>
     );
 };
