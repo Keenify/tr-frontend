@@ -124,6 +124,18 @@ const Product: React.FC<ProductProps> = ({ session }) => {
     }
   }, []);
 
+  const filteredProducts = React.useMemo(() => {
+    return products.reduce((acc: { regular: ProductType[]; giftBox: ProductType[] }, product) => {
+      const isGiftBox = product.name.toLowerCase().includes('gift box');
+      if (activeTab === 'products' && !isGiftBox) {
+        acc.regular.push(product);
+      } else if (activeTab === 'giftbox' && isGiftBox) {
+        acc.giftBox.push(product);
+      }
+      return acc;
+    }, { regular: [], giftBox: [] });
+  }, [products, activeTab]);
+
   if (isLoading || loadingProducts) {
     return (
       <div className="flex justify-center items-center h-full">
@@ -166,6 +178,16 @@ const Product: React.FC<ProductProps> = ({ session }) => {
               Products
             </button>
             <button
+              onClick={() => setActiveTab('giftbox')}
+              className={`mr-8 py-2 px-1 ${
+                activeTab === 'giftbox'
+                  ? 'border-b-2 border-blue-500 text-blue-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Gift Box
+            </button>
+            <button
               onClick={() => setActiveTab('rollout')}
               className={`py-2 px-1 ${
                 activeTab === 'rollout'
@@ -179,7 +201,7 @@ const Product: React.FC<ProductProps> = ({ session }) => {
         </div>
       </div>
 
-      {activeTab === 'products' ? (
+      {(activeTab === 'products' || activeTab === 'giftbox') ? (
         <>
           <CreateProductModal
             isOpen={isModalOpen}
@@ -189,7 +211,7 @@ const Product: React.FC<ProductProps> = ({ session }) => {
           />
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {products.map(product => (
+            {(activeTab === 'products' ? filteredProducts.regular : filteredProducts.giftBox).map(product => (
               <div key={product.id} className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex justify-between items-start">
                   <h2 className="text-xl font-semibold mb-2">{product.name}</h2>

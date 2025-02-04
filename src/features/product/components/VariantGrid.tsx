@@ -40,17 +40,19 @@ const VariantGrid: React.FC<VariantGridProps> = ({ variants, onVariantUpdate }) 
         {variants.map(variant => (
           <div 
             key={variant.id} 
-            className="p-3 border rounded-lg bg-gray-50 hover:shadow-md transition-shadow cursor-pointer"
+            className="p-2 border rounded-lg bg-gray-50 hover:shadow-md transition-shadow cursor-pointer flex flex-col h-[150px]"
             onClick={() => handleVariantClick(variant)}
           >
             {variant.image_url && (
-              <img 
-                src={variant.image_url} 
-                alt={variant.name}
-                className="w-full h-24 object-cover rounded-md mb-2"
-              />
+              <div className="w-full h-20 flex-shrink-0">
+                <img 
+                  src={variant.image_url} 
+                  alt={variant.name}
+                  className="w-full h-full object-contain rounded-md"
+                />
+              </div>
             )}
-            <p className="text-sm text-gray-700 text-center break-word min-h-[2.5rem]">
+            <p className="text-sm text-gray-700 text-center mt-auto line-clamp-2 overflow-hidden">
               {variant.name}
             </p>
           </div>
