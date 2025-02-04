@@ -64,9 +64,8 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
             getProductsByCompany(companyInfo.id)
                 .then(products => {
                     setProducts(products);
-                    // Initialize all products as selected
-                    const initialSelectedProducts = new Set(products.map(product => product.id));
-                    setSelectedProducts(initialSelectedProducts);
+                    // Initialize all products as unselected (empty Set)
+                    setSelectedProducts(new Set());
                     
                     return Promise.all(
                         products.map(product => {
