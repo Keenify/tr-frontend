@@ -90,6 +90,7 @@ const CreateVariantModal: React.FC<CreateVariantModalProps> = ({ isOpen, onClose
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Product Barcode</label>
                         <input
+                            title="Enter product barcode"
                             type="text"
                             value={productBarcode}
                             onChange={(e) => setProductBarcode(e.target.value)}
@@ -100,6 +101,7 @@ const CreateVariantModal: React.FC<CreateVariantModalProps> = ({ isOpen, onClose
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Carton Barcode</label>
                         <input
+                            title="Enter carton barcode"
                             type="text"
                             value={cartonBarcode}
                             onChange={(e) => setCartonBarcode(e.target.value)}
