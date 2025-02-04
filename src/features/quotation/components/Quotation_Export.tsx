@@ -189,9 +189,11 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                                 className="w-full"
                                             />
                                         ) : (
-                                            ['fob_price_per_carton', 'fob_price_per_unit', 'recommended_retail_price_usd'].includes(field) 
-                                                ? `$${Number(product.variants[0]?.[field as keyof typeof product.variants[0]]).toFixed(2)}`
-                                                : product.variants[0]?.[field as keyof typeof product.variants[0]]
+                                            field === 'fob_price_per_unit' 
+                                                ? `$${(Number(product.variants[0]?.fob_price_per_carton) / Number(product.variants[0]?.pack_size_per_carton)).toFixed(2)}`
+                                                : ['fob_price_per_carton', 'recommended_retail_price_usd'].includes(field)
+                                                    ? `$${Number(product.variants[0]?.[field as keyof typeof product.variants[0]]).toFixed(2)}`
+                                                    : product.variants[0]?.[field as keyof typeof product.variants[0]]
                                         )}
                                     </td>
                                 ))}
