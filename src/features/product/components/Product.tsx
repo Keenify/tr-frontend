@@ -11,6 +11,7 @@ import DeleteProductModal from './DeleteProductModal';
 import CreateVariantModal from './CreateVariantModal';
 import VariantGrid from './VariantGrid';
 import ProductRollOut from './ProductRollOut';
+import EditProductExportModal from './EditProductExportModal';
 
 interface ProductProps {
   session: Session;
@@ -27,6 +28,8 @@ const Product: React.FC<ProductProps> = ({ session }) => {
   const [deletingProduct, setDeletingProduct] = React.useState<ProductType | null>(null);
   const [creatingVariantForProduct, setCreatingVariantForProduct] = React.useState<ProductType | null>(null);
   const [activeTab, setActiveTab] = React.useState('products');
+  const [editMenuOpen, setEditMenuOpen] = React.useState<number | null>(null);
+  const [editingProductExport, setEditingProductExport] = React.useState<ProductType | null>(null);
 
   const fetchProducts = React.useCallback(async () => {
     if (!companyInfo?.id) return;
@@ -198,16 +201,42 @@ const Product: React.FC<ProductProps> = ({ session }) => {
                 <div className="flex justify-between items-start">
                   <h2 className="text-xl font-semibold mb-2">{product.name}</h2>
                   <div className="flex gap-2">
-                    <button
-                      title="Edit product"
-                      onClick={() => setEditingProduct(product)}
-                      className="text-gray-600 hover:text-gray-800"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-12 12a2 2 0 01-2.828 0 2 2 0 010-2.828l12-12z" />
-                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-12 12a2 2 0 01-2.828 0 2 2 0 010-2.828l12-12z" />
-                      </svg>
-                    </button>
+                    <div className="relative">
+                      <button
+                        title="Edit options"
+                        onClick={() => setEditMenuOpen(editMenuOpen === product.id ? null : product.id)}
+                        className="text-gray-600 hover:text-gray-800"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-12 12a2 2 0 01-2.828 0 2 2 0 010-2.828l12-12z" />
+                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-12 12a2 2 0 01-2.828 0 2 2 0 010-2.828l12-12z" />
+                        </svg>
+                      </button>
+                      {editMenuOpen === product.id && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
+                          <div className="py-1">
+                            <button
+                              onClick={() => {
+                                setEditingProduct(product);
+                                setEditMenuOpen(null);
+                              }}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              Edit Product Details
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingProductExport(product);
+                                setEditMenuOpen(null);
+                              }}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              Edit Product Export Details
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     <button
                       title="Delete product"
                       onClick={() => setDeletingProduct(product)}
@@ -268,6 +297,14 @@ const Product: React.FC<ProductProps> = ({ session }) => {
               isOpen={!!creatingVariantForProduct}
               onClose={() => setCreatingVariantForProduct(null)}
               onSubmit={(data) => handleCreateVariant(creatingVariantForProduct.id, data)}
+            />
+          )}
+
+          {editingProductExport && (
+            <EditProductExportModal
+              isOpen={!!editingProductExport}
+              onClose={() => setEditingProductExport(null)}
+              product={editingProductExport}
             />
           )}
         </>
