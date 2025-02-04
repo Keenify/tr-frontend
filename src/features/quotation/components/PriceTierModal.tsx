@@ -11,9 +11,10 @@ interface PriceTierModalProps {
     onClose: () => void;
     products: Product[];
     productPriceTiers: { [key: number]: ProductPriceTier[] };
+    onPriceTierUpdate: (productId: number, updatedTiers: ProductPriceTier[]) => void;
 }
 
-const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products, productPriceTiers }) => {
+const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products, productPriceTiers, onPriceTierUpdate }) => {
     const [isSideModalOpen, setIsSideModalOpen] = useState(false);
     const [newTier, setNewTier] = useState({ min_cartons: 0, price_per_unit: 0 });
     const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
@@ -37,7 +38,8 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
             if (!productPriceTiers[productId]) {
                 productPriceTiers[productId] = [];
             }
-            productPriceTiers[productId].push(newPriceTier);
+            const updatedTiers = [...productPriceTiers[productId], newPriceTier];
+            onPriceTierUpdate(productId, updatedTiers);
             setIsSideModalOpen(false);
             setNewTier({ min_cartons: 0, price_per_unit: 0 });
         } catch (error) {
@@ -60,9 +62,10 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
             try {
                 const success = await deletePriceTier(selectedTier.tierId);
                 if (success) {
-                    productPriceTiers[selectedTier.productId] = productPriceTiers[selectedTier.productId].filter(
+                    const updatedTiers = productPriceTiers[selectedTier.productId].filter(
                         tier => tier.id !== selectedTier.tierId
                     );
+                    onPriceTierUpdate(selectedTier.productId, updatedTiers);
                     setSelectedTier({ productId: null, tierId: null });
                     setIsDeleteModalOpen(false);
                 }
@@ -86,13 +89,14 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
     };
 
     const handleSaveEditTier = async () => {
-        if (editTier.tierId !== null) {
+        if (editTier.tierId !== null && selectedProductId !== null) {
             try {
                 const updatedTier = await updatePriceTier(editTier.tierId, editTier.min_cartons, editTier.price_per_unit);
-                const productTiers = productPriceTiers[selectedProductId!];
+                const productTiers = [...productPriceTiers[selectedProductId]];
                 const tierIndex = productTiers.findIndex(t => t.id === editTier.tierId);
                 if (tierIndex !== -1) {
                     productTiers[tierIndex] = updatedTier;
+                    onPriceTierUpdate(selectedProductId, productTiers);
                 }
                 setIsEditModalOpen(false);
             } catch (error) {

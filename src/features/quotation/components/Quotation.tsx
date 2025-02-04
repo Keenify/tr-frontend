@@ -227,6 +227,13 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
         }
     };
 
+    const handlePriceTierUpdate = (productId: number, updatedTiers: ProductPriceTier[]) => {
+        setProductPriceTiers(prev => ({
+            ...prev,
+            [productId]: updatedTiers
+        }));
+    };
+
     if (loadingProducts) {
         return <div>Loading products...</div>;
     }
@@ -559,6 +566,7 @@ const Products: React.FC<ProductsProps> = ({ session }) => {
                 onClose={() => setIsPriceTierModalOpen(false)}
                 products={products}
                 productPriceTiers={productPriceTiers}
+                onPriceTierUpdate={handlePriceTierUpdate}
             />
         </div>
     );
