@@ -11,6 +11,8 @@ export interface Product {
 export interface ProductVariant {
     name: string;
     image_url: string | null;
+    product_barcode?: string;
+    carton_barcode?: string;
     id: number;
     product_id: number;
     created_at: string;
@@ -48,6 +50,8 @@ export interface CreateProductVariantRequest {
 export interface UpdateProductVariantRequest {
     name?: string;
     image?: File;
+    product_barcode?: string;
+    carton_barcode?: string;
 }
 
 export interface DeleteProductVariantRequest {

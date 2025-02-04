@@ -5,13 +5,20 @@ import { deleteProductVariant, updateProductVariant } from '../../../services/us
 interface EditVariantModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: { name: string; image?: File }) => void;
+    onSubmit: (data: { 
+        name: string; 
+        image?: File;
+        product_barcode?: string;
+        carton_barcode?: string;
+    }) => void;
     onDelete?: () => void;
     variant: ProductVariant;
 }
 
 const EditVariantModal: React.FC<EditVariantModalProps> = ({ isOpen, onClose, onSubmit, onDelete, variant }) => {
     const [name, setName] = React.useState(variant.name);
+    const [productBarcode, setProductBarcode] = React.useState(variant.product_barcode || '');
+    const [cartonBarcode, setCartonBarcode] = React.useState(variant.carton_barcode || '');
     const [image, setImage] = React.useState<File | null>(null);
     const [isDragging, setIsDragging] = React.useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -19,6 +26,8 @@ const EditVariantModal: React.FC<EditVariantModalProps> = ({ isOpen, onClose, on
     // Reset form state when variant changes
     React.useEffect(() => {
         setName(variant.name);
+        setProductBarcode(variant.product_barcode || '');
+        setCartonBarcode(variant.carton_barcode || '');
         setImage(null);
     }, [variant]);
 
@@ -52,8 +61,18 @@ const EditVariantModal: React.FC<EditVariantModalProps> = ({ isOpen, onClose, on
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await updateProductVariant(variant.id, { name, image: image || undefined });
-            onSubmit({ name, image: image || undefined });
+            await updateProductVariant(variant.id, { 
+                name, 
+                image: image || undefined,
+                product_barcode: productBarcode,
+                carton_barcode: cartonBarcode
+            });
+            onSubmit({ 
+                name, 
+                image: image || undefined,
+                product_barcode: productBarcode,
+                carton_barcode: cartonBarcode
+            });
             setImage(null);
             onClose();
         } catch (error) {
@@ -90,6 +109,26 @@ const EditVariantModal: React.FC<EditVariantModalProps> = ({ isOpen, onClose, on
                             onChange={(e) => setName(e.target.value)}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                             required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Product Barcode</label>
+                        <input
+                            type="text"
+                            value={productBarcode}
+                            onChange={(e) => setProductBarcode(e.target.value)}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Carton Barcode</label>
+                        <input
+                            type="text"
+                            value={cartonBarcode}
+                            onChange={(e) => setCartonBarcode(e.target.value)}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         />
                     </div>
 

@@ -3,11 +3,18 @@ import React from 'react';
 interface CreateVariantModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: { name: string; image?: File }) => void;
+    onSubmit: (data: { 
+        name: string; 
+        image?: File;
+        product_barcode?: string;
+        carton_barcode?: string;
+    }) => void;
 }
 
 const CreateVariantModal: React.FC<CreateVariantModalProps> = ({ isOpen, onClose, onSubmit }) => {
     const [name, setName] = React.useState('');
+    const [productBarcode, setProductBarcode] = React.useState('');
+    const [cartonBarcode, setCartonBarcode] = React.useState('');
     const [image, setImage] = React.useState<File | null>(null);
     const [isDragging, setIsDragging] = React.useState(false);
     const [showError, setShowError] = React.useState(false);
@@ -19,8 +26,15 @@ const CreateVariantModal: React.FC<CreateVariantModalProps> = ({ isOpen, onClose
             setShowError(true);
             return;
         }
-        onSubmit({ name, image });
+        onSubmit({ 
+            name, 
+            image,
+            product_barcode: productBarcode,
+            carton_barcode: cartonBarcode
+        });
         setName('');
+        setProductBarcode('');
+        setCartonBarcode('');
         setImage(null);
         setShowError(false);
         onClose();
@@ -70,6 +84,26 @@ const CreateVariantModal: React.FC<CreateVariantModalProps> = ({ isOpen, onClose
                             onChange={(e) => setName(e.target.value)}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                             required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Product Barcode</label>
+                        <input
+                            type="text"
+                            value={productBarcode}
+                            onChange={(e) => setProductBarcode(e.target.value)}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Carton Barcode</label>
+                        <input
+                            type="text"
+                            value={cartonBarcode}
+                            onChange={(e) => setCartonBarcode(e.target.value)}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         />
                     </div>
 
