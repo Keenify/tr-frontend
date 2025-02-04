@@ -68,18 +68,36 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
     year: "numeric",
   });
 
-  // Copy all the existing state and functions from the original Quotation component
-  // Lines 51-570 from the original Quotation.tsx
-  // Add new state for footer text
-  const [footerText, setFooterText] = React.useState<string>(
-    `*Remarks:
+  // Add new state for gift box
+  const [isGiftBox, setIsGiftBox] = React.useState<boolean>(false);
+
+  // Update the initial footer text state to be a function that considers gift box status
+  const getFooterText = (includeGiftBox: boolean) => {
+    const giftBoxContent = `Content Per Gift Box:
+3 x 30g Assorted Flavoured Popcorn
+2 x 35g Brownie Crisps
+1 x 50g Crispy Cones
+1 x 20 pcs YUMI Corn Sticks
+
+`;
+
+    const remarks = `*Remarks:
 1. All prices above are subject to prevailing GST
 2. All goods sold are not returnable
 3. Mixing of products within the same carton is not allowed
 4. Discount is applicable to same product category
 5. FREE delivery to ONE location, $8 delivery fee to every subsequent location
-6. Validity of Quotation: 30 days`
-  );
+6. Validity of Quotation: 30 days`;
+
+    return includeGiftBox ? giftBoxContent + remarks : remarks;
+  };
+
+  const [footerText, setFooterText] = React.useState<string>(() => getFooterText(false));
+
+  // Add effect to update footer text when gift box status changes
+  React.useEffect(() => {
+    setFooterText(getFooterText(isGiftBox));
+  }, [isGiftBox]);
 
   React.useEffect(() => {
     if (companyInfo?.id) {
@@ -172,6 +190,15 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
     setVisibleCartonColumns(new Set(priceTierHeaders));
   }, [priceTierHeaders]);
 
+  // Update the useEffect to check for gift box products
+  React.useEffect(() => {
+    const hasGiftBoxProduct = Array.from(selectedProducts).some(productId => {
+      const product = products.find(p => p.id === productId);
+      return product?.name.toLowerCase().includes('gift box');
+    });
+    setIsGiftBox(hasGiftBoxProduct);
+  }, [selectedProducts, products]);
+
   // Function to toggle product selection
   const toggleProductSelection = (productId: number) => {
     setSelectedProducts((prev) => {
@@ -193,6 +220,15 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
           return newFlavors;
         });
       }
+
+      // Check if any selected product contains "gift box"
+      const selectedProductsList = Array.from(newSelection);
+      const hasGiftBoxProduct = selectedProductsList.some(id => {
+        const product = products.find(p => p.id === id);
+        return product?.name.toLowerCase().includes('gift box');
+      });
+      setIsGiftBox(hasGiftBoxProduct);
+
       return newSelection;
     });
   };
@@ -316,6 +352,14 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
 
         <Grid item xs={6}>
           <div className="toggle-container">
+            <label className="toggle-label">
+              <input
+                type="checkbox"
+                checked={isGiftBox}
+                onChange={() => setIsGiftBox(prev => !prev)}
+              />
+              Gift Box
+            </label>
             <label className="toggle-label">
               <input
                 type="checkbox"
