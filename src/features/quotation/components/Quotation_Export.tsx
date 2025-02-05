@@ -247,7 +247,12 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
             <div className="mt-4 flex justify-end">
                 <button 
                     onClick={handleGeneratePDF}
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    disabled={!selections.some(product => product.isSelected)}
+                    className={`font-bold py-2 px-4 rounded ${
+                        selections.some(product => product.isSelected)
+                            ? 'bg-blue-500 hover:bg-blue-700 text-white'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
                 >
                     Generate PDF
                 </button>
