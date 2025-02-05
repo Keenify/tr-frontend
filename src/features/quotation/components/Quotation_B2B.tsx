@@ -74,6 +74,9 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
   // Add sales account manager state
   const [salesAccountManager, setSalesAccountManager] = React.useState<string>("");
 
+  // Add new state for toggling between carton and pack count
+  const [displayPackCount, setDisplayPackCount] = React.useState<boolean>(false);
+
   // Update the initial footer text state to be a function that considers gift box status
   const getFooterText = (includeGiftBox: boolean) => {
     const giftBoxContent = `Content Per Gift Box:
@@ -177,23 +180,32 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
   // Function to get unique price tier headers for the table
   const getPriceTierHeaders = () => {
     const allTiers = Object.values(productPriceTiers).flat();
-    const uniqueCartons = Array.from(
-      new Set(allTiers.map((tier) => tier.min_cartons))
-    );
-    return uniqueCartons
-      .filter((carton): carton is number => carton !== null && carton > 0)
-      .sort((a, b) => a - b);
+    if (displayPackCount) {
+      const uniquePacks = Array.from(
+        new Set(allTiers.map((tier) => tier.min_packs))
+      );
+      return uniquePacks
+        .filter((pack): pack is number => pack !== null && pack > 0)
+        .sort((a, b) => a - b);
+    } else {
+      const uniqueCartons = Array.from(
+        new Set(allTiers.map((tier) => tier.min_cartons))
+      );
+      return uniqueCartons
+        .filter((carton): carton is number => carton !== null && carton > 0)
+        .sort((a, b) => a - b);
+    }
   };
 
   const priceTierHeaders = React.useMemo(
     () => getPriceTierHeaders(),
-    [productPriceTiers]
+    [productPriceTiers, displayPackCount]
   );
 
-  // Initialize visible carton columns
+  // Update the useEffect to initialize visible columns based on the toggle
   React.useEffect(() => {
-    setVisibleCartonColumns(new Set(priceTierHeaders.filter((carton): carton is number => carton !== null && carton > 0)));
-  }, [priceTierHeaders]);
+    setVisibleCartonColumns(new Set(priceTierHeaders));
+  }, [priceTierHeaders, displayPackCount]);
 
   // Update the useEffect to check for gift box products
   React.useEffect(() => {
@@ -253,20 +265,6 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
         newFlavors[productId].add(flavor); // Check flavor
       }
       return newFlavors;
-    });
-  };
-
-  // Function to toggle carton column visibility
-  const toggleCartonColumn = (carton: number) => {
-    setVisibleCartonColumns((prev) => {
-      const newVisibleCartonColumns = new Set(prev);
-      if (newVisibleCartonColumns.has(carton)) {
-        newVisibleCartonColumns.delete(carton);
-      } else {
-        newVisibleCartonColumns.add(carton);
-      }
-      // Convert to array, sort, and convert back to set
-      return new Set(Array.from(newVisibleCartonColumns).sort((a, b) => a - b));
     });
   };
 
@@ -381,12 +379,25 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
       link.download = `quotation-${customerCompanyName}-${currentDate}.pdf`;
       link.click();
 
-      URL.revokeObjectURL(blobUrl);
+      // URL.revokeObjectURL(blobUrl);
     } catch (error) {
       console.error("Error generating PDF:", error);
     } finally {
       setIsGeneratingPDF(false);
     }
+  };
+
+  // Function to toggle the visibility of carton columns
+  const toggleCartonColumn = (carton: number) => {
+    setVisibleCartonColumns((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(carton)) {
+        newSet.delete(carton);
+      } else {
+        newSet.add(carton);
+      }
+      return newSet;
+    });
   };
 
   if (loadingProducts) {
@@ -423,6 +434,14 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
 
         <Grid item xs={6}>
           <div className="toggle-container">
+            <label className="toggle-label">
+              <input
+                type="checkbox"
+                checked={displayPackCount}
+                onChange={() => setDisplayPackCount((prev) => !prev)}
+              />
+              Display Pack Count
+            </label>
             <label className="toggle-label">
               <input
                 type="checkbox"
@@ -525,13 +544,15 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
               )}
             </TableRow>
             <TableRow>
-              {Array.from(visibleCartonColumns).map((carton) => (
+              {Array.from(visibleCartonColumns).map((count) => (
                 <TableCell
-                  key={carton}
+                  key={count}
                   align="center"
                   className="table-header-cell"
                   style={{ width: "65px", backgroundColor: "#FF9933" }}
-                >{`≥${carton} carton`}</TableCell>
+                >
+                  {displayPackCount ? `≥${count} pack` : `≥${count} carton`}
+                </TableCell>
               ))}
             </TableRow>
           </TableHead>
@@ -669,36 +690,51 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
                     <span>No variants</span>
                   )}
                 </TableCell>
-                {Array.from(visibleCartonColumns).map((carton) => (
+                {Array.from(visibleCartonColumns).map((count) => (
                   <TableCell
-                    key={carton}
+                    key={count}
                     align="center"
                     className="table-cell"
                     onDoubleClick={() =>
                       handleDoubleClick(
                         product.id,
-                        `price_${carton}`,
+                        displayPackCount ? `price_pack_${count}` : `price_${count}`,
                         productPriceTiers[product.id]
-                          ?.find((tier) => tier.min_cartons === carton)
+                          ?.find((tier) =>
+                            displayPackCount
+                              ? tier.min_packs === count
+                              : tier.min_cartons === count
+                          )
                           ?.price_per_unit.toString() || ""
                       )
                     }
                   >
                     {editingCell?.productId === product.id &&
-                    editingCell.field === `price_${carton}` ? (
+                    editingCell.field === (displayPackCount ? `price_pack_${count}` : `price_${count}`) ? (
                       <input
                         type="text"
                         value={editValue}
                         onChange={handleInputChange}
-                        onBlur={() => handleBlur(product.id, `price_${carton}`)}
+                        onBlur={() =>
+                          handleBlur(
+                            product.id,
+                            displayPackCount ? `price_pack_${count}` : `price_${count}`
+                          )
+                        }
                         onKeyDown={(e) =>
-                          handleKeyDown(e, product.id, `price_${carton}`)
+                          handleKeyDown(
+                            e,
+                            product.id,
+                            displayPackCount ? `price_pack_${count}` : `price_${count}`
+                          )
                         }
                         autoFocus
                       />
                     ) : (
-                      productPriceTiers[product.id]?.find(
-                        (tier) => tier.min_cartons === carton
+                      productPriceTiers[product.id]?.find((tier) =>
+                        displayPackCount
+                          ? tier.min_packs === count
+                          : tier.min_cartons === count
                       )?.price_per_unit || "N/A"
                     )}
                   </TableCell>
