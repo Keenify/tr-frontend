@@ -16,13 +16,14 @@ interface PriceTierModalProps {
 
 const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products, productPriceTiers, onPriceTierUpdate }) => {
     const [isSideModalOpen, setIsSideModalOpen] = useState(false);
-    const [newTier, setNewTier] = useState({ min_cartons: 0, price_per_unit: 0 });
+    const [newTier, setNewTier] = useState({ min_cartons: 0, min_packs: 0, price_per_unit: 0 });
     const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
     const [selectedTier, setSelectedTier] = useState<{ productId: number | null, tierId: number | null }>({ productId: null, tierId: null });
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editTier, setEditTier] = useState<{ min_cartons: number, price_per_unit: number, tierId: number | null }>({
+    const [editTier, setEditTier] = useState<{ min_cartons: number, min_packs: number, price_per_unit: number, tierId: number | null }>({
         min_cartons: 0,
+        min_packs: 0,
         price_per_unit: 0,
         tierId: null
     });
@@ -34,14 +35,14 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
 
     const handleSaveNewTier = async (productId: number) => {
         try {
-            const newPriceTier = await createPriceTier(newTier.min_cartons, newTier.price_per_unit, productId);
+            const newPriceTier = await createPriceTier(newTier.min_cartons, newTier.min_packs, newTier.price_per_unit, productId);
             if (!productPriceTiers[productId]) {
                 productPriceTiers[productId] = [];
             }
             const updatedTiers = [...productPriceTiers[productId], newPriceTier];
             onPriceTierUpdate(productId, updatedTiers);
             setIsSideModalOpen(false);
-            setNewTier({ min_cartons: 0, price_per_unit: 0 });
+            setNewTier({ min_cartons: 0, min_packs: 0, price_per_unit: 0 });
         } catch (error) {
             console.error('Error saving new price tier:', error);
         }
@@ -80,6 +81,7 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
         if (tier) {
             setEditTier({
                 min_cartons: Number(tier.min_cartons),
+                min_packs: Number(tier.min_packs),
                 price_per_unit: Number(tier.price_per_unit),
                 tierId: tier.id
             });
@@ -91,7 +93,7 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
     const handleSaveEditTier = async () => {
         if (editTier.tierId !== null && selectedProductId !== null) {
             try {
-                const updatedTier = await updatePriceTier(editTier.tierId, editTier.min_cartons, editTier.price_per_unit);
+                const updatedTier = await updatePriceTier(editTier.tierId, editTier.min_cartons, editTier.min_packs, editTier.price_per_unit);
                 const productTiers = [...productPriceTiers[selectedProductId]];
                 const tierIndex = productTiers.findIndex(t => t.id === editTier.tierId);
                 if (tierIndex !== -1) {
@@ -107,7 +109,7 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
 
     return (
         <Modal open={open} onClose={onClose}>
-            <div className="price-tier-modal">
+            <div className="price-tier-modal" style={{ width: '80%', height: '80%' }}>
                 <div className="modal-header">
                     <IconButton 
                         onClick={onClose} 
@@ -124,7 +126,7 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
                 <TableContainer 
                     component={Paper} 
                     sx={{ 
-                        maxHeight: '60vh',
+                        maxHeight: '70vh',
                         overflow: 'auto'
                     }}
                 >
@@ -132,7 +134,8 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
                         <TableHead>
                             <TableRow>
                                 <TableCell>Product Name</TableCell>
-                                <TableCell>Price Tiers</TableCell>
+                                <TableCell>Carton Price Tiers</TableCell>
+                                <TableCell>Pack Price Tiers</TableCell>
                                 <TableCell>Action</TableCell>
                             </TableRow>
                         </TableHead>
@@ -141,18 +144,32 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
                                 <TableRow key={product.id}>
                                     <TableCell>{product.name}</TableCell>
                                     <TableCell>
-                                        {productPriceTiers[product.id]?.sort((a, b) => a.min_cartons - b.min_cartons).map(tier => (
+                                        {productPriceTiers[product.id]?.filter(tier => tier.min_cartons !== null && tier.min_cartons !== 0).sort((a, b) => a.min_cartons! - b.min_cartons!).map(tier => (
                                             <div key={tier.id}>
                                                 <input
-                                                    title={`Price tier for ${tier.min_cartons} cartons at $${tier.price_per_unit} per unit`}
+                                                    title={`Price tier for ≥${tier.min_cartons} cartons at $${tier.price_per_unit} per unit`}
                                                     type="radio"
-                                                    name={`tier-${product.id}`}
+                                                    name={`tier-carton-${product.id}`}
                                                     checked={selectedTier.productId === product.id && selectedTier.tierId === tier.id}
                                                     onChange={() => handleCheckboxChange(product.id, tier.id)}
                                                 />
-                                                {`≥${tier.min_cartons} cartons: $${tier.price_per_unit}`}
+                                                ≥{tier.min_cartons} cartons: ${tier.price_per_unit}
                                             </div>
-                                        )) || 'No price tiers available'}
+                                        )) || 'No carton price tiers available'}
+                                    </TableCell>
+                                    <TableCell>
+                                        {productPriceTiers[product.id]?.filter(tier => tier.min_packs !== 0).sort((a, b) => a.min_packs - b.min_packs).map(tier => (
+                                            <div key={tier.id}>
+                                                <input
+                                                    title={`Price tier for ≥${tier.min_packs} packs at $${tier.price_per_unit} per unit`}
+                                                    type="radio"
+                                                    name={`tier-pack-${product.id}`}
+                                                    checked={selectedTier.productId === product.id && selectedTier.tierId === tier.id}
+                                                    onChange={() => handleCheckboxChange(product.id, tier.id)}
+                                                />
+                                                ≥{tier.min_packs} packs: ${tier.price_per_unit}
+                                            </div>
+                                        )) || 'No pack price tiers available'}
                                     </TableCell>
                                     <TableCell>
                                         <IconButton onClick={() => handleAddClick(product.id)}>
@@ -192,6 +209,15 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
                             />
                         </label>
                         <label>
+                            Min Packs
+                            <input
+                                type="number"
+                                placeholder="Min Packs"
+                                value={newTier.min_packs}
+                                onChange={(e) => setNewTier({ ...newTier, min_packs: parseInt(e.target.value) })}
+                            />
+                        </label>
+                        <label>
                             Price per Unit
                             <input
                                 type="number"
@@ -224,6 +250,15 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
                                 placeholder="Min Cartons"
                                 value={editTier.min_cartons}
                                 onChange={(e) => setEditTier({ ...editTier, min_cartons: parseInt(e.target.value) })}
+                            />
+                        </label>
+                        <label>
+                            Min Packs
+                            <input
+                                type="number"
+                                placeholder="Min Packs"
+                                value={editTier.min_packs}
+                                onChange={(e) => setEditTier({ ...editTier, min_packs: parseInt(e.target.value) })}
                             />
                         </label>
                         <label>
