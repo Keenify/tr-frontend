@@ -90,7 +90,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
 3. Mixing of products within the same carton is not allowed
 4. Discount is applicable to same product category
 5. FREE delivery to ONE location, $8 delivery fee to every subsequent location
-6. Validity of Quotation: 30 days`;
+6. Validity of Quotation: 30 days from quotation date shown above`;
 
     return includeGiftBox ? giftBoxContent + remarks : remarks;
   };
