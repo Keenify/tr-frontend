@@ -180,7 +180,9 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
     const uniqueCartons = Array.from(
       new Set(allTiers.map((tier) => tier.min_cartons))
     );
-    return uniqueCartons.sort((a, b) => a - b);
+    return uniqueCartons
+      .filter((carton): carton is number => carton !== null && carton > 0)
+      .sort((a, b) => a - b);
   };
 
   const priceTierHeaders = React.useMemo(
@@ -190,7 +192,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
 
   // Initialize visible carton columns
   React.useEffect(() => {
-    setVisibleCartonColumns(new Set(priceTierHeaders));
+    setVisibleCartonColumns(new Set(priceTierHeaders.filter((carton): carton is number => carton !== null && carton > 0)));
   }, [priceTierHeaders]);
 
   // Update the useEffect to check for gift box products
@@ -429,7 +431,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
               />
               Show Pack Count Per Box
             </label>
-            {priceTierHeaders.map((carton) => (
+            {priceTierHeaders.filter((carton): carton is number => carton !== null).map((carton) => (
               <label key={carton} className="toggle-label">
                 <input
                   type="checkbox"
