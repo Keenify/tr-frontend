@@ -364,6 +364,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
           showPackCount,
           showRetailPrice,
           visibleCartonColumns: Array.from(visibleCartonColumns),
+          displayType: displayPackCount ? 'pack' : 'carton', // New key to indicate pack or carton
         },
         footer: footerText,
       };
