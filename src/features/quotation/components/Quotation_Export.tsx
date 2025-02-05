@@ -13,6 +13,13 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     const [editingCell, setEditingCell] = useState<{ id: number, field: string } | null>(null);
     const { companyInfo, isLoading, error } = useUserAndCompanyData(session.user.id);
     const [collapsedRows, setCollapsedRows] = useState<Set<number>>(new Set());
+    const [customerCompanyName, setCustomerCompanyName] = useState<string>('');
+    const [salesAccountManager, setSalesAccountManager] = useState<string>('');
+    const currentDate = new Date().toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+    });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -93,6 +100,11 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     };
 
     const handleGeneratePDF = () => {
+        if (!customerCompanyName || !salesAccountManager || !selections.some(product => product.isSelected)) {
+            console.error('Cannot generate PDF: Missing required information or no products selected.');
+            return;
+        }
+
         const selectedProducts = selections
             .filter(product => product.isSelected)
             .map(product => ({
@@ -112,9 +124,27 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
             }))
             .filter(product => product.variants.length > 0);
 
-        console.log('Selected products for PDF with full details:', selectedProducts);
-        console.log(JSON.stringify(selectedProducts, null, 1));
-        // TODO: Add PDF generation logic here
+        const pdfData = {
+            selectedProducts,
+            companyInfo: {
+                name: companyInfo?.name || '',
+                address: companyInfo?.address || '',
+                website_url: companyInfo?.website_url || '',
+                phone: companyInfo?.phone || '',
+                logo_url: companyInfo?.logo_url || '',
+                id: companyInfo?.id || '',
+                created_at: companyInfo?.created_at || '',
+                completed_sign_up_sequence: companyInfo?.completed_sign_up_sequence || false,
+                company_brand_color: companyInfo?.company_brand_color || null
+            },
+            customerCompanyName,
+            currentDate,
+            sales_account_manager: salesAccountManager
+        };
+
+        console.log('Selected products for PDF with full details:', pdfData);
+        console.log(JSON.stringify(pdfData, null, 1));
+        // TODO: Add PDF generation logic here with pdfData
     };
 
     const toggleCollapse = (productId: number) => {
@@ -131,6 +161,23 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
 
     return (
         <div className="quotation-export-container p-4">
+            <div className="mb-4">
+                <input
+                    type="text"
+                    placeholder="Customer Company Name"
+                    value={customerCompanyName}
+                    onChange={(e) => setCustomerCompanyName(e.target.value)}
+                    className="border p-2 w-full mb-2"
+                />
+                <input
+                    type="text"
+                    placeholder="Sales Account Manager"
+                    value={salesAccountManager}
+                    onChange={(e) => setSalesAccountManager(e.target.value)}
+                    className="border p-2 w-full"
+                />
+                <div className="mt-2">Updated At: {currentDate}</div>
+            </div>
             <table className="min-w-full border-collapse border border-gray-300">
                 <thead>
                     <tr className="bg-orange-100">
@@ -247,8 +294,14 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
             <div className="mt-4 flex justify-end">
                 <button 
                     onClick={handleGeneratePDF}
-                    disabled={!selections.some(product => product.isSelected)}
+                    disabled={
+                        !customerCompanyName || 
+                        !salesAccountManager || 
+                        !selections.some(product => product.isSelected)
+                    }
                     className={`font-bold py-2 px-4 rounded ${
+                        customerCompanyName && 
+                        salesAccountManager && 
                         selections.some(product => product.isSelected)
                             ? 'bg-blue-500 hover:bg-blue-700 text-white'
                             : 'bg-gray-300 text-gray-500 cursor-not-allowed'
