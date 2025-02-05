@@ -16,7 +16,14 @@ export const getProductPriceTiers = async (productId: string): Promise<ProductPr
     return response.json();
 };
 
-export const createPriceTier = async (minCartons: number, pricePerUnit: number, productId: number): Promise<ProductPriceTier> => {
+export const createPriceTier = async (minCartons: number, minPacks: number, pricePerUnit: number, productId: number): Promise<ProductPriceTier> => {
+    // Check if both minCartons and minPacks are greater than 0
+    if (minCartons > 0 && minPacks > 0) {
+        alert('minCartons and minPacks cannot both be greater than 0 at the same time.');
+        throw new Error('Invalid input: minCartons and minPacks cannot both be greater than 0.');
+    }
+
+    console.log('Creating price tier:', { minCartons, minPacks, pricePerUnit, productId });
     const response = await fetch(`${BACKEND_API_DOMAIN}/products/price-tiers/`, {
         method: 'POST',
         headers: {
@@ -25,19 +32,24 @@ export const createPriceTier = async (minCartons: number, pricePerUnit: number, 
         },
         body: JSON.stringify({
             min_cartons: minCartons,
+            min_packs: minPacks,
             price_per_unit: pricePerUnit,
             product_id: productId,
         }),
     });
 
     if (!response.ok) {
+        console.error('Failed to create price tier:', response.statusText);
         throw new Error('Failed to create price tier');
     }
 
-    return response.json();
+    const result = await response.json();
+    console.log('Created price tier:', result);
+    return result;
 };
 
-export const updatePriceTier = async (priceTierId: number, minCartons: number, pricePerUnit: number): Promise<ProductPriceTier> => {
+export const updatePriceTier = async (priceTierId: number, minCartons: number, minPacks: number, pricePerUnit: number): Promise<ProductPriceTier> => {
+    console.log('Updating price tier:', { priceTierId, minCartons, minPacks, pricePerUnit });
     const response = await fetch(`${BACKEND_API_DOMAIN}/products/price-tiers/${priceTierId}`, {
         method: 'PUT',
         headers: {
@@ -46,15 +58,19 @@ export const updatePriceTier = async (priceTierId: number, minCartons: number, p
         },
         body: JSON.stringify({
             min_cartons: minCartons,
+            min_packs: minPacks,
             price_per_unit: pricePerUnit,
         }),
     });
 
     if (!response.ok) {
+        console.error('Failed to update price tier:', response.statusText);
         throw new Error('Failed to update price tier');
     }
 
-    return response.json();
+    const result = await response.json();
+    console.log('Updated price tier:', result);
+    return result;
 };
 
 export const deletePriceTier = async (priceTierId: number): Promise<boolean> => {
