@@ -199,14 +199,14 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
             <table className="min-w-full border-collapse border border-gray-300">
                 <thead>
                     <tr className="bg-orange-100">
-                        <th className="border border-gray-300 p-2">Select</th>
-                        <th className="border border-gray-300 p-2">Product Name</th>
-                        <th className="border border-gray-300 p-2">Container Size</th>
-                        <th className="border border-gray-300 p-2">Cartons/Container</th>
-                        <th className="border border-gray-300 p-2">Pack Size/Carton</th>
-                        <th className="border border-gray-300 p-2">FOB Price/Carton</th>
-                        <th className="border border-gray-300 p-2">FOB Price/Unit</th>
-                        <th className="border border-gray-300 p-2">RRP (USD)</th>
+                        <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>Select</th>
+                        <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>Product Name</th>
+                        <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>Container Size</th>
+                        <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>Cartons/Container</th>
+                        <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>Pack Size/Carton</th>
+                        <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>FOB Price/Carton</th>
+                        <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>FOB Price/Unit</th>
+                        <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>RRP (USD)</th>
                     </tr>
                 </thead>
                 <tbody>

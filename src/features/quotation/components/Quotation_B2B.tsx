@@ -463,7 +463,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
                 align="center"
                 rowSpan={2}
                 className="table-header-cell"
-                style={{ width: "60px" }}
+                style={{ width: "60px", backgroundColor: "#FF9933" }}
               >
                 Select
               </TableCell>
@@ -471,7 +471,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
                 align="center"
                 rowSpan={2}
                 className="table-header-cell"
-                style={{ width: "15%" }}
+                style={{ width: "15%", backgroundColor: "#FF9933" }}
               >
                 Product Name
               </TableCell>
@@ -479,7 +479,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
                 align="center"
                 rowSpan={2}
                 className="table-header-cell"
-                style={{ width: "120px" }}
+                style={{ width: "120px", backgroundColor: "#FF9933" }}
               >
                 Packaging
               </TableCell>
@@ -488,7 +488,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
                   align="center"
                   rowSpan={2}
                   className="table-header-cell"
-                  style={{ width: "80px" }}
+                  style={{ width: "80px", backgroundColor: "#FF9933" }}
                 >
                   Pack Count Per Box
                 </TableCell>
@@ -497,7 +497,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
                 align="center"
                 rowSpan={2}
                 className="table-header-cell"
-                style={{ width: "15%" }}
+                style={{ width: "15%", backgroundColor: "#FF9933" }}
               >
                 Flavour
               </TableCell>
@@ -506,6 +506,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
                   align="center"
                   colSpan={visibleCartonColumns.size}
                   className="table-header-cell"
+                  style={{ backgroundColor: "#FF9933" }}
                 >
                   Price per unit (SGD)
                 </TableCell>
@@ -515,7 +516,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
                   align="center"
                   rowSpan={2}
                   className="table-header-cell"
-                  style={{ width: "100px" }}
+                  style={{ width: "100px", backgroundColor: "#FF9933" }}
                 >
                   Recommended Retail Price
                 </TableCell>
@@ -527,7 +528,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
                   key={carton}
                   align="center"
                   className="table-header-cell"
-                  style={{ width: "65px" }}
+                  style={{ width: "65px", backgroundColor: "#FF9933" }}
                 >{`≥${carton} carton`}</TableCell>
               ))}
             </TableRow>
