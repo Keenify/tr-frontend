@@ -19,7 +19,8 @@ export interface ProductVariant {
 }
 
 export interface ProductPriceTier {
-    min_cartons: number;
+    min_cartons: number | null;
+    min_packs: number;
     price_per_unit: string;
     id: number;
     product_id: number;
