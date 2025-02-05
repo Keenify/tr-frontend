@@ -15,3 +15,23 @@ export interface QuotationPDFData {
     };
     footer: string;
 }
+
+export interface QuotationExportPDFData {
+    selectedProducts: {
+        product_name: string;
+        product_id: number;
+        container_size: string;
+        cartons_per_container: number | string;
+        pack_size_per_carton: number | string;
+        fob_price_per_carton: number | string;
+        recommended_retail_price_usd: number | string;
+        variants: {
+            description: string;
+            variant_id: number;
+        }[];
+    }[];
+    companyInfo: CompanyData;
+    customerCompanyName: string;
+    currentDate: string;
+    sales_account_manager: string;
+}

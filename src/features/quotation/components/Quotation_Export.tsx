@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { getCompanyProductExportDetails, transformToSelectableFormat } from '../../../services/useProductExportDetails';
 import { ProductExportSelection } from '../../../shared/types/ProductExport';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
+import { generateQuotationExportPDF } from '../services/useQuotationPDF';
+import { QuotationExportPDFData } from '../types/QuotationPDF';
 
 interface QuotationExportProps {
     session: Session;
@@ -99,7 +101,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
         setEditingCell(null);
     };
 
-    const handleGeneratePDF = () => {
+    const handleGeneratePDF = async () => {
         if (!customerCompanyName || !salesAccountManager || !selections.some(product => product.isSelected)) {
             console.error('Cannot generate PDF: Missing required information or no products selected.');
             return;
@@ -124,7 +126,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
             }))
             .filter(product => product.variants.length > 0);
 
-        const pdfData = {
+        const pdfData: QuotationExportPDFData = {
             selectedProducts,
             companyInfo: {
                 name: companyInfo?.name || '',
@@ -142,9 +144,20 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
             sales_account_manager: salesAccountManager
         };
 
-        console.log('Selected products for PDF with full details:', pdfData);
-        console.log(JSON.stringify(pdfData, null, 1));
-        // TODO: Add PDF generation logic here with pdfData
+        try {
+            const pdfBlob = await generateQuotationExportPDF(pdfData as QuotationExportPDFData);
+            console.log("PDF generated successfully");
+
+            const blobUrl = URL.createObjectURL(pdfBlob);
+            const link = document.createElement("a");
+            link.href = blobUrl;
+            link.download = `export-quotation-${customerCompanyName}-${currentDate}.pdf`;
+            link.click();
+
+            URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error("Error generating PDF:", error);
+        }
     };
 
     const toggleCollapse = (productId: number) => {
