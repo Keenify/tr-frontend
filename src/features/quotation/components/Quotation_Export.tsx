@@ -19,9 +19,10 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     const [salesAccountManager, setSalesAccountManager] = useState<string>('');
     const currentDate = new Date().toLocaleDateString("en-GB", {
         day: "2-digit",
-        month: "short",
+        month: "long",
         year: "numeric",
     });
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState<boolean>(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -107,6 +108,8 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
             return;
         }
 
+        setIsGeneratingPDF(true);
+
         const selectedProducts = selections
             .filter(product => product.isSelected)
             .map(product => ({
@@ -157,6 +160,8 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
             URL.revokeObjectURL(blobUrl);
         } catch (error) {
             console.error("Error generating PDF:", error);
+        } finally {
+            setIsGeneratingPDF(false);
         }
     };
 
@@ -308,19 +313,32 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                 <button 
                     onClick={handleGeneratePDF}
                     disabled={
+                        isGeneratingPDF || 
                         !customerCompanyName || 
                         !salesAccountManager || 
                         !selections.some(product => product.isSelected)
                     }
                     className={`font-bold py-2 px-4 rounded ${
-                        customerCompanyName && 
-                        salesAccountManager && 
-                        selections.some(product => product.isSelected)
-                            ? 'bg-blue-500 hover:bg-blue-700 text-white'
-                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        isGeneratingPDF
+                            ? 'bg-blue-300 text-white cursor-not-allowed'
+                            : customerCompanyName && 
+                              salesAccountManager && 
+                              selections.some(product => product.isSelected)
+                                ? 'bg-blue-500 hover:bg-blue-700 text-white'
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
                 >
-                    Generate PDF
+                    {isGeneratingPDF ? (
+                        <span className="flex items-center">
+                            <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                            Generating...
+                        </span>
+                    ) : (
+                        'Generate PDF'
+                    )}
                 </button>
             </div>
         </div>

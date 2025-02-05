@@ -64,7 +64,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
   const [isGeneratingPDF, setIsGeneratingPDF] = React.useState<boolean>(false);
   const currentDate = new Date().toLocaleDateString("en-GB", {
     day: "2-digit",
-    month: "short",
+    month: "long",
     year: "numeric",
   });
 
