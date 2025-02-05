@@ -133,7 +133,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
         <div className="quotation-export-container p-4">
             <table className="min-w-full border-collapse border border-gray-300">
                 <thead>
-                    <tr className="bg-gray-100">
+                    <tr className="bg-orange-100">
                         <th className="border border-gray-300 p-2">Select</th>
                         <th className="border border-gray-300 p-2">Product Name</th>
                         <th className="border border-gray-300 p-2">Container Size</th>
@@ -204,7 +204,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                         <div className="ml-8">
                                             <table className="w-full border-collapse">
                                                 <thead>
-                                                    <tr className="bg-gray-100 text-sm">
+                                                    <tr className="bg-orange-100 text-sm">
                                                         <th className="border border-gray-200 p-1">Select</th>
                                                         <th className="border border-gray-200 p-1">Description</th>
                                                     </tr>
