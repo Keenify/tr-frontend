@@ -159,7 +159,7 @@ const EditVariantModal: React.FC<EditVariantModalProps> = ({ isOpen, onClose, on
                                     <img
                                         src={URL.createObjectURL(image)}
                                         alt="New variant preview"
-                                        className="mx-auto h-24 object-cover rounded-md"
+                                        className="mx-auto h-96 object-cover rounded-md"
                                     />
                                     <p className="text-sm text-gray-500">{image.name}</p>
                                 </div>
@@ -168,7 +168,7 @@ const EditVariantModal: React.FC<EditVariantModalProps> = ({ isOpen, onClose, on
                                     <img
                                         src={variant.image_url}
                                         alt="Current variant"
-                                        className="mx-auto h-24 object-cover rounded-md"
+                                        className="mx-auto h-96 object-cover rounded-md"
                                     />
                                     <p className="text-sm text-gray-500">Current image</p>
                                 </div>
