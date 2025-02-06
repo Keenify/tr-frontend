@@ -29,7 +29,6 @@ import Projects from './features/projects/components/Projects';
 import Supplier from './features/people/supplier/components/Supplier';
 import Client from './features/people/client/components/Client';
 import Admin from './features/admin/components/Admin';
-import SlideEditorPage from './features/product/routes/SlideEditorPage';
 import Hiring from './features/people/hiring/components/Hiring';
 
 // Create a client
@@ -69,7 +68,6 @@ const App: React.FC = () => {
                 <Route path="/:userId/resources" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="resources" onTabChange={() => { }}><Resources session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/projects" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="projects" onTabChange={() => { }}><Projects session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/admin" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="admin" onTabChange={() => { }}><Admin session={session} /></DashboardLayout>} />} />
-                <Route path="/slides/edit/:slideId" element={<SlideEditorPage />} />
                 <Route path="/:userId/hiring" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="hiring" onTabChange={() => { }}><Hiring session={session} /></DashboardLayout>} />} />
               </>
             )}
