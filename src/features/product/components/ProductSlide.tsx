@@ -37,29 +37,8 @@ const ProductSlide: React.FC<ProductSlideProps> = ({ session }) => {
           }
         );
         
-        const slidesWithThumbnails = await Promise.all(response.data.files.map(async (slide: GoogleSlide) => {
-          if (slide.thumbnailLink) {
-            // Add a timestamp to bypass caching
-            const timestamp = new Date().getTime();
-            slide.thumbnailLink = `${slide.thumbnailLink}&timestamp=${timestamp}`;
-            
-            // If URL contains 'drive-storage', try to get the thumbnail using alternative method
-            if (slide.thumbnailLink.includes('drive-storage')) {
-              try {
-                const altThumbnailUrl = `https://drive.google.com/thumbnail?id=${slide.id}&sz=w800`;
-                // Verify if the alternative URL is accessible
-                await axios.head(altThumbnailUrl);
-                slide.thumbnailLink = altThumbnailUrl;
-              } catch (error) {
-                console.warn(`Could not fetch alternative thumbnail for slide ${slide.id}:`, error);
-              }
-            }
-          }
-          return slide;
-        }));
-
-        console.log('Slides with processed thumbnails:', slidesWithThumbnails);
-        setSlides(slidesWithThumbnails);
+        // Simply use the slides data without modifying thumbnailLinks
+        setSlides(response.data.files);
         setIsLoading(false);
       } catch (error) {
         console.error('Error fetching Google Slides:', error);
@@ -103,7 +82,7 @@ const ProductSlide: React.FC<ProductSlideProps> = ({ session }) => {
                       onError={(e) => {
                         console.error(`Error loading thumbnail for ${slide.name}:`, e);
                         // Fallback to placeholder on error
-                        e.currentTarget.onerror = null; // Prevent infinite loop
+                        e.currentTarget.onerror = null;
                         e.currentTarget.src = `https://drive.google.com/thumbnail?id=${slide.id}&sz=w800`;
                       }}
                     />
@@ -115,8 +94,8 @@ const ProductSlide: React.FC<ProductSlideProps> = ({ session }) => {
                     </div>
                   )}
                 </div>
-                <div className="flex items-center text-blue-600 hover:text-blue-800">
-                  <span className="font-medium truncate">{slide.name}</span>
+                <div className="flex items-center justify-center text-blue-600 hover:text-blue-800">
+                  <span className="font-medium truncate text-lg px-1 text-center">{slide.name}</span>
                 </div>
               </a>
             </div>
