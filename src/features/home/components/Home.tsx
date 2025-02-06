@@ -10,14 +10,14 @@ interface HomeProps {
 }
 
 const imagePaths = [
-  "src/assets/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-0.png",
-  "src/assets/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-1.png",
-  "src/assets/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-2.png",
-  "src/assets/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-3.png",
-  "src/assets/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-4.png",
-  "src/assets/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-5.png",
-  "src/assets/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-6.png",
-  "src/assets/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-7.png"
+  "src/assets/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-0.png",
+  "src/assets/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-1.png",
+  "src/assets/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-2.png",
+  "src/assets/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-3.png",
+  "src/assets/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-4.png",
+  "src/assets/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-5.png",
+  "src/assets/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-6.png",
+  "src/assets/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-7.png"
 ];
 
 const Home: React.FC<HomeProps> = ({ session }) => {
