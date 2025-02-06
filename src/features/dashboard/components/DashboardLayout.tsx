@@ -146,6 +146,8 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
       navigate(`/${userId}/supplier`);
     } else if (subTab === 'client') {
       navigate(`/${userId}/client`);
+    } else if (subTab === 'hiring') {
+      navigate(`/${userId}/hiring`);
     }
   };
 
