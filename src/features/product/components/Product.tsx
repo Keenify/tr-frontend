@@ -309,7 +309,7 @@ const Product: React.FC<ProductProps> = ({ session }) => {
           )}
         </>
       ) : (
-        <ProductSlide />
+        <ProductSlide session={session} />
       )}
     </div>
   );
