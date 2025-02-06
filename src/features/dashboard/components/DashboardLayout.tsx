@@ -29,7 +29,8 @@ const navigationConfig = [
       { id: 'directory', label: 'Directory', shortForm: 'Di', icon: ThumbsUp },
       { id: 'orgChart', label: 'Org Chart', shortForm: 'OC', icon: ThumbsUp },
       { id: 'supplier', label: 'Supplier', shortForm: 'Su', icon: ThumbsUp },
-      { id: 'client', label: 'Client', shortForm: 'Cl', icon: ThumbsUp }
+      { id: 'client', label: 'Client', shortForm: 'Cl', icon: ThumbsUp },
+      { id: 'hiring', label: 'Hiring', shortForm: 'Hi', icon: ThumbsUp }
     ]
   },
   { id: 'projects', label: 'Projects', shortForm: 'P', icon: ThumbsUp, isExpandable: false },
@@ -45,7 +46,7 @@ const navigationConfig = [
  */
 type TabType = typeof navigationConfig[number]['id'];
 
-type SubTabType = 'directory' | 'orgChart' | 'supplier' | 'client';
+type SubTabType = 'directory' | 'orgChart' | 'supplier' | 'client' | 'hiring';
 
 interface LayoutProps {
   children: React.ReactNode;
