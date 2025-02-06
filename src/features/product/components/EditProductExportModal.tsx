@@ -52,7 +52,8 @@ const EditProductExportModal: React.FC<EditProductExportModalProps> = ({ isOpen,
           cartons_per_container: details?.cartons_per_container || 0,
         });
         setIsNewRecord(!details);
-      } catch (err) {
+      } catch (err: Error | unknown) {
+        console.error('Error fetching export details:', err);
         setIsNewRecord(true);
         setExportDetails(null);
       } finally {
@@ -111,6 +112,8 @@ const EditProductExportModal: React.FC<EditProductExportModalProps> = ({ isOpen,
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">Pack Size per Carton</label>
               <input
+                title="Pack Size per Carton"
+                placeholder="Pack Size per Carton"
                 type="number"
                 className="w-full border rounded p-2"
                 value={formData.pack_size_per_carton}
@@ -121,6 +124,8 @@ const EditProductExportModal: React.FC<EditProductExportModalProps> = ({ isOpen,
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">FOB Price per Carton</label>
               <input
+                title="FOB Price per Carton"
+                placeholder="FOB Price per Carton"
                 type="text"
                 className="w-full border rounded p-2"
                 value={formData.fob_price_per_carton}
@@ -131,6 +136,8 @@ const EditProductExportModal: React.FC<EditProductExportModalProps> = ({ isOpen,
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">Recommended Retail Price (USD)</label>
               <input
+                title="Recommended Retail Price (USD)"
+                placeholder="Recommended Retail Price (USD)"
                 type="text"
                 className="w-full border rounded p-2"
                 value={formData.recommended_retail_price_usd}
@@ -141,6 +148,8 @@ const EditProductExportModal: React.FC<EditProductExportModalProps> = ({ isOpen,
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">Shelf Life</label>
               <input
+                title="Shelf Life"
+                placeholder="Shelf Life"
                 type="text"
                 className="w-full border rounded p-2"
                 value={formData.shelf_life}
@@ -151,6 +160,8 @@ const EditProductExportModal: React.FC<EditProductExportModalProps> = ({ isOpen,
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">HS Code</label>
               <input
+                title="HS Code"
+                placeholder="HS Code"
                 type="text"
                 className="w-full border rounded p-2"
                 value={formData.hs_code}
@@ -161,6 +172,8 @@ const EditProductExportModal: React.FC<EditProductExportModalProps> = ({ isOpen,
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">Carton Width</label>
               <input
+                title="Carton Width"
+                placeholder="Carton Width"
                 type="text"
                 className="w-full border rounded p-2"
                 value={formData.carton_width}
@@ -171,6 +184,8 @@ const EditProductExportModal: React.FC<EditProductExportModalProps> = ({ isOpen,
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">Carton Length</label>
               <input
+                title="Carton Length"
+                placeholder="Carton Length"
                 type="text"
                 className="w-full border rounded p-2"
                 value={formData.carton_length}
@@ -181,6 +196,8 @@ const EditProductExportModal: React.FC<EditProductExportModalProps> = ({ isOpen,
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">Carton Height</label>
               <input
+                title="Carton Height"
+                placeholder="Carton Height"
                 type="text"
                 className="w-full border rounded p-2"
                 value={formData.carton_height}
@@ -191,6 +208,8 @@ const EditProductExportModal: React.FC<EditProductExportModalProps> = ({ isOpen,
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">Net Weight</label>
               <input
+                title="Net Weight"
+                placeholder="Net Weight"
                 type="text"
                 className="w-full border rounded p-2"
                 value={formData.net_weight}
@@ -201,6 +220,8 @@ const EditProductExportModal: React.FC<EditProductExportModalProps> = ({ isOpen,
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">Gross Weight</label>
               <input
+                title="Gross Weight"
+                placeholder="Gross Weight"
                 type="text"
                 className="w-full border rounded p-2"
                 value={formData.gross_weight}
@@ -211,6 +232,8 @@ const EditProductExportModal: React.FC<EditProductExportModalProps> = ({ isOpen,
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">Country of Origin</label>
               <input
+                title="Country of Origin"
+                placeholder="Country of Origin"
                 type="text"
                 className="w-full border rounded p-2"
                 value={formData.country_of_origin}
@@ -221,6 +244,8 @@ const EditProductExportModal: React.FC<EditProductExportModalProps> = ({ isOpen,
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">Container Size</label>
               <input
+                title="Container Size"
+                placeholder="Container Size"
                 type="text"
                 className="w-full border rounded p-2"
                 value={formData.container_size}
@@ -231,6 +256,8 @@ const EditProductExportModal: React.FC<EditProductExportModalProps> = ({ isOpen,
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1">Cartons per Container</label>
               <input
+                title="Cartons per Container"
+                placeholder="Cartons per Container"
                 type="number"
                 className="w-full border rounded p-2"
                 value={formData.cartons_per_container}
