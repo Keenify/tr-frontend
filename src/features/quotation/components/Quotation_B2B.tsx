@@ -178,7 +178,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
   }, [companyInfo?.id]);
 
   // Function to get unique price tier headers for the table
-  const getPriceTierHeaders = () => {
+  const getPriceTierHeaders = React.useCallback(() => {
     const allTiers = Object.values(productPriceTiers).flat();
     if (displayPackCount) {
       const uniquePacks = Array.from(
@@ -195,11 +195,11 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
         .filter((carton): carton is number => carton !== null && carton > 0)
         .sort((a, b) => a - b);
     }
-  };
+  }, [productPriceTiers, displayPackCount]);
 
   const priceTierHeaders = React.useMemo(
     () => getPriceTierHeaders(),
-    [productPriceTiers, displayPackCount]
+    [getPriceTierHeaders]
   );
 
   // Update the useEffect to initialize visible columns based on the toggle
@@ -562,6 +562,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
               <TableRow key={product.id} hover data-product-id={product.id}>
                 <TableCell align="center" className="table-cell">
                   <input
+                    title="Select product"
                     type="checkbox"
                     checked={selectedProducts.has(product.id)}
                     onChange={() => toggleProductSelection(product.id)}
@@ -642,6 +643,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
                           handleKeyDown(e, product.id, "pack_count_per_box")
                         }
                         autoFocus
+                        placeholder="Enter pack count"
                       />
                     ) : (
                       product.pack_count_per_box
@@ -730,6 +732,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
                           )
                         }
                         autoFocus
+                        placeholder="Enter price"
                       />
                     ) : (
                       productPriceTiers[product.id]?.find((tier) =>
@@ -769,6 +772,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
                           )
                         }
                         autoFocus
+                        placeholder="Enter retail price"
                       />
                     ) : product.recommended_retail_price ? (
                       `$${parseFloat(product.recommended_retail_price).toFixed(
