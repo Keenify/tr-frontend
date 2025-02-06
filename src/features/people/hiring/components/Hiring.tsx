@@ -10,7 +10,7 @@ import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 
 // Import the PDF file
-import InterviewPDF from '../../../../assets/home/people/hiring/Day 8 - Designing Interview Sheets Complete.pdf';
+import InterviewPDF from '../../../../assets/people/hiring/Day 8 - Designing Interview Sheets Complete.pdf';
 
 interface HiringProps {
   session: Session;

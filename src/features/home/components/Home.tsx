@@ -10,14 +10,14 @@ interface HomeProps {
 }
 
 const imagePaths = [
-  "src/assets/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-0.png",
-  "src/assets/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-1.png",
-  "src/assets/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-2.png",
-  "src/assets/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-3.png",
-  "src/assets/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-4.png",
-  "src/assets/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-5.png",
-  "src/assets/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-6.png",
-  "src/assets/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-7.png"
+  "public/images/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-0.png",
+  "public/images/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-1.png",
+  "public/images/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-2.png",
+  "public/images/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-3.png",
+  "public/images/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-4.png",
+  "public/images/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-5.png",
+  "public/images/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-6.png",
+  "public/images/home/svn KL-officewall design FA_visual-guide_outlined/9d445079-a305-433e-81b7-bac1fc557797-7.png"
 ];
 
 const Home: React.FC<HomeProps> = ({ session }) => {
@@ -29,25 +29,35 @@ const Home: React.FC<HomeProps> = ({ session }) => {
     slidesToScroll: 1,
     autoplay: false,
     dotsClass: "slick-dots custom-dots",
+    accessibility: true,
+    focusOnSelect: false,
     appendDots: (dots: React.ReactNode) => (
-      <div style={{
-        position: 'absolute',
-        bottom: '-40px',
-        width: '100%'
-      }}>
+      <div 
+        style={{
+          position: 'absolute',
+          bottom: '-40px',
+          width: '100%'
+        }}
+        role="tablist"
+      >
         {dots}
       </div>
     ),
-    customPaging: () => (
-      <div style={{
-        width: '12px',
-        height: '12px',
-        border: '2px solid #666',
-        borderRadius: '50%',
-        margin: '0 5px',
-        backgroundColor: 'transparent',
-        transition: 'all 0.3s ease',
-      }}></div>
+    customPaging: (i: number) => (
+      <button
+        role="tab"
+        aria-label={`Go to slide ${i + 1}`}
+        style={{
+          width: '12px',
+          height: '12px',
+          border: '2px solid #666',
+          borderRadius: '50%',
+          margin: '0 5px',
+          backgroundColor: 'transparent',
+          transition: 'all 0.3s ease',
+          cursor: 'pointer'
+        }}
+      />
     ),
   };
 
@@ -73,16 +83,21 @@ const Home: React.FC<HomeProps> = ({ session }) => {
         <div style={{ width: '100%', height: '100%' }}>
           <Slider {...settings}>
             {imagePaths.map((path, index) => (
-              <div key={index} style={{ 
-                width: '100%',
-                height: '75vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
+              <div 
+                key={index} 
+                role="tabpanel"
+                aria-label={`Slide ${index + 1}`}
+                style={{ 
+                  width: '100%',
+                  height: '75vh',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
                 <img 
                   src={path} 
-                  alt={`Slide ${index}`} 
+                  alt={`Slide ${index + 1}`} 
                   style={{ 
                     maxWidth: '70%',
                     maxHeight: '100%',
