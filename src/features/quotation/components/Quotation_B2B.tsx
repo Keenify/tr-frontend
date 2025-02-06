@@ -458,7 +458,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
                   checked={visibleCartonColumns.has(carton)}
                   onChange={() => toggleCartonColumn(carton)}
                 />
-                {`Show ≥${carton} Carton`}
+                {displayPackCount ? `Show ≥${carton} Pack` : `Show ≥${carton} Carton`}
               </label>
             ))}
             <label className="toggle-label">
