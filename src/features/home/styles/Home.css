@@ -1,0 +1,7 @@
+.custom-dots li.slick-active div {
+  background-color: #666 !important;
+}
+
+.slick-slider, .slick-list, .slick-track {
+  height: 100%;
+} 
