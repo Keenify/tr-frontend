@@ -10,8 +10,8 @@ import EditProductModal from './EditProductModal';
 import DeleteProductModal from './DeleteProductModal';
 import CreateVariantModal from './CreateVariantModal';
 import VariantGrid from './VariantGrid';
-import ProductRollOut from './ProductRollOut';
 import EditProductExportModal from './EditProductExportModal';
+import ProductSlide from './ProductSlide';
 
 interface ProductProps {
   session: Session;
@@ -173,14 +173,14 @@ const Product: React.FC<ProductProps> = ({ session }) => {
               Products
             </button>
             <button
-              onClick={() => setActiveTab('rollout')}
+              onClick={() => setActiveTab('slides')}
               className={`py-2 px-1 ${
-                activeTab === 'rollout'
+                activeTab === 'slides'
                   ? 'border-b-2 border-blue-500 text-blue-600'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              Product Roll Out
+              Product Slides
             </button>
           </nav>
         </div>
@@ -309,7 +309,7 @@ const Product: React.FC<ProductProps> = ({ session }) => {
           )}
         </>
       ) : (
-        <ProductRollOut session={session} />
+        <ProductSlide />
       )}
     </div>
   );
