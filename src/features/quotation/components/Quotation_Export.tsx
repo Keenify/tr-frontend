@@ -222,6 +222,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                             {collapsedRows.has(product.product_id) ? '+' : '-'}
                                         </button>
                                         <input
+                                            title="Select Product"
                                             type="checkbox"
                                             checked={product.isSelected}
                                             onChange={(e) => handleProductSelect(product.product_id, e.target.checked)}
@@ -247,6 +248,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                     >
                                         {editingCell?.id === product.product_id && editingCell.field === field ? (
                                             <input
+                                                title="Edit Field"
                                                 type="text"
                                                 defaultValue={String(product.variants[0]?.[field as keyof typeof product.variants[0]])}
                                                 onBlur={(e) => handleCellEdit(product.product_id, field, e.target.value)}
@@ -279,6 +281,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                                         <tr key={variant.variant_id} className="text-sm">
                                                             <td className="border border-gray-200 p-1">
                                                                 <input
+                                                                    title="Select Variant"
                                                                     type="checkbox"
                                                                     checked={variant.isSelected}
                                                                     onChange={(e) => handleVariantSelect(
