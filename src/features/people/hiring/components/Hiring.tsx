@@ -56,6 +56,52 @@ const Hiring: React.FC<HiringProps> = ({ session }) => {
     setSelectedImage(null);
   };
 
+  const handlePrint = () => {
+    const printFrame = document.createElement('iframe');
+    printFrame.style.display = 'none';
+    document.body.appendChild(printFrame);
+    
+    const style = `
+      <style>
+        body { margin: 0; padding: 20px; }
+        img { 
+          width: 100%;
+          max-width: 100%;
+          height: auto;
+          margin-bottom: 20px;
+          page-break-after: always;
+        }
+        img:last-child {
+          page-break-after: auto;
+        }
+        @media print {
+          @page { margin: 0; }
+          body { margin: 1.6cm; }
+        }
+      </style>
+    `;
+
+    printFrame.contentDocument?.write(`
+      <html>
+        <head>
+          <title>Interview Guide</title>
+          ${style}
+        </head>
+        <body>
+          ${images.map(image => `<img src="${image.src}" alt="${image.alt}">`).join('')}
+        </body>
+      </html>
+    `);
+    printFrame.contentDocument?.close();
+
+    printFrame.onload = () => {
+      printFrame.contentWindow?.print();
+      setTimeout(() => {
+        document.body.removeChild(printFrame);
+      }, 500);
+    };
+  };
+
   const images = [
     { src: interviewQuestion1Image, alt: "Interview Guide Part 1" },
     { src: interviewQuestion2Image, alt: "Interview Guide Part 2" },
@@ -72,6 +118,21 @@ const Hiring: React.FC<HiringProps> = ({ session }) => {
       </Box>
 
       <TabPanel value={tabValue} index={0}>
+        <div style={{ marginBottom: '20px' }}>
+          <button
+            onClick={handlePrint}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#1976d2',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Print Guide
+          </button>
+        </div>
         <div style={{ 
           display: 'flex',
           flexDirection: 'row',
