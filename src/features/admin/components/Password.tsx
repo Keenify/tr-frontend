@@ -9,7 +9,8 @@ import {
   getDecryptedPassword 
 } from '../services/usePassword';
 import { CreatePasswordPayload, PasswordData, UpdatePasswordPayload } from '../types/password';
-import { EyeIcon, EyeSlashIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon, PencilIcon, TrashIcon, ClipboardIcon } from '@heroicons/react/24/outline';
+import { ClipboardDocumentCheckIcon } from '@heroicons/react/24/solid';
 
 interface PasswordProps {
   session: Session;
@@ -30,6 +31,7 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
     notes: '',
   });
   const [passwordToDelete, setPasswordToDelete] = useState<PasswordData | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Fetch passwords
   useEffect(() => {
@@ -148,6 +150,17 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
       url: '',
       notes: '',
     });
+  };
+
+  const handleCopyPassword = async (passwordId: string, password: string) => {
+    try {
+      await navigator.clipboard.writeText(password);
+      setCopiedId(passwordId);
+      setTimeout(() => setCopiedId(null), 2000); // Reset after 2 seconds
+    } catch (error) {
+      console.error('Failed to copy password:', error);
+      setError('Failed to copy password to clipboard');
+    }
   };
 
   const renderEditableRow = (password: Partial<PasswordData & { password?: string }>) => (
@@ -294,17 +307,32 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
                   <div className="font-mono min-w-[120px]">
                     {decryptedPasswords[password.id] || '•••••••'}
                   </div>
-                  <button
-                    onClick={() => handleTogglePassword(password.id)}
-                    className="text-gray-600 hover:text-gray-900 flex-shrink-0 ml-2"
-                    title={decryptedPasswords[password.id] ? "Hide password" : "Show password"}
-                  >
-                    {decryptedPasswords[password.id] ? (
-                      <EyeSlashIcon className="h-5 w-5" />
-                    ) : (
-                      <EyeIcon className="h-5 w-5" />
+                  <div className="flex items-center gap-2">
+                    {decryptedPasswords[password.id] && (
+                      <button
+                        onClick={() => handleCopyPassword(password.id, decryptedPasswords[password.id])}
+                        className="text-gray-600 hover:text-gray-900 flex-shrink-0"
+                        title="Copy password"
+                      >
+                        {copiedId === password.id ? (
+                          <ClipboardDocumentCheckIcon className="h-5 w-5 text-green-500" />
+                        ) : (
+                          <ClipboardIcon className="h-5 w-5" />
+                        )}
+                      </button>
                     )}
-                  </button>
+                    <button
+                      onClick={() => handleTogglePassword(password.id)}
+                      className="text-gray-600 hover:text-gray-900 flex-shrink-0"
+                      title={decryptedPasswords[password.id] ? "Hide password" : "Show password"}
+                    >
+                      {decryptedPasswords[password.id] ? (
+                        <EyeSlashIcon className="h-5 w-5" />
+                      ) : (
+                        <EyeIcon className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </td>
               <td className="px-6 py-4">
