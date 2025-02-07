@@ -2,6 +2,12 @@ import React from 'react';
 import { Session } from '@supabase/supabase-js';
 import '../styles/Home.css';
 
+// image
+import MountEverest from '../../../../src/assets/home/mount-everest.png';
+
+<img src={MountEverest} alt="Mount Everest" />
+
+
 interface HomeProps {
   session: Session;
 }
@@ -27,7 +33,7 @@ const Home: React.FC<HomeProps> = ({ session }) => {
         marginBottom: '50px'
       }}>
         <img 
-          src="/public/images/home/mount-everest.png"
+          src={MountEverest}
           alt="Mount Everest" 
           style={{ 
             maxWidth: '70%',
