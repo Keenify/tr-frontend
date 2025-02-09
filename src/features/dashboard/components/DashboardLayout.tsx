@@ -37,7 +37,8 @@ const navigationConfig = [
   { id: 'dailyHuddle', label: 'Daily Huddle', shortForm: 'Dh', icon: Calendar, isExpandable: false },
   { id: 'sales', label: 'Sales', shortForm: 'S', icon: ThumbsUp, isExpandable: false },
   { id: 'quotation', label: 'Quotation', shortForm: 'Qu', icon: ThumbsUp, isExpandable: false },
-  { id: 'product', label: 'Product', shortForm: 'P', icon: ThumbsUp, isExpandable: false }
+  { id: 'product', label: 'Product', shortForm: 'P', icon: ThumbsUp, isExpandable: false },
+  { id: 'idea', label: 'Idea', shortForm: 'I', icon: ThumbsUp, isExpandable: false }
 ] as const;
 
 /**
