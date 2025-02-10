@@ -63,7 +63,13 @@ const AttachmentUploadModal: React.FC<AttachmentUploadModalProps> = ({
           className="border-dashed border-2 border-gray-300 p-4 text-center"
         >
           Drag and drop a file here or
-          <input type="file" onChange={handleFileChange} className="mt-2" />
+          <input 
+            type="file" 
+            onChange={handleFileChange} 
+            className="mt-2" 
+            title="Upload a file"
+            placeholder="Upload a file"
+          />
         </div>
         {file && file.type.startsWith("image/") && (
           <div className="mt-2">

@@ -202,6 +202,8 @@ const CardModal: React.FC<CardModalProps> = ({
                     Title
                   </label>
                   <input
+                    title="Title"
+                    placeholder="Title"
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
@@ -215,6 +217,8 @@ const CardModal: React.FC<CardModalProps> = ({
                     Description
                   </label>
                   <textarea
+                    title="Description"
+                    placeholder="Description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     className="mt-1 block w-full rounded-md border border-gray-300 p-2"
@@ -241,6 +245,8 @@ const CardModal: React.FC<CardModalProps> = ({
                   </label>
                   <div className="flex items-center gap-2">
                     <input
+                      title="Color"
+                      placeholder="Color"
                       type="color"
                       value={colorCode}
                       onChange={(e) => setColorCode(e.target.value)}
