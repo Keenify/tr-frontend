@@ -39,12 +39,12 @@ const AnonymousFeedbackPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-8">
-      <div className="max-w-2xl w-full bg-gray-800 rounded-lg shadow-xl p-6">
+    <div className="h-screen bg-gray-900 flex items-center justify-center p-4">
+      <div className="max-w-2xl w-full bg-gray-800 rounded-lg shadow-xl p-6 max-h-[90vh] overflow-y-auto">
         <h1 className="text-3xl font-bold text-gray-100 mb-2">
           📫 Anonymous Feedback Box
         </h1>
-        <p className="text-gray-400 mb-6">
+        <p className="text-gray-400 mb-4">
           Share your thoughts, concerns, or suggestions about the company or team members. 
           Your feedback will be submitted anonymously to help improve our workplace.
           <span className="block mt-2 text-yellow-400">
@@ -56,7 +56,7 @@ const AnonymousFeedbackPage: React.FC = () => {
           <textarea
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
-            className="w-full h-40 px-4 py-3 bg-gray-700 text-gray-100 rounded-lg 
+            className="w-full h-32 px-4 py-3 bg-gray-700 text-gray-100 rounded-lg 
                      border border-gray-600 focus:outline-none focus:border-blue-500
                      placeholder-gray-500"
             placeholder="Enter your feedback here..."
