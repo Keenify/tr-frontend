@@ -1,9 +1,9 @@
 import { Session } from '@supabase/supabase-js';
 import Modal from 'react-modal';
 import { useState } from 'react';
-import { useSession } from '../../../shared/hooks/useSession';
+import { useSession } from '../../../../shared/hooks/useSession';
 import { useNavigate } from 'react-router-dom';
-import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
+import { useUserAndCompanyData } from '../../../../shared/hooks/useUserAndCompanyData';
 
 const Feedback = ({ session }: { session: Session }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);

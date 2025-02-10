@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ClipLoader } from 'react-spinners';
 import { format } from 'date-fns';
 import { getCompanyFeedbacks } from '../services/useCompanyFeedback';
-import { FeedbackResponse } from '../../feedback/types/feedback';
+import { FeedbackResponse } from '../../people/feedback/types/feedback';
 
 interface FeedbackProps {
   companyId?: string;

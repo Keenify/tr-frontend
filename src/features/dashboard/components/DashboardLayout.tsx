@@ -30,7 +30,8 @@ const navigationConfig = [
       { id: 'orgChart', label: 'Org Chart', shortForm: 'OC', icon: ThumbsUp },
       { id: 'supplier', label: 'Supplier', shortForm: 'Su', icon: ThumbsUp },
       { id: 'client', label: 'Client', shortForm: 'Cl', icon: ThumbsUp },
-      { id: 'hiring', label: 'Hiring', shortForm: 'Hi', icon: ThumbsUp }
+      { id: 'hiring', label: 'Hiring', shortForm: 'Hi', icon: ThumbsUp },
+      { id: 'feedback', label: 'Feedback', shortForm: 'F', icon: ThumbsUp, isExpandable: false }
     ]
   },
   { id: 'projects', label: 'Projects', shortForm: 'P', icon: ThumbsUp, isExpandable: false },
@@ -39,7 +40,6 @@ const navigationConfig = [
   { id: 'quotation', label: 'Quotation', shortForm: 'Qu', icon: ThumbsUp, isExpandable: false },
   { id: 'product', label: 'Product', shortForm: 'P', icon: ThumbsUp, isExpandable: false },
   { id: 'idea', label: 'Idea', shortForm: 'I', icon: ThumbsUp, isExpandable: false },
-  { id: 'feedback', label: 'Feedback', shortForm: 'F', icon: ThumbsUp, isExpandable: false }
 ] as const;
 
 /**
@@ -48,7 +48,7 @@ const navigationConfig = [
  */
 type TabType = typeof navigationConfig[number]['id'];
 
-type SubTabType = 'directory' | 'orgChart' | 'supplier' | 'client' | 'hiring';
+type SubTabType = 'directory' | 'orgChart' | 'supplier' | 'client' | 'hiring' | 'feedback';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -150,6 +150,8 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
       navigate(`/${userId}/client`);
     } else if (subTab === 'hiring') {
       navigate(`/${userId}/hiring`);
+    } else if (subTab === 'feedback') {
+      navigate(`/${userId}/feedback`);
     }
   };
 

@@ -1,4 +1,4 @@
-import { FeedbackResponse, ApiResponse } from '../../feedback/types/feedback';
+import { FeedbackResponse, ApiResponse } from '../../people/feedback/types/feedback';
 
 // Access environment variables from .env
 const API_DOMAIN = import.meta.env.VITE_BACKEND_API_DOMAIN;
