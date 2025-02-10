@@ -67,6 +67,8 @@ const NewCardModal = ({ isOpen, onClose, onSave, lists, selectedListId }: NewCar
             <div>
               <label className="block text-sm font-medium text-gray-700">Title</label>
               <input
+                title="Title"
+                placeholder="Title"
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -78,6 +80,8 @@ const NewCardModal = ({ isOpen, onClose, onSave, lists, selectedListId }: NewCar
             <div>
               <label className="block text-sm font-medium text-gray-700">Description</label>
               <textarea
+                title="Description"
+                placeholder="Description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="mt-1 block w-full rounded-md border border-gray-300 p-2"
@@ -88,6 +92,7 @@ const NewCardModal = ({ isOpen, onClose, onSave, lists, selectedListId }: NewCar
             <div>
               <label className="block text-sm font-medium text-gray-700">Due Date</label>
               <DatePicker
+                title="Due Date"
                 selected={dueDate}
                 onChange={(date) => setDueDate(date)}
                 className="mt-1 block w-full rounded-md border border-gray-300 p-2"
@@ -100,6 +105,8 @@ const NewCardModal = ({ isOpen, onClose, onSave, lists, selectedListId }: NewCar
               <label className="block text-sm font-medium text-gray-700">Color</label>
               <div className="flex items-center gap-2">
                 <input
+                  title="Color"
+                  placeholder="Color"
                   type="color"
                   value={colorCode}
                   onChange={(e) => setColorCode(e.target.value)}
