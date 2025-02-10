@@ -32,6 +32,7 @@ import Admin from './features/admin/components/Admin';
 import Hiring from './features/people/hiring/components/Hiring';
 import Idea from './features/idea/components/Idea';
 import Feedback from './features/feedback/components/Feedback';
+import AnonymousFeedbackPage from './features/feedback/components/AnonymousFeedbackPage';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App: React.FC = () => {
 
             {/* Public Routes */}
             <Route path="/login" element={<AuthForm />} />
+            <Route path="/anonymous_feedback" element={<AnonymousFeedbackPage />} />
 
             {/* Protected Routes */}
             {session && (

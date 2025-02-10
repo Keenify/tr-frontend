@@ -1,62 +1,95 @@
 import { Session } from '@supabase/supabase-js';
+import Modal from 'react-modal';
 import { useState } from 'react';
+import { useSession } from '../../../shared/hooks/useSession';
+import { useNavigate } from 'react-router-dom';
 
 const Feedback = ({ session }: { session: Session }) => {
-  const [feedback, setFeedback] = useState('');
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { signOut } = useSession();
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Here you can send the feedback along with the session.user.email to your backend
-    console.log('Feedback:', feedback, 'From:', session.user.email);
-    
-    // Reset form and show success message
-    setFeedback('');
-    setIsSubmitted(true);
-    
-    // Hide success message after 3 seconds
-    setTimeout(() => {
-      setIsSubmitted(false);
-    }, 3000);
+  const handleFeedbackClick = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleConfirm = async () => {
+    localStorage.setItem('feedback_user_id', session.user.id);
+    await signOut();
+    window.open('/anonymous_feedback', '_blank');
+    navigate('/login');
+    setIsModalOpen(false);
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 p-8">
-      <div className="max-w-2xl mx-auto bg-gray-800 rounded-lg shadow-xl p-6">
-        <h1 className="text-3xl font-bold text-gray-100 mb-2">
-          Anonymous Feedback Box
-        </h1>
-        <p className="text-gray-400 mb-6">
-          Share your thoughts, concerns, or suggestions about the company or team members. 
-          Your feedback will be submitted anonymously to help improve our workplace.
-        </p>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <textarea
-            value={feedback}
-            onChange={(e) => setFeedback(e.target.value)}
-            className="w-full h-40 px-4 py-3 bg-gray-700 text-gray-100 rounded-lg 
-                     border border-gray-600 focus:outline-none focus:border-blue-500
-                     placeholder-gray-500"
-            placeholder="Enter your feedback here..."
-            required
-          />
-          
+    <div className="min-h-screen w-full bg-black flex items-center justify-center">
+      <div className="max-w-md w-full p-8 bg-gray-900/80 backdrop-blur-sm rounded-xl 
+                    border border-green-500/20 shadow-2xl shadow-green-500/10">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4 text-green-400 tracking-wider">Anonymous Feedback</h2>
+          <p className="text-gray-400 mb-6">
+            Share your thoughts and suggestions anonymously to help improve our workplace.
+          </p>
           <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold 
-                     py-3 px-6 rounded-lg transition duration-200"
+            title="Open Anonymous Feedback Form"
+            onClick={handleFeedbackClick}
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold 
+                     py-3 px-6 rounded-lg transition duration-200 border border-green-500
+                     shadow-lg shadow-green-500/20 w-full"
           >
-            Submit Anonymous Feedback
+            Open Anonymous Feedback Form
           </button>
-        </form>
+        </div>
 
-        {isSubmitted && (
-          <div className="mt-4 p-4 bg-green-900 text-green-100 rounded-lg">
-            Your feedback has been submitted anonymously. Thank you for your input!
+        <Modal
+          isOpen={isModalOpen}
+          onRequestClose={handleCancel}
+          className="fixed inset-0 flex items-center justify-center"
+          overlayClassName="fixed inset-0 bg-black/90 backdrop-blur-sm"
+          style={{
+            content: {
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: '#0a0a0a',
+              borderRadius: '0.75rem',
+              padding: '1.5rem',
+              width: '400px',
+              margin: 0,
+              minHeight: 'min-content',
+              border: '1px solid #2f2f2f',
+              boxShadow: '0 0 20px rgba(34, 197, 94, 0.1)'
+            }
+          }}
+        >
+          <div className="bg-gray-900/80 rounded-lg p-6 border border-green-500/20">
+            <h3 className="text-xl font-semibold mb-3 text-green-400 text-center">Confirm Submission</h3>
+            <p className="text-gray-400 mb-4 text-center">
+              For complete anonymity, it is recommended to log out before submitting feedback. Would you like to logout?
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={handleCancel}
+                className="px-6 py-2 text-gray-400 hover:text-gray-200 border border-gray-700 
+                         rounded-lg transition duration-200 hover:border-gray-600 min-w-[100px]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirm}
+                className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold 
+                         rounded-lg transition duration-200 border border-green-500 min-w-[100px]"
+              >
+                Yes, Logout
+              </button>
+            </div>
           </div>
-        )}
+        </Modal>
       </div>
     </div>
   );
