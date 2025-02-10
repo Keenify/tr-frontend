@@ -3,11 +3,13 @@ import Modal from 'react-modal';
 import { useState } from 'react';
 import { useSession } from '../../../shared/hooks/useSession';
 import { useNavigate } from 'react-router-dom';
+import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 
 const Feedback = ({ session }: { session: Session }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { signOut } = useSession();
   const navigate = useNavigate();
+  const { companyInfo } = useUserAndCompanyData(session.user.id);
 
   const handleFeedbackClick = () => {
     setIsModalOpen(true);
@@ -15,6 +17,9 @@ const Feedback = ({ session }: { session: Session }) => {
 
   const handleConfirm = async () => {
     localStorage.setItem('feedback_user_id', session.user.id);
+    if (companyInfo?.id) {
+      localStorage.setItem('feedback_company_id', companyInfo.id);
+    }
     await signOut();
     window.open('/anonymous_feedback', '_blank');
     navigate('/login');

@@ -1,24 +1,28 @@
-
 import { useState } from 'react';
-
+import { createFeedback } from '../services/useFeedback';
 
 const AnonymousFeedbackPage: React.FC = () => {
   const [feedback, setFeedback] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
     try {
-      // TODO: Replace this with your API call
-      // Example structure:
-      // await submitAnonymousFeedback({
-      //   feedback: feedback,
-      //   timestamp: new Date().toISOString()
-      // });
+      const userId = localStorage.getItem('feedback_user_id');
+      const companyId = localStorage.getItem('feedback_company_id');
       
-      // For now, just log to console
-      console.log('Feedback:', feedback);
+      if (!userId || !companyId) {
+        throw new Error('Missing user or company information');
+      }
+
+      await createFeedback({
+        userId,
+        companyId,
+        feedback,
+      });
       
       // Reset form and show success message
       setFeedback('');
@@ -29,9 +33,8 @@ const AnonymousFeedbackPage: React.FC = () => {
         setIsSubmitted(false);
       }, 3000);
     } catch (error) {
-      // TODO: Add error handling
+      setError('Failed to submit feedback. Please try again.');
       console.error('Error submitting feedback:', error);
-      // Optionally add error state and display error message to user
     }
   };
 
@@ -68,6 +71,12 @@ const AnonymousFeedbackPage: React.FC = () => {
             Submit Anonymous Feedback
           </button>
         </form>
+
+        {error && (
+          <div className="mt-4 p-4 bg-red-900 text-red-100 rounded-lg">
+            {error}
+          </div>
+        )}
 
         {isSubmitted && (
           <div className="mt-4 p-4 bg-green-900 text-green-100 rounded-lg">
