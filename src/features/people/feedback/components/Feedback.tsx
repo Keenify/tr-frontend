@@ -77,7 +77,8 @@ const Feedback = ({ session }: { session: Session }) => {
           <div className="bg-gray-900/80 rounded-lg p-3 border border-green-500/20">
             <h3 className="text-lg font-semibold mb-2 text-green-400 text-center">Confirm Submission</h3>
             <p className="text-gray-400 mb-3 text-center text-sm">
-              For complete anonymity, it is recommended to log out before submitting feedback. Would you like to logout?
+              Once you click "Yes, Logout", you'll be logged out and a new tab will open for your anonymous feedback. 
+              Please proceed with your feedback in the new tab.
             </p>
             <div className="flex justify-center gap-3">
               <button

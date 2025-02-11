@@ -48,7 +48,7 @@ const AnonymousFeedbackPage: React.FC = () => {
           Share your thoughts, concerns, or suggestions about the company or team members. 
           Your feedback will be submitted anonymously to help improve our workplace.
           <span className="block mt-2 text-yellow-400">
-            You have been logged out to ensure complete anonymity. Your session data will not be included.
+            Please make sure you're logged out in the previous tab before continuing here. This ensures your feedback remains anonymous.
           </span>
         </p>
 
