@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Session } from '@supabase/supabase-js';
+import SlideIcon from '../../../shared/components/SlideIcon';
 
 interface ProductSlideProps {
   session: Session;
@@ -73,26 +74,8 @@ const ProductSlide: React.FC<ProductSlideProps> = ({ session }) => {
                 rel="noopener noreferrer"
                 className="block p-4 h-full"
               >
-                <div className="h-3/4 mb-3 overflow-hidden rounded-md bg-gray-100">
-                  {slide.thumbnailLink ? (
-                    <img 
-                      src={slide.thumbnailLink} 
-                      alt={`Thumbnail of ${slide.name}`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        console.error(`Error loading thumbnail for ${slide.name}:`, e);
-                        // Fallback to placeholder on error
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = `https://drive.google.com/thumbnail?id=${slide.id}&sz=w800`;
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" />
-                      </svg>
-                    </div>
-                  )}
+                <div className="h-3/4 mb-3 overflow-hidden rounded-md bg-gray-50 flex items-center justify-center">
+                  <SlideIcon />
                 </div>
                 <div className="flex items-center justify-center text-blue-600 hover:text-blue-800">
                   <span className="font-medium truncate text-lg px-1 text-center">{slide.name}</span>
