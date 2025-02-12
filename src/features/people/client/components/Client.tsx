@@ -147,13 +147,10 @@ const Client: React.FC<ClientProps> = ({
         position: maxPosition + 1,
         board_id: HARDCODED_BOARD_ID
       });
-      setLists(currentLists => [...currentLists, {
-        ...newList,
-        title: newList.name,
-        cards: []
-      }]);
+      return newList.id;
     } catch (error) {
       console.error('Failed to create list:', error);
+      throw error;
     }
   };
 

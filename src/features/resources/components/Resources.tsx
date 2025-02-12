@@ -217,32 +217,18 @@ const Resources: React.FC<ResourcesProps> = ({
    */
   const handleListAdd = async (title: string) => {
     try {
-      if (!title) {
-        throw new Error('List title is required');
-      }
-
-      // Calculate the highest position value
+      if (!title) throw new Error('List title is required');
       const maxPosition = lists.reduce((max, list) => 
         Math.max(max, list.position || 0), -1);
-      const position = maxPosition + 1;
-
-      // Create the new list
       const newList = await createList({
         name: title,
-        position,
+        position: maxPosition + 1,
         board_id: HARDCODED_BOARD_ID
       });
-        
-
-      // Update the local state with the new list
-      setLists(currentLists => [...currentLists, {
-        ...newList,
-        title: newList.name, // Add title alias for TrelloBoard
-        cards: [] // Initialize with empty cards array
-      }]);
+      return newList.id;  // Return the new list ID
     } catch (error) {
       console.error('Failed to create list:', error);
-      // You might want to add error handling here (e.g., showing a toast notification)
+      throw error;
     }
   };
 

@@ -53,7 +53,7 @@ interface TrelloBoardHookProps {
   /** Callback function when a new card is added to a list */
   onCardAdd?: (listId: string, title: string) => Promise<string>;
   /** Callback function when a new list is added to the board */
-  onListAdd?: (title: string) => Promise<void>;
+  onListAdd?: (title: string) => Promise<string>;
   /** Callback function when a card is deleted */
   onCardDelete?: (listId: string, cardId: string) => Promise<void>;
   /** Callback function when a list is deleted */
@@ -271,18 +271,26 @@ export const useTrelloBoard = (
     setError(null);
 
     try {
-      // Optimistic update
+      const tempId = `temp-${Date.now()}`;
       const newList: TrelloList = {
-        id: `${Date.now()}`,
+        id: tempId,
         title,
         cards: []
       };
 
       setLists([...lists, newList]);
 
-      // API call
       if (onListAdd) {
-        await onListAdd(title);
+        const realId = await onListAdd(title);
+        if (realId) {
+          setLists(currentLists => 
+            currentLists.map(list => 
+              list.id === tempId 
+                ? { ...list, id: realId }
+                : list
+            )
+          );
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
