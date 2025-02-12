@@ -1,128 +1,189 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Session } from '@supabase/supabase-js';
+import { Session } from "@supabase/supabase-js";
+import React, { useEffect, useState } from "react";
+import { createCard, updateCard } from "../../../shared/components/trello/services/useCard";
+import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
+import { CardUpdate, TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
+import { getBoardDetails, HARDCODED_BOARD_ID } from "../services/useBoard";
+import { List } from "../types/board";
+import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
+import { getUserData } from '../../../services/useUser';
 
 interface ProjectProps {
-  title?: string;
   session: Session;
+  boardId?: string;
 }
 
-const Project: React.FC<ProjectProps> = ({ title = 'Hello World', session }) => {
-  const [plankaToken, setPlankaToken] = useState<string | null>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+const Project: React.FC<ProjectProps> = ({ 
+  session, 
+  boardId = HARDCODED_BOARD_ID 
+}) => {
+  const [lists, setLists] = useState<List[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { companyInfo, isLoading: isLoadingCompany } = useUserAndCompanyData(session.user.id);
+  const [userRole, setUserRole] = useState<string>('');
 
-  // Function to log in to Planka using the shared binding account
-  const loginToPlanka = async () => {
-    const plankaBaseUrl = 'https://caddy-proxy-production-423e.up.railway.app';
-    const plankaApiUrl = `${plankaBaseUrl}/api/access-tokens`;
-
-    console.log('Attempting to login to Planka...');
-    try {
-      const response = await fetch(plankaApiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          emailOrUsername: "tanengkeen@gmail.com",
-          password: "admin"
-        }),
-      });
-
-      const data = await response.json();
-      console.log('Planka login response:', data);
-
-      if (data.item) {
-        console.log('Token received, length:', data.item.length);
-        localStorage.setItem('plankaToken', data.item);
-        setPlankaToken(data.item);
-      } else {
-        console.error('No token received in response');
+  useEffect(() => {
+    const fetchBoardDetails = async () => {
+      try {
+        setIsLoading(true);
+        const boardDetails = await getBoardDetails(boardId);
+        const transformedLists = boardDetails.map(list => ({
+          ...list,
+          title: list.name,
+          cards: list.cards.map(card => ({
+            ...card,
+            thumbnailUrl: card.thumbnail_url,
+            colorCode: card.color_code,
+          })),
+        }));
+        setLists(transformedLists);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load board details');
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Planka login failed:', error);
-    }
-  };
+    };
 
-  // Check for a stored token or authenticate when the component mounts
+    fetchBoardDetails();
+  }, [boardId]);
+
   useEffect(() => {
-    const storedToken = localStorage.getItem('plankaToken');
-    console.log('Stored token exists:', !!storedToken);
-    if (storedToken) {
-      console.log('Using stored token, length:', storedToken.length);
-      setPlankaToken(storedToken);
-    } else {
-      console.log('No stored token found, logging in...');
-      loginToPlanka();
-    }
-  }, []);
+    const fetchUserRole = async () => {
+      try {
+        const userData = await getUserData(session.user.id);
+        setUserRole(userData.role);
+      } catch (err) {
+        console.error('Failed to fetch user role:', err);
+      }
+    };
+    fetchUserRole();
+  }, [session.user.id]);
 
-  // Add a useEffect to log when plankaToken changes
-  useEffect(() => {
-    console.log('plankaToken state updated:', !!plankaToken);
-    console.log('plankaToken value:', plankaToken);
-  }, [plankaToken]);
+  if (isLoading || isLoadingCompany) {
+    return <div>Loading...</div>;
+  }
 
-  // Add function to verify Planka access
-  const verifyPlankaAccess = async (token: string) => {
-    const plankaBaseUrl = 'https://caddy-proxy-production-423e.up.railway.app';
-    const plankaApiUrl = `${plankaBaseUrl}/api/projects`;
-    
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  const handleListMove = async (sourceIndex: number, destinationIndex: number) => {
     try {
-      const response = await fetch(plankaApiUrl, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        }
-      });
-      const data = await response.json();
-      console.log('Planka API response:', data);
-      return response.ok;
+      const sourceList = lists[sourceIndex];
+      const destinationList = lists[destinationIndex];
+      await Promise.all([
+        updateList(sourceList.id, { position: destinationIndex }),
+        updateList(destinationList.id, { position: sourceIndex })
+      ]);
     } catch (error) {
-      console.error('Planka API verification failed:', error);
-      return false;
+      console.error('Failed to update list positions:', error);
     }
   };
 
-  // Add useEffect to verify access when token is available
-  useEffect(() => {
-    if (plankaToken) {
-      verifyPlankaAccess(plankaToken);
+  const handleCardMove = async (
+    _sourceListId: string,
+    destinationListId: string,
+    _sourceIndex: number,
+    destinationIndex: number,
+    cardId: string
+  ) => {
+    try {
+      await updateCard(cardId, {
+        list_id: destinationListId,
+        position: destinationIndex
+      });
+    } catch (error) {
+      console.error('Failed to move card:', error);
     }
-  }, [plankaToken]);
+  };
 
-  // Add useEffect to send token to iframe
-  useEffect(() => {
-    if (plankaToken && iframeRef.current) {
-      iframeRef.current.contentWindow?.postMessage(
-        { token: plankaToken },
-        'https://planka.autolabkit.com'
-      );
+  const handleCardUpdate = async (listId: string, cardId: string, updates: CardUpdate) => {
+    try {
+      const apiUpdates = {
+        ...updates,
+        list_id: listId,
+        color_code: updates.colorCode,
+      };
+      delete apiUpdates.colorCode;
+      await updateCard(cardId, apiUpdates);
+    } catch (error) {
+      console.error('Failed to update card:', error);
     }
-  }, [plankaToken]);
+  };
+
+  const handleListTitleChange = async (listId: string, newTitle: string) => {
+    try {
+      await updateList(listId, { name: newTitle });
+    } catch (error) {
+      console.error('Failed to update list title:', error);
+    }
+  };
+
+  const handleCardAdd = async (listId: string, title: string) => {
+    try {
+      if (!title) throw new Error('Card title is required');
+      const list = lists.find(l => l.id === listId);
+      const position = list?.cards.length ?? 0;
+      const newCard = await createCard({
+        list_id: listId,
+        title,
+        position,
+      });
+      return newCard.id;
+    } catch (error) {
+      console.error('Failed to create card:', error);
+      throw error;
+    }
+  };
+
+  const handleListAdd = async (title: string) => {
+    try {
+      if (!title) throw new Error('List title is required');
+      const maxPosition = lists.reduce((max, list) => 
+        Math.max(max, list.position || 0), -1);
+      const newList = await createList({
+        name: title,
+        position: maxPosition + 1,
+        board_id: HARDCODED_BOARD_ID
+      });
+      setLists(currentLists => [...currentLists, {
+        ...newList,
+        title: newList.name,
+        cards: []
+      }]);
+    } catch (error) {
+      console.error('Failed to create list:', error);
+    }
+  };
+
+  const handleListDelete = async (listId: string) => {
+    try {
+      await deleteList(listId);
+    } catch (error) {
+      console.error('Error deleting list:', error);
+    }
+  };
 
   return (
-    <div className="project-container">
-      <h1>{title}</h1>
-      <p>Welcome, {session.user.email} to my project page!</p>
-      {plankaToken ? (
-        <iframe
-          ref={iframeRef}
-          src="https://caddy-proxy-production-423e.up.railway.app/boards/1434060322221589509"
-          title="Planka Project Management"
-          referrerPolicy="origin"
-          style={{
-            width: '100%',
-            height: '800px',
-            border: 'none',
-            borderRadius: '8px',
-            marginTop: '20px'
-          }}
-        />
-      ) : (
-        <p>Loading Planka...</p>
-      )}
-      <div id="token-debug" style={{ display: 'none' }}>
-        Token: {plankaToken}
+    <div className="min-h-screen p-6 flex flex-col">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Project Management</h1>
+        {companyInfo?.name && (
+          <span className="text-lg text-gray-600">{companyInfo.name}</span>
+        )}
       </div>
+      <TrelloBoard 
+        initialLists={lists}
+        onListMove={handleListMove}
+        onCardMove={handleCardMove}
+        onCardUpdate={handleCardUpdate}
+        onListTitleChange={handleListTitleChange}
+        onCardAdd={handleCardAdd}
+        onListAdd={handleListAdd}
+        onListDelete={handleListDelete}
+        userRole={userRole}
+      />
     </div>
   );
 };
