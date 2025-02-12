@@ -219,10 +219,11 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                   key={attachment.id}
                   className="flex items-center justify-between p-2 border rounded-md"
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
                     <a
                       onClick={() => handleOpenAttachment(attachment.id)}
-                      className="text-blue-500 hover:text-blue-600 cursor-pointer"
+                      className="text-blue-500 hover:text-blue-600 cursor-pointer truncate"
+                      title={attachment.file_url}
                     >
                       {attachment.file_url}
                     </a>
@@ -230,7 +231,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRemoveAttachment(attachment.id)}
-                    className="text-red-500 hover:text-red-600"
+                    className="text-red-500 hover:text-red-600 flex-shrink-0 ml-2"
                   >
                     Remove
                   </button>
