@@ -33,7 +33,7 @@ import Hiring from './features/people/hiring/components/Hiring';
 import Idea from './features/idea/components/Idea';
 import Feedback from './features/people/feedback/components/Feedback';
 import AnonymousFeedbackPage from './features/people/feedback/components/AnonymousFeedbackPage';
-
+import Finance from './features/finance/components/Finance';
 // Create a client
 const queryClient = new QueryClient();
 
@@ -75,6 +75,7 @@ const App: React.FC = () => {
                 <Route path="/:userId/hiring" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="hiring" onTabChange={() => { }}><Hiring session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/idea" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="idea" onTabChange={() => { }}><Idea session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/feedback" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="feedback" onTabChange={() => { }}><Feedback session={session} /></DashboardLayout>} />} />
+                <Route path="/:userId/finance" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="finance" onTabChange={() => { }}><Finance session={session} /></DashboardLayout>} />} />
               </>
             )}
 
