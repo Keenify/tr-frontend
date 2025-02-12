@@ -9,7 +9,6 @@ interface FinanceProps {
 interface GoogleSheet {
   id: string;
   name: string;
-  thumbnailLink?: string;
 }
 
 // Constants
@@ -37,7 +36,7 @@ const Finance: React.FC<FinanceProps> = ({ session }) => {
             params: {
               q: `'${FOLDER_ID}' in parents and mimeType='application/vnd.google-apps.spreadsheet'`,
               key: import.meta.env.VITE_GOOGLE_DRIVE_API_KEY,
-              fields: 'files(id, name, thumbnailLink)',
+              fields: 'files(id, name)',
               supportsAllDrives: true,
             },
           }
@@ -79,25 +78,10 @@ const Finance: React.FC<FinanceProps> = ({ session }) => {
                 rel="noopener noreferrer"
                 className="block p-4 h-full"
               >
-                <div className="h-3/4 mb-3 overflow-hidden rounded-md bg-gray-100">
-                  {sheet.thumbnailLink ? (
-                    <img 
-                      src={sheet.thumbnailLink} 
-                      alt={`Thumbnail of ${sheet.name}`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        console.error(`Error loading thumbnail for ${sheet.name}:`, e);
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = `https://drive.google.com/thumbnail?id=${sheet.id}&sz=w800`;
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M21.17 3.25H2.83c-.76 0-1.38.62-1.38 1.38v14.74c0 .76.62 1.38 1.38 1.38h18.34c.76 0 1.38-.62 1.38-1.38V4.63c0-.76-.62-1.38-1.38-1.38zM8 17.5H3.5v-3H8v3zm0-4.5H3.5V10H8v3zm0-4.5H3.5V5.5H8V8.5zm12.5 9H9.5v-3h11v3zm0-4.5H9.5V10h11v3zm0-4.5H9.5V5.5h11V8.5z"/>
-                      </svg>
-                    </div>
-                  )}
+                <div className="h-3/4 mb-3 overflow-hidden rounded-md bg-gray-100 flex items-center justify-center">
+                  <svg className="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M21.17 3.25H2.83c-.76 0-1.38.62-1.38 1.38v14.74c0 .76.62 1.38 1.38 1.38h18.34c.76 0 1.38-.62 1.38-1.38V4.63c0-.76-.62-1.38-1.38-1.38zM8 17.5H3.5v-3H8v3zm0-4.5H3.5V10H8v3zm0-4.5H3.5V5.5H8V8.5zm12.5 9H9.5v-3h11v3zm0-4.5H9.5V10h11v3zm0-4.5H9.5V5.5h11V8.5z"/>
+                  </svg>
                 </div>
                 <div className="flex items-center justify-center text-blue-600 hover:text-blue-800">
                   <span className="font-medium truncate text-lg px-1 text-center">{sheet.name}</span>
