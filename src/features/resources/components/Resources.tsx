@@ -7,6 +7,8 @@ import { getBoardDetails, HARDCODED_BOARD_ID } from "../services/useBoard";
 import { List } from "../types/board";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 import { getUserData } from '../../../services/useUser';
+import { Tab } from '@headlessui/react';
+import Learning from './Learning';
 
 interface ResourcesProps {
   session: Session;
@@ -249,17 +251,58 @@ const Resources: React.FC<ResourcesProps> = ({
           <span className="text-lg text-gray-600">{companyInfo.name}</span>
         )}
       </div>
-      <TrelloBoard 
-        initialLists={lists}
-        onListMove={handleListMove}
-        onCardMove={handleCardMove}
-        onCardUpdate={handleCardUpdate}
-        onListTitleChange={handleListTitleChange}
-        onCardAdd={handleCardAdd}
-        onListAdd={handleListAdd}
-        onListDelete={handleListDelete}
-        userRole={userRole}
-      />
+
+      <Tab.Group>
+        <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1 mb-6">
+          <Tab
+            className={({ selected }) =>
+              `w-full rounded-lg py-2.5 text-sm font-medium leading-5
+              ${selected 
+                ? 'bg-white text-blue-700 shadow'
+                : 'text-gray-600 hover:bg-white/[0.12] hover:text-gray-800'
+              }`
+            }
+          >
+            Resources Board
+          </Tab>
+          <Tab
+            className={({ selected }) =>
+              `w-full rounded-lg py-2.5 text-sm font-medium leading-5
+              ${selected 
+                ? 'bg-white text-blue-700 shadow'
+                : 'text-gray-600 hover:bg-white/[0.12] hover:text-gray-800'
+              }`
+            }
+          >
+            Learning
+          </Tab>
+        </Tab.List>
+
+        <Tab.Panels>
+          <Tab.Panel>
+            {isLoading || isLoadingCompany ? (
+              <div>Loading...</div>
+            ) : error ? (
+              <div>Error: {error}</div>
+            ) : (
+              <TrelloBoard 
+                initialLists={lists}
+                onListMove={handleListMove}
+                onCardMove={handleCardMove}
+                onCardUpdate={handleCardUpdate}
+                onListTitleChange={handleListTitleChange}
+                onCardAdd={handleCardAdd}
+                onListAdd={handleListAdd}
+                onListDelete={handleListDelete}
+                userRole={userRole}
+              />
+            )}
+          </Tab.Panel>
+          <Tab.Panel>
+            <Learning session={session} />
+          </Tab.Panel>
+        </Tab.Panels>
+      </Tab.Group>
     </div>
   );
 };
