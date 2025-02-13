@@ -31,7 +31,8 @@ const navigationConfig = [
       { id: 'supplier', label: 'Supplier', shortForm: 'Su', icon: ThumbsUp },
       { id: 'client', label: 'Client', shortForm: 'Cl', icon: ThumbsUp },
       { id: 'hiring', label: 'Hiring', shortForm: 'Hi', icon: ThumbsUp },
-      { id: 'feedback', label: 'Feedback', shortForm: 'F', icon: ThumbsUp, isExpandable: false }
+      { id: 'feedback', label: 'Feedback', shortForm: 'F', icon: ThumbsUp },
+      { id: 'calendar', label: 'Calendar', shortForm: 'Ca', icon: Calendar }
     ]
   },
   { id: 'projects', label: 'Projects', shortForm: 'P', icon: ThumbsUp, isExpandable: false },
@@ -50,7 +51,7 @@ const navigationConfig = [
  */
 type TabType = typeof navigationConfig[number]['id'];
 
-type SubTabType = 'directory' | 'orgChart' | 'supplier' | 'client' | 'hiring' | 'feedback';
+type SubTabType = 'directory' | 'orgChart' | 'supplier' | 'client' | 'hiring' | 'feedback' | 'calendar';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -154,6 +155,8 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
       navigate(`/${userId}/hiring`);
     } else if (subTab === 'feedback') {
       navigate(`/${userId}/feedback`);
+    } else if (subTab === 'calendar') {
+      navigate(`/${userId}/calendar`);
     }
   };
 
