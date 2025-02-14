@@ -35,7 +35,7 @@ import Feedback from './features/people/feedback/components/Feedback';
 import AnonymousFeedbackPage from './features/people/feedback/components/AnonymousFeedbackPage';
 import Finance from './features/finance/components/Finance';
 import Playbook from './features/playbook/components/Playbook';
-import Calendar from './features/people/calendar/component/Calendar';
+import Calendar from './features/people/calendar/components/Calendar';
 
 // Create a client
 const queryClient = new QueryClient();
