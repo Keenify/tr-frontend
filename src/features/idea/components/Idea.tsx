@@ -1,20 +1,15 @@
 import { Session } from '@supabase/supabase-js';
-import { ReactFlowProvider } from 'reactflow';
-// import MindMap from './mindmap/Mindmap.tsx';
+import { memo } from 'react';
+import FlowWrapper from './FlowWrapper';
 
-export function Idea({ session }: { session: Session }) {
+
+export const Idea = memo(({ session }: { session: Session }) => {
   console.log('Current session:', session);
   return (
-    <ReactFlowProvider>
-      <div style={{ 
-        height: '80vh', 
-        width: '100%'
-      }}>
-        {/* <MindMap /> */}
-        Will be here
+    <div className="w-full h-[80vh]">
+      <FlowWrapper />
     </div>
-    </ReactFlowProvider>
   );
-}
+});
 
 export default Idea;

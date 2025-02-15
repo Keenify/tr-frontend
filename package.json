@@ -56,7 +56,7 @@
     "@uiw/react-md-editor": "^4.0.5",
     "@vercel/analytics": "^1.4.1",
     "@vercel/speed-insights": "^1.1.0",
-    "@xyflow/react": "^12.4.2",
+    "@xyflow/react": "^12.4.3",
     "antd": "^5.22.3",
     "axios": "^1.7.9",
     "classcat": "^5.0.5",
