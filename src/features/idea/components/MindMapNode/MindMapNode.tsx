@@ -30,9 +30,22 @@ function MindMapNode({ id, data }: NodeProps<NodeData>) {
 
   useLayoutEffect(() => {
     if (inputRef.current) {
-      inputRef.current.style.width = `${data.label.length * 8}px`;
+      // Create a temporary span to measure text width
+      const span = document.createElement('span');
+      span.style.visibility = 'hidden';
+      span.style.position = 'absolute';
+      span.style.whiteSpace = 'nowrap';
+      span.style.font = window.getComputedStyle(inputRef.current).font;
+      span.textContent = data.label;
+      
+      document.body.appendChild(span);
+      const width = span.getBoundingClientRect().width;
+      document.body.removeChild(span);
+      
+      // Add some padding to the width
+      inputRef.current.style.width = `${Math.ceil(width) + 20}px`;
     }
-  }, [data.label.length]);
+  }, [data.label]);
 
   return (
     <>

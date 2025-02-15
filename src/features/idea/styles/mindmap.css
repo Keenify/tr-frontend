@@ -23,6 +23,11 @@ body {
     border: none;
     padding: 6px 10px;
     font-weight: 700;
+    min-width: 150px;
+    width: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
   
   .react-flow__handle.target {
@@ -48,10 +53,14 @@ body {
   
   .inputWrapper {
     display: flex;
+    min-width: 150px;
     height: 20px;
     z-index: 1;
     position: relative;
     pointer-events: none;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
   }
   
   .dragHandle {
@@ -62,17 +71,24 @@ body {
     display: flex;
     align-items: center;
     pointer-events: all;
+    position: absolute;
+    left: 0;
   }
   
   .input {
     border: none;
-    padding: 0 2px;
+    padding: 0 4px;
     border-radius: 1px;
     font-weight: 700;
     background: transparent;
     height: 100%;
     color: #222;
     pointer-events: none;
+    min-width: 100px;
+    width: auto;
+    white-space: nowrap;
+    overflow: visible;
+    text-align: center;
   }
   
   .input:focus {
