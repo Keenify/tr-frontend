@@ -1,4 +1,4 @@
-import { useCallback, useRef, useMemo } from 'react';
+import { useCallback, useRef, useMemo, useState, useEffect } from 'react';
 import ReactFlow, {
   ConnectionLineType,
   NodeOrigin,
@@ -14,26 +14,75 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import '../styles/mindmap.css';
+import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
+import { 
+  createMindMap, 
+  updateMindMap, 
+  getMindMap, 
+  MindMapData,
+  CreateMindMapRequest 
+} from '../services/useMindMap';
+import { Session } from '@supabase/supabase-js';
+import toast from 'react-hot-toast';
 
 import MindMapNode from './MindMapNode/MindMapNode';
 import MindMapEdge from './MindMapEdge/MindMapEdge';
 
-const initialNodes = [
-  {
-    id: 'root',
-    type: 'mindmap',
-    data: { label: 'React Flow Mind Map' },
-    position: { x: 0, y: 0 },
-    dragHandle: '.dragHandle',
-  },
-];
+interface MindMapProps {
+  session: Session;
+  mindmapId?: string; // Optional - if not provided, we're creating a new mindmap
+}
 
-function Flow() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+function Flow({ session, mindmapId }: MindMapProps) {
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  
+  const [title, setTitle] = useState('Double click to edit title');
+  const [description, setDescription] = useState('Double click to edit description');
+  const [isTitleEditing, setIsTitleEditing] = useState(false);
+  const [isDescriptionEditing, setIsDescriptionEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const { userInfo, companyInfo } = useUserAndCompanyData(session.user.id);
+
+  // Fetch existing mindmap data if mindmapId is provided
+  useEffect(() => {
+    const fetchMindMap = async () => {
+      if (!mindmapId) {
+        // Initialize empty mindmap with root node for new mindmap
+        const rootNode = {
+          id: 'root',
+          type: 'mindmap',
+          data: { 
+            label: 'Double click to edit title',
+            description: 'Double click to edit description'
+          },
+          position: { x: 0, y: 0 }
+        };
+        setNodes([rootNode]);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const mindmapData = await getMindMap(mindmapId);
+        setTitle(mindmapData.title);
+        setDescription(mindmapData.description);
+        setNodes(mindmapData.mindmap.nodes);
+        setEdges(mindmapData.mindmap.edges);
+      } catch (err) {
+        setError('Failed to load mindmap');
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMindMap();
+  }, [mindmapId, setNodes, setEdges]);
+
   const store = useStoreApi();
-  const { project } = useReactFlow();
+  const { screenToFlowPosition } = useReactFlow();
   const connectingNodeId = useRef<string | null>(null);
 
   const nodeTypes = useMemo(() => ({ mindmap: MindMapNode }), []);
@@ -41,23 +90,21 @@ function Flow() {
 
   const getChildNodePosition = useCallback(
     (event: MouseEvent, parentNode?: Node) => {
-      const { domNode } = store.getState();
-      if (!domNode || !parentNode?.positionAbsolute || !parentNode?.width || !parentNode?.height) {
+      if (!parentNode?.positionAbsolute || !parentNode?.width || !parentNode?.height) {
         return;
       }
 
-      const { top, left } = domNode.getBoundingClientRect();
-      const panePosition = project({
-        x: event.clientX - left,
-        y: event.clientY - top,
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
       });
 
       return {
-        x: panePosition.x - parentNode.positionAbsolute.x + parentNode.width / 2,
-        y: panePosition.y - parentNode.positionAbsolute.y + parentNode.height / 2,
+        x: position.x - parentNode.positionAbsolute.x + parentNode.width / 2,
+        y: position.y - parentNode.positionAbsolute.y + parentNode.height / 2,
       };
     },
-    [project, store]
+    [screenToFlowPosition]
   );
 
   const onConnectStart: OnConnectStart = useCallback((_, params) => {
@@ -80,7 +127,11 @@ function Flow() {
         const newNode = {
           id: crypto.randomUUID(),
           type: 'mindmap',
-          data: { label: 'New Node' },
+          data: { 
+            label: 'New Node',
+            description: '',
+            isEditing: false 
+          },
           position: childNodePosition,
           dragHandle: '.dragHandle',
           parentNode: parentNode.id,
@@ -103,6 +154,69 @@ function Flow() {
   const connectionLineStyle = { stroke: '#F6AD55', strokeWidth: 3 };
   const defaultEdgeOptions = { style: connectionLineStyle, type: 'mindmap' };
 
+  const handleSave = useCallback(async () => {
+    if (!companyInfo?.id) {
+      setError('Company information not available');
+      return;
+    }
+
+    const mindMapData: MindMapData = {
+      title,
+      description,
+      nodes: nodes.map(node => ({
+        id: node.id,
+        type: node.type || 'mindmap',
+        data: {
+          label: node.data.label,
+          description: node.data.description,
+        },
+        position: node.position,
+        parentNode: node.parentNode,
+      })),
+      edges: edges.map(edge => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        type: edge.type || 'mindmap',
+      })),
+    };
+
+    try {
+      if (mindmapId) {
+        // Update existing mindmap
+        await updateMindMap(mindmapId, {
+          title,
+          description,
+          mindmap: mindMapData
+        });
+        toast.success('Mind map updated successfully');
+      } else {
+        // Create new mindmap
+        const createRequest: CreateMindMapRequest = {
+          title,
+          description,
+          mindmap: mindMapData,
+          company_id: companyInfo.id,
+          created_by: userInfo?.id || ''
+        };
+        await createMindMap(createRequest);
+        toast.success('Mind map created successfully');
+      }
+    } catch (err) {
+      setError('Failed to save mindmap');
+      console.error(err);
+      toast.error('Failed to save mind map');
+    }
+  }, [title, description, nodes, edges, mindmapId, companyInfo?.id, userInfo?.id]);
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-full">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500 text-center">{error}</div>;
+  }
+
   return (
     <ReactFlow
       nodes={nodes}
@@ -121,7 +235,44 @@ function Flow() {
     >
       <Controls showInteractive={false} />
       <Panel position="top-left" className="header">
-        React Flow Mind Map
+        <div className="flex flex-col gap-2">
+          <input
+            type="text"
+            className={`px-2 py-1 text-xl font-semibold ${
+              isTitleEditing 
+                ? 'border rounded bg-white' 
+                : 'border-none bg-transparent text-black'
+            }`}
+            value={title}
+            placeholder="Double click to edit title"
+            readOnly={!isTitleEditing}
+            onDoubleClick={() => setIsTitleEditing(true)}
+            onChange={(e) => setTitle(e.target.value)}
+            onBlur={() => setIsTitleEditing(false)}
+          />
+          <textarea
+            className={`px-2 py-1 text-sm ${
+              isDescriptionEditing 
+                ? 'border rounded resize-none bg-white' 
+                : 'border-none bg-transparent text-black resize-none'
+            }`}
+            rows={2}
+            value={description}
+            placeholder="Double click to edit description"
+            readOnly={!isDescriptionEditing}
+            onDoubleClick={() => setIsDescriptionEditing(true)}
+            onChange={(e) => setDescription(e.target.value)}
+            onBlur={() => setIsDescriptionEditing(false)}
+          />
+        </div>
+      </Panel>
+      <Panel position="top-right">
+        <button 
+          onClick={handleSave}
+          className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
+        >
+          {mindmapId ? 'Update Mind Map' : 'Create Mind Map'}
+        </button>
       </Panel>
     </ReactFlow>
   );
