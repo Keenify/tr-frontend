@@ -21,6 +21,7 @@ import {
     onEdgesChange: OnEdgesChange;
     updateNodeLabel: (nodeId: string, label: string) => void;
     addChildNode: (parentNode: Node, position: XYPosition) => void;
+    deleteNode: (nodeId: string) => void;
   };
   
   const initialNodes: Node[] = [
@@ -79,6 +80,33 @@ import {
       set((state) => ({
         nodes: [...state.nodes, newNode],
         edges: [...state.edges, newEdge],
+      }));
+    },
+    deleteNode: (nodeId: string) => {
+      const getDescendantNodes = (currentId: string): string[] => {
+        const descendants: string[] = [];
+        const edges = get().edges;
+        
+        const findChildren = (id: string) => {
+          const childEdges = edges.filter(edge => edge.source === id);
+          childEdges.forEach(edge => {
+            descendants.push(edge.target);
+            findChildren(edge.target);
+          });
+        };
+        
+        findChildren(currentId);
+        return descendants;
+      };
+
+      const descendantIds = getDescendantNodes(nodeId);
+      const allNodesToDelete = [nodeId, ...descendantIds];
+
+      set(state => ({
+        nodes: state.nodes.filter(node => !allNodesToDelete.includes(node.id)),
+        edges: state.edges.filter(edge => 
+          !allNodesToDelete.includes(edge.source) && !allNodesToDelete.includes(edge.target)
+        ),
       }));
     },
   }));

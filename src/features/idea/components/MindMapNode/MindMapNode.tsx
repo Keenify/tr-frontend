@@ -9,7 +9,35 @@ export type NodeData = {
 
 function MindMapNode({ id, data }: NodeProps<NodeData>) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const { setNodes } = useReactFlow();
+  const { setNodes, setEdges, getEdges } = useReactFlow();
+
+  // Function to get all descendant node IDs
+  const getDescendantNodes = (nodeId: string): string[] => {
+    const descendants: string[] = [];
+    const edges = getEdges();
+    
+    const findChildren = (currentId: string) => {
+      const childEdges = edges.filter(edge => edge.source === currentId);
+      childEdges.forEach(edge => {
+        descendants.push(edge.target);
+        findChildren(edge.target);
+      });
+    };
+    
+    findChildren(nodeId);
+    return descendants;
+  };
+
+  // Function to handle node deletion
+  const handleDelete = () => {
+    const descendantIds = getDescendantNodes(id);
+    const allNodesToDelete = [id, ...descendantIds];
+
+    setNodes(nodes => nodes.filter(node => !allNodesToDelete.includes(node.id)));
+    setEdges(edges => edges.filter(edge => 
+      !allNodesToDelete.includes(edge.source) && !allNodesToDelete.includes(edge.target)
+    ));
+  };
 
   const updateNodeLabel = (nodeId: string, label: string) => {
     setNodes((nds) =>
@@ -60,6 +88,18 @@ function MindMapNode({ id, data }: NodeProps<NodeData>) {
           className="input"
           ref={inputRef}
         />
+        {id !== 'root' && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete();
+            }}
+            className="deleteButton"
+            title="Delete node"
+          >
+            ×
+          </button>
+        )}
       </div>
 
       <Handle type="target" position={Position.Top} />

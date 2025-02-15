@@ -97,3 +97,33 @@ body {
     background: rgba(255, 255, 255, 0.25);
     pointer-events: all;
   }
+  
+  .deleteButton {
+    position: absolute;
+    right: -8px;
+    top: -8px;
+    width: 20px;
+    height: 20px;
+    background: #ff4444;
+    color: white;
+    border-radius: 50%;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    pointer-events: all;
+    opacity: 0;
+    transition: opacity 0.2s;
+    border: none;
+    outline: none;
+    z-index: 2;
+  }
+  
+  .inputWrapper:hover .deleteButton {
+    opacity: 1;
+  }
+  
+  .deleteButton:hover {
+    background: #ff0000;
+  }
