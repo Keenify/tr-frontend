@@ -1,11 +1,17 @@
 import { memo } from 'react';
 import { ReactFlowProvider } from 'reactflow';
 import Flow from './MindMap';
+import { Session } from '@supabase/supabase-js';
 
-export const FlowWrapper = memo(() => {
+interface FlowWrapperProps {
+  session: Session;
+  mindmapId?: string;
+}
+
+export const FlowWrapper = memo(({ session, mindmapId }: FlowWrapperProps) => {
   return (
     <ReactFlowProvider>
-      <Flow />
+      <Flow session={session} mindmapId={mindmapId} />
     </ReactFlowProvider>
   );
 });
