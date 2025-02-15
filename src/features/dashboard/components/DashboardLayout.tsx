@@ -3,6 +3,7 @@ import { Calendar, Power, ThumbsUp, ChevronDown, ChevronRight, Shield, Home } fr
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase'; // Import supabase client
 import { useNavigate, useParams } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 
 /**
  * Props for the Layout component.
@@ -168,6 +169,30 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
    */
   return (
     <div className="flex flex-col h-screen bg-gray-50">
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: '#4ade80',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 4000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
       {/* Top Bar Section */}
       {/* @section Contains company logo, user profile, and sign out button */}
       <div className="flex justify-between items-center bg-white border-b border-gray-200 px-4 py-2">
