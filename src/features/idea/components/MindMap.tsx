@@ -42,6 +42,7 @@ function Flow({ session, mindmapId }: MindMapProps) {
   const [isDescriptionEditing, setIsDescriptionEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentMindMapId, setCurrentMindMapId] = useState<string | undefined>(mindmapId);
 
   const { userInfo, companyInfo } = useUserAndCompanyData(session.user.id);
 
@@ -182,9 +183,9 @@ function Flow({ session, mindmapId }: MindMapProps) {
     };
 
     try {
-      if (mindmapId) {
+      if (currentMindMapId) {
         // Update existing mindmap
-        await updateMindMap(mindmapId, {
+        await updateMindMap(currentMindMapId, {
           title,
           description,
           mindmap: mindMapData
@@ -199,7 +200,8 @@ function Flow({ session, mindmapId }: MindMapProps) {
           company_id: companyInfo.id,
           created_by: userInfo?.id || ''
         };
-        await createMindMap(createRequest);
+        const newMindMap = await createMindMap(createRequest);
+        setCurrentMindMapId(newMindMap.id); // Set the new mindmap ID after creation
         toast.success('Mind map created successfully');
       }
     } catch (err) {
@@ -207,7 +209,7 @@ function Flow({ session, mindmapId }: MindMapProps) {
       console.error(err);
       toast.error('Failed to save mind map');
     }
-  }, [title, description, nodes, edges, mindmapId, companyInfo?.id, userInfo?.id]);
+  }, [title, description, nodes, edges, currentMindMapId, companyInfo?.id, userInfo?.id]);
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-full">Loading...</div>;
@@ -271,7 +273,7 @@ function Flow({ session, mindmapId }: MindMapProps) {
           onClick={handleSave}
           className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
         >
-          {mindmapId ? 'Update Mind Map' : 'Create Mind Map'}
+          {currentMindMapId ? 'Update Mind Map' : 'Create Mind Map'}
         </button>
       </Panel>
     </ReactFlow>
