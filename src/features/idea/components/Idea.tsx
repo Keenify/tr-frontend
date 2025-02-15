@@ -83,11 +83,11 @@ export const Idea = ({ session }: { session: Session }) => {
       ) : (isLoading || isUserDataLoading) ? (
         <p className="text-center">Loading...</p>
       ) : (
-        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 px-4">
+        <div className="w-full flex flex-wrap gap-4 px-4">
           {mindmaps.map((mindmap) => (
             <div
               key={mindmap.id}
-              className="bg-white rounded-lg border border-gray-200 hover:border-blue-500 transition-all duration-200 relative group"
+              className="bg-white rounded-lg border border-gray-200 hover:border-blue-500 transition-all duration-200 relative group flex-grow basis-[calc(100%-1rem)] sm:basis-[calc(50%-1rem)] lg:basis-[calc(33.333%-1rem)] xl:basis-[calc(25%-1rem)]"
             >
               <div 
                 className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
