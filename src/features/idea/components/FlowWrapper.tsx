@@ -10,9 +10,11 @@ interface FlowWrapperProps {
 
 export const FlowWrapper = memo(({ session, mindmapId }: FlowWrapperProps) => {
   return (
-    <ReactFlowProvider>
-      <Flow session={session} mindmapId={mindmapId} />
-    </ReactFlowProvider>
+    <div className="absolute inset-0">
+      <ReactFlowProvider>
+        <Flow session={session} mindmapId={mindmapId} />
+      </ReactFlowProvider>
+    </div>
   );
 });
 
