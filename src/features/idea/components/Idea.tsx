@@ -1,17 +1,19 @@
 import { Session } from '@supabase/supabase-js';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { MoreVertical } from 'react-feather';
 import toast from 'react-hot-toast';
 import FlowWrapper from './FlowWrapper';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import { getCompanyMindMaps, MindMapResponse, deleteMindMap } from '../services/useMindMap';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 
 export const Idea = ({ session }: { session: Session }) => {
+  const navigate = useNavigate();
+  const { mindmapId } = useParams<{ mindmapId: string }>();
+  const location = useLocation();
   const [mindmaps, setMindmaps] = useState<MindMapResponse[]>([]);
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
-  const [selectedMindmapId, setSelectedMindmapId] = useState<string | undefined>();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedMindmapForDelete, setSelectedMindmapForDelete] = useState<MindMapResponse | null>(null);
 
@@ -19,28 +21,43 @@ export const Idea = ({ session }: { session: Session }) => {
   const { companyInfo, error: userDataError, isLoading: isUserDataLoading } = 
     useUserAndCompanyData(session.user.id);
 
-  useEffect(() => {
-    const fetchMindmaps = async () => {
-      if (!companyInfo?.id || isUserDataLoading) return;
+  console.log('Current path:', location.pathname);
+  console.log('Current mindmapId:', mindmapId);
 
-      try {
-        const fetchedMindmaps = await getCompanyMindMaps(companyInfo.id);
-        setMindmaps(fetchedMindmaps);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error fetching mindmaps:', error);
-        setError('Failed to load mindmaps. Please try again later.');
-        setIsLoading(false);
-      }
-    };
+  // Check if we're on the new route
+  const isNewRoute = location.pathname.endsWith('/new');
+  
+  const fetchMindmaps = useCallback(async () => {
+    if (!companyInfo?.id || isUserDataLoading) return;
 
-    fetchMindmaps();
+    try {
+      const fetchedMindmaps = await getCompanyMindMaps(companyInfo.id);
+      setMindmaps(fetchedMindmaps);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching mindmaps:', error);
+      setError('Failed to load mindmaps. Please try again later.');
+      setIsLoading(false);
+    }
   }, [companyInfo?.id, isUserDataLoading]);
+
+  useEffect(() => {
+    fetchMindmaps();
+  }, [fetchMindmaps]);
 
   // Show error if user data fetch failed
   if (userDataError) {
     return <p className="text-red-500 text-center">Failed to load user data. Please try again later.</p>;
   }
+
+  // Update the click handlers to use navigation
+  const handleMindmapClick = (id: string) => {
+    navigate(`/${session.user.id}/idea/${id}`);
+  };
+
+  const handleCreateClick = () => {
+    navigate(`/${session.user.id}/idea/new`);
+  };
 
   const handleDeleteClick = (mindmap: MindMapResponse, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering the mindmap selection
@@ -64,12 +81,26 @@ export const Idea = ({ session }: { session: Session }) => {
     }
   };
 
-  if (isCreating || selectedMindmapId) {
+  // If mindmapId is present or we're on the new route, show the FlowWrapper
+  if (mindmapId || isNewRoute) {
+    console.log('Rendering FlowWrapper with mindmapId:', isNewRoute ? 'new' : mindmapId);
     return (
-      <div className="w-full h-[80vh]">
+      <div className="w-full h-[80vh] relative">
+        <button
+          onClick={() => {
+            navigate(`/${session.user.id}/idea`);
+            fetchMindmaps();
+          }}
+          className="absolute top-4 left-4 px-3 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2 z-10"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Ideas
+        </button>
         <FlowWrapper 
           session={session} 
-          mindmapId={selectedMindmapId}
+          mindmapId={isNewRoute ? undefined : mindmapId}
         />
       </div>
     );
@@ -99,7 +130,7 @@ export const Idea = ({ session }: { session: Session }) => {
               </div>
               <div 
                 className="p-4 cursor-pointer"
-                onClick={() => setSelectedMindmapId(mindmap.id)}
+                onClick={() => handleMindmapClick(mindmap.id)}
               >
                 <h3 className="font-medium text-gray-900 mb-2 truncate">
                   {mindmap.title}
@@ -113,7 +144,7 @@ export const Idea = ({ session }: { session: Session }) => {
 
           {/* Create New Mindmap Button */}
           <div
-            onClick={() => setIsCreating(true)}
+            onClick={handleCreateClick}
             className="bg-white rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-500 transition-all duration-200 cursor-pointer group"
           >
             <div className="p-4 h-full flex flex-col items-center justify-center">

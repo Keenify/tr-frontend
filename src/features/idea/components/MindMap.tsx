@@ -11,6 +11,8 @@ import ReactFlow, {
   useEdgesState,
   OnConnectStart,
   OnConnectEnd,
+  NodeChange,
+  EdgeChange,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import '../styles/mindmap.css';
@@ -43,43 +45,50 @@ function Flow({ session, mindmapId }: MindMapProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentMindMapId, setCurrentMindMapId] = useState<string | undefined>(mindmapId);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const { userInfo, companyInfo } = useUserAndCompanyData(session.user.id);
 
-  // Fetch existing mindmap data if mindmapId is provided
+  // Initialize or fetch mindmap data
   useEffect(() => {
-    const fetchMindMap = async () => {
-      if (!mindmapId) {
-        // Initialize empty mindmap with root node for new mindmap
-        const rootNode = {
-          id: 'root',
-          type: 'mindmap',
-          data: { 
-            label: 'Double click to edit title',
-            description: 'Double click to edit description'
-          },
-          position: { x: 0, y: 0 }
-        };
-        setNodes([rootNode]);
-        setIsLoading(false);
-        return;
-      }
-
+    const initializeMindMap = async () => {
+      setIsLoading(true);
       try {
-        const mindmapData = await getMindMap(mindmapId);
-        setTitle(mindmapData.title);
-        setDescription(mindmapData.description);
-        setNodes(mindmapData.mindmap.nodes);
-        setEdges(mindmapData.mindmap.edges);
+        if (!mindmapId || mindmapId === 'new') {
+          // Initialize new mindmap
+          const initialNode = {
+            id: 'root',
+            type: 'mindmap',
+            data: { 
+              label: 'Root Node',
+              description: 'Start your mind map here'
+            },
+            position: { x: 0, y: 0 },
+            dragHandle: '.dragHandle',
+          };
+          
+          setNodes([initialNode]);
+          setEdges([]);
+          setTitle('New Mind Map');
+          setDescription('Add a description for your mind map');
+          setIsLoading(false);
+        } else {
+          // Fetch existing mindmap
+          const mindmapData = await getMindMap(mindmapId);
+          setTitle(mindmapData.title);
+          setDescription(mindmapData.description);
+          setNodes(mindmapData.mindmap.nodes);
+          setEdges(mindmapData.mindmap.edges);
+          setIsLoading(false);
+        }
       } catch (err) {
-        setError('Failed to load mindmap');
-        console.error(err);
-      } finally {
+        console.error('Error initializing mindmap:', err);
+        setError('Failed to initialize mind map');
         setIsLoading(false);
       }
     };
 
-    fetchMindMap();
+    initializeMindMap();
   }, [mindmapId, setNodes, setEdges]);
 
   const store = useStoreApi();
@@ -155,6 +164,26 @@ function Flow({ session, mindmapId }: MindMapProps) {
   const connectionLineStyle = { stroke: '#F6AD55', strokeWidth: 3 };
   const defaultEdgeOptions = { style: connectionLineStyle, type: 'mindmap' };
 
+  const handleNodesChange = useCallback((changes: NodeChange[]) => {
+    setHasUnsavedChanges(true);
+    onNodesChange(changes);
+  }, [onNodesChange]);
+
+  const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
+    setHasUnsavedChanges(true);
+    onEdgesChange(changes);
+  }, [onEdgesChange]);
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setDescription(e.target.value);
+    setHasUnsavedChanges(true);
+  };
+
   const handleSave = useCallback(async () => {
     if (!companyInfo?.id) {
       setError('Company information not available');
@@ -204,6 +233,7 @@ function Flow({ session, mindmapId }: MindMapProps) {
         setCurrentMindMapId(newMindMap.id); // Set the new mindmap ID after creation
         toast.success('Mind map created successfully');
       }
+      setHasUnsavedChanges(false); // Reset unsaved changes after successful save
     } catch (err) {
       setError('Failed to save mindmap');
       console.error(err);
@@ -211,72 +241,88 @@ function Flow({ session, mindmapId }: MindMapProps) {
     }
   }, [title, description, nodes, edges, currentMindMapId, companyInfo?.id, userInfo?.id]);
 
-  if (isLoading) {
-    return <div className="flex justify-center items-center h-full">Loading...</div>;
-  }
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
 
-  if (error) {
-    return <div className="text-red-500 text-center">{error}</div>;
-  }
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnectStart={onConnectStart}
-      onConnectEnd={onConnectEnd}
-      nodeTypes={nodeTypes}
-      edgeTypes={edgeTypes}
-      nodeOrigin={nodeOrigin}
-      defaultEdgeOptions={defaultEdgeOptions}
-      connectionLineStyle={connectionLineStyle}
-      connectionLineType={ConnectionLineType.Straight}
-      fitView
-    >
-      <Controls showInteractive={false} />
-      <Panel position="top-left" className="header">
-        <div className="flex flex-col gap-2">
-          <input
-            type="text"
-            className={`px-2 py-1 text-xl font-semibold ${
-              isTitleEditing 
-                ? 'border rounded bg-white' 
-                : 'border-none bg-transparent text-black'
-            }`}
-            value={title}
-            placeholder="Double click to edit title"
-            readOnly={!isTitleEditing}
-            onDoubleClick={() => setIsTitleEditing(true)}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={() => setIsTitleEditing(false)}
-          />
-          <textarea
-            className={`px-2 py-1 text-sm ${
-              isDescriptionEditing 
-                ? 'border rounded resize-none bg-white' 
-                : 'border-none bg-transparent text-black resize-none'
-            }`}
-            rows={2}
-            value={description}
-            placeholder="Double click to edit description"
-            readOnly={!isDescriptionEditing}
-            onDoubleClick={() => setIsDescriptionEditing(true)}
-            onChange={(e) => setDescription(e.target.value)}
-            onBlur={() => setIsDescriptionEditing(false)}
-          />
+    <div style={{ width: '100%', height: '100%' }}>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-full">
+          <p>Loading...</p>
         </div>
-      </Panel>
-      <Panel position="top-right">
-        <button 
-          onClick={handleSave}
-          className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
+      ) : error ? (
+        <div className="flex items-center justify-center h-full">
+          <p className="text-red-500">{error}</p>
+        </div>
+      ) : (
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={handleNodesChange}
+          onEdgesChange={handleEdgesChange}
+          onConnectStart={onConnectStart}
+          onConnectEnd={onConnectEnd}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          nodeOrigin={nodeOrigin}
+          defaultEdgeOptions={defaultEdgeOptions}
+          connectionLineStyle={connectionLineStyle}
+          connectionLineType={ConnectionLineType.Straight}
+          fitView
         >
-          {currentMindMapId ? 'Update Mind Map' : 'Create Mind Map'}
-        </button>
-      </Panel>
-    </ReactFlow>
+          <Controls showInteractive={false} />
+          <Panel position="top-left" className="header z-50 mt-16">
+            <div className="flex flex-col gap-2">
+              <input
+                type="text"
+                className={`px-2 py-1 text-xl font-semibold ${
+                  isTitleEditing 
+                    ? 'border rounded bg-white' 
+                    : 'border-none bg-transparent text-black'
+                }`}
+                value={title}
+                placeholder="Double click to edit title"
+                readOnly={!isTitleEditing}
+                onDoubleClick={() => setIsTitleEditing(true)}
+                onChange={handleTitleChange}
+                onBlur={() => setIsTitleEditing(false)}
+              />
+              <textarea
+                className={`px-2 py-1 text-sm ${
+                  isDescriptionEditing 
+                    ? 'border rounded resize-none bg-white' 
+                    : 'border-none bg-transparent text-black resize-none'
+                }`}
+                rows={2}
+                value={description}
+                placeholder="Double click to edit description"
+                readOnly={!isDescriptionEditing}
+                onDoubleClick={() => setIsDescriptionEditing(true)}
+                onChange={handleDescriptionChange}
+                onBlur={() => setIsDescriptionEditing(false)}
+              />
+            </div>
+          </Panel>
+          <Panel position="top-right" className="z-50">
+            <button 
+              onClick={handleSave}
+              className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
+            >
+              {hasUnsavedChanges ? '* Save Changes' : (currentMindMapId ? 'Update Mind Map' : 'Create Mind Map')}
+            </button>
+          </Panel>
+        </ReactFlow>
+      )}
+    </div>
   );
 }
 
