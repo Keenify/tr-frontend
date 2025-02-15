@@ -76,7 +76,27 @@ const App: React.FC = () => {
                 <Route path="/:userId/projects" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="projects" onTabChange={() => { }}><Projects session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/admin" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="admin" onTabChange={() => { }}><Admin session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/hiring" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="hiring" onTabChange={() => { }}><Hiring session={session} /></DashboardLayout>} />} />
-                <Route path="/:userId/idea" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="idea" onTabChange={() => { }}><Idea session={session} /></DashboardLayout>} />} />
+                <Route path="/:userId/idea/new" element={
+                  <ProtectedRoute session={session} element={
+                    <DashboardLayout session={session} signOut={signOut} activeTab="idea" onTabChange={() => {}}>
+                      <Idea session={session} key="new" />
+                    </DashboardLayout>
+                  } />
+                } />
+                <Route path="/:userId/idea/:mindmapId" element={
+                  <ProtectedRoute session={session} element={
+                    <DashboardLayout session={session} signOut={signOut} activeTab="idea" onTabChange={() => {}}>
+                      <Idea session={session} />
+                    </DashboardLayout>
+                  } />
+                } />
+                <Route path="/:userId/idea" element={
+                  <ProtectedRoute session={session} element={
+                    <DashboardLayout session={session} signOut={signOut} activeTab="idea" onTabChange={() => {}}>
+                      <Idea session={session} />
+                    </DashboardLayout>
+                  } />
+                } />
                 <Route path="/:userId/feedback" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="feedback" onTabChange={() => { }}><Feedback session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/finance" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="finance" onTabChange={() => { }}><Finance session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/playbook" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="playbook" onTabChange={() => { }}><Playbook session={session} /></DashboardLayout>} />} />
