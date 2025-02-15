@@ -1,4 +1,4 @@
-import { useCallback, useRef, useMemo, useState, useEffect } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import ReactFlow, {
   ConnectionLineType,
   NodeOrigin,
@@ -29,6 +29,10 @@ import toast from 'react-hot-toast';
 
 import MindMapNode from './MindMapNode/MindMapNode';
 import MindMapEdge from './MindMapEdge/MindMapEdge';
+
+// Define these outside the component
+const nodeTypes = { mindmap: MindMapNode };
+const edgeTypes = { mindmap: MindMapEdge };
 
 interface MindMapProps {
   session: Session;
@@ -94,9 +98,6 @@ function Flow({ session, mindmapId }: MindMapProps) {
   const store = useStoreApi();
   const { screenToFlowPosition } = useReactFlow();
   const connectingNodeId = useRef<string | null>(null);
-
-  const nodeTypes = useMemo(() => ({ mindmap: MindMapNode }), []);
-  const edgeTypes = useMemo(() => ({ mindmap: MindMapEdge }), []);
 
   const getChildNodePosition = useCallback(
     (event: MouseEvent, parentNode?: Node) => {
