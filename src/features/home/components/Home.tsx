@@ -3,10 +3,7 @@ import { Session } from '@supabase/supabase-js';
 import '../styles/Home.css';
 
 // image
-import MountEverest from '../../../../src/assets/home/mount-everest.png';
-
-<img src={MountEverest} alt="Mount Everest" />
-
+import MountEverest from '../../../../src/assets/home/mount-everest-completed.png';
 
 interface HomeProps {
   session: Session;
@@ -17,33 +14,23 @@ const Home: React.FC<HomeProps> = ({ session }) => {
 
   return (
     <div style={{ 
-      padding: '20px', 
       height: '100vh', 
       overflow: 'hidden',
-      position: 'relative'
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#fff' // Changed from #000 to #fff for white background
     }}>
-      <div style={{ 
-        border: '2px solid #ccc', 
-        padding: '10px', 
-        position: 'relative', 
-        height: '75vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: '50px'
-      }}>
-        <img 
-          src={MountEverest}
-          alt="Mount Everest" 
-          style={{ 
-            maxWidth: '70%',
-            maxHeight: '100%',
-            objectFit: 'contain',
-            border: '2px solid #000',
-            padding: '5px'
-          }} 
-        />
-      </div>
+      <img 
+        src={MountEverest}
+        alt="Mount Everest" 
+        style={{ 
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain'
+        }} 
+      />
     </div>
   );
 };
