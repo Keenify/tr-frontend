@@ -421,17 +421,6 @@ const AccountabilityMatrix: React.FC<AccountabilityMatrixProps> = ({ session }) 
           </tbody>
         </table>
       </div>
-      
-      {!editingRowId && (
-        <div className="mt-4">
-          <button
-            onClick={handleAddRow}
-            className="button-primary"
-          >
-            Add New Row
-          </button>
-        </div>
-      )}
     </div>
   );
 };
