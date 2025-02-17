@@ -94,7 +94,17 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
                       {formatTime(event.start_time)} - {formatTime(event.end_time)}
                     </p>
                     {event.location && (
-                      <p className="text-sm mt-1">📍 {event.location}</p>
+                      <div className="text-sm mt-1">
+                        <p>📍 {event.location.split(' - ')[0]}</p>
+                        <a
+                          href={event.location.split(' - ')[1]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-indigo-600 hover:text-indigo-500"
+                        >
+                          View on Google Maps
+                        </a>
+                      </div>
                     )}
                     {event.description && (
                       <p className="text-sm mt-2 whitespace-pre-wrap">{event.description}</p>

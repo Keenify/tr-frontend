@@ -1,13 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'react-feather';
 import { CreateCalendarEventPayload, EventType } from '../types/calendar';
 import { formatDateTimeForInput } from '../utils/dateUtils';
+import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
+import { loadGoogleMapsScript } from '../../../../utils/loadGoogleMapsScript';
 
 interface CreateEventModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (event: CreateCalendarEventPayload) => void;
   initialDate?: Date;
+}
+
+interface GooglePlace {
+  label: string;
+  value: {
+    place_id: string;
+  };
 }
 
 const EVENT_TYPES: EventType[] = ['Employee Leave', 'Booth', 'Meeting', 'Other'];
@@ -27,6 +36,15 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     description: '',
   });
 
+  const [locationValue, setLocationValue] = useState<GooglePlace | null>(null);
+  const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
+
+  useEffect(() => {
+    loadGoogleMapsScript().then(() => {
+      setIsGoogleMapsLoaded(true);
+    });
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
@@ -43,6 +61,20 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  const handlePlaceSelect = (place: GooglePlace | null) => {
+    if (!place) return;
+    
+    const locationDescription = place.label;
+    const placeId = place.value.place_id;
+    const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationDescription)}&query_place_id=${placeId}`;
+    
+    setLocationValue(place);
+    setFormData(prev => ({
+      ...prev,
+      location: `${locationDescription} - ${mapsLink}`,
     }));
   };
 
@@ -132,14 +164,42 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
             <label htmlFor="location" className="block text-sm font-medium text-gray-700">
               Location
             </label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            />
+            {isGoogleMapsLoaded ? (
+              <GooglePlacesAutocomplete
+                apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+                selectProps={{
+                  value: locationValue,
+                  onChange: handlePlaceSelect,
+                  className: "mt-1",
+                  classNamePrefix: "google-places",
+                  placeholder: "Search for a location...",
+                  styles: {
+                    control: (provided) => ({
+                      ...provided,
+                      borderColor: '#D1D5DB',
+                      borderRadius: '0.375rem',
+                      '&:hover': {
+                        borderColor: '#6366F1'
+                      }
+                    }),
+                  }
+                }}
+              />
+            ) : (
+              <div className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2">
+                Loading Google Maps...
+              </div>
+            )}
+            {formData.location && (
+              <a
+                href={formData.location.split(' - ')[1]}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-indigo-600 hover:text-indigo-500 mt-1 inline-block"
+              >
+                View on Google Maps
+              </a>
+            )}
           </div>
 
           <div>
