@@ -9,6 +9,10 @@ import {
   TableHead,
   TableRow,
   TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { Session } from "@supabase/supabase-js";
 import React from "react";
@@ -76,6 +80,9 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
 
   // Add new state for toggling between carton and pack count
   const [displayPackCount, setDisplayPackCount] = React.useState<boolean>(false);
+
+  // Add currency state
+  const [selectedCurrency, setSelectedCurrency] = React.useState<'SGD' | 'MYR'>('SGD');
 
   // Update the initial footer text state to be a function that considers gift box status
   const getFooterText = (includeGiftBox: boolean) => {
@@ -358,13 +365,14 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
         })),
         companyInfo,
         customerCompanyName,
-        sales_account_manager: salesAccountManager, // Updated key name
+        sales_account_manager: salesAccountManager,
         currentDate,
+        currency: selectedCurrency,
         tableSettings: {
           showPackCount,
           showRetailPrice,
           visibleCartonColumns: Array.from(visibleCartonColumns),
-          displayType: displayPackCount ? 'pack' : 'carton', // New key to indicate pack or carton
+          displayType: displayPackCount ? 'pack' : 'carton',
         },
         footer: footerText,
       };
@@ -430,6 +438,21 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
             onChange={(e) => setSalesAccountManager(e.target.value)}
             placeholder="Enter sales account manager name"
           />
+          <FormControl 
+            variant="outlined" 
+            fullWidth 
+            style={{ marginTop: '1rem' }}
+          >
+            <InputLabel>Currency</InputLabel>
+            <Select
+              value={selectedCurrency}
+              onChange={(e) => setSelectedCurrency(e.target.value as 'SGD' | 'MYR')}
+              label="Currency"
+            >
+              <MenuItem value="SGD">SGD</MenuItem>
+              <MenuItem value="MYR">MYR</MenuItem>
+            </Select>
+          </FormControl>
           <div className="date-container">Updated At: {currentDate}</div>
         </Grid>
 
@@ -530,7 +553,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
                   className="table-header-cell"
                   style={{ backgroundColor: "#FF9933" }}
                 >
-                  Price per unit (SGD)
+                  Price per unit ({selectedCurrency})
                 </TableCell>
               )}
               {showRetailPrice && (
