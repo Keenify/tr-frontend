@@ -186,7 +186,10 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
 
   // Function to get unique price tier headers for the table
   const getPriceTierHeaders = React.useCallback(() => {
-    const allTiers = Object.values(productPriceTiers).flat();
+    const allTiers = Object.values(productPriceTiers)
+      .flat()
+      .filter(tier => tier.currency === selectedCurrency); // Filter by selected currency
+    
     if (displayPackCount) {
       const uniquePacks = Array.from(
         new Set(allTiers.map((tier) => tier.min_packs))
@@ -202,7 +205,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
         .filter((carton): carton is number => carton !== null && carton > 0)
         .sort((a, b) => a - b);
     }
-  }, [productPriceTiers, displayPackCount]);
+  }, [productPriceTiers, displayPackCount, selectedCurrency]);
 
   const priceTierHeaders = React.useMemo(
     () => getPriceTierHeaders(),
@@ -409,6 +412,22 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
     });
   };
 
+  // Add or update the CSS styles in your Quotation.css file
+  const toggleContainerStyles = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)', // Creates 2 columns
+    gap: '10px',
+    padding: '15px',
+    width: '100%'
+  };
+
+  const toggleLabelStyles = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    whiteSpace: 'nowrap'
+  };
+
   if (loadingProducts) {
     return <div>Loading products...</div>;
   }
@@ -457,8 +476,8 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
         </Grid>
 
         <Grid item xs={6}>
-          <div className="toggle-container">
-            <label className="toggle-label">
+          <div className="toggle-container" style={toggleContainerStyles}>
+            <label className="toggle-label" style={toggleLabelStyles}>
               <input
                 type="checkbox"
                 checked={displayPackCount}
@@ -466,7 +485,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
               />
               Display Pack Count
             </label>
-            <label className="toggle-label">
+            <label className="toggle-label" style={toggleLabelStyles}>
               <input
                 type="checkbox"
                 checked={showPackCount}
@@ -474,17 +493,19 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
               />
               Show Pack Count Per Box
             </label>
-            {priceTierHeaders.filter((carton): carton is number => carton !== null).map((carton) => (
-              <label key={carton} className="toggle-label">
-                <input
-                  type="checkbox"
-                  checked={visibleCartonColumns.has(carton)}
-                  onChange={() => toggleCartonColumn(carton)}
-                />
-                {displayPackCount ? `Show ≥${carton} Pack` : `Show ≥${carton} Carton`}
-              </label>
-            ))}
-            <label className="toggle-label">
+            {priceTierHeaders
+              .filter((carton): carton is number => carton !== null)
+              .map((carton) => (
+                <label key={carton} className="toggle-label" style={toggleLabelStyles}>
+                  <input
+                    type="checkbox"
+                    checked={visibleCartonColumns.has(carton)}
+                    onChange={() => toggleCartonColumn(carton)}
+                  />
+                  {displayPackCount ? `Show ≥${carton} Pack` : `Show ≥${carton} Carton`}
+                </label>
+              ))}
+            <label className="toggle-label" style={toggleLabelStyles}>
               <input
                 type="checkbox"
                 checked={showRetailPrice}
@@ -563,7 +584,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
                   className="table-header-cell"
                   style={{ width: "100px", backgroundColor: "#FF9933" }}
                 >
-                  Recommended Retail Price
+                  Recommended Retail Price ({selectedCurrency})
                 </TableCell>
               )}
             </TableRow>
@@ -728,8 +749,8 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
                         productPriceTiers[product.id]
                           ?.find((tier) =>
                             displayPackCount
-                              ? tier.min_packs === count
-                              : tier.min_cartons === count
+                              ? tier.min_packs === count && tier.currency === selectedCurrency
+                              : tier.min_cartons === count && tier.currency === selectedCurrency
                           )
                           ?.price_per_unit.toString() || ""
                       )
@@ -758,11 +779,12 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
                         placeholder="Enter price"
                       />
                     ) : (
-                      productPriceTiers[product.id]?.find((tier) =>
-                        displayPackCount
-                          ? tier.min_packs === count
-                          : tier.min_cartons === count
-                      )?.price_per_unit || "N/A"
+                      productPriceTiers[product.id]
+                        ?.find((tier) =>
+                          displayPackCount
+                            ? tier.min_packs === count && tier.currency === selectedCurrency
+                            : tier.min_cartons === count && tier.currency === selectedCurrency
+                        )?.price_per_unit || "N/A"
                     )}
                   </TableCell>
                 ))}
@@ -770,40 +792,8 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
                   <TableCell
                     align="center"
                     className="table-cell"
-                    onDoubleClick={() =>
-                      handleDoubleClick(
-                        product.id,
-                        "recommended_retail_price",
-                        product.recommended_retail_price.toString()
-                      )
-                    }
                   >
-                    {editingCell?.productId === product.id &&
-                    editingCell.field === "recommended_retail_price" ? (
-                      <input
-                        type="text"
-                        value={editValue}
-                        onChange={handleInputChange}
-                        onBlur={() =>
-                          handleBlur(product.id, "recommended_retail_price")
-                        }
-                        onKeyDown={(e) =>
-                          handleKeyDown(
-                            e,
-                            product.id,
-                            "recommended_retail_price"
-                          )
-                        }
-                        autoFocus
-                        placeholder="Enter retail price"
-                      />
-                    ) : product.recommended_retail_price ? (
-                      `$${parseFloat(product.recommended_retail_price).toFixed(
-                        2
-                      )}`
-                    ) : (
-                      "N/A"
-                    )}
+                    {product[selectedCurrency === 'SGD' ? 'rrp_sgd' : 'rrp_myr'] || 'N/A'}
                   </TableCell>
                 )}
               </TableRow>
@@ -859,6 +849,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
         products={products}
         productPriceTiers={productPriceTiers}
         onPriceTierUpdate={handlePriceTierUpdate}
+        selectedCurrency={selectedCurrency}
       />
     </div>
   );

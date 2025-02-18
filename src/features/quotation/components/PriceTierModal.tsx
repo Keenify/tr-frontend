@@ -12,11 +12,12 @@ interface PriceTierModalProps {
     products: Product[];
     productPriceTiers: { [key: number]: ProductPriceTier[] };
     onPriceTierUpdate: (productId: number, updatedTiers: ProductPriceTier[]) => void;
+    selectedCurrency: 'SGD' | 'MYR';
 }
 
-const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products, productPriceTiers, onPriceTierUpdate }) => {
+const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products, productPriceTiers, onPriceTierUpdate, selectedCurrency }) => {
     const [isSideModalOpen, setIsSideModalOpen] = useState(false);
-    const [newTier, setNewTier] = useState({ min_cartons: 0, min_packs: 0, price_per_unit: 0 });
+    const [newTier, setNewTier] = useState({ min_cartons: 0, min_packs: 0, price_per_unit: 0, currency: selectedCurrency });
     const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
     const [selectedTier, setSelectedTier] = useState<{ productId: number | null, tierId: number | null }>({ productId: null, tierId: null });
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -35,14 +36,20 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
 
     const handleSaveNewTier = async (productId: number) => {
         try {
-            const newPriceTier = await createPriceTier(newTier.min_cartons, newTier.min_packs, newTier.price_per_unit, productId);
+            const newPriceTier = await createPriceTier(
+                newTier.min_cartons,
+                newTier.min_packs,
+                newTier.price_per_unit,
+                productId,
+                selectedCurrency
+            );
             if (!productPriceTiers[productId]) {
                 productPriceTiers[productId] = [];
             }
             const updatedTiers = [...productPriceTiers[productId], newPriceTier];
-            onPriceTierUpdate(productId, updatedTiers);
+            onPriceTierUpdate(productId, updatedTiers as ProductPriceTier[]);
             setIsSideModalOpen(false);
-            setNewTier({ min_cartons: 0, min_packs: 0, price_per_unit: 0 });
+            setNewTier({ min_cartons: 0, min_packs: 0, price_per_unit: 0, currency: selectedCurrency });
         } catch (error) {
             console.error('Error saving new price tier:', error);
         }
@@ -93,7 +100,7 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
     const handleSaveEditTier = async () => {
         if (editTier.tierId !== null && selectedProductId !== null) {
             try {
-                const updatedTier = await updatePriceTier(editTier.tierId, editTier.min_cartons, editTier.min_packs, editTier.price_per_unit);
+                const updatedTier = await updatePriceTier(editTier.tierId, editTier.min_cartons, editTier.min_packs, editTier.price_per_unit, selectedCurrency);
                 const productTiers = [...productPriceTiers[selectedProductId]];
                 const tierIndex = productTiers.findIndex(t => t.id === editTier.tierId);
                 if (tierIndex !== -1) {
@@ -134,8 +141,8 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
                         <TableHead>
                             <TableRow>
                                 <TableCell sx={{ width: '20%' }}>Product Name</TableCell>
-                                <TableCell sx={{ width: '15%' }}>Carton Price Tiers</TableCell>
-                                <TableCell sx={{ width: '15%' }}>Pack Price Tiers</TableCell>
+                                <TableCell sx={{ width: '15%' }}>Carton Price Tiers ({selectedCurrency})</TableCell>
+                                <TableCell sx={{ width: '15%' }}>Pack Price Tiers ({selectedCurrency})</TableCell>
                                 <TableCell sx={{ width: '10%' }}>Action</TableCell>
                             </TableRow>
                         </TableHead>
@@ -144,38 +151,45 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
                                 <TableRow key={product.id}>
                                     <TableCell sx={{ verticalAlign: 'top' }}>{product.name}</TableCell>
                                     <TableCell sx={{ verticalAlign: 'top' }}>
-                                        {productPriceTiers[product.id]?.filter(tier => tier.min_cartons !== null && tier.min_cartons !== 0)
-                                            .sort((a, b) => a.min_cartons! - b.min_cartons!)
-                                            .map(tier => (
-                                                <div key={tier.id} style={{ marginBottom: '4px' }}>
-                                                    <input
-                                                        style={{ marginRight: '4px' }}
-                                                        title={`Price tier for ≥${tier.min_cartons} cartons at $${tier.price_per_unit} per unit`}
-                                                        type="radio"
-                                                        name={`tier-carton-${product.id}`}
-                                                        checked={selectedTier.productId === product.id && selectedTier.tierId === tier.id}
-                                                        onChange={() => handleCheckboxChange(product.id, tier.id)}
-                                                    />
-                                                    ≥{tier.min_cartons} cartons: ${tier.price_per_unit}
-                                                </div>
-                                            )) || 'No carton price tiers available'}
+                                        {productPriceTiers[product.id]?.filter(tier => 
+                                            tier.min_cartons !== null && 
+                                            tier.min_cartons !== 0 &&
+                                            tier.currency === selectedCurrency
+                                        )
+                                        .sort((a, b) => a.min_cartons! - b.min_cartons!)
+                                        .map(tier => (
+                                            <div key={tier.id} style={{ marginBottom: '4px' }}>
+                                                <input
+                                                    style={{ marginRight: '4px' }}
+                                                    title={`Price tier for ≥${tier.min_cartons} cartons at $${tier.price_per_unit} per unit`}
+                                                    type="radio"
+                                                    name={`tier-carton-${product.id}`}
+                                                    checked={selectedTier.productId === product.id && selectedTier.tierId === tier.id}
+                                                    onChange={() => handleCheckboxChange(product.id, tier.id)}
+                                                />
+                                                ≥{tier.min_cartons} cartons: {tier.currency} ${tier.price_per_unit}
+                                            </div>
+                                        )) || 'No carton price tiers available'}
                                     </TableCell>
                                     <TableCell sx={{ verticalAlign: 'top' }}>
-                                        {productPriceTiers[product.id]?.filter(tier => tier.min_packs !== 0)
-                                            .sort((a, b) => a.min_packs - b.min_packs)
-                                            .map(tier => (
-                                                <div key={tier.id} style={{ marginBottom: '4px' }}>
-                                                    <input
-                                                        style={{ marginRight: '4px' }}
-                                                        title={`Price tier for ≥${tier.min_packs} packs at $${tier.price_per_unit} per unit`}
-                                                        type="radio"
-                                                        name={`tier-pack-${product.id}`}
-                                                        checked={selectedTier.productId === product.id && selectedTier.tierId === tier.id}
-                                                        onChange={() => handleCheckboxChange(product.id, tier.id)}
-                                                    />
-                                                    ≥{tier.min_packs} packs: ${tier.price_per_unit}
-                                                </div>
-                                            )) || 'No pack price tiers available'}
+                                        {productPriceTiers[product.id]?.filter(tier => 
+                                            tier.min_packs !== 0 &&
+                                            tier.currency === selectedCurrency
+                                        )
+                                        .sort((a, b) => a.min_packs - b.min_packs)
+                                        .map(tier => (
+                                            <div key={tier.id} style={{ marginBottom: '4px' }}>
+                                                <input
+                                                    style={{ marginRight: '4px' }}
+                                                    title={`Price tier for ≥${tier.min_packs} packs at $${tier.price_per_unit} per unit`}
+                                                    type="radio"
+                                                    name={`tier-pack-${product.id}`}
+                                                    checked={selectedTier.productId === product.id && selectedTier.tierId === tier.id}
+                                                    onChange={() => handleCheckboxChange(product.id, tier.id)}
+                                                />
+                                                ≥{tier.min_packs} packs: {tier.currency} ${tier.price_per_unit}
+                                            </div>
+                                        )) || 'No pack price tiers available'}
                                     </TableCell>
                                     <TableCell sx={{ verticalAlign: 'top' }}>
                                         <IconButton onClick={() => handleAddClick(product.id)}>

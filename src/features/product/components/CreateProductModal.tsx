@@ -12,7 +12,8 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({ isOpen, onClose
   const [formData, setFormData] = useState<CreateProductRequest>({
     name: '',
     pack_count_per_box: 0,
-    recommended_retail_price: 0,
+    rrp_sgd: null,
+    rrp_myr: null,
     company_id: companyId,
   });
 
@@ -54,16 +55,27 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({ isOpen, onClose
             />
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Recommended Retail Price</label>
+            <label className="block text-sm font-medium mb-1">Retail Price (SGD)</label>
             <input
-              title="Recommended Retail Price"
-              placeholder="Recommended Retail Price"
+              title="Retail Price (SGD)"
+              placeholder="Retail Price (SGD)"
               type="number"
               step="0.01"
               className="w-full border rounded p-2"
-              value={formData.recommended_retail_price}
-              onChange={(e) => setFormData({ ...formData, recommended_retail_price: parseFloat(e.target.value) })}
-              required
+              value={formData.rrp_sgd || ''}
+              onChange={(e) => setFormData({ ...formData, rrp_sgd: e.target.value || null })}
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Retail Price (MYR)</label>
+            <input
+              title="Retail Price (MYR)"
+              placeholder="Retail Price (MYR)"
+              type="number"
+              step="0.01"
+              className="w-full border rounded p-2"
+              value={formData.rrp_myr || ''}
+              onChange={(e) => setFormData({ ...formData, rrp_myr: e.target.value || null })}
             />
           </div>
           <div className="flex justify-end gap-2">

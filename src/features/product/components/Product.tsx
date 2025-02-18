@@ -249,7 +249,10 @@ const Product: React.FC<ProductProps> = ({ session }) => {
                   </div>
                 </div>
                 <p className="text-gray-600">Pack Count: {product.pack_count_per_box}</p>
-                <p className="text-gray-600">Retail Price: ${product.recommended_retail_price}</p>
+                <div className="text-gray-600">
+                  {product.rrp_sgd && <p>Retail Price: SGD ${product.rrp_sgd}</p>}
+                  {product.rrp_myr && <p>Retail Price: MYR ${product.rrp_myr}</p>}
+                </div>
                 
                 <div className="mt-2">
                   <div className="flex justify-between items-center">

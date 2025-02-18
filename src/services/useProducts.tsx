@@ -18,6 +18,10 @@ export const getProductsByCompany = async (companyId: string): Promise<Product[]
 };
 
 export const createProduct = async (product: CreateProductRequest): Promise<Product> => {
+    if (!product.rrp_sgd && !product.rrp_myr) {
+        throw new Error('At least one retail price (SGD or MYR) must be provided');
+    }
+
     const response = await fetch(`${BACKEND_API_DOMAIN}/products/`, {
         method: 'POST',
         headers: {

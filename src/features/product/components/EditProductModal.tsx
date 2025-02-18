@@ -13,7 +13,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
   const [formData, setFormData] = useState<UpdateProductRequest>({
     name: product.name,
     pack_count_per_box: Number(product.pack_count_per_box),
-    recommended_retail_price: Number(product.recommended_retail_price),
+    rrp_sgd: product.rrp_sgd,
+    rrp_myr: product.rrp_myr,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,16 +61,27 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ isOpen, onClose, on
             />
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Recommended Retail Price</label>
+            <label className="block text-sm font-medium mb-1">Retail Price (SGD)</label>
             <input
-              title="Recommended Retail Price"
-              placeholder="Recommended Retail Price"
+              title="Retail Price (SGD)"
+              placeholder="Retail Price (SGD)"
               type="number"
               step="0.01"
               className="w-full border rounded p-2"
-              value={formData.recommended_retail_price}
-              onChange={(e) => setFormData({ ...formData, recommended_retail_price: parseFloat(e.target.value) })}
-              required
+              value={formData.rrp_sgd || ''}
+              onChange={(e) => setFormData({ ...formData, rrp_sgd: e.target.value || null })}
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Retail Price (MYR)</label>
+            <input
+              title="Retail Price (MYR)"
+              placeholder="Retail Price (MYR)"
+              type="number"
+              step="0.01"
+              className="w-full border rounded p-2"
+              value={formData.rrp_myr || ''}
+              onChange={(e) => setFormData({ ...formData, rrp_myr: e.target.value || null })}
             />
           </div>
           <div className="flex justify-end gap-2">
