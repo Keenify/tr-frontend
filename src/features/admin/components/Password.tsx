@@ -1,5 +1,5 @@
 import { Session } from "@supabase/supabase-js";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 import { 
   getCompanyPasswords, 
@@ -11,6 +11,7 @@ import {
 import { CreatePasswordPayload, PasswordData, UpdatePasswordPayload } from '../types/password';
 import { EyeIcon, EyeSlashIcon, PencilIcon, TrashIcon, ClipboardIcon } from '@heroicons/react/24/outline';
 import { ClipboardDocumentCheckIcon } from '@heroicons/react/24/solid';
+import { Tab } from '@headlessui/react';
 
 interface PasswordProps {
   session: Session;
@@ -20,7 +21,7 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
   const [passwords, setPasswords] = useState<PasswordData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { companyInfo, isLoading: isLoadingCompany } = useUserAndCompanyData(session.user.id);
+  const { companyInfo, isLoading: isLoadingCompany, userInfo } = useUserAndCompanyData(session.user.id);
   const [decryptedPasswords, setDecryptedPasswords] = useState<Record<string, string>>({});
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState<Partial<PasswordData & { password?: string }>>({
@@ -32,6 +33,11 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
   });
   const [passwordToDelete, setPasswordToDelete] = useState<PasswordData | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [countries, setCountries] = useState<string[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<string>('All');
+  const isManager = userInfo?.role === 'manager';
+  const [showNewPasswordForm, setShowNewPasswordForm] = useState(false);
+  const AVAILABLE_COUNTRIES = ['SG', 'MY'];
 
   // Fetch passwords
   useEffect(() => {
@@ -41,6 +47,10 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
         setIsLoading(true);
         const data = await getCompanyPasswords(companyInfo.id);
         setPasswords(data);
+        
+        // Extract unique countries from passwords
+        const uniqueCountries = Array.from(new Set(data.map(p => p.country || 'Uncategorized')));
+        setCountries(['All', ...uniqueCountries]);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load passwords');
       } finally {
@@ -50,6 +60,12 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
 
     fetchPasswords();
   }, [companyInfo?.id]);
+
+  // Filter passwords based on selected country
+  const filteredPasswords = useMemo(() => {
+    if (selectedCountry === 'All') return passwords;
+    return passwords.filter(p => (p.country || 'Uncategorized') === selectedCountry);
+  }, [passwords, selectedCountry]);
 
   const handleTogglePassword = async (passwordId: string) => {
     try {
@@ -96,6 +112,7 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
       username: password.username,
       url: password.url,
       notes: password.notes,
+      country: password.country,
     });
   };
 
@@ -107,6 +124,7 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
           username: newPassword.username || '',
           url: newPassword.url ? (newPassword.url.match(/^https?:\/\//) ? newPassword.url : `https://${newPassword.url}`) : '',
           notes: newPassword.notes || '',
+          country: newPassword.country || '',
         };
         
         if (newPassword.password && newPassword.password.trim() !== '') {
@@ -124,6 +142,7 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
           ...newPassword,
           url: newPassword.url ? (newPassword.url.match(/^https?:\/\//) ? newPassword.url : `https://${newPassword.url}`) : '',
           company_id: companyInfo.id,
+          country: newPassword.country || '',
         } as CreatePasswordPayload);
         setPasswords(prev => [...prev, created]);
       }
@@ -163,7 +182,7 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
     }
   };
 
-  const renderEditableRow = (password: Partial<PasswordData & { password?: string }>) => (
+  const renderEditableRow = (password: Partial<PasswordData & { password?: string }>, isNew: boolean = false) => (
     <tr className="bg-white hover:bg-gray-50 transition-colors">
       <td className="px-6 py-4">
         <input
@@ -171,7 +190,7 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
           value={password.name || ''}
           onChange={e => setNewPassword(prev => ({ ...prev, name: e.target.value }))}
           className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
-          placeholder="Name"
+          placeholder="Enter a password name"
         />
       </td>
       <td className="px-6 py-4">
@@ -180,7 +199,7 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
           value={password.username || ''}
           onChange={e => setNewPassword(prev => ({ ...prev, username: e.target.value }))}
           className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
-          placeholder="Username"
+          placeholder="Enter a username"
         />
       </td>
       <td className="px-6 py-4">
@@ -189,7 +208,7 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
           value={password.password || ''}
           onChange={e => setNewPassword(prev => ({ ...prev, password: e.target.value }))}
           className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
-          placeholder={isEditing ? "Leave empty to keep existing password" : "Password"}
+          placeholder={isNew ? "Enter a password" : "Leave empty to keep existing"}
         />
       </td>
       <td className="px-6 py-4">
@@ -198,7 +217,7 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
           value={password.url || ''}
           onChange={e => setNewPassword(prev => ({ ...prev, url: e.target.value }))}
           className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
-          placeholder="URL"
+          placeholder="Enter a URL"
         />
       </td>
       <td className="px-6 py-4">
@@ -207,8 +226,23 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
           value={password.notes || ''}
           onChange={e => setNewPassword(prev => ({ ...prev, notes: e.target.value }))}
           className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
-          placeholder="Notes"
+          placeholder="Enter notes"
         />
+      </td>
+      <td className="px-6 py-4">
+        <select
+          title="Select country"
+          value={password.country || ''}
+          onChange={e => setNewPassword(prev => ({ ...prev, country: e.target.value }))}
+          className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
+        >
+          <option value="">Select country</option>
+          {AVAILABLE_COUNTRIES.map(country => (
+            <option key={country} value={country}>
+              {country}
+            </option>
+          ))}
+        </select>
       </td>
       <td className="px-6 py-4">
         <div className="flex space-x-2">
@@ -219,7 +253,10 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
             Save
           </button>
           <button
-            onClick={handleCancel}
+            onClick={() => {
+              handleCancel();
+              setShowNewPasswordForm(false);
+            }}
             className="text-gray-600 hover:text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
           >
             Cancel
@@ -231,73 +268,11 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
 
   const renderTableBody = () => (
     <tbody className="divide-y divide-gray-200">
-      {!isEditing && renderEditableRow(newPassword)}
-      {passwords.map((password) => (
+      {isManager && showNewPasswordForm && !isEditing && renderEditableRow(newPassword, true)}
+      {filteredPasswords.map((password) => (
         <tr key={password.id}>
           {isEditing === password.id ? (
-            <>
-              <td className="px-6 py-4">
-                <input
-                  type="text"
-                  value={newPassword.name || ''}
-                  onChange={e => setNewPassword(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
-                  placeholder="Name"
-                />
-              </td>
-              <td className="px-6 py-4">
-                <input
-                  type="text"
-                  value={newPassword.username || ''}
-                  onChange={e => setNewPassword(prev => ({ ...prev, username: e.target.value }))}
-                  className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
-                  placeholder="Username"
-                />
-              </td>
-              <td className="px-6 py-4">
-                <input
-                  type="password"
-                  value={newPassword.password || ''}
-                  onChange={e => setNewPassword(prev => ({ ...prev, password: e.target.value }))}
-                  className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
-                  placeholder="Leave empty to keep existing password"
-                />
-              </td>
-              <td className="px-6 py-4">
-                <input
-                  type="text"
-                  value={newPassword.url || ''}
-                  onChange={e => setNewPassword(prev => ({ ...prev, url: e.target.value }))}
-                  className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
-                  placeholder="URL"
-                />
-              </td>
-              <td className="px-6 py-4">
-                <input
-                  type="text"
-                  value={newPassword.notes || ''}
-                  onChange={e => setNewPassword(prev => ({ ...prev, notes: e.target.value }))}
-                  className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
-                  placeholder="Notes"
-                />
-              </td>
-              <td className="px-6 py-4">
-                <div className="flex space-x-2">
-                  <button
-                    onClick={handleSave}
-                    className="text-green-600 hover:text-green-800 px-3 py-1.5 rounded-lg hover:bg-green-50 transition-colors"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    className="text-gray-600 hover:text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </td>
-            </>
+            renderEditableRow(newPassword)
           ) : (
             <>
               <td className="px-6 py-4 whitespace-nowrap">{password.name}</td>
@@ -348,23 +323,26 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
                 )}
               </td>
               <td className="px-6 py-4">{password.notes}</td>
+              <td className="px-6 py-4">{password.country}</td>
               <td className="px-6 py-4">
-                <div className="flex space-x-2">
-                  <button 
-                    onClick={() => handleEdit(password)}
-                    className="text-blue-600 hover:text-blue-800"
-                    title="Edit password"
-                  >
-                    <PencilIcon className="h-5 w-5" />
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(password)}
-                    className="text-red-600 hover:text-red-800"
-                    title="Delete password"
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                  </button>
-                </div>
+                {isManager && (
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={() => handleEdit(password)}
+                      className="text-blue-600 hover:text-blue-800"
+                      title="Edit password"
+                    >
+                      <PencilIcon className="h-5 w-5" />
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(password)}
+                      className="text-red-600 hover:text-red-800"
+                      title="Delete password"
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                )}
               </td>
             </>
           )}
@@ -381,9 +359,19 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
     <div className="min-h-screen p-6 flex flex-col">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Password Management</h1>
-        {companyInfo?.name && (
-          <span className="text-lg text-gray-600">{companyInfo.name}</span>
-        )}
+        <div className="flex items-center gap-4">
+          {isManager && !showNewPasswordForm && !isEditing && (
+            <button
+              onClick={() => setShowNewPasswordForm(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              New Password
+            </button>
+          )}
+          {companyInfo?.name && (
+            <span className="text-lg text-gray-600">{companyInfo.name}</span>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -398,21 +386,47 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg shadow-sm border border-gray-200">
-        <table className="min-w-full bg-white">
-          <thead>
-            <tr>
-              <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b w-[15%]">Name</th>
-              <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b w-[15%]">Username</th>
-              <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b w-[25%]">Password</th>
-              <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b w-[20%]">URL</th>
-              <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b w-[15%]">Notes</th>
-              <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b w-[10%]">Actions</th>
-            </tr>
-          </thead>
-          {renderTableBody()}
-        </table>
-      </div>
+      <Tab.Group onChange={(index) => setSelectedCountry(countries[index])}>
+        <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1 mb-6 overflow-x-auto">
+          {countries.map((country) => (
+            <Tab
+              key={country}
+              className={({ selected }) =>
+                `w-full rounded-lg py-2.5 text-sm font-medium leading-5 min-w-[100px]
+                ${selected 
+                  ? 'bg-white text-blue-700 shadow'
+                  : 'text-gray-600 hover:bg-white/[0.12] hover:text-gray-800'
+                }`
+              }
+            >
+              {country}
+            </Tab>
+          ))}
+        </Tab.List>
+
+        <Tab.Panels>
+          {countries.map((country) => (
+            <Tab.Panel key={country}>
+              <div className="overflow-x-auto rounded-lg shadow-sm border border-gray-200">
+                <table className="min-w-full bg-white">
+                  <thead>
+                    <tr>
+                      <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Name</th>
+                      <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Username</th>
+                      <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Password</th>
+                      <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">URL</th>
+                      <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Notes</th>
+                      <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Country</th>
+                      <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Actions</th>
+                    </tr>
+                  </thead>
+                  {renderTableBody()}
+                </table>
+              </div>
+            </Tab.Panel>
+          ))}
+        </Tab.Panels>
+      </Tab.Group>
 
       {passwordToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

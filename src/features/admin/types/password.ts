@@ -6,6 +6,7 @@ export interface PasswordData {
     id: string;
     company_id: string;
     password_encrypted: string;
+    country: string;
     created_at: string;
     updated_at: string;
 }
@@ -17,6 +18,7 @@ export interface CreatePasswordPayload {
     notes: string;
     password: string;
     company_id: string;
+    country: string;
 }
 
 export interface UpdatePasswordPayload {
@@ -25,4 +27,5 @@ export interface UpdatePasswordPayload {
     password?: string;
     url?: string;
     notes?: string;
+    country?: string;
 } 
