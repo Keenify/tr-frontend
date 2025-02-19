@@ -25,13 +25,22 @@ import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyDa
 import { Product, ProductPriceTier } from "../../../shared/types/Product";
 import { QuotationPDFData } from "../types/QuotationPDF";
 import "../styles/Quotation.css";
+import { BranchInfo, CompanyData } from '../../../shared/types/companyType';
 
 interface QuotationB2BProps {
   session: Session;
+  branch: 'SG' | 'MY';
+  companyInfo: CompanyData;
+  branchInfo: BranchInfo;
 }
 
-export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
-  const { companyInfo, error } = useUserAndCompanyData(session.user.id);
+export const QuotationB2B: React.FC<QuotationB2BProps> = ({ 
+  session, 
+  branch,
+  companyInfo,
+  branchInfo
+}) => {
+  const { companyInfo: userCompanyInfo, error } = useUserAndCompanyData(session.user.id);
   const [products, setProducts] = React.useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = React.useState<boolean>(true);
   const [fetchError, setFetchError] = React.useState<string | null>(null);
@@ -81,8 +90,13 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
   // Add new state for toggling between carton and pack count
   const [displayPackCount, setDisplayPackCount] = React.useState<boolean>(false);
 
-  // Add currency state
-  const [selectedCurrency, setSelectedCurrency] = React.useState<'SGD' | 'MYR'>('SGD');
+  // Update the currency state to use branch
+  const [selectedCurrency, setSelectedCurrency] = React.useState<'SGD' | 'MYR'>(branch === 'SG' ? 'SGD' : 'MYR');
+
+  // Add effect to update currency when branch changes
+  React.useEffect(() => {
+    setSelectedCurrency(branch === 'SG' ? 'SGD' : 'MYR');
+  }, [branch]);
 
   // Update the initial footer text state to be a function that considers gift box status
   const getFooterText = (includeGiftBox: boolean) => {
@@ -113,9 +127,9 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
   }, [isGiftBox]);
 
   React.useEffect(() => {
-    if (companyInfo?.id) {
+    if (userCompanyInfo?.id) {
       setLoadingProducts(true);
-      getProductsByCompany(companyInfo.id)
+      getProductsByCompany(userCompanyInfo.id)
         .then((products) => {
           setProducts(products);
           // Initialize all products as unselected (empty Set)
@@ -182,7 +196,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
         })
         .finally(() => setLoadingProducts(false));
     }
-  }, [companyInfo?.id]);
+  }, [userCompanyInfo?.id]);
 
   // Function to get unique price tier headers for the table
   const getPriceTierHeaders = React.useCallback(() => {
@@ -366,7 +380,12 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({ session }) => {
           variants: productVariants[product.id] || [],
           priceTiers: productPriceTiers[product.id] || [],
         })),
-        companyInfo,
+        companyInfo: {
+          ...companyInfo,
+          name: branchInfo.name,
+          phone: branchInfo.phone,
+          address: branchInfo.address
+        },
         customerCompanyName,
         sales_account_manager: salesAccountManager,
         currentDate,

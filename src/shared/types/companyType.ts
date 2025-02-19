@@ -9,3 +9,9 @@ export interface CompanyData {
   phone: string;
   logo_url: string;
 }
+
+export interface BranchInfo {
+    name: string;
+    phone: string;
+    address: string;
+}
