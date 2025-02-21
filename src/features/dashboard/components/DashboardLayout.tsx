@@ -5,6 +5,7 @@ import { supabase } from '../../../lib/supabase'; // Import supabase client
 import { useNavigate, useParams } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import toast from 'react-hot-toast'; // Import toast directly
+import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 
 /**
  * Props for the Layout component.
@@ -87,6 +88,12 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Option 1: Remove error if unused
+  const { companyInfo, error: companyError } = useUserAndCompanyData(session.user.id);
+  if (companyError) {
+    console.error('Error fetching company data:', companyError);
+  }
 
   // Update state when props change
   React.useEffect(() => {
@@ -229,32 +236,48 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
           },
         }}
       />
-      {/* Top Bar Section */}
-      <div className="flex justify-between items-center bg-white border-b border-gray-200 px-6 py-3">
-        <div className="flex items-center">
-          <span role="img" aria-label="Company Logo" className="text-2xl">🏢</span>
+      {/* Top Bar - Modern gradient background */}
+      <div className="flex justify-between items-center bg-gradient-to-r from-rose-400 to-orange-400 text-white border-b border-rose-300 px-6 py-3">
+        <div className="flex items-center gap-3">
+          {companyInfo?.logo_url ? (
+            <img 
+              src={companyInfo.logo_url} 
+              alt="Company Logo"
+              className="h-8 w-auto object-contain"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+              }}
+            />
+          ) : (
+            <span role="img" aria-label="Company Logo" className="text-2xl">🏢</span>
+          )}
+          <span className="text-lg font-semibold text-white">
+            {companyInfo?.name || 'Company Name'}
+          </span>
         </div>
-        {/* Enhanced User Profile Section */}
+        
+        {/* User Profile Section - Updated colors */}
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center shadow-sm">
+            <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center">
               <span className="text-white font-semibold text-lg">
                 {email.charAt(0).toUpperCase()}
               </span>
             </div>
             <div className="flex flex-col">
-              <p className="text-sm font-medium text-gray-900">{email}</p>
+              <p className="text-sm font-medium text-white">{email}</p>
               <div className="flex space-x-4 mt-1">
                 <button
                   onClick={() => setIsResetModalOpen(true)}
-                  className="text-sm text-gray-600 hover:text-indigo-600 flex items-center transition-colors duration-150"
+                  className="text-sm text-white/80 hover:text-white flex items-center transition-colors duration-150"
                 >
                   <Lock className="w-4 h-4 mr-1" />
                   Reset Password
                 </button>
                 <button
                   onClick={handleSignOut}
-                  className="text-sm text-gray-600 hover:text-indigo-600 flex items-center transition-colors duration-150"
+                  className="text-sm text-white/80 hover:text-white flex items-center transition-colors duration-150"
                 >
                   <Power className="w-4 h-4 mr-1" />
                   Sign Out
@@ -307,18 +330,18 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
       )}
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar Navigation Section */}
-        <div className={`bg-white border-r border-gray-200 flex-shrink-0 transition-all duration-300 ${
+        {/* Sidebar - Modern styling */}
+        <div className={`bg-gradient-to-b from-gray-800 to-gray-900 text-white border-r border-gray-700 flex-shrink-0 transition-all duration-300 ${
           isSidebarCollapsed ? 'w-16' : 'w-64'
         } relative`}>
           {/* Collapse Toggle Button */}
           <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="absolute -right-3 top-4 bg-white border border-gray-200 rounded-full p-1 shadow-sm hover:bg-gray-50"
+            className="absolute -right-3 top-4 bg-gray-800 border border-gray-700 rounded-full p-1 shadow-lg hover:bg-gray-700"
             aria-label="Toggle sidebar"
           >
             <svg
-              className={`w-4 h-4 transform transition-transform ${isSidebarCollapsed ? 'rotate-180' : ''}`}
+              className={`w-4 h-4 text-white transform transition-transform ${isSidebarCollapsed ? 'rotate-180' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -336,8 +359,8 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
                       onClick={() => handleTabChange(tab.id)}
                       className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                         activeTabState === tab.id && !tab.isExpandable
-                          ? 'bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                          ? 'bg-indigo-500 text-white'
+                          : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                       } ${tab.isExpandable ? 'cursor-default' : ''}`}
                     >
                       <span className="flex items-center gap-2">
@@ -364,8 +387,8 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
                             onClick={() => handleSubTabClick(subTab.id as SubTabType)}
                             className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                               localActiveSubTab === subTab.id
-                                ? 'bg-red-50 text-red-600 border-l-4 border-red-600'
-                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
+                                ? 'bg-indigo-500/50 text-white'
+                                : 'text-gray-400 hover:bg-gray-700 hover:text-white'
                             }`}
                           >
                             <span>{isSidebarCollapsed ? subTab.shortForm : subTab.label}</span>
