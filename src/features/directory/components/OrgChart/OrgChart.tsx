@@ -46,6 +46,9 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
       const employeesData = await directoryService.fetchEmployees(companyId);
       setEmployees(employeesData);
 
+      // Log employees data
+      console.log("Employees data:", JSON.stringify(employeesData, null, 2));
+
       // Check if there is an employee with the highest rank
       const hasHighestRank = employeesData.some(emp => emp.highest_rank);
       if (hasHighestRank) {
