@@ -59,6 +59,11 @@ const Admin: React.FC<AdminProps> = ({ session }) => {
   }, [companyInfo?.id, session.user.email]);
 
   React.useEffect(() => {
+    if (!companyInfo?.id) {
+      setLoading(false);
+      return;
+    }
+    console.log('Company ID:', companyInfo?.id);
     fetchCompanyDetails();
   }, [fetchCompanyDetails]);
 
@@ -72,8 +77,18 @@ const Admin: React.FC<AdminProps> = ({ session }) => {
 
   if (userError || error) {
     return (
-      <div className="p-4 text-red-600 text-center">
-        <p>Error: {userError?.message || error}</p>
+      <div className="p-4 text-red-600 text-center bg-red-100 rounded-lg">
+        <p className="font-medium">No Company Found</p>
+        <p className="text-sm mt-2">No company profile attached to this user - {session.user.email}</p>
+      </div>
+    );
+  }
+
+  if (!companyInfo?.id) {
+    return (
+      <div className="p-4 text-red-600 text-center bg-red-100 rounded-lg">
+        <p className="font-medium">No Company Found</p>
+        <p className="text-sm mt-2">No company profile found for user ID: {session.user.id}</p>
       </div>
     );
   }
