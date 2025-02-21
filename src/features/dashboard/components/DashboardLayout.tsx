@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Calendar, Power, ThumbsUp, ChevronDown, ChevronRight, Shield, Home } from 'react-feather'; // Import Power, ThumbsUp, and Clock icons from react-feather
+import { Calendar, Power, ThumbsUp, ChevronDown, ChevronRight, Shield, Home, Lock } from 'react-feather'; // Import Power, ThumbsUp, and Clock icons from react-feather
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabase'; // Import supabase client
 import { useNavigate, useParams } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast'; // Import toast directly
 
 /**
  * Props for the Layout component.
@@ -83,6 +84,9 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
   const [isPeopleSubmenuOpen, setIsPeopleSubmenuOpen] = React.useState(activeTab === 'people');
   const [localActiveSubTab, setLocalActiveSubTab] = useState<SubTabType | undefined>(activeSubTab);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   // Update state when props change
   React.useEffect(() => {
@@ -164,6 +168,35 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
     }
   };
 
+  // Add this new function to handle password reset
+  const handlePasswordReset = async () => {
+    if (newPassword !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast.success('Password updated successfully');
+      setIsResetModalOpen(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      toast.error('Failed to update password');
+      console.error('Error updating password:', error);
+    }
+  };
+
   /**
    * Main layout structure:
    * 1. Top Bar - Contains company logo and user profile
@@ -197,30 +230,81 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
         }}
       />
       {/* Top Bar Section */}
-      {/* @section Contains company logo, user profile, and sign out button */}
-      <div className="flex justify-between items-center bg-white border-b border-gray-200 px-4 py-2">
+      <div className="flex justify-between items-center bg-white border-b border-gray-200 px-6 py-3">
         <div className="flex items-center">
           <span role="img" aria-label="Company Logo" className="text-2xl">🏢</span>
         </div>
-        {/* User Profile Section */}
-        <div className="flex items-center space-x-3">
-          <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center">
-            <span className="text-white font-medium text-lg">
-              {email.charAt(0).toUpperCase()}
-            </span>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">{email}</p>
-            <button
-              onClick={handleSignOut}
-              className="text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors flex items-center"
-            >
-              <Power className="w-5 h-5 mr-1" />
-              Sign Out
-            </button>
+        {/* Enhanced User Profile Section */}
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
+            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center shadow-sm">
+              <span className="text-white font-semibold text-lg">
+                {email.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <p className="text-sm font-medium text-gray-900">{email}</p>
+              <div className="flex space-x-4 mt-1">
+                <button
+                  onClick={() => setIsResetModalOpen(true)}
+                  className="text-sm text-gray-600 hover:text-indigo-600 flex items-center transition-colors duration-150"
+                >
+                  <Lock className="w-4 h-4 mr-1" />
+                  Reset Password
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  className="text-sm text-gray-600 hover:text-indigo-600 flex items-center transition-colors duration-150"
+                >
+                  <Power className="w-4 h-4 mr-1" />
+                  Sign Out
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Add Password Reset Modal */}
+      {isResetModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <h2 className="text-xl font-semibold mb-4">Reset Password</h2>
+            <input
+              type="password"
+              placeholder="New Password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full p-2 border rounded mb-3"
+            />
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full p-2 border rounded mb-4"
+            />
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => {
+                  setIsResetModalOpen(false);
+                  setNewPassword('');
+                  setConfirmPassword('');
+                }}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePasswordReset}
+                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+              >
+                Update Password
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar Navigation Section */}
