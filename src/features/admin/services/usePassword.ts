@@ -44,7 +44,7 @@ export async function createPassword(payload: CreatePasswordPayload): Promise<Pa
 export async function getCompanyPasswords(
     companyId: string,
     skip: number = 0,
-    limit: number = 100
+    limit: number = 500
 ): Promise<PasswordData[]> {
     const endpoint = `${API_DOMAIN}/passwords/?skip=${skip}&limit=${limit}&company_id=${encodeURIComponent(companyId)}`;
 
