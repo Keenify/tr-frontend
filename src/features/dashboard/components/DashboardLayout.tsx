@@ -46,7 +46,7 @@ const navigationConfig = [
   { id: 'quotation', label: 'Quotation', shortForm: 'Qu', icon: ThumbsUp, isExpandable: false },
   { id: 'product', label: 'Product', shortForm: 'P', icon: ThumbsUp, isExpandable: false },
   { id: 'playbook', label: 'Playbook', shortForm: 'Pb', icon: ThumbsUp, isExpandable: false },
-  { id: 'idea', label: 'Idea', shortForm: 'I', icon: ThumbsUp, isExpandable: false },
+  { id: 'sandbox', label: 'Sandbox', shortForm: 'Sb', icon: ThumbsUp, isExpandable: false },
 ] as const;
 
 /**

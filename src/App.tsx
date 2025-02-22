@@ -77,23 +77,23 @@ const App: React.FC = () => {
                 <Route path="/:userId/admin" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="admin" onTabChange={() => { }}><Admin session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/hiring" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="hiring" onTabChange={() => { }}><Hiring session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/accountability" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="accountability" onTabChange={() => { }}><AccountabilityMatrix session={session} /></DashboardLayout>} />} />
-                <Route path="/:userId/idea/new" element={
+                <Route path="/:userId/sandbox/new" element={
                   <ProtectedRoute session={session} element={
-                    <DashboardLayout session={session} signOut={signOut} activeTab="idea" onTabChange={() => {}}>
+                    <DashboardLayout session={session} signOut={signOut} activeTab="sandbox" onTabChange={() => {}}>
                       <Idea session={session} key="new" />
                     </DashboardLayout>
                   } />
                 } />
-                <Route path="/:userId/idea/:mindmapId" element={
+                <Route path="/:userId/sandbox/:mindmapId" element={
                   <ProtectedRoute session={session} element={
-                    <DashboardLayout session={session} signOut={signOut} activeTab="idea" onTabChange={() => {}}>
+                    <DashboardLayout session={session} signOut={signOut} activeTab="sandbox" onTabChange={() => {}}>
                       <Idea session={session} />
                     </DashboardLayout>
                   } />
                 } />
-                <Route path="/:userId/idea" element={
+                <Route path="/:userId/sandbox" element={
                   <ProtectedRoute session={session} element={
-                    <DashboardLayout session={session} signOut={signOut} activeTab="idea" onTabChange={() => {}}>
+                    <DashboardLayout session={session} signOut={signOut} activeTab="sandbox" onTabChange={() => {}}>
                       <Idea session={session} />
                     </DashboardLayout>
                   } />

@@ -32,7 +32,11 @@ export const Idea = ({ session }: { session: Session }) => {
 
     try {
       const fetchedMindmaps = await getCompanyMindMaps(companyInfo.id);
-      setMindmaps(fetchedMindmaps);
+      // Sort mindmaps by updated_at in descending order (most recent first)
+      const sortedMindmaps = fetchedMindmaps.sort((a, b) => 
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      );
+      setMindmaps(sortedMindmaps);
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching mindmaps:', error);
