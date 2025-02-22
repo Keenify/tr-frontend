@@ -5,25 +5,19 @@ export const loadGoogleMapsScript = () => {
     return googleMapsPromise;
   }
 
-  // Check if script is already in the document
-  const existingScript = document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]');
-  if (existingScript) {
+  // Check if the API is already loaded
+  if (window.google?.maps) {
     return Promise.resolve();
   }
 
-  googleMapsPromise = new Promise<void>((resolve) => {
-    // Create a unique callback name
-    const callbackName = `googleMapsCallback${Date.now()}`;
-
-    window[callbackName] = () => {
-      resolve();
-      delete window[callbackName];
-    };
-
+  googleMapsPromise = new Promise<void>((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places&loading=async`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places`;
     script.async = true;
     script.defer = true;
+
+    script.addEventListener('load', () => resolve());
+    script.addEventListener('error', (e) => reject(e));
 
     document.head.appendChild(script);
   });
@@ -33,6 +27,8 @@ export const loadGoogleMapsScript = () => {
 
 declare global {
   interface Window {
-    [key: string]: unknown;
+    google?: {
+      maps?: unknown;
+    };
   }
 } 

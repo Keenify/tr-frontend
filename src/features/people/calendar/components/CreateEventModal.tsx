@@ -40,9 +40,14 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
   const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
 
   useEffect(() => {
-    loadGoogleMapsScript().then(() => {
-      setIsGoogleMapsLoaded(true);
-    });
+    loadGoogleMapsScript()
+      .then(() => {
+        setIsGoogleMapsLoaded(true);
+      })
+      .catch((error) => {
+        console.error('Failed to load Google Maps:', error);
+        setIsGoogleMapsLoaded(false);
+      });
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
