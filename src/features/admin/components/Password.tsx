@@ -12,6 +12,7 @@ import { CreatePasswordPayload, PasswordData, UpdatePasswordPayload } from '../t
 import { EyeIcon, EyeSlashIcon, PencilIcon, TrashIcon, ClipboardIcon } from '@heroicons/react/24/outline';
 import { ClipboardDocumentCheckIcon } from '@heroicons/react/24/solid';
 import { Tab } from '@headlessui/react';
+import EditPasswordModal from './EditPasswordModal';
 
 interface PasswordProps {
   session: Session;
@@ -36,8 +37,9 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
   const [countries, setCountries] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<string>('All');
   const isManager = userInfo?.role === 'manager';
-  const [showNewPasswordForm, setShowNewPasswordForm] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const AVAILABLE_COUNTRIES = ['SG', 'MY'];
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch passwords
   useEffect(() => {
@@ -63,9 +65,26 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
 
   // Filter passwords based on selected country
   const filteredPasswords = useMemo(() => {
-    if (selectedCountry === 'All') return passwords;
-    return passwords.filter(p => (p.country || 'Uncategorized') === selectedCountry);
-  }, [passwords, selectedCountry]);
+    let filtered = passwords;
+    
+    // Filter by country
+    if (selectedCountry !== 'All') {
+      filtered = filtered.filter(p => p.country === selectedCountry);
+    }
+
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(p => 
+        p.name.toLowerCase().includes(query) ||
+        p.username.toLowerCase().includes(query) ||
+        p.url?.toLowerCase().includes(query) ||
+        p.notes?.toLowerCase().includes(query)
+      );
+    }
+
+    return filtered;
+  }, [passwords, selectedCountry, searchQuery]);
 
   const handleTogglePassword = async (passwordId: string) => {
     try {
@@ -114,6 +133,7 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
       notes: password.notes,
       country: password.country,
     });
+    setIsModalOpen(true);
   };
 
   const handleSave = async () => {
@@ -169,6 +189,7 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
       url: '',
       notes: '',
     });
+    setIsModalOpen(false);
   };
 
   const handleCopyPassword = async (passwordId: string, password: string) => {
@@ -182,170 +203,97 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
     }
   };
 
-  const renderEditableRow = (password: Partial<PasswordData & { password?: string }>, isNew: boolean = false) => (
-    <tr className="bg-white hover:bg-gray-50 transition-colors">
-      <td className="px-6 py-4">
-        <input
-          type="text"
-          value={password.name || ''}
-          onChange={e => setNewPassword(prev => ({ ...prev, name: e.target.value }))}
-          className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
-          placeholder="Enter a password name"
-        />
-      </td>
-      <td className="px-6 py-4">
-        <input
-          type="text"
-          value={password.username || ''}
-          onChange={e => setNewPassword(prev => ({ ...prev, username: e.target.value }))}
-          className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
-          placeholder="Enter a username"
-        />
-      </td>
-      <td className="px-6 py-4">
-        <input
-          type="password"
-          value={password.password || ''}
-          onChange={e => setNewPassword(prev => ({ ...prev, password: e.target.value }))}
-          className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
-          placeholder={isNew ? "Enter a password" : "Leave empty to keep existing"}
-        />
-      </td>
-      <td className="px-6 py-4">
-        <input
-          type="text"
-          value={password.url || ''}
-          onChange={e => setNewPassword(prev => ({ ...prev, url: e.target.value }))}
-          className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
-          placeholder="Enter a URL"
-        />
-      </td>
-      <td className="px-6 py-4">
-        <input
-          type="text"
-          value={password.notes || ''}
-          onChange={e => setNewPassword(prev => ({ ...prev, notes: e.target.value }))}
-          className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
-          placeholder="Enter notes"
-        />
-      </td>
-      <td className="px-6 py-4">
-        <select
-          title="Select country"
-          value={password.country || ''}
-          onChange={e => setNewPassword(prev => ({ ...prev, country: e.target.value }))}
-          className="w-full px-3 py-2 bg-gray-50 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg transition-all duration-200 focus:bg-white focus:outline-none"
-        >
-          <option value="">Select country</option>
-          {AVAILABLE_COUNTRIES.map(country => (
-            <option key={country} value={country}>
-              {country}
-            </option>
-          ))}
-        </select>
-      </td>
-      <td className="px-6 py-4">
-        <div className="flex space-x-2">
-          <button
-            onClick={handleSave}
-            className="text-green-600 hover:text-green-800 px-3 py-1.5 rounded-lg hover:bg-green-50 transition-colors"
-          >
-            Save
-          </button>
-          <button
-            onClick={() => {
-              handleCancel();
-              setShowNewPasswordForm(false);
-            }}
-            className="text-gray-600 hover:text-gray-800 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </button>
-        </div>
-      </td>
-    </tr>
-  );
+  const handleNewPassword = () => {
+    setNewPassword({
+      name: '',
+      username: '',
+      password: '',
+      url: '',
+      notes: '',
+    });
+    setIsModalOpen(true);
+  };
+
+  const getCountForCountry = (country: string) => {
+    if (country === 'All') {
+      return passwords.length;
+    }
+    return passwords.filter(p => p.country === country).length;
+  };
 
   const renderTableBody = () => (
     <tbody className="divide-y divide-gray-200">
-      {isManager && showNewPasswordForm && !isEditing && renderEditableRow(newPassword, true)}
       {filteredPasswords.map((password) => (
-        <tr key={password.id}>
-          {isEditing === password.id ? (
-            renderEditableRow(newPassword)
-          ) : (
-            <>
-              <td className="px-6 py-4 whitespace-nowrap">{password.name}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{password.username}</td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center justify-between">
-                  <div className="font-mono min-w-[120px]">
-                    {decryptedPasswords[password.id] || '•••••••'}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {decryptedPasswords[password.id] && (
-                      <button
-                        onClick={() => handleCopyPassword(password.id, decryptedPasswords[password.id])}
-                        className="text-gray-600 hover:text-gray-900 flex-shrink-0"
-                        title="Copy password"
-                      >
-                        {copiedId === password.id ? (
-                          <ClipboardDocumentCheckIcon className="h-5 w-5 text-green-500" />
-                        ) : (
-                          <ClipboardIcon className="h-5 w-5" />
-                        )}
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleTogglePassword(password.id)}
-                      className="text-gray-600 hover:text-gray-900 flex-shrink-0"
-                      title={decryptedPasswords[password.id] ? "Hide password" : "Show password"}
-                    >
-                      {decryptedPasswords[password.id] ? (
-                        <EyeSlashIcon className="h-5 w-5" />
-                      ) : (
-                        <EyeIcon className="h-5 w-5" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </td>
-              <td className="px-6 py-4">
-                {password.url && (
-                  <a 
-                    href={password.url.startsWith('https://') ? password.url : `https://${password.url}`}
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-blue-600 hover:text-blue-800"
+        <tr key={password.id} className="hover:bg-gray-50">
+          <td className="px-6 py-4 break-words">{password.name}</td>
+          <td className="px-6 py-4 break-words">{password.username}</td>
+          <td className="px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="font-mono break-words">
+                {decryptedPasswords[password.id] || '•••••••'}
+              </div>
+              <div className="flex items-center gap-2">
+                {decryptedPasswords[password.id] && (
+                  <button
+                    onClick={() => handleCopyPassword(password.id, decryptedPasswords[password.id])}
+                    className="text-gray-600 hover:text-gray-900 flex-shrink-0"
+                    title="Copy password"
                   >
-                    {password.url}
-                  </a>
+                    {copiedId === password.id ? (
+                      <ClipboardDocumentCheckIcon className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <ClipboardIcon className="h-5 w-5" />
+                    )}
+                  </button>
                 )}
-              </td>
-              <td className="px-6 py-4">{password.notes}</td>
-              <td className="px-6 py-4">{password.country}</td>
-              <td className="px-6 py-4">
-                {isManager && (
-                  <div className="flex space-x-2">
-                    <button 
-                      onClick={() => handleEdit(password)}
-                      className="text-blue-600 hover:text-blue-800"
-                      title="Edit password"
-                    >
-                      <PencilIcon className="h-5 w-5" />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(password)}
-                      className="text-red-600 hover:text-red-800"
-                      title="Delete password"
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                    </button>
-                  </div>
-                )}
-              </td>
-            </>
-          )}
+                <button
+                  onClick={() => handleTogglePassword(password.id)}
+                  className="text-gray-600 hover:text-gray-900 flex-shrink-0"
+                  title={decryptedPasswords[password.id] ? "Hide password" : "Show password"}
+                >
+                  {decryptedPasswords[password.id] ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+          </td>
+          <td className="px-6 py-4 break-words">
+            {password.url && (
+              <a 
+                href={password.url.startsWith('https://') ? password.url : `https://${password.url}`}
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-blue-600 hover:text-blue-800"
+              >
+                {password.url}
+              </a>
+            )}
+          </td>
+          <td className="px-6 py-4 break-words">{password.notes}</td>
+          <td className="px-6 py-4 break-words">{password.country}</td>
+          <td className="px-6 py-4">
+            {isManager && (
+              <div className="flex space-x-2">
+                <button 
+                  onClick={() => handleEdit(password)}
+                  className="text-blue-600 hover:text-blue-800"
+                  title="Edit password"
+                >
+                  <PencilIcon className="h-5 w-5" />
+                </button>
+                <button 
+                  onClick={() => handleDelete(password)}
+                  className="text-red-600 hover:text-red-800"
+                  title="Delete password"
+                >
+                  <TrashIcon className="h-5 w-5" />
+                </button>
+              </div>
+            )}
+          </td>
         </tr>
       ))}
     </tbody>
@@ -359,17 +307,55 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
     <div className="min-h-screen p-6 flex flex-col">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Password Management</h1>
-        <div className="flex items-center gap-4">
-          {isManager && !showNewPasswordForm && !isEditing && (
-            <button
-              onClick={() => setShowNewPasswordForm(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        <div className="flex items-center space-x-3">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-4 py-2 w-64 border border-gray-200 rounded-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none transition-all duration-200"
+            />
+            <svg
+              className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              New Password
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </div>
+          {isManager && (
+            <button
+              onClick={handleNewPassword}
+              className="px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+              <span>New Password</span>
             </button>
           )}
           {companyInfo?.name && (
-            <span className="text-lg text-gray-600">{companyInfo.name}</span>
+            <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1.5 rounded-full">
+              {companyInfo.name}
+            </span>
           )}
         </div>
       </div>
@@ -392,14 +378,23 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
             <Tab
               key={country}
               className={({ selected }) =>
-                `w-full rounded-lg py-2.5 text-sm font-medium leading-5 min-w-[100px]
+                `w-full rounded-lg py-2.5 text-sm font-medium leading-5 min-w-[100px] flex items-center justify-center gap-2
                 ${selected 
                   ? 'bg-white text-blue-700 shadow'
                   : 'text-gray-600 hover:bg-white/[0.12] hover:text-gray-800'
                 }`
               }
             >
-              {country}
+              {({ selected }) => (
+                <>
+                  {country}
+                  <span className={`px-2 py-0.5 rounded-full text-xs ${
+                    selected ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'
+                  }`}>
+                    {getCountForCountry(country)}
+                  </span>
+                </>
+              )}
             </Tab>
           ))}
         </Tab.List>
@@ -407,17 +402,17 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
         <Tab.Panels>
           {countries.map((country) => (
             <Tab.Panel key={country}>
-              <div className="overflow-x-auto rounded-lg shadow-sm border border-gray-200">
-                <table className="min-w-full bg-white">
-                  <thead>
+              <div className="overflow-y-auto overflow-x-hidden rounded-lg shadow-sm border border-gray-200 max-w-full">
+                <table className="w-full bg-white table-fixed">
+                  <thead className="sticky top-0 z-10">
                     <tr>
-                      <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Name</th>
-                      <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Username</th>
-                      <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Password</th>
-                      <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">URL</th>
-                      <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Notes</th>
-                      <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Country</th>
-                      <th className="px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Actions</th>
+                      <th className="w-[15%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Name</th>
+                      <th className="w-[15%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Username</th>
+                      <th className="w-[20%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Password</th>
+                      <th className="w-[20%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">URL</th>
+                      <th className="w-[15%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Notes</th>
+                      <th className="w-[7%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Country</th>
+                      <th className="w-[8%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Actions</th>
                     </tr>
                   </thead>
                   {renderTableBody()}
@@ -452,6 +447,16 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
           </div>
         </div>
       )}
+
+      <EditPasswordModal
+        isOpen={isModalOpen}
+        onClose={handleCancel}
+        onSave={handleSave}
+        password={newPassword}
+        setPassword={setNewPassword}
+        isNew={!isEditing}
+        AVAILABLE_COUNTRIES={AVAILABLE_COUNTRIES}
+      />
     </div>
   );
 };
