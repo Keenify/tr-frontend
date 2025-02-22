@@ -227,6 +227,18 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
         <tr key={password.id} className="hover:bg-gray-50">
           <td className="px-6 py-4 break-words">{password.name}</td>
           <td className="px-6 py-4 break-words">{password.username}</td>
+          <td className="px-6 py-4 break-words">
+            {password.url && (
+              <a 
+                href={password.url.startsWith('https://') ? password.url : `https://${password.url}`}
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-blue-600 hover:text-blue-800"
+              >
+                {password.url}
+              </a>
+            )}
+          </td>
           <td className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="font-mono break-words">
@@ -259,18 +271,6 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
                 </button>
               </div>
             </div>
-          </td>
-          <td className="px-6 py-4 break-words">
-            {password.url && (
-              <a 
-                href={password.url.startsWith('https://') ? password.url : `https://${password.url}`}
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-blue-600 hover:text-blue-800"
-              >
-                {password.url}
-              </a>
-            )}
           </td>
           <td className="px-6 py-4 break-words">{password.notes}</td>
           <td className="px-6 py-4 break-words">{password.country}</td>
@@ -408,8 +408,8 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
                     <tr>
                       <th className="w-[15%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Name</th>
                       <th className="w-[15%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Username</th>
-                      <th className="w-[20%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Password</th>
                       <th className="w-[20%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">URL</th>
+                      <th className="w-[20%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Password</th>
                       <th className="w-[15%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Notes</th>
                       <th className="w-[7%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Country</th>
                       <th className="w-[8%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Actions</th>
