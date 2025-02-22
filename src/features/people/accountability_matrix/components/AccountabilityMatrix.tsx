@@ -124,7 +124,8 @@ const AccountabilityMatrix: React.FC<AccountabilityMatrixProps> = ({ session }) 
     container: (base) => ({
       ...base,
       zIndex: 100,
-      width: '300px'
+      width: '100%',
+      minWidth: '150px'
     }),
     control: (base) => ({
       ...base,
@@ -192,6 +193,22 @@ const AccountabilityMatrix: React.FC<AccountabilityMatrixProps> = ({ session }) 
     }
   };
 
+  // Replace the formatTeamMembers function with this new component
+  const TeamMemberLabels: React.FC<{ teamMemberIds: string[] }> = ({ teamMemberIds }) => {
+    return (
+      <div className="team-members-container">
+        {teamMemberIds.map(teamMemberId => {
+          const employee = employees.find(emp => emp.id === teamMemberId);
+          return employee ? (
+            <span key={teamMemberId} className="team-member-label">
+              {`${employee.first_name} ${employee.last_name}`}
+            </span>
+          ) : null;
+        })}
+      </div>
+    );
+  };
+
   if (isLoadingCompany) {
     return <div>Loading...</div>;
   }
@@ -205,30 +222,30 @@ const AccountabilityMatrix: React.FC<AccountabilityMatrixProps> = ({ session }) 
         )}
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="table-container">
         <table className="matrix-table">
           <thead>
             <tr className="table-header">
-              <th className="table-cell">
+              <th className="table-cell" style={{ width: '20%' }}>
                 <div className="matrix-title">TASK/PROCESS</div>
               </th>
-              <th className="table-cell">
+              <th className="table-cell" style={{ width: '15%' }}>
                 <div className="matrix-title">ACCOUNTABLE</div>
                 <div className="header-subtitle">Function/person</div>
               </th>
-              <th className="table-cell">
+              <th className="table-cell" style={{ width: '25%' }}>
                 <div className="matrix-title">THE TEAM</div>
                 <div className="header-subtitle">Who else is involved</div>
               </th>
-              <th className="table-cell">
+              <th className="table-cell" style={{ width: '15%' }}>
                 <div className="matrix-title">DEPENDENCY</div>
                 <div className="header-subtitle">Who we rely on?</div>
               </th>
-              <th className="table-cell">
+              <th className="table-cell" style={{ width: '15%' }}>
                 <div className="matrix-title">FREQUENCY</div>
-                <div className="header-subtitle">How often does this happen?</div>
+                <div className="header-subtitle">How often?</div>
               </th>
-              <th className="table-cell">
+              <th className="table-cell" style={{ width: '10%' }}>
                 <div className="matrix-title">ACTIONS</div>
               </th>
             </tr>
@@ -286,10 +303,7 @@ const AccountabilityMatrix: React.FC<AccountabilityMatrixProps> = ({ session }) 
                       closeMenuOnSelect={false}
                     />
                   ) : (
-                    row.team_involved.map(teamMemberId => {
-                      const employee = employees.find(emp => emp.id === teamMemberId);
-                      return `${employee?.first_name} ${employee?.last_name}`;
-                    }).join(', ')
+                    <TeamMemberLabels teamMemberIds={row.team_involved} />
                   )}
                 </td>
                 <td className="table-cell">
