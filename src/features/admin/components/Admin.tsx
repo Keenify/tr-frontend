@@ -65,7 +65,7 @@ const Admin: React.FC<AdminProps> = ({ session }) => {
     }
     console.log('Company ID:', companyInfo?.id);
     fetchCompanyDetails();
-  }, [fetchCompanyDetails]);
+  }, [fetchCompanyDetails, companyInfo?.id]);
 
   if (userLoading || loading) {
     return (
