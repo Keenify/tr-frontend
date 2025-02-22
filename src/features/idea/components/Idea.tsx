@@ -1,6 +1,6 @@
 import { Session } from '@supabase/supabase-js';
 import { useEffect, useState, useCallback } from 'react';
-import { MoreVertical } from 'react-feather';
+import { Trash2 } from 'react-feather';
 import toast from 'react-hot-toast';
 import FlowWrapper from './FlowWrapper';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
@@ -56,11 +56,11 @@ export const Idea = ({ session }: { session: Session }) => {
 
   // Update the click handlers to use navigation
   const handleMindmapClick = (id: string) => {
-    navigate(`/${session.user.id}/idea/${id}`);
+    navigate(`/${session.user.id}/sandbox/${id}`);
   };
 
   const handleCreateClick = () => {
-    navigate(`/${session.user.id}/idea/new`);
+    navigate(`/${session.user.id}/sandbox/new`);
   };
 
   const handleDeleteClick = (mindmap: MindMapResponse, e: React.MouseEvent) => {
@@ -92,7 +92,7 @@ export const Idea = ({ session }: { session: Session }) => {
       <div className="w-full h-[80vh] relative">
         <button
           onClick={() => {
-            navigate(`/${session.user.id}/idea`);
+            navigate(`/${session.user.id}/sandbox`);
             fetchMindmaps();
           }}
           className="absolute top-4 left-4 px-3 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2 z-10"
@@ -100,7 +100,7 @@ export const Idea = ({ session }: { session: Session }) => {
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Back to Ideas
+          Back to Sandbox
         </button>
         <FlowWrapper 
           session={session} 
@@ -112,24 +112,29 @@ export const Idea = ({ session }: { session: Session }) => {
 
   return (
     <div className="w-full py-4">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Idea</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Sandbox</h1>
       {error ? (
         <p className="text-red-500 text-center">{error}</p>
       ) : (isLoading || isUserDataLoading) ? (
         <p className="text-center">Loading...</p>
       ) : (
-        <div className="w-full flex flex-wrap gap-4 px-4">
+        <div className="w-full grid grid-flow-col auto-cols-fr gap-4 px-4" 
+             style={{
+               gridTemplateRows: 'repeat(auto-fill, minmax(120px, 1fr))',
+               maxHeight: 'calc(100vh - 200px)', // Adjust this value based on your layout
+               overflowY: 'auto'
+             }}>
           {mindmaps.map((mindmap) => (
             <div
               key={mindmap.id}
-              className="bg-white rounded-lg border border-gray-200 hover:border-blue-500 transition-all duration-200 relative group flex-grow basis-[calc(100%-1rem)] sm:basis-[calc(50%-1rem)] lg:basis-[calc(33.333%-1rem)] xl:basis-[calc(25%-1rem)]"
+              className="bg-white rounded-lg border border-gray-200 hover:border-blue-500 transition-all duration-200 relative group mb-4"
             >
               <div 
                 className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={(e) => handleDeleteClick(mindmap, e)}
               >
-                <button className="p-1.5 hover:bg-gray-100 rounded-full" title="Delete Mind Map">
-                  <MoreVertical size={18} className="text-gray-500" />
+                <button className="p-1.5 hover:bg-gray-100 rounded-full text-red-500" title="Delete Mind Map">
+                  <Trash2 size={18} />
                 </button>
               </div>
               <div 
@@ -149,7 +154,7 @@ export const Idea = ({ session }: { session: Session }) => {
           {/* Create New Mindmap Button */}
           <div
             onClick={handleCreateClick}
-            className="bg-white rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-500 transition-all duration-200 cursor-pointer group"
+            className="bg-white rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-500 transition-all duration-200 cursor-pointer group mb-4"
           >
             <div className="p-4 h-full flex flex-col items-center justify-center">
               <div className="w-8 h-8 rounded-full bg-blue-50 group-hover:bg-blue-100 flex items-center justify-center mb-2 transition-colors">
