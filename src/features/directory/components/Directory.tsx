@@ -25,8 +25,8 @@ export const Directory = ({ companyId }: { companyId: string }) => {
   };
 
   return (
-    <div className="relative flex">
-      <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="relative flex w-full">
+      <div className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Directory</h1>
@@ -68,7 +68,7 @@ export const Directory = ({ companyId }: { companyId: string }) => {
         ) : error ? (
           <div className="text-center py-8 text-red-600">{error}</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
             {employees.map((employee) => (
               <EmployeeCard 
                 key={employee.id} 

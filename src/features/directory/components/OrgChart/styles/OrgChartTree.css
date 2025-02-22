@@ -1,10 +1,10 @@
 .org-chart-container {
   width: 100%;
-  height: 500px;
+  height: calc(100vh - 200px); /* Adjust based on your header/navigation height */
   background-color: #f9f9f9;
   border-radius: 8px;
   padding: 20px;
-  overflow: auto;
+  overflow: hidden; /* Changed from auto to hidden */
 }
 
 .node__circle {
@@ -16,4 +16,13 @@
 .node__text {
   font-size: 12px;
   fill: #333333;
+}
+
+/* Add smooth transitions */
+.rd3t-link {
+  transition: all 0.3s ease-in-out;
+}
+
+.rd3t-node {
+  transition: all 0.3s ease-in-out;
 }

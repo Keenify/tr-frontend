@@ -73,7 +73,7 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Org chart</h1>
@@ -131,24 +131,26 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
       </div>
 
       {/* Org Chart Tree */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-16">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-500 border-t-transparent"></div>
-        </div>
-      ) : treeData ? (
-        <OrgChartTree node={treeData} onNodeClick={handleNodeClick} />
-      ) : (
-        <div className="flex flex-col items-center justify-center py-16">
-          <img
-            src={noOrgChartImage}
-            alt="No org chart"
-            className="w-96 h-96 mb-8"
-          />
-          <h2 className="text-xl font-semibold text-gray-900">
-            An Org chart hasn't been created yet
-          </h2>
-        </div>
-      )}
+      <div className="w-full overflow-x-auto">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-500 border-t-transparent"></div>
+          </div>
+        ) : treeData ? (
+          <OrgChartTree node={treeData} onNodeClick={handleNodeClick} />
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16">
+            <img
+              src={noOrgChartImage}
+              alt="No org chart"
+              className="w-96 h-96 mb-8"
+            />
+            <h2 className="text-xl font-semibold text-gray-900">
+              An Org chart hasn't been created yet
+            </h2>
+          </div>
+        )}
+      </div>
 
       {/* Employee Panel */}
       <EmployeePanel
