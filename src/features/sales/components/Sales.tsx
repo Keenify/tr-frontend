@@ -60,7 +60,7 @@ const Sales = ({ session }: { session: Session }) => {
         setThumbnails(prev => ({ ...prev, [cardId]: thumbnailUrl }));
       }
     } catch (error) {
-      // console.error('Error fetching thumbnails:', error);
+      console.error('Error fetching thumbnails:', error);
     }
   };
 
@@ -87,6 +87,14 @@ const Sales = ({ session }: { session: Session }) => {
       return acc;
     }, {} as Record<string, TrelloCard[]>);
   }, [lists, allCards]);
+
+  /**
+   * Add this new memoized value to calculate max cards
+   */
+  const maxCardsInList = useMemo(() => {
+    if (!cardsByList) return 0;
+    return Math.max(...Object.values(cardsByList).map(cards => cards.length));
+  }, [cardsByList]);
 
   /**
    * Handles updates to a Trello card
@@ -190,17 +198,20 @@ const Sales = ({ session }: { session: Session }) => {
       </div>
       <h1 className="text-2xl font-bold mb-6">Sales Pipeline</h1>
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {lists && allCards && lists.map((list) => {
             const droppableId = String(list.id);
+            const currentListCards = cardsByList[list.id]?.filter(Boolean) || [];
+            const emptySpacesNeeded = maxCardsInList - currentListCards.length;
+
             return (
               <Droppable droppableId={droppableId} key={list.id}>
                 {(provided) => (
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className="bg-gray-100 rounded-lg p-4"
-                    style={{ height: 'auto' }}
+                    className="bg-gray-100 rounded-lg p-4 flex flex-col"
+                    style={{ height: 'calc(100vh - 200px)' }}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <UpdateList
@@ -210,11 +221,11 @@ const Sales = ({ session }: { session: Session }) => {
                         }}
                       />
                       <span className="bg-gray-200 px-2 py-1 rounded-full text-sm">
-                        {cardsByList[list.id]?.length || 0}
+                        {currentListCards.length || 0}
                       </span>
                     </div>
-                    <div>
-                      {cardsByList[list.id]?.filter(Boolean).map((card, index) => {
+                    <div className="overflow-y-auto flex-1">
+                      {currentListCards.map((card, index) => {
                         const draggableId = card.id;
                         return (
                           <Draggable 
@@ -243,6 +254,9 @@ const Sales = ({ session }: { session: Session }) => {
                           </Draggable>
                         );
                       })}
+                      {Array.from({ length: emptySpacesNeeded }).map((_, index) => (
+                        <div key={`empty-${index}`} className="h-[68px] mb-2" />
+                      ))}
                       {provided.placeholder}
                     </div>
                     <Button
@@ -252,6 +266,7 @@ const Sales = ({ session }: { session: Session }) => {
                       }}
                       startIcon={<span>+</span>}
                       style={{ color: '#6b7280' }}
+                      className="mt-2"
                     >
                       Add a Card
                     </Button>
