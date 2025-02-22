@@ -130,7 +130,7 @@ const Hiring: React.FC<HiringProps> = ({ session }) => {
               cursor: 'pointer'
             }}
           >
-            Print Guide
+            Save as PDF
           </button>
         </div>
         <div style={{ 
