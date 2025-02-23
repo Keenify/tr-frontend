@@ -171,6 +171,9 @@ export const Idea = ({ session }: { session: Session }) => {
                 <h3 className="font-medium text-gray-900 text-lg mb-2 truncate">
                   {mindmap.title}
                 </h3>
+                <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                  {mindmap.description || 'No description'}
+                </p>
                 <div className="text-sm text-gray-500 mt-auto space-y-1">
                   <div className="truncate">Created by: {employeeNames[mindmap.created_by] || 'Unknown'}</div>
                   <div className="truncate">Last Updated by: {employeeNames[mindmap.updated_by || mindmap.created_by] || 'Unknown'}</div>
