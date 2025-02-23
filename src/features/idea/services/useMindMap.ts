@@ -8,6 +8,7 @@ export interface MindMapNode {
     data: {
         label: string;
         description: string;
+        color: string;
     };
     position: {
         x: number;
