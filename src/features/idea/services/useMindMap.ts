@@ -40,7 +40,9 @@ export interface CreateMindMapRequest {
 
 export interface MindMapResponse extends CreateMindMapRequest {
     id: string;
-    created_at: string;
+    title: string;
+    created_by: string;
+    updated_by: string;
     updated_at: string;
 }
 

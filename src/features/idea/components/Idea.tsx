@@ -6,6 +6,7 @@ import FlowWrapper from './FlowWrapper';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import { getCompanyMindMaps, MindMapResponse, deleteMindMap } from '../services/useMindMap';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { directoryService } from '../../../shared/services/directoryService';
 
 export const Idea = ({ session }: { session: Session }) => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ export const Idea = ({ session }: { session: Session }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedMindmapForDelete, setSelectedMindmapForDelete] = useState<MindMapResponse | null>(null);
+  const [employeeNames, setEmployeeNames] = useState<Record<string, string>>({});
 
   // Get user and company data
   const { companyInfo, error: userDataError, isLoading: isUserDataLoading } = 
@@ -27,6 +29,20 @@ export const Idea = ({ session }: { session: Session }) => {
   // Check if we're on the new route
   const isNewRoute = location.pathname.endsWith('/new');
   
+  const fetchEmployeeNames = useCallback(async () => {
+    if (!companyInfo?.id) return;
+    try {
+      const employeesData = await directoryService.fetchEmployees(companyInfo.id);
+      const namesMap = employeesData.reduce((acc, emp) => ({
+        ...acc,
+        [emp.id]: `${emp.first_name} ${emp.last_name}`
+      }), {});
+      setEmployeeNames(namesMap);
+    } catch (error) {
+      console.error('Failed to fetch employees:', error);
+    }
+  }, [companyInfo?.id]);
+
   const fetchMindmaps = useCallback(async () => {
     if (!companyInfo?.id || isUserDataLoading) return;
 
@@ -37,13 +53,14 @@ export const Idea = ({ session }: { session: Session }) => {
         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
       );
       setMindmaps(sortedMindmaps);
+      await fetchEmployeeNames();
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching mindmaps:', error);
       setError('Failed to load mindmaps. Please try again later.');
       setIsLoading(false);
     }
-  }, [companyInfo?.id, isUserDataLoading]);
+  }, [companyInfo?.id, isUserDataLoading, fetchEmployeeNames]);
 
   useEffect(() => {
     fetchMindmaps();
@@ -118,17 +135,25 @@ export const Idea = ({ session }: { session: Session }) => {
       ) : (isLoading || isUserDataLoading) ? (
         <p className="text-center">Loading...</p>
       ) : (
-        <div className="w-full grid grid-flow-col auto-cols-fr gap-4 px-4" 
-             style={{
-               gridTemplateRows: 'repeat(auto-fill, minmax(120px, 1fr))',
-               maxHeight: 'calc(100vh - 200px)', // Adjust this value based on your layout
-               overflowY: 'auto'
-             }}>
+        <div className="w-full grid grid-cols-3 gap-4 px-4 [grid-auto-flow:column] h-[calc(100vh-200px)] grid-rows-[repeat(auto-fill,200px)]">
           {mindmaps.map((mindmap) => (
             <div
               key={mindmap.id}
-              className="bg-white rounded-lg border border-gray-200 hover:border-blue-500 transition-all duration-200 relative group mb-4"
+              className="bg-white rounded-lg border border-gray-200 hover:border-blue-500 transition-all duration-200 relative group"
             >
+              <div 
+                className="p-4 h-full flex flex-col cursor-pointer"
+                onClick={() => handleMindmapClick(mindmap.id)}
+              >
+                <h3 className="font-medium text-gray-900 text-lg mb-2 truncate">
+                  {mindmap.title}
+                </h3>
+                <div className="text-sm text-gray-500 mt-auto space-y-1">
+                  <div className="truncate">Created by: {employeeNames[mindmap.created_by] || 'Unknown'}</div>
+                  <div className="truncate">Last Updated by: {employeeNames[mindmap.updated_by || mindmap.created_by] || 'Unknown'}</div>
+                  <div>Last modified: {new Date(mindmap.updated_at).toLocaleDateString()}</div>
+                </div>
+              </div>
               <div 
                 className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={(e) => handleDeleteClick(mindmap, e)}
@@ -137,24 +162,13 @@ export const Idea = ({ session }: { session: Session }) => {
                   <Trash2 size={18} />
                 </button>
               </div>
-              <div 
-                className="p-4 cursor-pointer"
-                onClick={() => handleMindmapClick(mindmap.id)}
-              >
-                <h3 className="font-medium text-gray-900 mb-2 truncate">
-                  {mindmap.title}
-                </h3>
-                <div className="text-sm text-gray-500">
-                  Last modified: {new Date(mindmap.updated_at).toLocaleDateString()}
-                </div>
-              </div>
             </div>
           ))}
 
           {/* Create New Mindmap Button */}
           <div
             onClick={handleCreateClick}
-            className="bg-white rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-500 transition-all duration-200 cursor-pointer group mb-4"
+            className="bg-white rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-500 transition-all duration-200 cursor-pointer group"
           >
             <div className="p-4 h-full flex flex-col items-center justify-center">
               <div className="w-8 h-8 rounded-full bg-blue-50 group-hover:bg-blue-100 flex items-center justify-center mb-2 transition-colors">
