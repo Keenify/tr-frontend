@@ -33,6 +33,8 @@ import {
     addChildNode: (parentNode: Node, position: XYPosition) => void;
     /** Deletes a node and all its descendants */
     deleteNode: (nodeId: string) => void;
+    /** Updates the color of a specific node */
+    updateNodeColor: (nodeId: string, color: string) => void;
   };
   
   const initialNodes: Node[] = [
@@ -94,10 +96,14 @@ import {
      * @param position X/Y coordinates for the new node
      */
     addChildNode: (parentNode: Node, position: XYPosition) => {
-      const newNode = {
+      const newNode: Node<NodeData> = {
         id: nanoid(),
         type: 'mindmap',
-        data: { label: 'New Node' },
+        data: { 
+          label: 'New Node',
+          description: '',
+          color: (parentNode.data as NodeData).color || '#F6AD55'
+        },
         position,
         dragHandle: '.dragHandle',
         parentNode: parentNode.id,
@@ -151,6 +157,25 @@ import {
           !allNodesToDelete.includes(edge.source) && !allNodesToDelete.includes(edge.target)
         ),
       }));
+    },
+
+    /**
+     * Updates the color of a specific node
+     * @param nodeId ID of the node to update
+     * @param color New color value
+     */
+    updateNodeColor: (nodeId: string, color: string) => {
+      set({
+        nodes: get().nodes.map((node) => {
+          if (node.id === nodeId) {
+            return {
+              ...node,
+              data: { ...node.data, color },
+            };
+          }
+          return node;
+        }),
+      });
     },
   }));
   
