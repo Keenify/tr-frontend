@@ -10,6 +10,8 @@ import toast from 'react-hot-toast';
 import { ChevronUpDownIcon } from '@heroicons/react/20/solid';
 import { useUserAndCompanyData } from '../../../../shared/hooks/useUserAndCompanyData';
 import { directoryService } from '../../../../shared/services/directoryService';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 
 interface LeavesRequestProps {
     session: Session;
@@ -34,6 +36,9 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
         end_date: '',
         request_reason: ''
     });
+
+    const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
+    const [startDate, endDate] = dateRange;
 
     const fetchLeaveRequests = useCallback(async () => {
         if (!companyId || !userInfo?.id) return;
@@ -131,6 +136,16 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
 
     const sortedRequests = getSortedRequests();
 
+    const handleDateChange = (update: [Date | null, Date | null]) => {
+        setDateRange(update);
+        if (update[0]) {
+            setNewRequest(prev => ({ ...prev, start_date: update[0]?.toISOString().split('T')[0] || '' }));
+        }
+        if (update[1]) {
+            setNewRequest(prev => ({ ...prev, end_date: update[1]?.toISOString().split('T')[0] || '' }));
+        }
+    };
+
     if (isLoading) {
         return <div>Loading...</div>;
     }
@@ -157,28 +172,28 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Start Date</label>
-                            <input
-                                title="Start Date"
-                                type="date"
-                                value={newRequest.start_date}
-                                onChange={(e) => setNewRequest(prev => ({ ...prev, start_date: e.target.value }))}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                required
-                            />
+                            <label className="block text-sm font-medium text-gray-700">Select Dates</label>
+                            <div className="mt-1 relative">
+                                <DatePicker
+                                    selectsRange={true}
+                                    startDate={startDate}
+                                    endDate={endDate}
+                                    onChange={handleDateChange}
+                                    isClearable={true}
+                                    placeholderText="Select start date - end date"
+                                    className="block w-full min-w-[300px] rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    dateFormat="dd/MM/yyyy"
+                                    minDate={new Date()}
+                                    required
+                                />
+                                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                    <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">End Date</label>
-                            <input
-                                title="End Date"
-                                type="date"
-                                value={newRequest.end_date}
-                                onChange={(e) => setNewRequest(prev => ({ ...prev, end_date: e.target.value }))}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                required
-                            />
-                        </div>
-                        <div>
+                        <div className="md:col-span-2">
                             <label className="block text-sm font-medium text-gray-700">Reason</label>
                             <textarea
                                 title="Reason"
@@ -190,7 +205,7 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
                             />
                         </div>
                     </div>
-                    <div className="flex justify-end">
+                    <div className="flex justify-end mt-4">
                         <button
                             type="submit"
                             className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
