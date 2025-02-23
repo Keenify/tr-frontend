@@ -176,6 +176,12 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
   };
 
   const formatEventTitle = (event: CalendarEvent) => {
+    const eventTypeMapping = {
+      'annual_leave': 'Annual Leave',
+      'sick_leave': 'Sick Leave',
+      'timeoff': 'Time Off'
+    };
+
     const isLeaveEvent = ['sick_leave', 'timeoff', 'annual_leave'].includes(event.event_type.toLowerCase());
     if (!isLeaveEvent) {
       return `${event.event_type}: ${event.title}`;
@@ -184,7 +190,8 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
     // Extract name from the title (assuming format "Leave Request - Name")
     const name = event.title.split(' - ')[1] || event.title;
     const statusEmoji = getStatusEmoji(event.description);
-    return `${event.event_type}: ${statusEmoji} ${name}`;
+    const formattedEventType = eventTypeMapping[event.event_type.toLowerCase() as keyof typeof eventTypeMapping] || event.event_type;
+    return `${formattedEventType}: ${statusEmoji} ${name}`;
   };
 
   const getTileContent = ({ date }: { date: Date }) => {
