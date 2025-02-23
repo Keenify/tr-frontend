@@ -84,7 +84,8 @@ function Flow({ session, mindmapId }: MindMapProps) {
             type: 'mindmap',
             data: { 
               label: 'Root Node',
-              description: 'Start your mind map here'
+              description: 'Start your mind map here',
+              color: '#F6AD55'
             },
             position: { x: 0, y: 0 },
             dragHandle: '.dragHandle',
@@ -175,6 +176,7 @@ function Flow({ session, mindmapId }: MindMapProps) {
           data: { 
             label: 'New Node',
             description: '',
+            color: parentNode.data.color || '#F6AD55',
             isEditing: false 
           },
           position: childNodePosition,
@@ -239,6 +241,7 @@ function Flow({ session, mindmapId }: MindMapProps) {
         data: {
           label: node.data.label,
           description: node.data.description,
+          color: node.data.color || '#F6AD55'
         },
         position: node.position,
         parentNode: node.parentNode,
