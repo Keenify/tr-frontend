@@ -12,6 +12,7 @@ interface BaseProductExportDetails {
     country_of_origin: string;
     container_size: string;
     cartons_per_container: number;
+    barcode: string | null;
 }
 
 export interface ProductExportDetails extends BaseProductExportDetails {
@@ -57,5 +58,6 @@ export interface ProductExportSelection {
         recommended_retail_price_usd: string;
         container_size: string;
         cartons_per_container: number;
+        barcode: string | null;
     }[];
 }

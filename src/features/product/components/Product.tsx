@@ -12,6 +12,7 @@ import CreateVariantModal from './CreateVariantModal';
 import VariantGrid from './VariantGrid';
 import EditProductExportModal from './EditProductExportModal';
 import ProductSlide from './ProductSlide';
+import toast from 'react-hot-toast';
 
 interface ProductProps {
   session: Session;
@@ -71,31 +72,34 @@ const Product: React.FC<ProductProps> = ({ session }) => {
   const handleCreateProduct = async (productData: CreateProductRequest) => {
     try {
       await createProduct(productData);
-      await fetchProducts(); // Refresh the products list
+      await fetchProducts();
+      toast.success('Product created successfully');
     } catch (error) {
       console.error('Failed to create product:', error);
-      setFetchError('Failed to create product');
+      toast.error('Failed to create product');
     }
   };
 
   const handleUpdateProduct = async (productId: number, productData: UpdateProductRequest) => {
     try {
       await updateProduct(productId, productData);
-      await fetchProducts(); // Refresh the products list
+      await fetchProducts();
+      toast.success('Product updated successfully');
     } catch (error) {
       console.error('Failed to update product:', error);
-      setFetchError('Failed to update product');
+      toast.error('Failed to update product');
     }
   };
 
   const handleDeleteProduct = async (productId: number) => {
     try {
       await deleteProduct(productId);
-      await fetchProducts(); // Refresh the products list
+      await fetchProducts();
+      toast.success('Product deleted successfully');
       setDeletingProduct(null);
     } catch (error) {
       console.error('Failed to delete product:', error);
-      setFetchError('Failed to delete product');
+      toast.error('Failed to delete product');
     }
   };
 
@@ -106,11 +110,12 @@ const Product: React.FC<ProductProps> = ({ session }) => {
         image: data.image,
         product_id: productId
       });
-      await fetchProducts(); // Refresh the products list
+      await fetchProducts();
+      toast.success('Variant created successfully');
       setCreatingVariantForProduct(null);
     } catch (error) {
       console.error('Failed to create variant:', error);
-      setFetchError('Failed to create variant');
+      toast.error('Failed to create variant');
     }
   };
 

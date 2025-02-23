@@ -3,6 +3,7 @@ import { Product } from '../../../shared/types/Product';
 import { ProductExportDetails, UpdateProductExportDetails } from '../../../shared/types/ProductExport';
 import { getProductExportDetails, updateProductExportDetails, createProductExportDetails } from '../../../services/useProductExportDetails';
 import { ClipLoader } from 'react-spinners';
+import toast from 'react-hot-toast';
 
 interface EditProductExportModalProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ const EditProductExportModal: React.FC<EditProductExportModalProps> = ({ isOpen,
     country_of_origin: '',
     container_size: '',
     cartons_per_container: 0,
+    barcode: null,
   });
 
   useEffect(() => {
@@ -50,6 +52,7 @@ const EditProductExportModal: React.FC<EditProductExportModalProps> = ({ isOpen,
           country_of_origin: details?.country_of_origin || '',
           container_size: details?.container_size || '',
           cartons_per_container: details?.cartons_per_container || 0,
+          barcode: details?.barcode || null,
         });
         setIsNewRecord(!details);
       } catch (err: Error | unknown) {
@@ -75,12 +78,15 @@ const EditProductExportModal: React.FC<EditProductExportModalProps> = ({ isOpen,
           product_id: product.id,
           ...formData,
         });
+        toast.success('Product export details created successfully');
       } else {
         await updateProductExportDetails(exportDetails!.id, formData);
+        toast.success('Product export details updated successfully');
       }
       onClose();
     } catch (err) {
       console.error(err);
+      toast.error('Failed to save product export details');
     }
   };
 
@@ -263,6 +269,17 @@ const EditProductExportModal: React.FC<EditProductExportModalProps> = ({ isOpen,
                 value={formData.cartons_per_container}
                 onChange={(e) => setFormData({ ...formData, cartons_per_container: parseInt(e.target.value) })}
                 required
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Barcode</label>
+              <input
+                title="Barcode"
+                placeholder="Barcode"
+                type="text"
+                className="w-full border rounded p-2"
+                value={formData.barcode || ''}
+                onChange={(e) => setFormData({ ...formData, barcode: e.target.value || null })}
               />
             </div>
           </div>
