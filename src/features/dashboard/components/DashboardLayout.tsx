@@ -37,6 +37,7 @@ const navigationConfig = [
       { id: 'feedback', label: 'Feedback', shortForm: 'F', icon: ThumbsUp },
       { id: 'calendar', label: 'Calendar', shortForm: 'Ca', icon: Calendar },
       { id: 'accountability', label: 'Accountability', shortForm: 'Ac', icon: ThumbsUp },
+      { id: 'leaves', label: 'Leaves', shortForm: 'Le', icon: Calendar },
     ]
   },
   { id: 'projects', label: 'Projects', shortForm: 'P', icon: ThumbsUp, isExpandable: false },
@@ -55,7 +56,7 @@ const navigationConfig = [
  */
 type TabType = typeof navigationConfig[number]['id'];
 
-type SubTabType = 'directory' | 'orgChart' | 'supplier' | 'client' | 'hiring' | 'feedback' | 'calendar' | 'accountability';
+type SubTabType = 'directory' | 'orgChart' | 'supplier' | 'client' | 'hiring' | 'feedback' | 'calendar' | 'accountability' | 'leaves';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -172,6 +173,8 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
       navigate(`/${userId}/calendar`);
     } else if (subTab === 'accountability') {
       navigate(`/${userId}/accountability`);
+    } else if (subTab === 'leaves') {
+      navigate(`/${userId}/leaves`);
     }
   };
 

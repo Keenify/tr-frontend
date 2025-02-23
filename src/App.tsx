@@ -37,6 +37,8 @@ import Finance from './features/finance/components/Finance';
 import Playbook from './features/playbook/components/Playbook';
 import Calendar from './features/people/calendar/components/Calendar';
 import AccountabilityMatrix from './features/people/accountability_matrix/components/AccountabilityMatrix';
+import Leaves from './features/people/leaves/components/Leaves';
+
 // Create a client
 const queryClient = new QueryClient();
 
@@ -77,6 +79,7 @@ const App: React.FC = () => {
                 <Route path="/:userId/admin" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="admin" onTabChange={() => { }}><Admin session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/hiring" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="hiring" onTabChange={() => { }}><Hiring session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/accountability" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="accountability" onTabChange={() => { }}><AccountabilityMatrix session={session} /></DashboardLayout>} />} />
+                <Route path="/:userId/leaves" element={<ProtectedRoute session={session} element={<DashboardLayout session={session} signOut={signOut} activeTab="people" activeSubTab="leaves" onTabChange={() => { }}><Leaves session={session} /></DashboardLayout>} />} />
                 <Route path="/:userId/sandbox/new" element={
                   <ProtectedRoute session={session} element={
                     <DashboardLayout session={session} signOut={signOut} activeTab="sandbox" onTabChange={() => {}}>
