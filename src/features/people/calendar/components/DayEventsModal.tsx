@@ -13,6 +13,19 @@ interface DayEventsModalProps {
   onDeleteEvent: (eventId: string) => void;
 }
 
+type EventType = 'annual_leave' | 'sick_leave' | 'timeoff';
+
+const eventTypeMapping: Record<EventType, string> = {
+  'annual_leave': 'Annual Leave',
+  'sick_leave': 'Sick Leave',
+  'timeoff': 'Time Off'
+};
+
+const formatEventType = (eventType: string): string => {
+  const normalizedType = eventType.toLowerCase();
+  return eventTypeMapping[normalizedType as EventType] || eventType;
+};
+
 const formatTime = (dateString: string) => {
   const date = new Date(dateString);
   return date.toLocaleString('en-US', {
@@ -58,6 +71,13 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
     return ['timeoff', 'sick_leave', 'annual_leave'].includes(eventType.toLowerCase());
   };
 
+  const formatDescription = (description: string) => {
+    // Split the description into lines
+    const lines = description.split('\n');
+    // Filter out the line that contains "Type: "
+    return lines.filter(line => !line.toLowerCase().startsWith('type:')).join('\n');
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -93,7 +113,7 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
                 <div className="flex justify-between items-start w-full">
                   <div className="flex-grow">
                     <h3 className="font-semibold text-lg">{event.title}</h3>
-                    <p className="text-sm font-medium">{event.event_type}</p>
+                    <p className="text-sm font-medium">{formatEventType(event.event_type)}</p>
                     <p className="text-sm mt-1">
                       {formatTime(event.start_time)} - {formatTime(event.end_time)}
                     </p>
@@ -111,7 +131,9 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
                       </div>
                     )}
                     {event.description && (
-                      <p className="text-sm mt-2 whitespace-pre-wrap">{event.description}</p>
+                      <p className="text-sm mt-2 whitespace-pre-wrap">
+                        {formatDescription(event.description)}
+                      </p>
                     )}
                     <p className="text-sm mt-2 text-gray-600">
                       Created by: {eventCreators[event.created_by] 
