@@ -215,11 +215,15 @@ function Flow({ session, mindmapId }: MindMapProps) {
     try {
       if (currentMindMapId) {
         // Update existing mindmap
-        await updateMindMap(currentMindMapId, {
-          title,
-          description,
-          mindmap: mindMapData
-        });
+        await updateMindMap(
+          currentMindMapId,
+          userInfo?.id || '',
+          {
+            title,
+            description,
+            mindmap: mindMapData
+          }
+        );
         toast.success('Mind map updated successfully');
       } else {
         // Create new mindmap

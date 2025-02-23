@@ -48,6 +48,7 @@ export interface UpdateMindMapRequest {
     title?: string;
     description?: string;
     mindmap?: Partial<MindMapData>;
+    updated_by: string;
 }
 
 interface PaginationParams {
@@ -121,14 +122,21 @@ export async function getMindMap(mindMapId: string): Promise<MindMapResponse> {
 /**
  * Updates an existing mind map. Supports partial updates.
  * @param {string} mindMapId - The ID of the mind map to update.
- * @param {UpdateMindMapRequest} mindMapData - The fields to update. All fields are optional.
+ * @param {string} userId - The ID of the user making the update.
+ * @param {UpdateMindMapRequest} mindMapData - The fields to update.
  * @returns {Promise<MindMapResponse>} - A promise that resolves to the updated mind map data.
  */
 export async function updateMindMap(
-    mindMapId: string, 
-    mindMapData: UpdateMindMapRequest
+    mindMapId: string,
+    userId: string,
+    mindMapData: Omit<UpdateMindMapRequest, 'updated_by'>
 ): Promise<MindMapResponse> {
     const endpoint = `${API_DOMAIN}/mindmaps/${encodeURIComponent(mindMapId)}`;
+
+    const payload: UpdateMindMapRequest = {
+        ...mindMapData,
+        updated_by: userId
+    };
 
     const response = await fetch(endpoint, {
         method: 'PUT',
@@ -136,7 +144,7 @@ export async function updateMindMap(
             'Accept': 'application/json',
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(mindMapData)
+        body: JSON.stringify(payload)
     });
 
     const data = await response.json();
