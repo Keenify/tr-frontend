@@ -176,8 +176,9 @@ export const Idea = ({ session }: { session: Session }) => {
                 </p>
                 <div className="text-sm text-gray-500 mt-auto space-y-1">
                   <div className="truncate">Created by: {employeeNames[mindmap.created_by] || 'Unknown'}</div>
-                  <div className="truncate">Last Updated by: {employeeNames[mindmap.updated_by || mindmap.created_by] || 'Unknown'}</div>
-                  <div>Last modified: {new Date(mindmap.updated_at).toLocaleDateString()}</div>
+                  <div className="truncate">
+                    Last updated by {employeeNames[mindmap.updated_by || mindmap.created_by] || 'Unknown'} on {new Date(mindmap.updated_at).toLocaleDateString()}
+                  </div>
                 </div>
               </div>
               <div 
