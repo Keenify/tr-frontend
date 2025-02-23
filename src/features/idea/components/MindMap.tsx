@@ -34,11 +34,30 @@ import MindMapEdge from './MindMapEdge/MindMapEdge';
 const nodeTypes = { mindmap: MindMapNode };
 const edgeTypes = { mindmap: MindMapEdge };
 
+/**
+ * Interface for MindMap component props
+ */
 interface MindMapProps {
+  /** Active user session */
   session: Session;
-  mindmapId?: string; // Optional - if not provided, we're creating a new mindmap
+  /** Optional ID of existing mindmap. If not provided, creates a new mindmap */
+  mindmapId?: string;
 }
 
+/**
+ * MindMap Flow Component
+ * 
+ * A React component that provides an interactive mind mapping interface using ReactFlow.
+ * Supports creating new mind maps or editing existing ones with features like:
+ * - Drag and drop node creation
+ * - Node connections
+ * - Editable titles and descriptions
+ * - Auto-save functionality
+ * - Unsaved changes detection
+ * 
+ * @param {MindMapProps} props - Component props
+ * @returns {JSX.Element} Mind map interface
+ */
 function Flow({ session, mindmapId }: MindMapProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -99,6 +118,12 @@ function Flow({ session, mindmapId }: MindMapProps) {
   const { screenToFlowPosition } = useReactFlow();
   const connectingNodeId = useRef<string | null>(null);
 
+  /**
+   * Calculates the position for a new child node relative to its parent
+   * @param {MouseEvent} event - Mouse event containing click coordinates
+   * @param {Node} parentNode - Optional parent node reference
+   * @returns {Position | undefined} Calculated position or undefined
+   */
   const getChildNodePosition = useCallback(
     (event: MouseEvent, parentNode?: Node) => {
       if (!parentNode?.positionAbsolute || !parentNode?.width || !parentNode?.height) {
@@ -118,10 +143,19 @@ function Flow({ session, mindmapId }: MindMapProps) {
     [screenToFlowPosition]
   );
 
+  /**
+   * Handles the start of a connection between nodes
+   * @param {OnConnectStart} _ - Unused connect event
+   * @param {Object} params - Connection parameters containing nodeId
+   */
   const onConnectStart: OnConnectStart = useCallback((_, params) => {
     connectingNodeId.current = params.nodeId;
   }, []);
 
+  /**
+   * Handles the completion of a connection, creating new nodes when connecting to empty space
+   * @param {MouseEvent | TouchEvent} event - Connection end event
+   */
   const onConnectEnd: OnConnectEnd = useCallback((event: MouseEvent | TouchEvent) => {
     if (!(event instanceof MouseEvent)) return; // Guard for TouchEvent
     const { nodeInternals } = store.getState();
@@ -185,6 +219,11 @@ function Flow({ session, mindmapId }: MindMapProps) {
     setHasUnsavedChanges(true);
   };
 
+  /**
+   * Saves the current mind map state to the backend
+   * Creates a new mind map or updates an existing one based on currentMindMapId
+   * @returns {Promise<void>}
+   */
   const handleSave = useCallback(async () => {
     if (!companyInfo?.id) {
       setError('Company information not available');

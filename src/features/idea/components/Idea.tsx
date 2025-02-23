@@ -8,6 +8,29 @@ import { getCompanyMindMaps, MindMapResponse, deleteMindMap } from '../services/
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { directoryService } from '../../../shared/services/directoryService';
 
+/**
+ * Idea Component
+ * 
+ * A component that manages and displays mind maps in a sandbox environment.
+ * It provides functionality to view, create, and delete mind maps, with a grid layout
+ * for existing mind maps and a creation button.
+ * 
+ * Features:
+ * - Displays a grid of existing mind maps with their metadata
+ * - Allows creation of new mind maps
+ * - Supports deletion of mind maps with confirmation
+ * - Shows mind map editor when a specific mind map is selected
+ * - Displays employee names for mind map creators and editors
+ * 
+ * @component
+ * @param {Object} props
+ * @param {Session} props.session - The current user's session object from Supabase
+ * 
+ * @example
+ * ```tsx
+ * <Idea session={currentSession} />
+ * ```
+ */
 export const Idea = ({ session }: { session: Session }) => {
   const navigate = useNavigate();
   const { mindmapId } = useParams<{ mindmapId: string }>();

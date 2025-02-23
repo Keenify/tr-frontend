@@ -14,13 +14,24 @@ import {
   
   import { NodeData } from './MindMapNode/MindMapNode';
   
+  /**
+   * React Flow State type definition
+   * Manages the state of nodes and edges in the mind map
+   */
   export type RFState = {
+    /** Array of mind map nodes */
     nodes: Node<NodeData>[];
+    /** Array of edges connecting the nodes */
     edges: Edge[];
+    /** Callback function to handle node changes */
     onNodesChange: OnNodesChange;
+    /** Callback function to handle edge changes */
     onEdgesChange: OnEdgesChange;
+    /** Updates the label of a specific node */
     updateNodeLabel: (nodeId: string, label: string) => void;
+    /** Adds a new child node connected to a parent node */
     addChildNode: (parentNode: Node, position: XYPosition) => void;
+    /** Deletes a node and all its descendants */
     deleteNode: (nodeId: string) => void;
   };
   
@@ -37,16 +48,32 @@ import {
   const useStore = create<RFState>((set, get) => ({
     nodes: initialNodes,
     edges: [],
+    
+    /**
+     * Handles changes to nodes (e.g., position, deletion)
+     * @param changes Array of node changes to apply
+     */
     onNodesChange: (changes: NodeChange[]) => {
       set({
         nodes: applyNodeChanges(changes, get().nodes),
       });
     },
+
+    /**
+     * Handles changes to edges (e.g., deletion, connection)
+     * @param changes Array of edge changes to apply
+     */
     onEdgesChange: (changes: EdgeChange[]) => {
       set({
         edges: applyEdgeChanges(changes, get().edges),
       });
     },
+
+    /**
+     * Updates the label text of a specific node
+     * @param nodeId ID of the node to update
+     * @param label New label text
+     */
     updateNodeLabel: (nodeId: string, label: string) => {
       set({
         nodes: get().nodes.map((node) => {
@@ -60,6 +87,12 @@ import {
         }),
       });
     },
+
+    /**
+     * Creates a new child node connected to the specified parent node
+     * @param parentNode Parent node to connect to
+     * @param position X/Y coordinates for the new node
+     */
     addChildNode: (parentNode: Node, position: XYPosition) => {
       const newNode = {
         id: nanoid(),
@@ -82,7 +115,17 @@ import {
         edges: [...state.edges, newEdge],
       }));
     },
+
+    /**
+     * Deletes a node and all its descendant nodes recursively
+     * @param nodeId ID of the node to delete
+     */
     deleteNode: (nodeId: string) => {
+      /**
+       * Helper function to find all descendant nodes
+       * @param currentId ID of the current node
+       * @returns Array of descendant node IDs
+       */
       const getDescendantNodes = (currentId: string): string[] => {
         const descendants: string[] = [];
         const edges = get().edges;

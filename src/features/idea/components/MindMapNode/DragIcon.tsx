@@ -1,5 +1,11 @@
 // icon taken from grommet https://icons.grommet.io
 
+/**
+ * DragIcon component renders a drag handle icon using SVG.
+ * Icon design sourced from Grommet icons (https://icons.grommet.io)
+ * 
+ * @returns {JSX.Element} An SVG icon representing a drag handle with 6 dots arranged in 2 columns
+ */
 function DragIcon() {
     return (
       <svg viewBox="0 0 24 24">
