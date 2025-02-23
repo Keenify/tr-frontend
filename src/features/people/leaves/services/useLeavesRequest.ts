@@ -12,8 +12,14 @@ export async function createLeaveRequest(
     employeeId: string,
     payload: CreateLeaveRequestPayload
 ): Promise<LeaveRequest> {
+    console.log('Creating leave request with:', {
+        employeeId,
+        endpoint: `${API_DOMAIN}/employee-leaves/request?employee_id=${encodeURIComponent(employeeId)}`,
+        payload
+    });
+    
     const endpoint = `${API_DOMAIN}/employee-leaves/request?employee_id=${encodeURIComponent(employeeId)}`;
-
+    
     const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -24,12 +30,19 @@ export async function createLeaveRequest(
     });
 
     const data = await response.json();
+    console.log('API Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        data,
+        sentPayload: payload
+    });
 
     if (!response.ok) {
         console.error('❌ API request failed:', {
             status: response.status,
             statusText: response.statusText,
-            data
+            data,
+            payload
         });
         throw new Error('Failed to create leave request');
     }
