@@ -20,6 +20,9 @@ const Client: React.FC<ClientProps> = ({ session }) => {
   const { companyInfo, isLoading: isLoadingCompanyData } = useUserAndCompanyData(session.user.id);
   const queryClient = useQueryClient();
 
+  // Add sorting state
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
   // Mutations
   const updateMutation = useMutation({
     mutationFn: ({ clientId, payload }: { clientId: string; payload: UpdateB2BClientPayload }) =>
@@ -101,14 +104,21 @@ const Client: React.FC<ClientProps> = ({ session }) => {
     createMutation.mutate(payload as CreateB2BClientPayload);
   };
 
-  // Filter clients based on search term with null checks
+  // Filter and sort clients
   const filteredClients = clients?.filter((client) => {
     const searchString = searchTerm.toLowerCase();
     return (
       (client.client_company?.toLowerCase() || '').includes(searchString) ||
+      (client.business_unit?.toLowerCase() || '').includes(searchString) ||
       (client.name?.toLowerCase() || '').includes(searchString) ||
       (client.email?.toLowerCase() || '').includes(searchString)
     );
+  }).sort((a, b) => {
+    const nameA = `${a.client_company}${a.business_unit ? ` - ${a.business_unit}` : ''}`.toLowerCase();
+    const nameB = `${b.client_company}${b.business_unit ? ` - ${b.business_unit}` : ''}`.toLowerCase();
+    return sortOrder === 'asc' 
+      ? nameA.localeCompare(nameB)
+      : nameB.localeCompare(nameA);
   });
 
   if (isLoadingCompanyData || isLoadingClients) {
@@ -174,17 +184,23 @@ const Client: React.FC<ClientProps> = ({ session }) => {
         <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th 
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              >
                 Company Name
+                <span className="ml-1">
+                  {sortOrder === 'asc' ? '↑' : '↓'}
+                </span>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Contact Person
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Email
+                Contact Number
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Contact
+                Email
               </th>
             </tr>
           </thead>
@@ -201,16 +217,17 @@ const Client: React.FC<ClientProps> = ({ session }) => {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">
                     {client.client_company}
+                    {client.business_unit && ` - ${client.business_unit}`}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">{client.name}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{client.email}</div>
+                  <div className="text-sm text-gray-900">{client.contact_number}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{client.contact_number}</div>
+                  <div className="text-sm text-gray-900">{client.email}</div>
                 </td>
               </tr>
             ))}
