@@ -20,7 +20,7 @@ export interface ProductExportDetails extends BaseProductExportDetails {
     created_at: string;
 }
 
-export interface UpdateProductExportDetails extends BaseProductExportDetails {}
+export type UpdateProductExportDetails = BaseProductExportDetails;
 
 export interface CreateProductExportDetailsRequest extends BaseProductExportDetails {
     product_id: number;
