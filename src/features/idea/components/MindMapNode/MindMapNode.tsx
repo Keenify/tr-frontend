@@ -8,6 +8,7 @@ import DragIcon from './DragIcon';
  */
 export type NodeData = {
   label: string;
+  color: string;
 };
 
 /**
