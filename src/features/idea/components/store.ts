@@ -12,7 +12,11 @@ import {
   import { create } from 'zustand';
   import { nanoid } from 'nanoid/non-secure';
   
-  import { NodeData } from './MindMapNode/MindMapNode';
+  export type NodeData = {
+    label: string;
+    description: string;
+    color: string;
+  };
   
   /**
    * React Flow State type definition
