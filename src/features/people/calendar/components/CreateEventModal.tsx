@@ -19,7 +19,7 @@ interface GooglePlace {
   };
 }
 
-const EVENT_TYPES: EventType[] = ['Employee Leave', 'Booth', 'Meeting', 'Other'];
+const EVENT_TYPES: EventType[] = ['Booth', 'Meeting', 'Other'];
 
 const CreateEventModal: React.FC<CreateEventModalProps> = ({
   isOpen,

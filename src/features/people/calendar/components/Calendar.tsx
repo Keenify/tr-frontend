@@ -167,6 +167,26 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
     return null;
   };
 
+  const getStatusEmoji = (description: string = '') => {
+    const lowerDesc = description.toLowerCase();
+    if (lowerDesc.includes('pending')) return '⏳';
+    if (lowerDesc.includes('approved')) return '✅';
+    if (lowerDesc.includes('cancelled') || lowerDesc.includes('rejected')) return '❌';
+    return '';
+  };
+
+  const formatEventTitle = (event: CalendarEvent) => {
+    const isLeaveEvent = ['sick_leave', 'timeoff', 'annual_leave'].includes(event.event_type.toLowerCase());
+    if (!isLeaveEvent) {
+      return `${event.event_type}: ${event.title}`;
+    }
+
+    // Extract name from the title (assuming format "Leave Request - Name")
+    const name = event.title.split(' - ')[1] || event.title;
+    const statusEmoji = getStatusEmoji(event.description);
+    return `${event.event_type}: ${statusEmoji} ${name}`;
+  };
+
   const getTileContent = ({ date }: { date: Date }) => {
     const dayEvents = events.filter(event => {
       const eventStart = new Date(event.start_time);
@@ -206,9 +226,9 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
                   e.stopPropagation();
                   setSelectedEvent(event);
                 }}
-                title={`${event.event_type}: ${event.title}`}
+                title={formatEventTitle(event)}
               >
-                <span className="font-semibold">{event.event_type}</span>: {event.title}
+                {formatEventTitle(event)}
               </div>
             );
           })}

@@ -54,6 +54,10 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
     }
   }, [isOpen, events]);
 
+  const isLeaveEvent = (eventType: string) => {
+    return ['timeoff', 'sick_leave', 'annual_leave'].includes(eventType.toLowerCase());
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -116,26 +120,30 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
                     </p>
                   </div>
                   <div className="flex space-x-2 ml-4">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEditEvent(event);
-                      }}
-                      className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
-                      title="Edit"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteEvent(event.id);
-                      }}
-                      className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
-                      title="Delete"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    {!isLeaveEvent(event.event_type) && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEditEvent(event);
+                          }}
+                          className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
+                          title="Edit"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteEvent(event.id);
+                          }}
+                          className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+                          title="Delete"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

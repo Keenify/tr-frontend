@@ -1,16 +1,6 @@
-import { EventType } from '../types/calendar';
+import { EVENT_COLORS, EventColorType } from '../constants/eventColors';
 
-export const getEventTypeColor = (eventType: EventType): string => {
-  switch (eventType) {
-    case 'Employee Leave':
-      return 'bg-orange-100 text-orange-700';
-    case 'Booth':
-      return 'bg-green-100 text-green-700';
-    case 'Meeting':
-      return 'bg-blue-100 text-blue-700';
-    case 'Other':
-      return 'bg-purple-100 text-purple-700';
-    default:
-      return 'bg-gray-100 text-gray-700';
-  }
+export const getEventTypeColor = (eventType: string): string => {
+  const type = eventType.toLowerCase().replace(' ', '_') as EventColorType;
+  return EVENT_COLORS[type] || EVENT_COLORS.other;
 }; 

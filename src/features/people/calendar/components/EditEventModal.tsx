@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { X } from 'react-feather';
-import { CalendarEvent, CreateCalendarEventPayload } from '../types/calendar';
+import { CalendarEvent, CreateCalendarEventPayload, EventType } from '../types/calendar';
 import { formatDateTimeForInput, createISOString } from '../utils/dateUtils';
+import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
+import { loadGoogleMapsScript } from '../../../../utils/loadGoogleMapsScript';
 
 interface EditEventModalProps {
   isOpen: boolean;
@@ -10,20 +12,32 @@ interface EditEventModalProps {
   event: CalendarEvent;
 }
 
+interface GooglePlace {
+  label: string;
+  value: {
+    place_id: string;
+  };
+}
+
+const EVENT_TYPES: EventType[] = ['Booth', 'Meeting', 'Other'];
+
 const EditEventModal: React.FC<EditEventModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
   event,
 }) => {
+  const initialEventType = EVENT_TYPES.includes(event.event_type as EventType) 
+    ? event.event_type 
+    : EVENT_TYPES[0];
+
   const [formData, setFormData] = useState<CreateCalendarEventPayload>({
-    title: event.title,
-    event_type: event.event_type,
-    start_time: event.start_time,
-    end_time: event.end_time,
-    location: event.location || '',
-    description: event.description || '',
+    ...event,
+    event_type: initialEventType,
   });
+
+  const [locationValue, setLocationValue] = useState<GooglePlace | null>(null);
+  const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
 
   useEffect(() => {
     setFormData({
@@ -34,7 +48,30 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
       location: event.location || '',
       description: event.description || '',
     });
+
+    loadGoogleMapsScript()
+      .then(() => {
+        setIsGoogleMapsLoaded(true);
+      })
+      .catch((error) => {
+        console.error('Failed to load Google Maps:', error);
+        setIsGoogleMapsLoaded(false);
+      });
   }, [event]);
+
+  const handlePlaceSelect = (place: GooglePlace | null) => {
+    if (!place) return;
+    
+    const locationDescription = place.label;
+    const placeId = place.value.place_id;
+    const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationDescription)}&query_place_id=${placeId}`;
+    
+    setLocationValue(place);
+    setFormData(prev => ({
+      ...prev,
+      location: `${locationDescription} - ${mapsLink}`,
+    }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +79,7 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
     onClose();
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -78,15 +115,20 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
 
           <div>
             <label htmlFor="event_type" className="block text-sm font-medium text-gray-700">Event Type</label>
-            <input
-              type="text"
+            <select
               id="event_type"
               name="event_type"
               value={formData.event_type}
               onChange={handleInputChange}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               required
-            />
+            >
+              {EVENT_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -123,14 +165,42 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
 
           <div>
             <label htmlFor="location" className="block text-sm font-medium text-gray-700">Location</label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
+            {isGoogleMapsLoaded ? (
+              <GooglePlacesAutocomplete
+                apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+                selectProps={{
+                  value: locationValue,
+                  onChange: handlePlaceSelect,
+                  className: "mt-1",
+                  classNamePrefix: "google-places",
+                  placeholder: "Search for a location...",
+                  styles: {
+                    control: (provided) => ({
+                      ...provided,
+                      borderColor: '#D1D5DB',
+                      borderRadius: '0.375rem',
+                      '&:hover': {
+                        borderColor: '#6366F1'
+                      }
+                    }),
+                  }
+                }}
+              />
+            ) : (
+              <div className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2">
+                Loading Google Maps...
+              </div>
+            )}
+            {formData.location && (
+              <a
+                href={formData.location.split(' - ')[1]}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-indigo-600 hover:text-indigo-500 mt-1 inline-block"
+              >
+                View on Google Maps
+              </a>
+            )}
           </div>
 
           <div>
