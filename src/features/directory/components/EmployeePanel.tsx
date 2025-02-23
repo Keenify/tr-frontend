@@ -1,4 +1,4 @@
-import { Employee } from '../types/directory.types';
+import { Employee } from '../../../shared/types/directory.types';
 
 interface EmployeePanelProps {
   employee: Employee | undefined;

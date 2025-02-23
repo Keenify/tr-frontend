@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import noOrgChartImage from "../../assets/org_chart.svg";
 import { OrgChartConfigPanel } from "./OrgChartConfigPanel";
-import { directoryService } from "../../services/directoryService";
-import { Employee } from "../../types/directory.types";
+import { directoryService } from "../../../../shared/services/directoryService";
+import { Employee } from "../../../../shared/types/directory.types";
 import OrgChartTree from "./OrgChartTree";
 import { EmployeePanel } from "../EmployeePanel";
 

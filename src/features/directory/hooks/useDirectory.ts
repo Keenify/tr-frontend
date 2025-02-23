@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Employee, DirectoryFilters } from '../types/directory.types';
-import { directoryService } from '../services/directoryService';
+import { Employee, DirectoryFilters } from '../../../shared/types/directory.types';
+import { directoryService } from '../../../shared/services/directoryService';
 
 export const useDirectory = (companyId: string) => {
   const [employees, setEmployees] = useState<Employee[]>([]);

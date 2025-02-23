@@ -1,6 +1,6 @@
 import { Directory } from '../components/Directory';
 import { useEffect, useState } from 'react';
-import { directoryService } from '../services/directoryService';
+import { directoryService } from '../../../shared/services/directoryService';
 import { Session } from '@supabase/supabase-js';
 
 interface DirectoryPageProps {

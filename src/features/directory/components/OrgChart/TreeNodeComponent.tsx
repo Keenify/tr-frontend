@@ -1,5 +1,5 @@
 import React from "react";
-import { Employee } from "../../types/directory.types";
+import { Employee } from "../../../../shared/types/directory.types";
 import "./styles/TreeNodeComponent.css";
 
 /**

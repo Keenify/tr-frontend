@@ -1,4 +1,4 @@
-import { Employee } from '../types/directory.types';
+import { Employee } from '../../../shared/types/directory.types';
 
 interface EmployeeCardProps {
   employee: Employee;

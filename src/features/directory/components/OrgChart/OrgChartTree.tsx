@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Tree, { RawNodeDatum, CustomNodeElementProps } from "react-d3-tree";
-import { Employee } from "../../types/directory.types";
+import { Employee } from "../../../../shared/types/directory.types";
 import MemoizedTreeNodeComponent from "./TreeNodeComponent";
 import "./styles/OrgChartTree.css";
 

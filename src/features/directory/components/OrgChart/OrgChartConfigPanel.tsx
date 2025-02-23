@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Employee } from '../../types/directory.types';
-import { directoryService } from '../../services/directoryService';
+import { Employee } from '../../../../shared/types/directory.types';
+import { directoryService } from '../../../../shared/services/directoryService';
 import { AddTeammateModal } from '../modals/AddTeammateModal';
 import '../../styles/OrgChartConfigPanel.css';
 

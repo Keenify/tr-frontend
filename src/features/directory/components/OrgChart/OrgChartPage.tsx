@@ -1,6 +1,6 @@
 import { OrgChart } from './OrgChart';
 import { Session } from '@supabase/supabase-js';
-import { directoryService } from "../../services/directoryService";
+import { directoryService } from "../../../../shared/services/directoryService";
 import { useEffect, useState } from 'react';
 
 /**

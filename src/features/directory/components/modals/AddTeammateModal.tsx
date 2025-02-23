@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { directoryService } from '../../services/directoryService';
+import { directoryService } from '../../../../shared/services/directoryService';
 
 interface AddTeammateModalProps {
   isOpen: boolean;
