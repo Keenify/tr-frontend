@@ -1,10 +1,17 @@
-import React, { useState } from 'react';
-import { Calendar, Power, ThumbsUp, ChevronDown, ChevronRight, Shield, Home, Lock } from 'react-feather'; // Import Power, ThumbsUp, and Clock icons from react-feather
-import { Session } from '@supabase/supabase-js';
-import { supabase } from '../../../lib/supabase'; // Import supabase client
-import { useNavigate, useParams } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
-import toast from 'react-hot-toast'; // Import toast directly
+import React, { useState, useEffect } from "react";
+import {
+  Calendar,
+  Power,
+  ThumbsUp,
+  ChevronDown,
+  ChevronRight,
+  Lock,
+} from "react-feather"; // Import Power, ThumbsUp, and Clock icons from react-feather
+import { Session } from "@supabase/supabase-js";
+import { supabase } from "../../../lib/supabase"; // Import supabase client
+import { useNavigate, useParams } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast"; // Import toast directly
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 
 /**
@@ -24,39 +31,165 @@ import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyDa
  * @constant {Object[]}
  */
 const navigationConfig = [
-  { id: 'home', label: 'Home', shortForm: 'H', icon: Home, isExpandable: false },
-  { id: 'admin', label: 'Admin', shortForm: 'A', icon: Shield, isExpandable: false },
-  { id: 'resources', label: 'Resources', shortForm: 'R', icon: ThumbsUp, isExpandable: false },
-  { id: 'people', label: 'People', shortForm: 'Pe', icon: ThumbsUp, isExpandable: true,
+  {
+    id: "people",
+    label: "People",
+    shortForm: "Pe",
+    icon: ThumbsUp,
+    isExpandable: true,
     subTabs: [
-      { id: 'directory', label: 'Directory', shortForm: 'Di', icon: ThumbsUp },
-      { id: 'orgChart', label: 'Org Chart', shortForm: 'OC', icon: ThumbsUp },
-      { id: 'supplier', label: 'Supplier', shortForm: 'Su', icon: ThumbsUp },
-      { id: 'client', label: 'Client', shortForm: 'Cl', icon: ThumbsUp },
-      { id: 'hiring', label: 'Hiring', shortForm: 'Hi', icon: ThumbsUp },
-      { id: 'feedback', label: 'Feedback', shortForm: 'F', icon: ThumbsUp },
-      { id: 'calendar', label: 'Calendar', shortForm: 'Ca', icon: Calendar },
-      { id: 'accountability', label: 'Accountability', shortForm: 'Ac', icon: ThumbsUp },
-      { id: 'leaves', label: 'Leaves', shortForm: 'Le', icon: Calendar },
-    ]
+      { id: "directory", label: "Directory", shortForm: "Di", icon: ThumbsUp },
+      { id: "orgChart", label: "Org Chart", shortForm: "OC", icon: ThumbsUp },
+      { id: "supplier", label: "Supplier", shortForm: "Su", icon: ThumbsUp },
+      { id: "client", label: "Client", shortForm: "Cl", icon: ThumbsUp },
+      { id: "hiring", label: "Hiring", shortForm: "Hi", icon: ThumbsUp },
+      // { id: 'feedback', label: 'Feedback', shortForm: 'F', icon: ThumbsUp },
+      { id: "calendar", label: "Calendar", shortForm: "Ca", icon: Calendar },
+      {
+        id: "accountability",
+        label: "Accountability",
+        shortForm: "Ac",
+        icon: ThumbsUp,
+      },
+      { id: "leaves", label: "Leaves", shortForm: "Le", icon: Calendar },
+    ],
   },
-  { id: 'projects', label: 'Projects', shortForm: 'P', icon: ThumbsUp, isExpandable: false },
-  { id: 'dailyHuddle', label: 'Daily Huddle', shortForm: 'Dh', icon: Calendar, isExpandable: false },
-  { id: 'sales', label: 'Sales', shortForm: 'S', icon: ThumbsUp, isExpandable: false },
-  { id: 'finance', label: 'Finance', shortForm: 'Fi', icon: ThumbsUp, isExpandable: false },
-  { id: 'quotation', label: 'Quotation', shortForm: 'Qu', icon: ThumbsUp, isExpandable: false },
-  { id: 'product', label: 'Product', shortForm: 'P', icon: ThumbsUp, isExpandable: false },
-  { id: 'playbook', label: 'Playbook', shortForm: 'Pb', icon: ThumbsUp, isExpandable: false },
-  { id: 'sandbox', label: 'Sandbox', shortForm: 'Sb', icon: ThumbsUp, isExpandable: false },
+  {
+    id: "sales",
+    label: "Sales & Marketing",
+    shortForm: "SM",
+    icon: ThumbsUp,
+    isExpandable: true,
+    subTabs: [
+      { id: "salesTab", label: "Sales", shortForm: "Sa", icon: ThumbsUp },
+      { id: "product", label: "Product", shortForm: "Pr", icon: ThumbsUp },
+      { id: "quotation", label: "Quotation", shortForm: "Qu", icon: ThumbsUp },
+    ],
+  },
+  {
+    id: "meeting",
+    label: "Meeting",
+    shortForm: "Me",
+    icon: Calendar,
+    isExpandable: true,
+    subTabs: [
+      {
+        id: "dailyHuddle",
+        label: "Daily Huddle",
+        shortForm: "Dh",
+        icon: Calendar,
+      },
+    ],
+  },
+  {
+    id: "financeData",
+    label: "Finance & Data",
+    shortForm: "FD",
+    icon: ThumbsUp,
+    isExpandable: true,
+    subTabs: [
+      { id: "financeTab", label: "Finance", shortForm: "Fi", icon: ThumbsUp },
+      {
+        id: "onlineSales",
+        label: "Online Sales",
+        shortForm: "OS",
+        icon: ThumbsUp,
+      },
+    ],
+  },
+  {
+    id: "process",
+    label: "Process",
+    shortForm: "Pr",
+    icon: ThumbsUp,
+    isExpandable: true,
+    subTabs: [
+      { id: "playbook", label: "Playbook", shortForm: "Pb", icon: ThumbsUp },
+      { id: "projects", label: "Projects", shortForm: "Pj", icon: ThumbsUp },
+    ],
+  },
+  {
+    id: "technology",
+    label: "Technology",
+    shortForm: "Te",
+    icon: ThumbsUp,
+    isExpandable: true,
+    subTabs: [
+      {
+        id: "password",
+        label: "Password Management",
+        shortForm: "Pw",
+        icon: ThumbsUp,
+      },
+      { id: "resources", label: "Resources", shortForm: "Rs", icon: ThumbsUp },
+      { id: "sandbox", label: "Sandbox", shortForm: "Sb", icon: ThumbsUp },
+      { id: "todo", label: "Todo", shortForm: "Td", icon: ThumbsUp },
+    ],
+  },
+  {
+    id: "teamHealth",
+    label: "Team Health",
+    shortForm: "TH",
+    icon: ThumbsUp,
+    isExpandable: true,
+    subTabs: [
+      { id: "admin", label: "Admin", shortForm: "Ad", icon: ThumbsUp },
+      { id: "award", label: "Award", shortForm: "Aw", icon: ThumbsUp },
+      {
+        id: "leaderboard",
+        label: "Leaderboard",
+        shortForm: "Lb",
+        icon: ThumbsUp,
+      },
+      { id: "milestone", label: "Milestone", shortForm: "Mi", icon: ThumbsUp },
+      { id: "feedback", label: "Feedback", shortForm: "Fe", icon: ThumbsUp },
+    ],
+  },
+  {
+    id: "thePlan",
+    label: "The Plan",
+    shortForm: "TP",
+    icon: ThumbsUp,
+    isExpandable: true,
+    subTabs: [{ id: "peak", label: "Peak", shortForm: "Pe", icon: ThumbsUp }],
+  },
 ] as const;
 
 /**
  * Type representing the possible tab values.
- * @typedef {string} TabType
  */
-type TabType = typeof navigationConfig[number]['id'];
+type TabType = (typeof navigationConfig)[number]["id"];
 
-type SubTabType = 'directory' | 'orgChart' | 'supplier' | 'client' | 'hiring' | 'feedback' | 'calendar' | 'accountability' | 'leaves';
+/**
+ * Type representing all possible subtab values.
+ */
+type SubTabType =
+  | "directory"
+  | "orgChart"
+  | "supplier"
+  | "client"
+  | "hiring"
+  | "calendar"
+  | "accountability"
+  | "leaves"
+  | "feedback"
+  | "salesTab"
+  | "product"
+  | "quotation"
+  | "dailyHuddle"
+  | "financeTab"
+  | "onlineSales"
+  | "playbook"
+  | "projects"
+  | "password"
+  | "resources"
+  | "sandbox"
+  | "todo"
+  | "admin"
+  | "award"
+  | "leaderboard"
+  | "milestone"
+  | "peak";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -70,140 +203,200 @@ interface LayoutProps {
 
 /**
  * Layout component for the dashboard, including sidebar and main content area.
- * 
+ *
  * This component provides a structured layout for the dashboard, featuring a sidebar
  * with navigation options and a main content area. It utilizes the `useAuth` hook to
  * manage user authentication state and display the user's first name in the profile section.
- * 
+ *
  * @param {LayoutProps} props - The properties for the Layout component.
  * @returns {JSX.Element} The rendered layout component.
  */
-export function DashboardLayout({ children, activeTab, onTabChange, session, signOut, activeSubTab, onSubTabChange }: LayoutProps) {
+export function DashboardLayout({
+  children,
+  activeTab,
+  session,
+  signOut,
+  activeSubTab,
+  onSubTabChange,
+}: LayoutProps) {
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
-  const email = session.user.email || 'user@example.com';
-  const [activeTabState, setActiveTabState] = React.useState<TabType>(activeTab);
-  const [isPeopleSubmenuOpen, setIsPeopleSubmenuOpen] = React.useState(activeTab === 'people');
-  const [localActiveSubTab, setLocalActiveSubTab] = useState<SubTabType | undefined>(activeSubTab);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const email = session.user.email || "user@example.com";
 
-  // Option 1: Remove error if unused
-  const { companyInfo, error: companyError } = useUserAndCompanyData(session.user.id);
+  // State management
+  const [activeTabState, setActiveTabState] = useState<TabType>(activeTab);
+  const [localActiveSubTab, setLocalActiveSubTab] = useState<
+    SubTabType | undefined
+  >(activeSubTab);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  // Submenu states
+  const [isPeopleSubmenuOpen, setIsPeopleSubmenuOpen] = useState(
+    activeTab === "people"
+  );
+  const [isSalesSubmenuOpen, setIsSalesSubmenuOpen] = useState(
+    activeTab === "sales"
+  );
+  const [isMeetingSubmenuOpen, setIsMeetingSubmenuOpen] = useState(
+    activeTab === "meeting"
+  );
+  const [isFinanceDataSubmenuOpen, setIsFinanceDataSubmenuOpen] = useState(
+    activeTab === "financeData"
+  );
+  const [isProcessSubmenuOpen, setIsProcessSubmenuOpen] = useState(
+    activeTab === "process"
+  );
+  const [isTechnologySubmenuOpen, setIsTechnologySubmenuOpen] = useState(
+    activeTab === "technology"
+  );
+  const [isTeamHealthSubmenuOpen, setIsTeamHealthSubmenuOpen] = useState(
+    activeTab === "teamHealth"
+  );
+  const [isThePlanSubmenuOpen, setIsThePlanSubmenuOpen] = useState(
+    activeTab === "thePlan"
+  );
+
+  // Password reset modal states
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Company data
+  const { companyInfo, error: companyError } = useUserAndCompanyData(
+    session.user.id
+  );
   if (companyError) {
-    console.error('Error fetching company data:', companyError);
+    console.error("Error fetching company data:", companyError);
   }
 
-  // Update state when props change
-  React.useEffect(() => {
+  // Update states when props change
+  useEffect(() => {
     setActiveTabState(activeTab);
-    setIsPeopleSubmenuOpen(activeTab === 'people');
+    setIsPeopleSubmenuOpen(activeTab === "people");
+    setIsSalesSubmenuOpen(activeTab === "sales");
+    setIsMeetingSubmenuOpen(activeTab === "meeting");
+    setIsFinanceDataSubmenuOpen(activeTab === "financeData");
+    setIsProcessSubmenuOpen(activeTab === "process");
+    setIsTechnologySubmenuOpen(activeTab === "technology");
+    setIsTeamHealthSubmenuOpen(activeTab === "teamHealth");
+    setIsThePlanSubmenuOpen(activeTab === "thePlan");
   }, [activeTab]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setLocalActiveSubTab(activeSubTab);
   }, [activeSubTab]);
 
   /**
-   * Handles the sign out process for the user.
-   * - Signs out from Supabase
-   * - Calls the parent signOut function
-   * - Navigates to login page
-   * @async
-   * @function handleSignOut
-   */
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    signOut(); // Call the passed signOut function to update the state
-    navigate('/login');
-  };
-
-  /**
    * Handles tab changes in the navigation.
-   * - Updates the active tab state
-   * - Toggles people submenu if applicable
-   * - Updates URL based on selected tab
-   * @function handleTabChange
-   * @param {TabType} tab - The selected tab
    */
   const handleTabChange = (tab: TabType) => {
     setActiveTabState(tab);
-    if (tab === 'people') {
-      setIsPeopleSubmenuOpen(!isPeopleSubmenuOpen);
-      return;
-    }
-    onTabChange(tab);
-    if (tab === 'home') {
-      navigate(`/${userId}`);
-    } else {
-      navigate(`/${userId}/${tab}`);
+
+    // Handle expandable sections
+    switch (tab) {
+      case "people":
+        setIsPeopleSubmenuOpen(!isPeopleSubmenuOpen);
+        return;
+      case "sales":
+        setIsSalesSubmenuOpen(!isSalesSubmenuOpen);
+        return;
+      case "meeting":
+        setIsMeetingSubmenuOpen(!isMeetingSubmenuOpen);
+        return;
+      case "financeData":
+        setIsFinanceDataSubmenuOpen(!isFinanceDataSubmenuOpen);
+        return;
+      case "process":
+        setIsProcessSubmenuOpen(!isProcessSubmenuOpen);
+        return;
+      case "technology":
+        setIsTechnologySubmenuOpen(!isTechnologySubmenuOpen);
+        return;
+      case "teamHealth":
+        setIsTeamHealthSubmenuOpen(!isTeamHealthSubmenuOpen);
+        return;
+      case "thePlan":
+        setIsThePlanSubmenuOpen(!isThePlanSubmenuOpen);
+        return;
     }
   };
 
   /**
-   * Handles subtab selection within the People section.
-   * - Updates local subtab state
-   * - Calls parent subtab change handler
-   * - Updates URL based on selected subtab
-   * @function handleSubTabClick
-   * @param {'directory' | 'orgChart'} subTab - The selected subtab
+   * Handles subtab selection and navigation
    */
   const handleSubTabClick = (subTab: SubTabType) => {
     setLocalActiveSubTab(subTab);
     if (onSubTabChange) {
       onSubTabChange(subTab);
     }
-    setActiveTabState('people');
-    
-    if (subTab === 'directory') {
-      navigate(`/${userId}/people`);
-    } else if (subTab === 'orgChart') {
-      navigate(`/${userId}/org_chart`);
-    } else if (subTab === 'supplier') {
-      navigate(`/${userId}/supplier`);
-    } else if (subTab === 'client') {
-      navigate(`/${userId}/client`);
-    } else if (subTab === 'hiring') {
-      navigate(`/${userId}/hiring`);
-    } else if (subTab === 'feedback') {
-      navigate(`/${userId}/feedback`);
-    } else if (subTab === 'calendar') {
-      navigate(`/${userId}/calendar`);
-    } else if (subTab === 'accountability') {
-      navigate(`/${userId}/accountability`);
-    } else if (subTab === 'leaves') {
-      navigate(`/${userId}/leaves`);
+
+    // Keep submenus open
+    switch (activeTabState) {
+      case "people":
+        setIsPeopleSubmenuOpen(true);
+        break;
+      case "sales":
+        setIsSalesSubmenuOpen(true);
+        break;
+      case "meeting":
+        setIsMeetingSubmenuOpen(true);
+        break;
+      case "financeData":
+        setIsFinanceDataSubmenuOpen(true);
+        break;
+      case "process":
+        setIsProcessSubmenuOpen(true);
+        break;
+      case "technology":
+        setIsTechnologySubmenuOpen(true);
+        break;
+      case "teamHealth":
+        setIsTeamHealthSubmenuOpen(true);
+        break;
+      case "thePlan":
+        setIsThePlanSubmenuOpen(true);
+        break;
     }
+
+    // Navigate to the subTab route
+    navigate(`/${userId}/${subTab}`);
+  };
+
+  /**
+   * Handles user sign out
+   */
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    signOut();
+    navigate("/login");
   };
 
   // Add this new function to handle password reset
   const handlePasswordReset = async () => {
     if (newPassword !== confirmPassword) {
-      toast.error('Passwords do not match');
+      toast.error("Passwords do not match");
       return;
     }
-    
+
     if (newPassword.length < 6) {
-      toast.error('Password must be at least 6 characters');
+      toast.error("Password must be at least 6 characters");
       return;
     }
 
     try {
       const { error } = await supabase.auth.updateUser({
-        password: newPassword
+        password: newPassword,
       });
 
       if (error) throw error;
 
-      toast.success('Password updated successfully');
+      toast.success("Password updated successfully");
       setIsResetModalOpen(false);
-      setNewPassword('');
-      setConfirmPassword('');
+      setNewPassword("");
+      setConfirmPassword("");
     } catch (error) {
-      toast.error('Failed to update password');
-      console.error('Error updating password:', error);
+      toast.error("Failed to update password");
+      console.error("Error updating password:", error);
     }
   };
 
@@ -215,26 +408,26 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
    */
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      <Toaster 
+      <Toaster
         position="top-right"
         toastOptions={{
           duration: 3000,
           style: {
-            background: '#363636',
-            color: '#fff',
+            background: "#363636",
+            color: "#fff",
           },
           success: {
             duration: 3000,
             iconTheme: {
-              primary: '#4ade80',
-              secondary: '#fff',
+              primary: "#4ade80",
+              secondary: "#fff",
             },
           },
           error: {
             duration: 4000,
             iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
+              primary: "#ef4444",
+              secondary: "#fff",
             },
           },
         }}
@@ -243,23 +436,25 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
       <div className="flex justify-between items-center bg-gradient-to-r from-rose-400 to-orange-400 text-white border-b border-rose-300 px-6 py-3">
         <div className="flex items-center gap-3">
           {companyInfo?.logo_url ? (
-            <img 
-              src={companyInfo.logo_url} 
+            <img
+              src={companyInfo.logo_url}
               alt="Company Logo"
               className="h-8 w-auto object-contain"
               onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                e.currentTarget.style.display = "none";
+                e.currentTarget.nextElementSibling?.classList.remove("hidden");
               }}
             />
           ) : (
-            <span role="img" aria-label="Company Logo" className="text-2xl">🏢</span>
+            <span role="img" aria-label="Company Logo" className="text-2xl">
+              🏢
+            </span>
           )}
           <span className="text-lg font-semibold text-white">
-            {companyInfo?.name || 'Company Name'}
+            {companyInfo?.name || "Company Name"}
           </span>
         </div>
-        
+
         {/* User Profile Section - Updated colors */}
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-3">
@@ -314,8 +509,8 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
               <button
                 onClick={() => {
                   setIsResetModalOpen(false);
-                  setNewPassword('');
-                  setConfirmPassword('');
+                  setNewPassword("");
+                  setConfirmPassword("");
                 }}
                 className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
               >
@@ -334,9 +529,11 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Modern styling */}
-        <div className={`bg-gradient-to-b from-gray-800 to-gray-900 text-white border-r border-gray-700 flex-shrink-0 transition-all duration-300 ${
-          isSidebarCollapsed ? 'w-16' : 'w-64'
-        } relative`}>
+        <div
+          className={`bg-gradient-to-b from-gray-800 to-gray-900 text-white border-r border-gray-700 flex-shrink-0 transition-all duration-300 ${
+            isSidebarCollapsed ? "w-16" : "w-64"
+          } relative`}
+        >
           {/* Collapse Toggle Button */}
           <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
@@ -344,12 +541,19 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
             aria-label="Toggle sidebar"
           >
             <svg
-              className={`w-4 h-4 text-white transform transition-transform ${isSidebarCollapsed ? 'rotate-180' : ''}`}
+              className={`w-4 h-4 text-white transform transition-transform ${
+                isSidebarCollapsed ? "rotate-180" : ""
+              }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
 
@@ -362,19 +566,46 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
                       onClick={() => handleTabChange(tab.id)}
                       className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                         activeTabState === tab.id && !tab.isExpandable
-                          ? 'bg-indigo-500 text-white'
-                          : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                      } ${tab.isExpandable ? 'cursor-default' : ''}`}
+                          ? "bg-indigo-500 text-white"
+                          : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                      } ${tab.isExpandable ? "cursor-default" : ""}`}
                     >
                       <span className="flex items-center gap-2">
-                        {isSidebarCollapsed ? tab.shortForm : (
+                        {isSidebarCollapsed ? (
+                          tab.shortForm
+                        ) : (
                           <>
                             {tab.label}
-                            {tab.isExpandable && (
-                              isPeopleSubmenuOpen 
-                                ? <ChevronDown size={16} className="text-gray-400" />
-                                : <ChevronRight size={16} className="text-gray-400" />
-                            )}
+                            {tab.isExpandable &&
+                              ((
+                                tab.id === "people"
+                                  ? isPeopleSubmenuOpen
+                                  : tab.id === "sales"
+                                  ? isSalesSubmenuOpen
+                                  : tab.id === "meeting"
+                                  ? isMeetingSubmenuOpen
+                                  : tab.id === "financeData"
+                                  ? isFinanceDataSubmenuOpen
+                                  : tab.id === "process"
+                                  ? isProcessSubmenuOpen
+                                  : tab.id === "technology"
+                                  ? isTechnologySubmenuOpen
+                                  : tab.id === "teamHealth"
+                                  ? isTeamHealthSubmenuOpen
+                                  : tab.id === "thePlan"
+                                  ? isThePlanSubmenuOpen
+                                  : false
+                              ) ? (
+                                <ChevronDown
+                                  size={16}
+                                  className="text-gray-400"
+                                />
+                              ) : (
+                                <ChevronRight
+                                  size={16}
+                                  className="text-gray-400"
+                                />
+                              ))}
                           </>
                         )}
                       </span>
@@ -382,26 +613,270 @@ export function DashboardLayout({ children, activeTab, onTabChange, session, sig
                         <tab.icon size={16} className="text-gray-400" />
                       )}
                     </button>
-                    {tab.id === 'people' && isPeopleSubmenuOpen && tab.subTabs && !isSidebarCollapsed && (
-                      <div className="pl-4 space-y-1">
-                        {tab.subTabs.map((subTab) => (
-                          <button
-                            key={subTab.id}
-                            onClick={() => handleSubTabClick(subTab.id as SubTabType)}
-                            className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                              localActiveSubTab === subTab.id
-                                ? 'bg-indigo-500/50 text-white'
-                                : 'text-gray-400 hover:bg-gray-700 hover:text-white'
-                            }`}
-                          >
-                            <span>{isSidebarCollapsed ? subTab.shortForm : subTab.label}</span>
-                            {subTab.icon && !isSidebarCollapsed && (
-                              <subTab.icon size={16} className="text-gray-400" />
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                    {/* People submenu */}
+                    {tab.id === "people" &&
+                      isPeopleSubmenuOpen &&
+                      tab.subTabs &&
+                      !isSidebarCollapsed && (
+                        <div className="pl-4 space-y-1">
+                          {tab.subTabs.map((subTab) => (
+                            <button
+                              key={subTab.id}
+                              onClick={() =>
+                                handleSubTabClick(subTab.id as SubTabType)
+                              }
+                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                localActiveSubTab === subTab.id
+                                  ? "bg-indigo-500/50 text-white"
+                                  : "text-gray-400 hover:bg-gray-700 hover:text-white"
+                              }`}
+                            >
+                              <span>
+                                {isSidebarCollapsed
+                                  ? subTab.shortForm
+                                  : subTab.label}
+                              </span>
+                              {subTab.icon && !isSidebarCollapsed && (
+                                <subTab.icon
+                                  size={16}
+                                  className="text-gray-400"
+                                />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    {/* Sales & Marketing submenu */}
+                    {tab.id === "sales" &&
+                      isSalesSubmenuOpen &&
+                      tab.subTabs &&
+                      !isSidebarCollapsed && (
+                        <div className="pl-4 space-y-1">
+                          {tab.subTabs.map((subTab) => (
+                            <button
+                              key={subTab.id}
+                              onClick={() =>
+                                handleSubTabClick(subTab.id as SubTabType)
+                              }
+                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                localActiveSubTab === subTab.id
+                                  ? "bg-indigo-500/50 text-white"
+                                  : "text-gray-400 hover:bg-gray-700 hover:text-white"
+                              }`}
+                            >
+                              <span>
+                                {isSidebarCollapsed
+                                  ? subTab.shortForm
+                                  : subTab.label}
+                              </span>
+                              {subTab.icon && !isSidebarCollapsed && (
+                                <subTab.icon
+                                  size={16}
+                                  className="text-gray-400"
+                                />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    {/* Meeting submenu */}
+                    {tab.id === "meeting" &&
+                      isMeetingSubmenuOpen &&
+                      tab.subTabs &&
+                      !isSidebarCollapsed && (
+                        <div className="pl-4 space-y-1">
+                          {tab.subTabs.map((subTab) => (
+                            <button
+                              key={subTab.id}
+                              onClick={() =>
+                                handleSubTabClick(subTab.id as SubTabType)
+                              }
+                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                localActiveSubTab === subTab.id
+                                  ? "bg-indigo-500/50 text-white"
+                                  : "text-gray-400 hover:bg-gray-700 hover:text-white"
+                              }`}
+                            >
+                              <span>
+                                {isSidebarCollapsed
+                                  ? subTab.shortForm
+                                  : subTab.label}
+                              </span>
+                              {subTab.icon && !isSidebarCollapsed && (
+                                <subTab.icon
+                                  size={16}
+                                  className="text-gray-400"
+                                />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    {/* Finance & Data submenu */}
+                    {tab.id === "financeData" &&
+                      isFinanceDataSubmenuOpen &&
+                      tab.subTabs &&
+                      !isSidebarCollapsed && (
+                        <div className="pl-4 space-y-1">
+                          {tab.subTabs.map((subTab) => (
+                            <button
+                              key={subTab.id}
+                              onClick={() =>
+                                handleSubTabClick(subTab.id as SubTabType)
+                              }
+                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                localActiveSubTab === subTab.id
+                                  ? "bg-indigo-500/50 text-white"
+                                  : "text-gray-400 hover:bg-gray-700 hover:text-white"
+                              }`}
+                            >
+                              <span>
+                                {isSidebarCollapsed
+                                  ? subTab.shortForm
+                                  : subTab.label}
+                              </span>
+                              {subTab.icon && !isSidebarCollapsed && (
+                                <subTab.icon
+                                  size={16}
+                                  className="text-gray-400"
+                                />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    {/* Process submenu */}
+                    {tab.id === "process" &&
+                      isProcessSubmenuOpen &&
+                      tab.subTabs &&
+                      !isSidebarCollapsed && (
+                        <div className="pl-4 space-y-1">
+                          {tab.subTabs.map((subTab) => (
+                            <button
+                              key={subTab.id}
+                              onClick={() =>
+                                handleSubTabClick(subTab.id as SubTabType)
+                              }
+                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                localActiveSubTab === subTab.id
+                                  ? "bg-indigo-500/50 text-white"
+                                  : "text-gray-400 hover:bg-gray-700 hover:text-white"
+                              }`}
+                            >
+                              <span>
+                                {isSidebarCollapsed
+                                  ? subTab.shortForm
+                                  : subTab.label}
+                              </span>
+                              {subTab.icon && !isSidebarCollapsed && (
+                                <subTab.icon
+                                  size={16}
+                                  className="text-gray-400"
+                                />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    {/* Technology submenu */}
+                    {tab.id === "technology" &&
+                      isTechnologySubmenuOpen &&
+                      tab.subTabs &&
+                      !isSidebarCollapsed && (
+                        <div className="pl-4 space-y-1">
+                          {tab.subTabs.map((subTab) => (
+                            <button
+                              key={subTab.id}
+                              onClick={() =>
+                                handleSubTabClick(subTab.id as SubTabType)
+                              }
+                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                localActiveSubTab === subTab.id
+                                  ? "bg-indigo-500/50 text-white"
+                                  : "text-gray-400 hover:bg-gray-700 hover:text-white"
+                              }`}
+                            >
+                              <span>
+                                {isSidebarCollapsed
+                                  ? subTab.shortForm
+                                  : subTab.label}
+                              </span>
+                              {subTab.icon && !isSidebarCollapsed && (
+                                <subTab.icon
+                                  size={16}
+                                  className="text-gray-400"
+                                />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    {/* Team Health submenu */}
+                    {tab.id === "teamHealth" &&
+                      isTeamHealthSubmenuOpen &&
+                      tab.subTabs &&
+                      !isSidebarCollapsed && (
+                        <div className="pl-4 space-y-1">
+                          {tab.subTabs.map((subTab) => (
+                            <button
+                              key={subTab.id}
+                              onClick={() =>
+                                handleSubTabClick(subTab.id as SubTabType)
+                              }
+                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                localActiveSubTab === subTab.id
+                                  ? "bg-indigo-500/50 text-white"
+                                  : "text-gray-400 hover:bg-gray-700 hover:text-white"
+                              }`}
+                            >
+                              <span>
+                                {isSidebarCollapsed
+                                  ? subTab.shortForm
+                                  : subTab.label}
+                              </span>
+                              {subTab.icon && !isSidebarCollapsed && (
+                                <subTab.icon
+                                  size={16}
+                                  className="text-gray-400"
+                                />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    {/* The Plan submenu */}
+                    {tab.id === "thePlan" &&
+                      isThePlanSubmenuOpen &&
+                      tab.subTabs &&
+                      !isSidebarCollapsed && (
+                        <div className="pl-4 space-y-1">
+                          {tab.subTabs.map((subTab) => (
+                            <button
+                              key={subTab.id}
+                              onClick={() =>
+                                handleSubTabClick(subTab.id as SubTabType)
+                              }
+                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                localActiveSubTab === subTab.id
+                                  ? "bg-indigo-500/50 text-white"
+                                  : "text-gray-400 hover:bg-gray-700 hover:text-white"
+                              }`}
+                            >
+                              <span>
+                                {isSidebarCollapsed
+                                  ? subTab.shortForm
+                                  : subTab.label}
+                              </span>
+                              {subTab.icon && !isSidebarCollapsed && (
+                                <subTab.icon
+                                  size={16}
+                                  className="text-gray-400"
+                                />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                   </React.Fragment>
                 ))}
               </div>
