@@ -1,4 +1,4 @@
-import { B2BClientData, CreateB2BClientPayload, UpdateB2BClientPayload } from '../types/b2bClient';
+import { B2BClientData, CreateB2BClientPayload, UpdateB2BClientPayload, B2BAttachmentResponse } from '../types/b2bClient';
 
 const API_DOMAIN = import.meta.env.VITE_BACKEND_API_DOMAIN;
 
@@ -153,4 +153,73 @@ export async function deleteB2BClient(clientId: string): Promise<{ message: stri
     }
 
     return data as { message: string };
+}
+
+/**
+ * Updates attachment information for a B2B client
+ * @param {string} fileUrl - The URL of the file
+ * @param {string} description - The description of the attachment
+ * @param {string} b2bClientId - The ID of the B2B client
+ * @returns {Promise<B2BAttachmentResponse>} - A promise that resolves to the updated attachment information
+ */
+export async function updateB2BAttachment(
+  fileUrl: string,
+  description: string,
+  b2bClientId: string
+): Promise<B2BAttachmentResponse> {
+  const endpoint = `${API_DOMAIN}/b2b-clients/attachments/`;
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      file_url: fileUrl,
+      description,
+      b2b_client_id: b2bClientId,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error('❌ API request failed:', {
+      status: response.status,
+      statusText: response.statusText,
+      data
+    });
+    throw new Error('Failed to update B2B attachment');
+  }
+
+  return data as B2BAttachmentResponse;
+}
+
+/**
+ * Deletes an attachment for a B2B client
+ * @param {string} attachmentId - The ID of the attachment to delete
+ * @returns {Promise<{ message: string }>} - A promise that resolves to a success message
+ */
+export async function deleteB2BAttachment(attachmentId: string): Promise<{ message: string }> {
+  const endpoint = `${API_DOMAIN}/b2b-clients/attachments/${encodeURIComponent(attachmentId)}`;
+
+  const response = await fetch(endpoint, {
+    method: 'DELETE',
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json();
+    console.error('❌ API request failed:', {
+      status: response.status,
+      statusText: response.statusText,
+      data
+    });
+    throw new Error('Failed to delete B2B attachment');
+  }
+
+  return { message: 'Attachment deleted successfully' };
 }
