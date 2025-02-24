@@ -1,4 +1,4 @@
-import { useState, Fragment } from "react";
+import React, { useState, Fragment } from "react";
 import { useUserAndCompanyData } from "../../../../shared/hooks/useUserAndCompanyData";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCompanyB2BClients, updateB2BClient, deleteB2BClient, createB2BClient } from "../services/useB2BClients";
@@ -7,6 +7,7 @@ import { Session } from "@supabase/supabase-js";
 import { Dialog, Transition } from "@headlessui/react";
 import { B2BClientData, CreateB2BClientPayload, UpdateB2BClientPayload } from "../types/b2bClient";
 import toast from "react-hot-toast";
+import ClientDetailsModal from './ClientDetailsModal';
 
 interface ClientProps {
   session: Session;
@@ -22,6 +23,9 @@ const Client: React.FC<ClientProps> = ({ session }) => {
 
   // Add sorting state
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  // State to hold attachments
+  const [attachments, setAttachments] = useState<File[]>([]);
 
   // Mutations
   const updateMutation = useMutation({
@@ -120,6 +124,13 @@ const Client: React.FC<ClientProps> = ({ session }) => {
       ? nameA.localeCompare(nameB)
       : nameB.localeCompare(nameA);
   });
+
+  // Add this function to refresh a specific client
+  const refreshClient = async (clientId: string) => {
+    await queryClient.invalidateQueries({ 
+      queryKey: ['b2bClients', companyInfo?.id, clientId]
+    });
+  };
 
   if (isLoadingCompanyData || isLoadingClients) {
     return (
@@ -243,192 +254,16 @@ const Client: React.FC<ClientProps> = ({ session }) => {
         )}
       </div>
 
-      {/* Client Details Modal */}
-      <Transition appear show={isModalOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={() => setIsModalOpen(false)}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-black bg-opacity-25" />
-          </Transition.Child>
-
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900"
-                  >
-                    Client Details
-                  </Dialog.Title>
-                  
-                  <form onSubmit={handleUpdate} className="mt-4 space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Company Name</label>
-                      <input
-                        title="Company Name"
-                        placeholder="Enter Company Name"
-                        type="text"
-                        name="client_company"
-                        defaultValue={selectedClient?.client_company}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Business Unit</label>
-                      <input
-                        title="Business Unit"
-                        placeholder="Enter Business Unit"
-                        type="text"
-                        name="business_unit"
-                        defaultValue={selectedClient?.business_unit || ''}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Contact Person</label>
-                      <input
-                        title="Contact Person"
-                        placeholder="Enter Contact Person"
-                        type="text"
-                        name="name"
-                        defaultValue={selectedClient?.name}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Email</label>
-                      <input
-                        title="Email"
-                        placeholder="Enter Email"
-                        type="email"
-                        name="email"
-                        defaultValue={selectedClient?.email}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Contact Number</label>
-                      <input
-                        title="Contact Number"
-                        placeholder="Enter Contact Number"
-                        type="text"
-                        name="contact_number"
-                        defaultValue={selectedClient?.contact_number}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Nature</label>
-                      <input
-                        title="Nature"
-                        placeholder="Enter or select Nature"
-                        type="text"
-                        name="nature"
-                        defaultValue={selectedClient?.nature}
-                        list="natures"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                      <datalist id="natures">
-                        {uniqueNatures.map((nature) => (
-                          <option key={nature} value={nature} />
-                        ))}
-                      </datalist>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Credit Terms</label>
-                      <input
-                        title="Credit Terms"
-                        placeholder="Enter or select Credit Terms"
-                        type="text"
-                        name="credit_terms"
-                        defaultValue={selectedClient?.credit_terms}
-                        list="creditTerms"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                      <datalist id="creditTerms">
-                        {uniqueCreditTerms.map((term) => (
-                          <option key={term} value={term} />
-                        ))}
-                      </datalist>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Last Price</label>
-                      <input
-                        title="Last Price"
-                        placeholder="Enter Last Price"
-                        type="text"
-                        name="last_price"
-                        defaultValue={selectedClient?.last_price || ''}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Remarks</label>
-                      <textarea
-                        title="Remarks"
-                        placeholder="Enter Remarks"
-                        name="remarks"
-                        defaultValue={selectedClient?.remarks}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        rows={3}
-                      />
-                    </div>
-
-                    <div className="mt-6 flex justify-between">
-                      <button
-                        type="button"
-                        className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
-                        onClick={handleDelete}
-                      >
-                        Delete
-                      </button>
-                      <div className="space-x-2">
-                        <button
-                          type="button"
-                          className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                          onClick={() => setIsModalOpen(false)}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="submit"
-                          className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                        >
-                          Update
-                        </button>
-                      </div>
-                    </div>
-                  </form>
-                </Dialog.Panel>
-              </Transition.Child>
-            </div>
-          </div>
-        </Dialog>
-      </Transition>
+      <ClientDetailsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        selectedClient={selectedClient}
+        handleUpdate={handleUpdate}
+        handleDelete={handleDelete}
+        attachments={attachments}
+        setAttachments={setAttachments}
+        refreshClient={refreshClient}
+      />
 
       {/* Create Modal */}
       <Transition appear show={isCreateModalOpen} as={Fragment}>
