@@ -4,7 +4,6 @@ import {
   Power,
   ThumbsUp,
   ChevronDown,
-  ChevronRight,
   Lock,
 } from "react-feather"; // Import Power, ThumbsUp, and Clock icons from react-feather
 import { Session } from "@supabase/supabase-js";
@@ -13,6 +12,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast"; // Import toast directly
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
+import { IconUsers, IconTargetArrow, IconDeviceComputerCamera, IconChartArrowsVertical, IconProgressCheck, IconSitemap, IconUserHeart, IconFlagStar } from '@tabler/icons-react'; // Changed from Users to IconUsers and added IconChartArrowsVertical and IconProgressCheck
 
 /**
  * Props for the Layout component.
@@ -35,7 +35,7 @@ const navigationConfig = [
     id: "people",
     label: "People",
     shortForm: "Pe",
-    icon: ThumbsUp,
+    icon: IconUsers,
     isExpandable: true,
     subTabs: [
       { id: "directory", label: "Directory", shortForm: "Di", icon: ThumbsUp },
@@ -43,7 +43,6 @@ const navigationConfig = [
       { id: "supplier", label: "Supplier", shortForm: "Su", icon: ThumbsUp },
       { id: "client", label: "Client", shortForm: "Cl", icon: ThumbsUp },
       { id: "hiring", label: "Hiring", shortForm: "Hi", icon: ThumbsUp },
-      // { id: 'feedback', label: 'Feedback', shortForm: 'F', icon: ThumbsUp },
       { id: "calendar", label: "Calendar", shortForm: "Ca", icon: Calendar },
       {
         id: "accountability",
@@ -58,7 +57,7 @@ const navigationConfig = [
     id: "sales",
     label: "Sales & Marketing",
     shortForm: "SM",
-    icon: ThumbsUp,
+    icon: IconTargetArrow,
     isExpandable: true,
     subTabs: [
       { id: "salesTab", label: "Sales", shortForm: "Sa", icon: ThumbsUp },
@@ -70,7 +69,7 @@ const navigationConfig = [
     id: "meeting",
     label: "Meeting",
     shortForm: "Me",
-    icon: Calendar,
+    icon: IconDeviceComputerCamera,
     isExpandable: true,
     subTabs: [
       {
@@ -85,7 +84,7 @@ const navigationConfig = [
     id: "financeData",
     label: "Finance & Data",
     shortForm: "FD",
-    icon: ThumbsUp,
+    icon: IconChartArrowsVertical,
     isExpandable: true,
     subTabs: [
       { id: "financeTab", label: "Finance", shortForm: "Fi", icon: ThumbsUp },
@@ -101,7 +100,7 @@ const navigationConfig = [
     id: "process",
     label: "Process",
     shortForm: "Pr",
-    icon: ThumbsUp,
+    icon: IconProgressCheck,
     isExpandable: true,
     subTabs: [
       { id: "playbook", label: "Playbook", shortForm: "Pb", icon: ThumbsUp },
@@ -112,7 +111,7 @@ const navigationConfig = [
     id: "technology",
     label: "Technology",
     shortForm: "Te",
-    icon: ThumbsUp,
+    icon: IconSitemap,
     isExpandable: true,
     subTabs: [
       {
@@ -130,7 +129,7 @@ const navigationConfig = [
     id: "teamHealth",
     label: "Team Health",
     shortForm: "TH",
-    icon: ThumbsUp,
+    icon: IconUserHeart,
     isExpandable: true,
     subTabs: [
       { id: "admin", label: "Admin", shortForm: "Ad", icon: ThumbsUp },
@@ -149,7 +148,7 @@ const navigationConfig = [
     id: "thePlan",
     label: "The Plan",
     shortForm: "TP",
-    icon: ThumbsUp,
+    icon: IconFlagStar,
     isExpandable: true,
     subTabs: [{ id: "peak", label: "Peak", shortForm: "Pe", icon: ThumbsUp }],
   },
@@ -530,14 +529,14 @@ export function DashboardLayout({
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Modern styling */}
         <div
-          className={`bg-gradient-to-b from-gray-800 to-gray-900 text-white border-r border-gray-700 flex-shrink-0 transition-all duration-300 ${
+          className={`bg-gradient-to-b from-gray-900 to-gray-800 text-white flex-shrink-0 transition-all duration-300 ${
             isSidebarCollapsed ? "w-16" : "w-64"
           } relative`}
         >
           {/* Collapse Toggle Button */}
           <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="absolute -right-3 top-4 bg-gray-800 border border-gray-700 rounded-full p-1 shadow-lg hover:bg-gray-700"
+            className="absolute -right-3 top-4 bg-gray-800 border border-gray-700 rounded-full p-1 shadow-lg hover:bg-gray-700 z-50"
             aria-label="Toggle sidebar"
           >
             <svg
@@ -557,335 +556,81 @@ export function DashboardLayout({
             </svg>
           </button>
 
-          <div className="flex flex-col h-full">
-            <div className="flex-1 py-6 px-4">
-              <div className="space-y-1">
-                {navigationConfig.map((tab) => (
-                  <React.Fragment key={tab.id}>
-                    <button
-                      onClick={() => handleTabChange(tab.id)}
-                      className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        activeTabState === tab.id && !tab.isExpandable
-                          ? "bg-indigo-500 text-white"
-                          : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                      } ${tab.isExpandable ? "cursor-default" : ""}`}
-                    >
-                      <span className="flex items-center gap-2">
-                        {isSidebarCollapsed ? (
-                          tab.shortForm
-                        ) : (
-                          <>
-                            {tab.label}
-                            {tab.isExpandable &&
-                              ((
-                                tab.id === "people"
-                                  ? isPeopleSubmenuOpen
-                                  : tab.id === "sales"
-                                  ? isSalesSubmenuOpen
-                                  : tab.id === "meeting"
-                                  ? isMeetingSubmenuOpen
-                                  : tab.id === "financeData"
-                                  ? isFinanceDataSubmenuOpen
-                                  : tab.id === "process"
-                                  ? isProcessSubmenuOpen
-                                  : tab.id === "technology"
-                                  ? isTechnologySubmenuOpen
-                                  : tab.id === "teamHealth"
-                                  ? isTeamHealthSubmenuOpen
-                                  : tab.id === "thePlan"
-                                  ? isThePlanSubmenuOpen
-                                  : false
-                              ) ? (
-                                <ChevronDown
-                                  size={16}
-                                  className="text-gray-400"
-                                />
-                              ) : (
-                                <ChevronRight
-                                  size={16}
-                                  className="text-gray-400"
-                                />
-                              ))}
-                          </>
-                        )}
+          <div className="flex flex-col h-full py-6">
+            <nav className="flex-1 space-y-1 px-3">
+              {navigationConfig.map((tab) => (
+                <div key={tab.id} className="relative">
+                  <button
+                    onClick={() => handleTabChange(tab.id)}
+                    className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                      activeTabState === tab.id
+                        ? "bg-indigo-600 text-white shadow-lg"
+                        : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
+                    }`}
+                  >
+                    <span className="flex items-center gap-3">
+                      <tab.icon size={18} className={activeTabState === tab.id ? "text-white" : "text-gray-400"} />
+                      {!isSidebarCollapsed && (
+                        <span className="truncate">{tab.label}</span>
+                      )}
+                    </span>
+                    {!isSidebarCollapsed && tab.isExpandable && (
+                      <span className={`transition-transform duration-200 ${
+                        (tab.id === "people" && isPeopleSubmenuOpen) ||
+                        (tab.id === "sales" && isSalesSubmenuOpen) ||
+                        (tab.id === "meeting" && isMeetingSubmenuOpen) ||
+                        (tab.id === "financeData" && isFinanceDataSubmenuOpen) ||
+                        (tab.id === "process" && isProcessSubmenuOpen) ||
+                        (tab.id === "technology" && isTechnologySubmenuOpen) ||
+                        (tab.id === "teamHealth" && isTeamHealthSubmenuOpen) ||
+                        (tab.id === "thePlan" && isThePlanSubmenuOpen)
+                          ? "rotate-180"
+                          : ""
+                      }`}>
+                        <ChevronDown size={16} />
                       </span>
-                      {!isSidebarCollapsed && !tab.isExpandable && (
-                        <tab.icon size={16} className="text-gray-400" />
-                      )}
-                    </button>
-                    {/* People submenu */}
-                    {tab.id === "people" &&
-                      isPeopleSubmenuOpen &&
-                      tab.subTabs &&
-                      !isSidebarCollapsed && (
-                        <div className="pl-4 space-y-1">
-                          {tab.subTabs.map((subTab) => (
-                            <button
-                              key={subTab.id}
-                              onClick={() =>
-                                handleSubTabClick(subTab.id as SubTabType)
-                              }
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                                localActiveSubTab === subTab.id
-                                  ? "bg-indigo-500/50 text-white"
-                                  : "text-gray-400 hover:bg-gray-700 hover:text-white"
-                              }`}
-                            >
-                              <span>
-                                {isSidebarCollapsed
-                                  ? subTab.shortForm
-                                  : subTab.label}
-                              </span>
-                              {subTab.icon && !isSidebarCollapsed && (
-                                <subTab.icon
-                                  size={16}
-                                  className="text-gray-400"
-                                />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    {/* Sales & Marketing submenu */}
-                    {tab.id === "sales" &&
-                      isSalesSubmenuOpen &&
-                      tab.subTabs &&
-                      !isSidebarCollapsed && (
-                        <div className="pl-4 space-y-1">
-                          {tab.subTabs.map((subTab) => (
-                            <button
-                              key={subTab.id}
-                              onClick={() =>
-                                handleSubTabClick(subTab.id as SubTabType)
-                              }
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                                localActiveSubTab === subTab.id
-                                  ? "bg-indigo-500/50 text-white"
-                                  : "text-gray-400 hover:bg-gray-700 hover:text-white"
-                              }`}
-                            >
-                              <span>
-                                {isSidebarCollapsed
-                                  ? subTab.shortForm
-                                  : subTab.label}
-                              </span>
-                              {subTab.icon && !isSidebarCollapsed && (
-                                <subTab.icon
-                                  size={16}
-                                  className="text-gray-400"
-                                />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    {/* Meeting submenu */}
-                    {tab.id === "meeting" &&
-                      isMeetingSubmenuOpen &&
-                      tab.subTabs &&
-                      !isSidebarCollapsed && (
-                        <div className="pl-4 space-y-1">
-                          {tab.subTabs.map((subTab) => (
-                            <button
-                              key={subTab.id}
-                              onClick={() =>
-                                handleSubTabClick(subTab.id as SubTabType)
-                              }
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                                localActiveSubTab === subTab.id
-                                  ? "bg-indigo-500/50 text-white"
-                                  : "text-gray-400 hover:bg-gray-700 hover:text-white"
-                              }`}
-                            >
-                              <span>
-                                {isSidebarCollapsed
-                                  ? subTab.shortForm
-                                  : subTab.label}
-                              </span>
-                              {subTab.icon && !isSidebarCollapsed && (
-                                <subTab.icon
-                                  size={16}
-                                  className="text-gray-400"
-                                />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    {/* Finance & Data submenu */}
-                    {tab.id === "financeData" &&
-                      isFinanceDataSubmenuOpen &&
-                      tab.subTabs &&
-                      !isSidebarCollapsed && (
-                        <div className="pl-4 space-y-1">
-                          {tab.subTabs.map((subTab) => (
-                            <button
-                              key={subTab.id}
-                              onClick={() =>
-                                handleSubTabClick(subTab.id as SubTabType)
-                              }
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                                localActiveSubTab === subTab.id
-                                  ? "bg-indigo-500/50 text-white"
-                                  : "text-gray-400 hover:bg-gray-700 hover:text-white"
-                              }`}
-                            >
-                              <span>
-                                {isSidebarCollapsed
-                                  ? subTab.shortForm
-                                  : subTab.label}
-                              </span>
-                              {subTab.icon && !isSidebarCollapsed && (
-                                <subTab.icon
-                                  size={16}
-                                  className="text-gray-400"
-                                />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    {/* Process submenu */}
-                    {tab.id === "process" &&
-                      isProcessSubmenuOpen &&
-                      tab.subTabs &&
-                      !isSidebarCollapsed && (
-                        <div className="pl-4 space-y-1">
-                          {tab.subTabs.map((subTab) => (
-                            <button
-                              key={subTab.id}
-                              onClick={() =>
-                                handleSubTabClick(subTab.id as SubTabType)
-                              }
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                                localActiveSubTab === subTab.id
-                                  ? "bg-indigo-500/50 text-white"
-                                  : "text-gray-400 hover:bg-gray-700 hover:text-white"
-                              }`}
-                            >
-                              <span>
-                                {isSidebarCollapsed
-                                  ? subTab.shortForm
-                                  : subTab.label}
-                              </span>
-                              {subTab.icon && !isSidebarCollapsed && (
-                                <subTab.icon
-                                  size={16}
-                                  className="text-gray-400"
-                                />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    {/* Technology submenu */}
-                    {tab.id === "technology" &&
-                      isTechnologySubmenuOpen &&
-                      tab.subTabs &&
-                      !isSidebarCollapsed && (
-                        <div className="pl-4 space-y-1">
-                          {tab.subTabs.map((subTab) => (
-                            <button
-                              key={subTab.id}
-                              onClick={() =>
-                                handleSubTabClick(subTab.id as SubTabType)
-                              }
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                                localActiveSubTab === subTab.id
-                                  ? "bg-indigo-500/50 text-white"
-                                  : "text-gray-400 hover:bg-gray-700 hover:text-white"
-                              }`}
-                            >
-                              <span>
-                                {isSidebarCollapsed
-                                  ? subTab.shortForm
-                                  : subTab.label}
-                              </span>
-                              {subTab.icon && !isSidebarCollapsed && (
-                                <subTab.icon
-                                  size={16}
-                                  className="text-gray-400"
-                                />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    {/* Team Health submenu */}
-                    {tab.id === "teamHealth" &&
-                      isTeamHealthSubmenuOpen &&
-                      tab.subTabs &&
-                      !isSidebarCollapsed && (
-                        <div className="pl-4 space-y-1">
-                          {tab.subTabs.map((subTab) => (
-                            <button
-                              key={subTab.id}
-                              onClick={() =>
-                                handleSubTabClick(subTab.id as SubTabType)
-                              }
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                                localActiveSubTab === subTab.id
-                                  ? "bg-indigo-500/50 text-white"
-                                  : "text-gray-400 hover:bg-gray-700 hover:text-white"
-                              }`}
-                            >
-                              <span>
-                                {isSidebarCollapsed
-                                  ? subTab.shortForm
-                                  : subTab.label}
-                              </span>
-                              {subTab.icon && !isSidebarCollapsed && (
-                                <subTab.icon
-                                  size={16}
-                                  className="text-gray-400"
-                                />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    {/* The Plan submenu */}
-                    {tab.id === "thePlan" &&
-                      isThePlanSubmenuOpen &&
-                      tab.subTabs &&
-                      !isSidebarCollapsed && (
-                        <div className="pl-4 space-y-1">
-                          {tab.subTabs.map((subTab) => (
-                            <button
-                              key={subTab.id}
-                              onClick={() =>
-                                handleSubTabClick(subTab.id as SubTabType)
-                              }
-                              className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                                localActiveSubTab === subTab.id
-                                  ? "bg-indigo-500/50 text-white"
-                                  : "text-gray-400 hover:bg-gray-700 hover:text-white"
-                              }`}
-                            >
-                              <span>
-                                {isSidebarCollapsed
-                                  ? subTab.shortForm
-                                  : subTab.label}
-                              </span>
-                              {subTab.icon && !isSidebarCollapsed && (
-                                <subTab.icon
-                                  size={16}
-                                  className="text-gray-400"
-                                />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
+                    )}
+                  </button>
+
+                  {/* Submenu */}
+                  {tab.subTabs && !isSidebarCollapsed && (
+                    <div
+                      className={`mt-1 ml-4 space-y-1 transition-all duration-200 ${
+                        (tab.id === "people" && isPeopleSubmenuOpen) ||
+                        (tab.id === "sales" && isSalesSubmenuOpen) ||
+                        (tab.id === "meeting" && isMeetingSubmenuOpen) ||
+                        (tab.id === "financeData" && isFinanceDataSubmenuOpen) ||
+                        (tab.id === "process" && isProcessSubmenuOpen) ||
+                        (tab.id === "technology" && isTechnologySubmenuOpen) ||
+                        (tab.id === "teamHealth" && isTeamHealthSubmenuOpen) ||
+                        (tab.id === "thePlan" && isThePlanSubmenuOpen)
+                          ? "opacity-100 max-h-screen"
+                          : "opacity-0 max-h-0 overflow-hidden"
+                      }`}
+                    >
+                      {tab.subTabs.map((subTab) => (
+                        <button
+                          key={subTab.id}
+                          onClick={() => handleSubTabClick(subTab.id as SubTabType)}
+                          className={`w-full flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-colors ${
+                            localActiveSubTab === subTab.id
+                              ? "bg-indigo-500/30 text-white"
+                              : "text-gray-400 hover:bg-gray-700/30 hover:text-white"
+                          }`}
+                        >
+                          <subTab.icon size={16} className={localActiveSubTab === subTab.id ? "text-indigo-400" : "text-gray-500"} />
+                          <span className="truncate">{subTab.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </nav>
           </div>
         </div>
 
-        {/* Main Content Section */}
-        {/* @section Displays the active component passed as children */}
+        {/* Main content area */}
         <div className="flex-1 overflow-auto">
           <div className="w-full h-full flex flex-col">
             {/* Content */}
