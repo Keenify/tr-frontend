@@ -171,7 +171,7 @@ export function Leaves({ session }: LeavesProps) {
             <Tab.Group selectedIndex={selectedTab} onChange={handleTabChange}>
                 <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1 mb-6">
                     <Tab
-                        className={({ selected }) =>
+                        className={({ selected }: { selected: boolean }) =>
                             `w-full rounded-lg py-2.5 text-sm font-medium leading-5
                             ${selected 
                                 ? 'bg-white text-blue-700 shadow'
@@ -182,7 +182,7 @@ export function Leaves({ session }: LeavesProps) {
                         Leave Balances
                     </Tab>
                     <Tab
-                        className={({ selected }) =>
+                        className={({ selected }: { selected: boolean }) =>
                             `w-full rounded-lg py-2.5 text-sm font-medium leading-5
                             ${selected 
                                 ? 'bg-white text-blue-700 shadow'
