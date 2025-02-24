@@ -7,6 +7,9 @@ import { Session } from "@supabase/supabase-js";
 import { Dialog, Transition } from "@headlessui/react";
 import { SupplierData, CreateSupplierPayload, UpdateSupplierPayload } from "../types/supplier";
 import toast from "react-hot-toast";
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
+import { FaWhatsapp } from 'react-icons/fa';
 
 interface SupplierProps {
   session: Session;
@@ -22,6 +25,7 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
 
   // Add sorting state
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [phoneNumber, setPhoneNumber] = useState<string>('');
 
   // Mutations
   const updateMutation = useMutation({
@@ -78,6 +82,7 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
     const formData = new FormData(e.currentTarget);
     const payload = {
       ...Object.fromEntries(formData.entries()),
+      contact_person_phone: phoneNumber,
       procurement_steps: formData.get('procurement_steps')?.toString() || '',
     } as unknown as UpdateSupplierPayload;
     
@@ -99,18 +104,20 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
     const formData = new FormData(e.currentTarget);
     const payload = {
       ...Object.fromEntries(formData.entries()),
+      contact_person_phone: phoneNumber,
       company_id: companyInfo?.id,
     };
     createMutation.mutate(payload as CreateSupplierPayload);
   };
 
-  // Add this function to clear selected supplier when opening create modal
+  // Function to open the create modal and reset phone number
   const handleOpenCreateModal = () => {
     setSelectedSupplier(null); // Clear any cached data
+    setPhoneNumber(''); // Reset phone number
     setIsCreateModalOpen(true);
   };
 
-  // Update the handleDuplicate function to ensure category is preserved
+  // Update the handleDuplicate function to reset phone number
   const handleDuplicate = () => {
     if (!selectedSupplier) return;
     
@@ -118,8 +125,23 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
     delete supplierData.id; // Remove the id property
     
     setSelectedSupplier(supplierData as SupplierData);
+    setPhoneNumber(''); // Reset phone number
     setIsModalOpen(false);
     setIsCreateModalOpen(true);
+  };
+
+  // Function to open the supplier details modal
+  const handleOpenSupplierModal = (supplier: SupplierData) => {
+    setSelectedSupplier(supplier);
+    setPhoneNumber(supplier.contact_person_phone || ''); // Set phone number or empty if NA
+    setIsModalOpen(true);
+  };
+
+  // Function to handle WhatsApp link
+  const handleWhatsAppClick = (phone: string) => {
+    if (phone && phone !== 'NA') {
+      window.open(`https://wa.me/${phone}`, '_blank');
+    }
   };
 
   // Filter and sort suppliers
@@ -227,10 +249,7 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
               <tr 
                 key={supplier.id} 
                 className="hover:bg-gray-50 cursor-pointer"
-                onClick={() => {
-                  setSelectedSupplier(supplier);
-                  setIsModalOpen(true);
-                }}
+                onClick={() => handleOpenSupplierModal(supplier)}
               >
                 <td className="px-6 py-4">
                   <div className="text-sm text-gray-900 break-words">{supplier.category}</div>
@@ -243,8 +262,18 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
                 <td className="px-6 py-4">
                   <div className="text-sm text-gray-900 break-words">{supplier.contact_person_name}</div>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 flex items-center justify-between">
                   <div className="text-sm text-gray-900 break-words">{supplier.contact_person_phone}</div>
+                  {supplier.contact_person_phone && supplier.contact_person_phone !== 'NA' && (
+                    <FaWhatsapp 
+                      className="text-green-500 cursor-pointer hover:text-green-600" 
+                      size={18}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent row click
+                        handleWhatsAppClick(supplier.contact_person_phone);
+                      }}
+                    />
+                  )}
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-sm text-gray-900 break-words">{supplier.contact_person_email}</div>
@@ -331,15 +360,19 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700" htmlFor="contact_person_phone">Contact Phone</label>
-                        <input
-                          id="contact_person_phone"
-                          type="text"
-                          name="contact_person_phone"
-                          title="Contact Phone"
-                          placeholder="Enter contact phone"
-                          defaultValue={selectedSupplier?.contact_person_phone}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                          required
+                        <PhoneInput
+                          country={'sg'}
+                          value={phoneNumber}
+                          onChange={setPhoneNumber}
+                          inputProps={{
+                            name: 'contact_person_phone',
+                            required: false,
+                            autoFocus: true
+                          }}
+                          containerClass="mt-1 block w-full"
+                          inputClass="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                          isValid={(value: string) => value === '' || value.length >= 8}
+                          preferredCountries={['sg', 'my']}
                         />
                       </div>
 
@@ -515,14 +548,19 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700" htmlFor="contact_person_phone">Contact Phone</label>
-                        <input
-                          id="contact_person_phone"
-                          type="text"
-                          name="contact_person_phone"
-                          title="Contact Phone"
-                          placeholder="Enter contact phone"
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                          required
+                        <PhoneInput
+                          country={'sg'}
+                          value={phoneNumber}
+                          onChange={setPhoneNumber}
+                          inputProps={{
+                            name: 'contact_person_phone',
+                            required: false,
+                            autoFocus: true
+                          }}
+                          containerClass="mt-1 block w-full"
+                          inputClass="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                          isValid={(value: string) => value === '' || value.length >= 8}
+                          preferredCountries={['sg', 'my']}
                         />
                       </div>
 
@@ -574,7 +612,7 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
                           name="procurement_steps"
                           title="Procurement Steps"
                           placeholder="Enter detailed procurement steps..."
-                          defaultValue={selectedSupplier?.procurement_steps || ''}
+                          defaultValue={selectedSupplier?.procurement_steps}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 min-h-[200px]"
                         />
                       </div>
@@ -585,7 +623,7 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
                           name="notes"
                           title="Notes"
                           placeholder="Enter detailed notes about the supplier..."
-                          defaultValue={selectedSupplier?.notes || ''}
+                          defaultValue={selectedSupplier?.notes}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 min-h-[200px]"
                         />
                       </div>
