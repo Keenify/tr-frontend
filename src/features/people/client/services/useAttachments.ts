@@ -63,3 +63,32 @@ export const deleteAttachment = async (filePath: string): Promise<void> => {
   console.log('Supabase deletion response:', data);
   console.log('File deleted successfully from storage:', cleanPath);
 };
+
+/**
+ * Gets a signed URL for an attachment that allows temporary access to the file.
+ * 
+ * @param {string} filePath - The path of the file in storage (e.g., 'b2b_clients/attachments/filename.pdf').
+ * @returns {Promise<string>} - A promise that resolves to the signed URL.
+ * @throws Will throw an error if getting the signed URL fails.
+ */
+export const getAttachmentSignedUrl = async (filePath: string): Promise<string> => {
+  const bucketName = import.meta.env.VITE_SUPABASE_STORAGE_BUCKET_ATTACHMENTS;
+
+  console.log('Getting signed URL for:', filePath);
+  
+  const { data, error } = await supabase.storage
+    .from(bucketName)
+    .createSignedUrl(filePath, 60 * 60); // URL expires in 1 hour
+
+  if (error) {
+    console.error('Error getting signed URL:', error);
+    throw error;
+  }
+
+  if (!data?.signedUrl) {
+    throw new Error('No signed URL returned');
+  }
+
+  console.log('Successfully generated signed URL');
+  return data.signedUrl;
+};

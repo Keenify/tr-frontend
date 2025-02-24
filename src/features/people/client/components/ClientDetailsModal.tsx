@@ -2,7 +2,7 @@ import React, { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { useDropzone } from 'react-dropzone';
 import { B2BClientData } from '../types/b2bClient';
-import { uploadAttachment, deleteAttachment } from '../services/useAttachments';
+import { uploadAttachment, deleteAttachment, getAttachmentSignedUrl } from '../services/useAttachments';
 import { updateB2BAttachment, deleteB2BAttachment } from '../services/useB2BClients';
 
 interface ClientDetailsModalProps {
@@ -134,6 +134,16 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
     } catch (error) {
       console.error('Error deleting attachment:', error);
       alert('Failed to delete attachment. Please try again.');
+    }
+  };
+
+  const handleAttachmentClick = async (fileUrl: string) => {
+    try {
+      const signedUrl = await getAttachmentSignedUrl(fileUrl);
+      window.open(signedUrl, '_blank');
+    } catch (error) {
+      console.error('Error opening attachment:', error);
+      alert('Failed to open attachment. Please try again.');
     }
   };
 
@@ -325,8 +335,12 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
                         <div className="max-h-[400px] overflow-y-auto">
                           <ul className="space-y-2">
                             {selectedClient?.attachments.map((attachment, index) => (
-                              <li key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                                <div className="flex-1 min-w-0 mr-2">
+                              <li key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded hover:bg-gray-100">
+                                <div 
+                                  className="flex-1 min-w-0 mr-2 cursor-pointer"
+                                  onClick={() => handleAttachmentClick(attachment.file_url)}
+                                  title="Click to open attachment"
+                                >
                                   <p className="text-sm text-gray-700 truncate break-all">
                                     {attachment.file_url.split('/').pop()?.split('_').slice(1).join('_') || 'Unnamed file'}
                                   </p>
