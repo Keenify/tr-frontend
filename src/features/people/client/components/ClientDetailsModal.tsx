@@ -9,6 +9,7 @@ interface ClientDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedClient: B2BClientData | null;
+  setSelectedClient: React.Dispatch<React.SetStateAction<B2BClientData | null>>;
   handleUpdate: (e: React.FormEvent) => void;
   handleDelete: () => void;
   attachments: File[];
@@ -20,6 +21,7 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
   isOpen,
   onClose,
   selectedClient,
+  setSelectedClient,
   handleUpdate,
   handleDelete,
   attachments,
@@ -54,7 +56,13 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
             uploaded_at: new Date().toISOString(),
             description: 'Attachment description'
           };
-          selectedClient.attachments = [...selectedClient.attachments, newAttachment];
+          setSelectedClient(prevClient => {
+            if (!prevClient) return null;
+            return {
+              ...prevClient,
+              attachments: [...prevClient.attachments, newAttachment]
+            };
+          });
         }
       }
       
@@ -95,13 +103,6 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
         return;
       }
 
-      // Debug log to check attachment data
-      console.log('Found attachment to delete:', {
-        attachmentId,
-        fullAttachment: attachment,
-        allAttachments: selectedClient.attachments
-      });
-
       // First delete the database record using the correct UUID
       try {
         await deleteB2BAttachment(attachment.id);
@@ -113,10 +114,14 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
         await deleteAttachment(filePath);
         console.log('Successfully deleted file from storage');
 
-        // Update the UI immediately
-        if (selectedClient) {
-          selectedClient.attachments = selectedClient.attachments.filter(a => a.id !== attachment.id);
-        }
+        // Update the UI using setState
+        setSelectedClient(prevClient => {
+          if (!prevClient) return null;
+          return {
+            ...prevClient,
+            attachments: prevClient.attachments.filter(a => a.id !== attachment.id)
+          };
+        });
 
         // Optional: Refresh in background
         if (refreshClient) {

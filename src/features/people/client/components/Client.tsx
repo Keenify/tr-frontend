@@ -258,6 +258,7 @@ const Client: React.FC<ClientProps> = ({ session }) => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         selectedClient={selectedClient}
+        setSelectedClient={setSelectedClient}
         handleUpdate={handleUpdate}
         handleDelete={handleDelete}
         attachments={attachments}
