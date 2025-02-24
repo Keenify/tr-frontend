@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { useUserAndCompanyData } from '../../../../shared/hooks/useUserAndCompanyData';
 import { directoryService } from '../../../../shared/services/directoryService';
@@ -25,6 +25,34 @@ export function Leaves({ session }: LeavesProps) {
         key: string;
         direction: 'asc' | 'desc';
     } | null>(null);
+    const [selectedTab, setSelectedTab] = useState(0);
+
+    const fetchLeaveData = useCallback(async () => {
+        if (!companyInfo?.id) {
+            console.log('No company ID available:', companyInfo);
+            return;
+        }
+
+        try {
+            const employeeList = await directoryService.fetchEmployees(companyInfo.id);
+            setEmployees(employeeList);
+
+            const balances = await getCompanyLeaveBalances(companyInfo.id);
+            const balanceMap = balances.reduce((acc, balance) => ({
+                ...acc,
+                [balance.employee_id]: balance
+            }), {});
+            setLeaveBalances(balanceMap);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    }, [companyInfo]);
+
+    useEffect(() => {
+        if (companyInfo?.id) {
+            fetchLeaveData();
+        }
+    }, [companyInfo?.id, fetchLeaveData]);
 
     useEffect(() => {
         async function checkManagerStatus() {
@@ -42,31 +70,6 @@ export function Leaves({ session }: LeavesProps) {
 
         checkManagerStatus();
     }, [companyInfo?.id, session.user.email]);
-
-    useEffect(() => {
-        async function fetchData() {
-            if (!companyInfo?.id) {
-                console.log('No company ID available:', companyInfo);
-                return;
-            }
-
-            try {
-                const employeeList = await directoryService.fetchEmployees(companyInfo.id);
-                setEmployees(employeeList);
-
-                const balances = await getCompanyLeaveBalances(companyInfo.id);
-                const balanceMap = balances.reduce((acc, balance) => ({
-                    ...acc,
-                    [balance.employee_id]: balance
-                }), {});
-                setLeaveBalances(balanceMap);
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            }
-        }
-
-        fetchData();
-    }, [companyInfo]);
 
     const handleInputChange = (employeeId: string, field: keyof LeaveBalance, value: number) => {
         setEditedBalances(prev => ({
@@ -145,6 +148,13 @@ export function Leaves({ session }: LeavesProps) {
         });
     };
 
+    const handleTabChange = (index: number) => {
+        setSelectedTab(index);
+        if (index === 0) {
+            fetchLeaveData();
+        }
+    };
+
     if (!companyInfo?.id) {
         return <div>Loading company information...</div>;
     }
@@ -158,7 +168,7 @@ export function Leaves({ session }: LeavesProps) {
                 )}
             </div>
 
-            <Tab.Group>
+            <Tab.Group selectedIndex={selectedTab} onChange={handleTabChange}>
                 <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1 mb-6">
                     <Tab
                         className={({ selected }) =>
