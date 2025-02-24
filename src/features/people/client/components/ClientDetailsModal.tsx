@@ -43,12 +43,13 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
         console.log('Uploaded file path:', filePath);
 
         // Update the client with the attachment information
-        await updateB2BAttachment(filePath, 'Attachment description', selectedClient.id);
+        const attachmentResponse = await updateB2BAttachment(filePath, 'Attachment description', selectedClient.id);
+        console.log('Attachment response:', attachmentResponse);
         
-        // Add the new attachment to the UI immediately
-        if (selectedClient) {
+        // Add the new attachment to the UI immediately using the response data
+        if (selectedClient && attachmentResponse) {
           const newAttachment = {
-            id: Date.now().toString(), // temporary ID until refresh
+            id: attachmentResponse.id,  // This should be a UUID from the server
             file_url: filePath,
             uploaded_at: new Date().toISOString(),
             description: 'Attachment description'
@@ -57,12 +58,10 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
         }
       }
       
-      // Clear the attachments after all uploads are complete
       setAttachments([]);
 
-      // Refresh client data in the background to get the real IDs
       if (refreshClient) {
-        refreshClient(selectedClient.id).catch(console.error);
+        await refreshClient(selectedClient.id);
       }
     } catch (error) {
       console.error('Error uploading files:', error);
@@ -85,7 +84,6 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
   const handleDeleteAttachment = async (attachmentId: string) => {
     if (!selectedClient?.id) return;
     
-    // Add confirmation dialog
     if (!window.confirm('Are you sure you want to delete this attachment?')) {
       return;
     }
@@ -97,27 +95,40 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
         return;
       }
 
-      // First delete the database record
-      await deleteB2BAttachment(attachmentId);
+      // Debug log to check attachment data
+      console.log('Found attachment to delete:', {
+        attachmentId,
+        fullAttachment: attachment,
+        allAttachments: selectedClient.attachments
+      });
 
-      // Then delete the actual file from Supabase storage
-      const fileUrl = attachment.file_url;
-      const filePath = fileUrl.split('/').slice(-2).join('/');
-      console.log('Deleting file from Supabase storage:', filePath);
-      await deleteAttachment(filePath);
-      console.log('Successfully deleted file:', filePath);
+      // First delete the database record using the correct UUID
+      try {
+        await deleteB2BAttachment(attachment.id);
+        console.log('Successfully deleted database record with ID:', attachment.id);
 
-      // Update the UI immediately by filtering out the deleted attachment
-      if (selectedClient) {
-        selectedClient.attachments = selectedClient.attachments.filter(a => a.id !== attachmentId);
-      }
+        // Then delete from storage
+        const filePath = attachment.file_url;
+        console.log('Deleting file from Supabase storage:', filePath);
+        await deleteAttachment(filePath);
+        console.log('Successfully deleted file from storage');
 
-      // Optional: Still refresh the client data in the background
-      if (refreshClient) {
-        refreshClient(selectedClient.id).catch(console.error);
+        // Update the UI immediately
+        if (selectedClient) {
+          selectedClient.attachments = selectedClient.attachments.filter(a => a.id !== attachment.id);
+        }
+
+        // Optional: Refresh in background
+        if (refreshClient) {
+          refreshClient(selectedClient.id).catch(console.error);
+        }
+      } catch (dbError) {
+        console.error('Error deleting from database:', dbError);
+        throw dbError;
       }
     } catch (error) {
       console.error('Error deleting attachment:', error);
+      alert('Failed to delete attachment. Please try again.');
     }
   };
 

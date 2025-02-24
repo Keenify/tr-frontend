@@ -41,16 +41,25 @@ export const uploadAttachment = async (file: File): Promise<string> => {
 export const deleteAttachment = async (filePath: string): Promise<void> => {
   const bucketName = import.meta.env.VITE_SUPABASE_STORAGE_BUCKET_ATTACHMENTS;
 
-  console.log('Starting deletion for file:', filePath);
+  // Log the full path being used for deletion
+  console.log('Attempting to delete from bucket:', bucketName);
+  console.log('File path for deletion:', filePath);
 
-  const { error } = await supabase.storage
+  // Ensure the path is correctly formatted
+  // Remove any leading slashes or 'b2b_clients/attachments/' if it appears twice
+  const cleanPath = filePath.replace(/^\//, '').replace(/^b2b_clients\/attachments\/b2b_clients\/attachments\//, 'b2b_clients/attachments/');
+
+  console.log('Cleaned file path:', cleanPath);
+
+  const { error, data } = await supabase.storage
     .from(bucketName)
-    .remove([filePath]);
+    .remove([cleanPath]);
 
   if (error) {
-    console.error('Error deleting file:', error);
+    console.error('Error deleting file from Supabase:', error);
     throw error;
   }
 
-  console.log('File deleted successfully:', filePath);
+  console.log('Supabase deletion response:', data);
+  console.log('File deleted successfully from storage:', cleanPath);
 };
