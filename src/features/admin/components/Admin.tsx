@@ -5,7 +5,6 @@ import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyDa
 import { CompanyData } from '../../../shared/types/companyType';
 import { UserData, getAllEmployees } from '../../../services/useUser';
 import { getCompanyData } from '../../../services/useCompany';
-import Password from './Password';
 import Feedback from './Feedback';
 
 interface AdminProps {
@@ -111,7 +110,7 @@ const Admin: React.FC<AdminProps> = ({ session }) => {
             {isManager && (
               <button
                 onClick={() => setActiveTab('feedback')}
-                className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'feedback'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -120,16 +119,6 @@ const Admin: React.FC<AdminProps> = ({ session }) => {
                 Feedback
               </button>
             )}
-            <button
-              onClick={() => setActiveTab('password')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'password'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Password Management
-            </button>
           </nav>
         </div>
       </div>
@@ -188,22 +177,13 @@ const Admin: React.FC<AdminProps> = ({ session }) => {
             </tbody>
           </table>
         </div>
-      ) : activeTab === 'feedback' ? (
+      ) : (
         isManager ? (
           <Feedback companyId={companyInfo?.id} />
         ) : (
           <div className="p-4 text-red-600 text-center bg-red-100 rounded-lg">
             <p className="font-medium">Access Denied</p>
             <p className="text-sm mt-2">Only managers can access the feedback feature.</p>
-          </div>
-        )
-      ) : (
-        isManager ? (
-          <Password session={session} />
-        ) : (
-          <div className="p-4 text-red-600 text-center bg-red-100 rounded-lg">
-            <p className="font-medium">Access Denied</p>
-            <p className="text-sm mt-2">Only managers can access the password management feature.</p>
           </div>
         )
       )}
