@@ -47,8 +47,13 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
         try {
             const response = await getCompanyLeaveRequests(companyId);
             
+            // Filter requests if not a manager
+            const filteredRequests = isManager 
+                ? response 
+                : response.filter(req => req.employee_id === userInfo.id);
+
             // Fetch employee names for all unique employee IDs
-            const uniqueEmployeeIds = [...new Set(response.map(req => req.employee_id))];
+            const uniqueEmployeeIds = [...new Set(filteredRequests.map(req => req.employee_id))];
             const namesPromises = uniqueEmployeeIds.map(async (empId) => {
                 const employee = await directoryService.fetchEmployee(empId);
                 return [empId, `${employee.first_name} ${employee.last_name}`];
@@ -56,14 +61,14 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
             
             const namesEntries = await Promise.all(namesPromises);
             setEmployeeNames(Object.fromEntries(namesEntries));
-            setRequests(response);
+            setRequests(filteredRequests);
         } catch (error) {
             console.error('Error fetching leave requests:', error);
             toast.error('Failed to fetch leave requests');
         } finally {
             setIsLoading(false);
         }
-    }, [companyId, userInfo?.id]);
+    }, [companyId, userInfo?.id, isManager]);
 
     useEffect(() => {
         if (companyId) {
