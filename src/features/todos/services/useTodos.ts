@@ -10,13 +10,19 @@ const API_DOMAIN = import.meta.env.VITE_BACKEND_API_DOMAIN;
 export async function createTodo(payload: CreateTodoPayload): Promise<TodoData> {
     const endpoint = `${API_DOMAIN}/todos/`;
 
+    // Add default value for is_completed if not provided
+    const todoPayload = {
+        ...payload,
+        is_completed: payload.is_completed ?? false
+    };
+
     const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(todoPayload),
     });
 
     const data = await response.json();

@@ -4,6 +4,7 @@ export interface TodoData {
     description: string;
     due_date: string;
     color_code: string;
+    is_completed: boolean;
     company_id: string;
     employee_id: string;
     created_at: string;
@@ -15,6 +16,7 @@ export interface CreateTodoPayload {
     description: string;
     due_date: string;
     color_code: string;
+    is_completed?: boolean;  // Optional, defaults to false
     employee_id: string;
     company_id: string;
 }
@@ -24,4 +26,5 @@ export interface UpdateTodoPayload {
     description?: string;
     due_date?: string;
     color_code?: string;
+    is_completed?: boolean;
 } 
