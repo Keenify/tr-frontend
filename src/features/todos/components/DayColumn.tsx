@@ -41,6 +41,8 @@ export const DayColumn: React.FC<DayColumnProps> = ({
   onTodoDeleted
 }) => {
   const [newTodoText, setNewTodoText] = useState('');
+  const minLines = 20; // Minimum number of lines to show
+  const emptyLines = Math.max(minLines - todos.length - 1, 0); // -1 for input row
 
   const handleKeyPress = async (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && newTodoText.trim()) {
@@ -49,7 +51,7 @@ export const DayColumn: React.FC<DayColumnProps> = ({
           title: newTodoText,
           description: '',
           due_date: format(date, 'yyyy-MM-dd'),
-          color_code: '#7924C2', // Default color
+          color_code: '#7924C2',
           employee_id: employeeId,
           company_id: companyId
         });
@@ -77,13 +79,14 @@ export const DayColumn: React.FC<DayColumnProps> = ({
 
   return (
     <div 
-      className="flex-1 min-h-[500px] border-r border-gray-200 bg-white"
+      className="flex-1 min-h-[500px] border-r border-gray-200 bg-white flex flex-col"
       onDragOver={(e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
       }}
       onDrop={handleDrop}
     >
+      {/* Header */}
       <div className="p-4 border-b border-gray-200 bg-gray-50">
         <div className="text-lg font-semibold text-gray-700">
           {format(date, 'EEEE')}
@@ -93,26 +96,40 @@ export const DayColumn: React.FC<DayColumnProps> = ({
         </div>
       </div>
       
-      <div className="divide-y divide-gray-100">
+      {/* Content area with fixed height rows */}
+      <div className="flex-1">
+        {/* All todo items */}
         {todos.map((todo) => (
-          <TodoItem 
-            key={todo.id} 
-            todo={todo} 
-            onUpdate={onTodoUpdated}
-            onDelete={onTodoDeleted}
+          <div key={todo.id} className="h-[40px] border-b border-gray-200">
+            <TodoItem 
+              todo={todo} 
+              onUpdate={onTodoUpdated}
+              onDelete={onTodoDeleted}
+            />
+          </div>
+        ))}
+        
+        {/* Add new todo input - always after todos */}
+        <div className="h-[40px] border-b border-gray-200">
+          <div className="h-full flex items-center px-4">
+            <input
+              type="text"
+              value={newTodoText}
+              onChange={(e) => setNewTodoText(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Add new todo..."
+              className="w-full outline-none bg-transparent"
+            />
+          </div>
+        </div>
+
+        {/* Empty lines to fill remaining space */}
+        {Array.from({ length: emptyLines }).map((_, index) => (
+          <div 
+            key={`empty-${index}`} 
+            className="h-[40px] border-b border-gray-200"
           />
         ))}
-      </div>
-      
-      <div className="p-4 border-t border-gray-100">
-        <input
-          type="text"
-          value={newTodoText}
-          onChange={(e) => setNewTodoText(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Add new todo..."
-          className="w-full border-b border-gray-200 focus:border-blue-500 outline-none py-1 bg-transparent"
-        />
       </div>
     </div>
   );

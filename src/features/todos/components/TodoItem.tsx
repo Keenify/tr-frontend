@@ -25,7 +25,7 @@ interface TodoItemProps {
 export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(todo.title);
-  const [isDeleteExpanded, setIsDeleteExpanded] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData('todoId', todo.id);
@@ -39,36 +39,26 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete }) 
         onUpdate(updatedTodo);
       } catch (error) {
         console.error('Failed to update todo:', error);
-        setTitle(todo.title);
+        setTitle(todo.title); // Reset on error
       }
     }
     setIsEditing(false);
   };
 
-  const handleDeleteClick = async () => {
-    if (isDeleteExpanded) {
-      try {
-        await deleteTodo(todo.id);
-        onDelete(todo.id);
-      } catch (error) {
-        console.error('Failed to delete todo:', error);
-        setIsDeleteExpanded(false);
-      }
-    } else {
-      setIsDeleteExpanded(true);
+  const handleDelete = async () => {
+    try {
+      await deleteTodo(todo.id);
+      onDelete(todo.id);
+    } catch (error) {
+      console.error('Failed to delete todo:', error);
+      setIsDeleting(false);
     }
-  };
-
-  // Reset delete expansion when mouse leaves the todo item
-  const handleMouseLeave = () => {
-    setIsDeleteExpanded(false);
   };
 
   return (
     <div
       draggable
       onDragStart={handleDragStart}
-      onMouseLeave={handleMouseLeave}
       className="cursor-move hover:bg-gray-50 rounded p-1 group flex items-center justify-between"
     >
       {isEditing ? (
@@ -96,18 +86,13 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete }) 
             <span>{todo.title}</span>
           </div>
           <button
-            onClick={handleDeleteClick}
-            className={`
-              opacity-0 group-hover:opacity-100 
-              transition-all duration-300 
-              ${isDeleteExpanded 
-                ? 'bg-red-500 text-white p-2 rounded-full transform scale-125' 
-                : 'text-gray-400 hover:text-red-500'
-              }
-            `}
-            title={isDeleteExpanded ? "Click again to confirm delete" : "Delete todo"}
+            onClick={handleDelete}
+            className={`opacity-0 group-hover:opacity-100 transition-opacity ${
+              isDeleting ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
+            }`}
+            title="Delete todo"
           >
-            <FaTrash size={isDeleteExpanded ? 16 : 14} />
+            <FaTrash size={14} />
           </button>
         </>
       )}
