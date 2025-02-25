@@ -6,6 +6,8 @@ import 'react-phone-input-2/lib/style.css';
 import { useDropzone } from 'react-dropzone';
 import { uploadAttachment, deleteAttachment, getAttachmentSignedUrl } from '../services/useAttachments';
 import { updateSupplierAttachment, deleteSupplierAttachment } from '../services/useSupplier';
+import Select from 'react-select';
+import countryList from 'react-select-country-list';
 
 interface SupplierDetailModalProps {
   isOpen: boolean;
@@ -93,13 +95,13 @@ const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
     await handleUpload();
   };
 
-  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement>) => {
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     await handleUpload();
     if (isCreateModalOpen) {
-      handleCreate(e as React.FormEvent<HTMLFormElement>);
+      handleCreate(e);
     } else {
-      handleUpdate(e as React.FormEvent<HTMLFormElement>);
+      handleUpdate(e);
     }
   };
 
@@ -154,6 +156,20 @@ const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
     }
   };
 
+  const getSortedCountries = () => {
+    const countries = countryList().getData();
+    const priorityCountries = ['SG', 'MY'];
+    
+    const prioritized = countries.filter(country => 
+      priorityCountries.includes(country.value)
+    );
+    const others = countries.filter(country => 
+      !priorityCountries.includes(country.value)
+    );
+    
+    return [...prioritized, ...others];
+  };
+
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={onClose}>
@@ -182,11 +198,15 @@ const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
             >
               <Dialog.Panel className="w-full max-w-7xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
                 <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 mb-4">
-                  {isCreateModalOpen ? 'Create New Supplier' : 'Supplier Details'}
+                  {isCreateModalOpen ? 'Create New Supplier' : 'Edit Supplier'}
                 </Dialog.Title>
                 
-                <div className="flex gap-6">
-                  {/* Left column - Basic Info */}
+                <form
+                  id={isCreateModalOpen ? "createForm" : "updateForm"}
+                  onSubmit={handleFormSubmit}
+                  className="flex gap-6"
+                >
+                  {/* Left column */}
                   <div className="w-1/3 space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Company Name</label>
@@ -263,6 +283,34 @@ const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
                         name="purchased_items_services"
                         defaultValue={selectedSupplier?.purchased_items_services}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Supplier Country</label>
+                      <Select
+                        name="client_country"
+                        options={getSortedCountries()}
+                        className="mt-1"
+                        defaultValue={getSortedCountries().find(
+                          country => country.value === selectedSupplier?.client_country
+                        )}
+                        placeholder="Select Supplier Country"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Origin Country</label>
+                      <Select
+                        name="origin_country"
+                        options={getSortedCountries()}
+                        className="mt-1"
+                        defaultValue={getSortedCountries().find(
+                          country => country.value === selectedSupplier?.origin_country
+                        )}
+                        placeholder="Select Origin Country"
                         required
                       />
                     </div>
@@ -412,7 +460,7 @@ const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
                       )}
                     </div>
                   </div>
-                </div>
+                </form>
 
                 {/* Action Buttons */}
                 <div className="mt-6 flex justify-between">
@@ -441,7 +489,6 @@ const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
                     <button
                       type="submit"
                       form={isCreateModalOpen ? "createForm" : "updateForm"}
-                      onClick={handleFormSubmit}
                       className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
                     >
                       {isCreateModalOpen ? 'Create' : 'Update'}

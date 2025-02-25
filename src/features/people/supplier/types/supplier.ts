@@ -17,6 +17,8 @@ export interface SupplierData {
     company_id: string;
     created_at: string;
     attachments: SupplierAttachment[];
+    client_country: string;
+    origin_country: string;
 }
 
 export interface CreateSupplierPayload {
@@ -29,6 +31,8 @@ export interface CreateSupplierPayload {
     procurement_steps?: string;
     notes?: string;
     company_id: string;
+    client_country: string;
+    origin_country: string;
 }
 
 export interface UpdateSupplierPayload {
@@ -40,6 +44,8 @@ export interface UpdateSupplierPayload {
     purchased_items_services: string;
     procurement_steps: string;
     notes: string;
+    client_country: string;
+    origin_country: string;
 }
 
 export interface SupplierAttachmentResponse {

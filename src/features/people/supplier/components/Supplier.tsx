@@ -1,20 +1,25 @@
-import { useState, Fragment } from "react";
+import React, { useState, Fragment, useEffect, useMemo } from "react";
 import { useUserAndCompanyData } from "../../../../shared/hooks/useUserAndCompanyData";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCompanySuppliers, updateSupplier, deleteSupplier, createSupplier } from "../services/useSupplier";
 import { ClipLoader } from "react-spinners";
 import { Session } from "@supabase/supabase-js";
-import { Dialog, Transition } from "@headlessui/react";
+import { Dialog, Transition, Tab } from "@headlessui/react";
 import { SupplierData, CreateSupplierPayload, UpdateSupplierPayload } from "../types/supplier";
 import toast from "react-hot-toast";
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { FaWhatsapp } from 'react-icons/fa';
 import SupplierDetailModal from './SupplierDetailModal';
+import Select from 'react-select';
+import countryList from 'react-select-country-list';
 
 interface SupplierProps {
   session: Session;
 }
+
+// Add type for react-select ref
+type SelectRefType = { getValue: () => Array<{ value: string; label: string; }> };
 
 const Supplier: React.FC<SupplierProps> = ({ session }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -27,6 +32,10 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
   // Add sorting state
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [phoneNumber, setPhoneNumber] = useState<string>('');
+
+  // Add these states
+  const [selectedCountry, setSelectedCountry] = useState<string>('All');
+  const [countries, setCountries] = useState<string[]>(['All']);
 
   // Mutations
   const updateMutation = useMutation({
@@ -76,17 +85,92 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
     enabled: !!companyInfo?.id,
   });
 
-  const handleUpdate = (e: React.FormEvent<HTMLFormElement>) => {
+  // Update useEffect to extract unique countries and handle null values
+  useEffect(() => {
+    if (suppliers) {
+      const uniqueCountries = Array.from(new Set(suppliers.map(supplier => 
+        supplier.origin_country || 'Uncategorized'
+      )));
+      setCountries(['All', ...uniqueCountries.sort()]);
+    }
+  }, [suppliers]);
+
+  // Update getCountForCountry to handle null values
+  const getCountForCountry = (country: string) => {
+    if (country === 'All') {
+      return suppliers?.length || 0;
+    }
+    if (country === 'Uncategorized') {
+      return suppliers?.filter(s => !s.origin_country).length || 0;
+    }
+    return suppliers?.filter(s => s.origin_country === country).length || 0;
+  };
+
+  // Update filtered suppliers logic to handle null values
+  const filteredSuppliers = useMemo(() => {
+    let filtered = suppliers || [];
+    
+    // Filter by country
+    if (selectedCountry !== 'All') {
+      if (selectedCountry === 'Uncategorized') {
+        filtered = filtered.filter(supplier => !supplier.origin_country);
+      } else {
+        filtered = filtered.filter(supplier => supplier.origin_country === selectedCountry);
+      }
+    }
+
+    // Filter by search term
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase();
+      filtered = filtered.filter(supplier => 
+        supplier.supplier_company_name.toLowerCase().includes(search) ||
+        supplier.contact_person_name?.toLowerCase().includes(search) ||
+        supplier.contact_person_email?.toLowerCase().includes(search)
+      );
+    }
+
+    // Sort if needed
+    if (sortOrder === 'asc') {
+      filtered.sort((a, b) => a.supplier_company_name.localeCompare(b.supplier_company_name));
+    } else {
+      filtered.sort((a, b) => b.supplier_company_name.localeCompare(a.supplier_company_name));
+    }
+
+    return filtered;
+  }, [suppliers, selectedCountry, searchTerm, sortOrder]);
+
+  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!selectedSupplier?.id) return;
+
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
     
-    const formData = new FormData(e.currentTarget);
-    const payload = {
-      ...Object.fromEntries(formData.entries()),
-      contact_person_phone: phoneNumber,
-      procurement_steps: formData.get('procurement_steps')?.toString() || '',
-    } as unknown as UpdateSupplierPayload;
+    // Get values from react-select components
+    const clientCountrySelect = form.querySelector('[name="client_country"]');
+    const originCountrySelect = form.querySelector('[name="origin_country"]');
     
+    const clientCountry = clientCountrySelect ? 
+      ((clientCountrySelect as unknown) as { value: string })?.value : 
+      selectedSupplier.client_country;
+      
+    const originCountry = originCountrySelect ? 
+      ((originCountrySelect as unknown) as { value: string })?.value : 
+      selectedSupplier.origin_country;
+
+    const payload: UpdateSupplierPayload = {
+      supplier_company_name: formData.get('supplier_company_name') as string || selectedSupplier.supplier_company_name,
+      contact_person_name: formData.get('contact_person_name') as string || selectedSupplier.contact_person_name,
+      contact_person_phone: phoneNumber || selectedSupplier.contact_person_phone,
+      contact_person_email: formData.get('contact_person_email') as string || selectedSupplier.contact_person_email,
+      category: formData.get('category') as string || selectedSupplier.category,
+      purchased_items_services: formData.get('purchased_items_services') as string || selectedSupplier.purchased_items_services,
+      procurement_steps: formData.get('procurement_steps') as string || selectedSupplier.procurement_steps,
+      notes: formData.get('notes') as string || selectedSupplier.notes,
+      client_country: clientCountry,
+      origin_country: originCountry,
+    };
+
     updateMutation.mutate({
       supplierId: selectedSupplier.id,
       payload,
@@ -100,14 +184,22 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
     }
   };
 
-  const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
+  // Update handleCreate
+  const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    
+    const clientCountry = ((form.querySelector('[name="client_country"]') as unknown) as SelectRefType)?.getValue()?.[0]?.value;
+    const originCountry = ((form.querySelector('[name="origin_country"]') as unknown) as SelectRefType)?.getValue()?.[0]?.value;
+    
     const payload = {
       ...Object.fromEntries(formData.entries()),
-      contact_person_phone: phoneNumber,
       company_id: companyInfo?.id,
+      client_country: clientCountry,
+      origin_country: originCountry,
     };
+    
     createMutation.mutate(payload as CreateSupplierPayload);
   };
 
@@ -145,19 +237,20 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
     }
   };
 
-  // Filter and sort suppliers
-  const filteredSuppliers = suppliers?.filter((supplier) => {
-    const searchString = searchTerm.toLowerCase();
-    return Object.values(supplier).some(value =>
-      (value?.toString().toLowerCase() || '').includes(searchString)
+  // Add this function to get sorted countries
+  const getSortedCountries = () => {
+    const countries = countryList().getData();
+    const priorityCountries = ['SG', 'MY'];
+    
+    const prioritized = countries.filter(country => 
+      priorityCountries.includes(country.value)
     );
-  }).sort((a, b) => {
-    const nameA = (a.supplier_company_name || '').toLowerCase();
-    const nameB = (b.supplier_company_name || '').toLowerCase();
-    return sortOrder === 'asc' 
-      ? nameA.localeCompare(nameB)
-      : nameB.localeCompare(nameA);
-  });
+    const others = countries.filter(country => 
+      !priorityCountries.includes(country.value)
+    );
+    
+    return [...prioritized, ...others];
+  };
 
   if (isLoadingCompanyData || isLoadingSuppliers) {
     return (
@@ -176,7 +269,7 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
   }
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen flex flex-col">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Suppliers</h1>
         <div className="flex justify-between items-center">
@@ -218,80 +311,114 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
         </button>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full bg-white shadow-md rounded-lg overflow-hidden table-fixed">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Category
-              </th>
-              <th 
-                className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              >
-                Company Name
-                <span className="ml-1">
-                  {sortOrder === 'asc' ? '↑' : '↓'}
-                </span>
-              </th>
-              <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Contact Person
-              </th>
-              <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Contact Phone
-              </th>
-              <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Contact Email
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredSuppliers?.map((supplier) => (
-              <tr 
-                key={supplier.id} 
-                className="hover:bg-gray-50 cursor-pointer"
-                onClick={() => handleOpenSupplierModal(supplier)}
-              >
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900 break-words">{supplier.category}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900 break-words">
-                    {supplier.supplier_company_name}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900 break-words">{supplier.contact_person_name}</div>
-                </td>
-                <td className="px-6 py-4 flex items-center justify-between">
-                  <div className="text-sm text-gray-900 break-words">{supplier.contact_person_phone}</div>
-                  {supplier.contact_person_phone && supplier.contact_person_phone !== 'NA' && (
-                    <FaWhatsapp 
-                      className="text-green-500 cursor-pointer hover:text-green-600" 
-                      size={18}
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent row click
-                        handleWhatsAppClick(supplier.contact_person_phone);
-                      }}
-                    />
-                  )}
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900 break-words">{supplier.contact_person_email}</div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <Tab.Group onChange={(index) => setSelectedCountry(countries[index])}>
+        <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1 mb-6 overflow-x-auto">
+          {countries.map((country) => (
+            <Tab
+              key={country}
+              className={({ selected }) =>
+                `w-full rounded-lg py-2.5 text-sm font-medium leading-5 min-w-[100px] flex items-center justify-center gap-2
+                ${selected 
+                  ? 'bg-white text-blue-700 shadow'
+                  : 'text-gray-600 hover:bg-white/[0.12] hover:text-gray-800'
+                }`
+              }
+            >
+              {({ selected }) => (
+                <>
+                  {country}
+                  <span className={`px-2 py-0.5 rounded-full text-xs ${
+                    selected ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'
+                  }`}>
+                    {getCountForCountry(country)}
+                  </span>
+                </>
+              )}
+            </Tab>
+          ))}
+        </Tab.List>
 
-        {filteredSuppliers?.length === 0 && (
-          <div className="text-center text-gray-500 py-4">
-            {suppliers?.length === 0 
-              ? "No suppliers found for this company."
-              : "No suppliers match your search criteria."}
-          </div>
-        )}
-      </div>
+        <Tab.Panels>
+          {countries.map((country) => (
+            <Tab.Panel key={country}>
+              <div className="overflow-x-auto">
+                <table className="w-full bg-white shadow-md rounded-lg overflow-hidden table-fixed">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Category
+                      </th>
+                      <th 
+                        className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                      >
+                        Company Name
+                        <span className="ml-1">
+                          {sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      </th>
+                      <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Contact Person
+                      </th>
+                      <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Contact Phone
+                      </th>
+                      <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Contact Email
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredSuppliers?.map((supplier) => (
+                      <tr 
+                        key={supplier.id} 
+                        className="hover:bg-gray-50 cursor-pointer"
+                        onClick={() => handleOpenSupplierModal(supplier)}
+                      >
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900 break-words">{supplier.category}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm font-medium text-gray-900 break-words">
+                            {supplier.supplier_company_name}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900 break-words">{supplier.contact_person_name}</div>
+                        </td>
+                        <td className="px-6 py-4 flex items-center justify-between">
+                          <div className="text-sm text-gray-900 break-words">{supplier.contact_person_phone}</div>
+                          {supplier.contact_person_phone && supplier.contact_person_phone !== 'NA' && (
+                            <FaWhatsapp 
+                              className="text-green-500 cursor-pointer hover:text-green-600" 
+                              size={18}
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent row click
+                                handleWhatsAppClick(supplier.contact_person_phone);
+                              }}
+                            />
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900 break-words">{supplier.contact_person_email}</div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {filteredSuppliers?.length === 0 && (
+                  <div className="text-center text-gray-500 py-4">
+                    {suppliers?.length === 0 
+                      ? "No suppliers found for this company."
+                      : "No suppliers match your search criteria."}
+                  </div>
+                )}
+              </div>
+            </Tab.Panel>
+          ))}
+        </Tab.Panels>
+      </Tab.Group>
 
       <SupplierDetailModal
         isOpen={isModalOpen}
@@ -422,6 +549,46 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
                           placeholder="Enter purchased items/services"
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                           required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700" htmlFor="client_country">Supplier Country</label>
+                        <Select
+                          name="client_country"
+                          options={getSortedCountries()}
+                          value={selectedSupplier?.client_country ? { 
+                            value: selectedSupplier.client_country, 
+                            label: selectedSupplier.client_country 
+                          } : null}
+                          onChange={(option) => {
+                            if (option && selectedSupplier) {
+                              const selectedCountry = option.value;
+                              setSelectedSupplier({ ...selectedSupplier, client_country: selectedCountry });
+                            }
+                          }}
+                          isMulti={false}
+                          placeholder="Select Supplier Country"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700" htmlFor="origin_country">Origin Country</label>
+                        <Select
+                          name="origin_country"
+                          options={getSortedCountries()}
+                          value={selectedSupplier?.origin_country ? {
+                            value: selectedSupplier.origin_country,
+                            label: selectedSupplier.origin_country
+                          } : null}
+                          onChange={(option) => {
+                            if (option && selectedSupplier) {
+                              const selectedCountry = option.value;
+                              setSelectedSupplier({ ...selectedSupplier, origin_country: selectedCountry });
+                            }
+                          }}
+                          isMulti={false}
+                          placeholder="Select Origin Country"
                         />
                       </div>
                     </div>
