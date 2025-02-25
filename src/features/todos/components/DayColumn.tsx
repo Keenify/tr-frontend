@@ -12,6 +12,7 @@ interface DayColumnProps {
   onTodoCreated: (todo: TodoData) => void;
   onTodoUpdated: (todo: TodoData) => void;
   onTodoDeleted: (todoId: string) => void;
+  isViewOnly?: boolean;
 }
 
 /**
@@ -38,11 +39,12 @@ export const DayColumn: React.FC<DayColumnProps> = ({
   companyId,
   onTodoCreated,
   onTodoUpdated,
-  onTodoDeleted
+  onTodoDeleted,
+  isViewOnly = false
 }) => {
   const [newTodoText, setNewTodoText] = useState('');
   const minLines = 20; // Minimum number of lines to show
-  const emptyLines = Math.max(minLines - todos.length - 1, 0); // -1 for input row
+  const emptyLines = Math.max(minLines - todos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row
 
   const handleKeyPress = async (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && newTodoText.trim()) {
@@ -64,6 +66,11 @@ export const DayColumn: React.FC<DayColumnProps> = ({
   };
 
   const handleDrop = async (e: React.DragEvent) => {
+    if (isViewOnly) {
+      e.preventDefault();
+      return;
+    }
+    
     e.preventDefault();
     const todoId = e.dataTransfer.getData('todoId');
     
@@ -81,8 +88,10 @@ export const DayColumn: React.FC<DayColumnProps> = ({
     <div 
       className="flex-1 min-h-[500px] border-r border-gray-200 bg-white flex flex-col"
       onDragOver={(e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
+        if (!isViewOnly) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+        }
       }}
       onDrop={handleDrop}
     >
@@ -105,23 +114,26 @@ export const DayColumn: React.FC<DayColumnProps> = ({
               todo={todo} 
               onUpdate={onTodoUpdated}
               onDelete={onTodoDeleted}
+              isViewOnly={isViewOnly}
             />
           </div>
         ))}
         
-        {/* Add new todo input - always after todos */}
-        <div className="h-[40px] border-b border-gray-200">
-          <div className="h-full flex items-center px-4">
-            <input
-              type="text"
-              value={newTodoText}
-              onChange={(e) => setNewTodoText(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Add new todo..."
-              className="w-full outline-none bg-transparent"
-            />
+        {/* Add new todo input - only show if not view only */}
+        {!isViewOnly && (
+          <div className="h-[40px] border-b border-gray-200">
+            <div className="h-full flex items-center px-4">
+              <input
+                type="text"
+                value={newTodoText}
+                onChange={(e) => setNewTodoText(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Add new todo..."
+                className="w-full outline-none bg-transparent"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Empty lines to fill remaining space */}
         {Array.from({ length: emptyLines }).map((_, index) => (

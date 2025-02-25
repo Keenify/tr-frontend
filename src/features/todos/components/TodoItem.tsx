@@ -8,6 +8,7 @@ interface TodoItemProps {
   todo: TodoData;
   onUpdate: (todo: TodoData) => void;
   onDelete: (todoId: string) => void;
+  isViewOnly?: boolean;
 }
 
 /**
@@ -23,12 +24,16 @@ interface TodoItemProps {
  * @param {Function} onUpdate - Callback when todo is updated
  * @param {Function} onDelete - Callback when todo is deleted
  */
-export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete }) => {
+export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, isViewOnly = false }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(todo.title);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDragStart = (e: React.DragEvent) => {
+    if (isViewOnly) {
+      e.preventDefault();
+      return;
+    }
     e.dataTransfer.setData('todoId', todo.id);
     e.dataTransfer.effectAllowed = 'move';
   };
@@ -70,11 +75,11 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete }) 
 
   return (
     <div
-      draggable
+      draggable={!isViewOnly}
       onDragStart={handleDragStart}
-      className="h-full cursor-move hover:bg-gray-50 group flex items-center justify-between px-4"
+      className={`h-full ${!isViewOnly ? 'cursor-move' : ''} hover:bg-gray-50 group flex items-center justify-between px-4`}
     >
-      {isEditing ? (
+      {isEditing && !isViewOnly ? (
         <input
           title="Todo Title"
           placeholder="Enter Todo Title"
@@ -89,22 +94,24 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete }) 
       ) : (
         <>
           <div className="flex items-center space-x-3 flex-grow min-w-0">
-            <button
-              onClick={handleToggleComplete}
-              className={`opacity-0 group-hover:opacity-100 transition-opacity ${
-                todo.is_completed ? 'text-green-500' : 'text-gray-400 hover:text-gray-600'
-              }`}
-              title={todo.is_completed ? "Mark as incomplete" : "Mark as complete"}
-            >
-              {todo.is_completed ? (
-                <FaRegCheckSquare size={16} />
-              ) : (
-                <FaRegSquare size={16} />
-              )}
-            </button>
+            {!isViewOnly && (
+              <button
+                onClick={handleToggleComplete}
+                className={`opacity-0 group-hover:opacity-100 transition-opacity ${
+                  todo.is_completed ? 'text-green-500' : 'text-gray-400 hover:text-gray-600'
+                }`}
+                title={todo.is_completed ? "Mark as incomplete" : "Mark as complete"}
+              >
+                {todo.is_completed ? (
+                  <FaRegCheckSquare size={16} />
+                ) : (
+                  <FaRegSquare size={16} />
+                )}
+              </button>
+            )}
             <div
-              onClick={() => setIsEditing(true)}
-              className="flex items-center space-x-2 flex-grow min-w-0 overflow-hidden"
+              onClick={() => !isViewOnly && setIsEditing(true)}
+              className={`flex items-center space-x-2 flex-grow min-w-0 overflow-hidden ${!isViewOnly ? 'cursor-pointer' : ''}`}
             >
               <div
                 className="w-2 h-2 flex-shrink-0 rounded-full"
@@ -115,17 +122,19 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete }) 
               </span>
             </div>
           </div>
-          <button
-            onClick={handleDelete}
-            className={`opacity-0 group-hover:opacity-100 transition-opacity ml-2 ${
-              isDeleting ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
-            }`}
-            title="Delete todo"
-          >
-            <FaTrash size={14} />
-          </button>
+          {!isViewOnly && (
+            <button
+              onClick={handleDelete}
+              className={`opacity-0 group-hover:opacity-100 transition-opacity ml-2 ${
+                isDeleting ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
+              }`}
+              title="Delete todo"
+            >
+              <FaTrash size={14} />
+            </button>
+          )}
         </>
       )}
     </div>
   );
-}; 
+};
