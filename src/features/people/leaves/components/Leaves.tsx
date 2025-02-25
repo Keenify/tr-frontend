@@ -5,7 +5,6 @@ import { directoryService } from '../../../../shared/services/directoryService';
 import { getCompanyLeaveBalances, updateLeaveBalance, createLeaveBalance } from '../services/useLeaves';
 import { Employee } from '../../../../shared/types/directory.types';
 import { LeaveBalance } from '../types/leaves';
-import { getAllEmployees } from '../../../../services/useUser';
 import toast from 'react-hot-toast';
 import { ChevronUpDownIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/20/solid';
 import { Tab } from '@headlessui/react';
@@ -35,7 +34,19 @@ export function Leaves({ session }: LeavesProps) {
 
         try {
             const employeeList = await directoryService.fetchEmployees(companyInfo.id);
-            setEmployees(employeeList);
+            const currentUser = employeeList.find(emp => 
+                emp.email?.toLowerCase() === session.user.email?.toLowerCase()
+            );
+            
+            // Check if manager (role contains 'manager')
+            const isUserManager = currentUser?.role?.toLowerCase().includes('manager') || false;
+            setIsManager(isUserManager);
+
+            // Filter employees if not a manager
+            const filteredEmployees = isUserManager
+                ? employeeList 
+                : employeeList.filter(emp => emp.email?.toLowerCase() === session.user.email?.toLowerCase());
+            setEmployees(filteredEmployees);
 
             const balances = await getCompanyLeaveBalances(companyInfo.id);
             const balanceMap = balances.reduce((acc, balance) => ({
@@ -46,30 +57,13 @@ export function Leaves({ session }: LeavesProps) {
         } catch (error) {
             console.error('Error fetching data:', error);
         }
-    }, [companyInfo]);
+    }, [companyInfo, session.user.email]);
 
     useEffect(() => {
         if (companyInfo?.id) {
             fetchLeaveData();
         }
     }, [companyInfo?.id, fetchLeaveData]);
-
-    useEffect(() => {
-        async function checkManagerStatus() {
-            if (!companyInfo?.id) return;
-            try {
-                const companyEmployees = await getAllEmployees(companyInfo.id);
-                const currentUser = companyEmployees.find(emp => 
-                    emp.email?.toLowerCase() === session.user.email?.toLowerCase()
-                );
-                setIsManager(currentUser?.role?.toLowerCase().includes('manager') || false);
-            } catch (error) {
-                console.error('Error checking manager status:', error);
-            }
-        }
-
-        checkManagerStatus();
-    }, [companyInfo?.id, session.user.email]);
 
     const handleInputChange = (employeeId: string, field: keyof LeaveBalance, value: number) => {
         setEditedBalances(prev => ({
