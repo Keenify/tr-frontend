@@ -44,7 +44,7 @@ import AccountabilityMatrix from "./features/people/accountability_matrix/compon
 import Leaves from "./features/people/leaves/components/Leaves";
 import OnlineSales from "./features/finance/components/OnlineSales";
 import Password from "./features/admin/components/Password";
-import Todo from "./features/todo/components/Todo";
+import Todo from "./features/todos/components/Todos";
 import Admin from "./features/admin/components/Admin";
 import Milestone from "./features/teamHealth/components/Milestone";
 import Award from "./features/teamHealth/components/Award";
