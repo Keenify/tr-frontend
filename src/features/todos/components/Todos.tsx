@@ -3,7 +3,7 @@ import { Session } from '@supabase/supabase-js';
 import { TodoData } from '../types/todo';
 import { getEmployeeTodos } from '../services/useTodos';
 import { DayColumn } from './DayColumn';
-import { addDays, startOfToday, format } from 'date-fns';
+import { addDays, startOfToday, format, subDays } from 'date-fns';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import { directoryService } from '../../../shared/services/directoryService';
 import { Employee } from '../../../shared/types/directory.types';
@@ -28,6 +28,7 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [startDate, setStartDate] = useState(startOfToday());
   const { userInfo, companyInfo, error: userDataError, isLoading: userDataLoading } = 
     useUserAndCompanyData(session.user.id);
 
@@ -86,6 +87,14 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
     setTodos(todos.filter(todo => todo.id !== todoId));
   };
 
+  const handlePrevDay = () => {
+    setStartDate(prevDate => subDays(prevDate, 1));
+  };
+
+  const handleNextDay = () => {
+    setStartDate(prevDate => addDays(prevDate, 1));
+  };
+
   if (userDataLoading || loading) {
     return <div>Loading...</div>;
   }
@@ -94,8 +103,7 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
     return <div>Error loading user data</div>;
   }
 
-  const today = startOfToday();
-  const dates = Array.from({ length: 5 }, (_, i) => addDays(today, i));
+  const dates = Array.from({ length: 5 }, (_, i) => addDays(startDate, i));
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -118,20 +126,46 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
           </select>
         </div>
       )}
+
       <div className="flex flex-1">
-        {dates.map((date) => (
-          <DayColumn
-            key={date.toISOString()}
-            date={date}
-            todos={todos.filter(todo => todo.due_date === format(date, 'yyyy-MM-dd'))}
-            employeeId={userInfo?.id || ''}
-            companyId={companyInfo?.id || ''}
-            onTodoCreated={handleTodoCreated}
-            onTodoUpdated={handleTodoUpdated}
-            onTodoDeleted={handleTodoDeleted}
-            isViewOnly={selectedEmployeeId !== null}
-          />
-        ))}
+        {/* Left arrow */}
+        <button
+          onClick={handlePrevDay}
+          className="p-1 hover:bg-gray-200 rounded-full transition-colors self-start mt-4"
+          title="Previous day"
+        >
+          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        {/* Columns */}
+        <div className="flex flex-1">
+          {dates.map((date) => (
+            <DayColumn
+              key={date.toISOString()}
+              date={date}
+              todos={todos.filter(todo => todo.due_date === format(date, 'yyyy-MM-dd'))}
+              employeeId={userInfo?.id || ''}
+              companyId={companyInfo?.id || ''}
+              onTodoCreated={handleTodoCreated}
+              onTodoUpdated={handleTodoUpdated}
+              onTodoDeleted={handleTodoDeleted}
+              isViewOnly={selectedEmployeeId !== null}
+            />
+          ))}
+        </div>
+
+        {/* Right arrow */}
+        <button
+          onClick={handleNextDay}
+          className="p-1 hover:bg-gray-200 rounded-full transition-colors self-start mt-4"
+          title="Next day"
+        >
+          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
     </div>
   );

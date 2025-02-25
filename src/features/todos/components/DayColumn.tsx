@@ -87,21 +87,20 @@ export const DayColumn: React.FC<DayColumnProps> = ({
   return (
     <div 
       className="flex-1 min-h-[500px] border-r border-gray-200 bg-white flex flex-col"
-      onDragOver={(e) => {
-        if (!isViewOnly) {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
-        }
-      }}
       onDrop={handleDrop}
+      onDragOver={(e) => e.preventDefault()}
     >
-      {/* Header */}
+      {/* Header with date and arrows */}
       <div className="p-4 border-b border-gray-200 bg-gray-50">
-        <div className="text-lg font-semibold text-gray-700">
-          {format(date, 'EEEE')}
-        </div>
-        <div className="text-sm text-gray-500">
-          {format(date, 'dd MMM yyyy')}
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-lg font-semibold text-gray-700">
+              {format(date, 'EEEE')}
+            </div>
+            <div className="text-sm text-gray-500">
+              {format(date, 'dd MMM yyyy')}
+            </div>
+          </div>
         </div>
       </div>
       
