@@ -86,7 +86,7 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await handleUpload(); // Upload files first
-    handleUpdate(e); // Then update other client details
+    handleUpdate(e);
   };
 
   const handleDeleteAttachment = async (attachmentId: string) => {
@@ -182,7 +182,7 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
                   {/* Client Information Section */}
                   <div className="flex-1 p-4 bg-gray-50 rounded-lg">
                     <h4 className="text-md font-medium text-gray-900 mb-4">Company Information</h4>
-                    <form onSubmit={handleFormSubmit} className="space-y-4">
+                    <form id="clientForm" onSubmit={handleFormSubmit} className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Company Name</label>
                         <input
@@ -284,6 +284,30 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
                           defaultValue={selectedClient?.remarks}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                           rows={3}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Client Country</label>
+                        <input
+                          title="Client Country"
+                          placeholder="Enter Client Country"
+                          type="text"
+                          name="client_country"
+                          defaultValue={selectedClient?.client_country}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Origin Country</label>
+                        <input
+                          title="Origin Country"
+                          placeholder="Enter Origin Country"
+                          type="text"
+                          name="origin_country"
+                          defaultValue={selectedClient?.origin_country}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                          required
                         />
                       </div>
                     </form>
@@ -396,7 +420,6 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
                       type="submit"
                       form="clientForm"
                       className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                      onClick={handleFormSubmit}
                     >
                       Update
                     </button>

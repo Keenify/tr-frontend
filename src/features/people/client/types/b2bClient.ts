@@ -19,6 +19,8 @@ export interface B2BClientData {
     company_id: string;
     created_at?: string;
     attachments: B2BAttachment[];
+    client_country: string;
+    origin_country: string;
 }
 
 export type CreateB2BClientPayload = Omit<B2BClientData, 'id' | 'created_at'>;
@@ -33,7 +35,9 @@ export type UpdateB2BClientPayload = Pick<B2BClientData,
   'nature' | 
   'credit_terms' | 
   'last_price' | 
-  'remarks'
+  'remarks' |
+  'client_country' |
+  'origin_country'
 >;
 
 export interface B2BAttachmentResponse {
