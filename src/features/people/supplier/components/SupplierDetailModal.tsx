@@ -191,6 +191,8 @@ const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Company Name</label>
                       <input
+                        title="Supplier Company Name"
+                        placeholder="Enter Supplier Company Name"
                         type="text"
                         name="supplier_company_name"
                         defaultValue={selectedSupplier?.supplier_company_name}
@@ -202,6 +204,8 @@ const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Contact Person</label>
                       <input
+                        title="Contact Person Name"
+                        placeholder="Enter Contact Person Name"
                         type="text"
                         name="contact_person_name"
                         defaultValue={selectedSupplier?.contact_person_name}
@@ -216,6 +220,8 @@ const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
                         value={phoneNumber}
                         onChange={setPhoneNumber}
                         inputProps={{
+                          title: 'Contact Person Phone Number',
+                          placeholder: 'Enter Contact Person Phone Number',
                           name: 'contact_person_phone',
                           required: false
                         }}
@@ -226,6 +232,8 @@ const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Contact Email</label>
                       <input
+                        title="Contact Person Email"
+                        placeholder="Enter Contact Person Email"
                         type="email"
                         name="contact_person_email"
                         defaultValue={selectedSupplier?.contact_person_email}
@@ -236,9 +244,11 @@ const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Category</label>
                       <input
+                        title="Purchased Items/Services"
+                        placeholder="Enter Purchased Items/Services"
                         type="text"
-                        name="category"
-                        defaultValue={selectedSupplier?.category}
+                        name="purchased_items_services"
+                        defaultValue={selectedSupplier?.purchased_items_services}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         required
                       />
@@ -247,6 +257,8 @@ const SupplierDetailModal: React.FC<SupplierDetailModalProps> = ({
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Purchased Items/Services</label>
                       <input
+                        title="Purchased Items/Services"
+                        placeholder="Enter Purchased Items/Services"
                         type="text"
                         name="purchased_items_services"
                         defaultValue={selectedSupplier?.purchased_items_services}
