@@ -1,4 +1,4 @@
-import { CreateSupplierPayload, SupplierData, UpdateSupplierPayload } from '../types/supplier';
+import { CreateSupplierPayload, SupplierData, UpdateSupplierPayload, SupplierAttachmentResponse } from '../types/supplier';
 
 const API_DOMAIN = import.meta.env.VITE_BACKEND_API_DOMAIN;
 
@@ -153,4 +153,73 @@ export async function deleteSupplier(supplierId: string): Promise<{ message: str
     }
 
     return data as { message: string };
+}
+
+/**
+ * Updates attachment information for a supplier
+ * @param {string} fileUrl - The URL of the file
+ * @param {string} description - The description of the attachment
+ * @param {string} supplierId - The ID of the supplier
+ * @returns {Promise<SupplierAttachmentResponse>} - A promise that resolves to the updated attachment information
+ */
+export async function updateSupplierAttachment(
+    fileUrl: string,
+    description: string,
+    supplierId: string
+): Promise<SupplierAttachmentResponse> {
+    const endpoint = `${API_DOMAIN}/suppliers/attachments/`;
+
+    const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            file_url: fileUrl,
+            description,
+            supplier_id: supplierId,
+        }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        console.error('❌ API request failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            data
+        });
+        throw new Error('Failed to update supplier attachment');
+    }
+
+    return data as SupplierAttachmentResponse;
+}
+
+/**
+ * Deletes an attachment for a supplier
+ * @param {string} attachmentId - The ID of the attachment to delete
+ * @returns {Promise<{ message: string }>} - A promise that resolves to a success message
+ */
+export async function deleteSupplierAttachment(attachmentId: string): Promise<{ message: string }> {
+    const endpoint = `${API_DOMAIN}/suppliers/attachments/${encodeURIComponent(attachmentId)}`;
+
+    const response = await fetch(endpoint, {
+        method: 'DELETE',
+        headers: {
+            'Accept': 'application/json',
+        },
+    });
+
+    if (!response.ok) {
+        const data = await response.json();
+        console.error('❌ API request failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            data
+        });
+        throw new Error('Failed to delete supplier attachment');
+    }
+
+    return { message: 'Attachment deleted successfully' };
 }

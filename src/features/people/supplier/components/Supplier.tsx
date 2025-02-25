@@ -297,6 +297,7 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         selectedSupplier={selectedSupplier}
+        setSelectedSupplier={setSelectedSupplier}
         isCreateModalOpen={isCreateModalOpen}
         phoneNumber={phoneNumber}
         setPhoneNumber={setPhoneNumber}
