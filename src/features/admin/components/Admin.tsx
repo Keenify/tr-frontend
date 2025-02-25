@@ -27,6 +27,7 @@ const Admin: React.FC<AdminProps> = ({ session }) => {
   const [error, setError] = React.useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('company');
   const [isManager, setIsManager] = React.useState<boolean>(false);
+  const [currentUser, setCurrentUser] = React.useState<UserData | undefined>();
 
   const fetchCompanyDetails = React.useCallback(async () => {
     if (!companyInfo?.id) return;
@@ -44,12 +45,19 @@ const Admin: React.FC<AdminProps> = ({ session }) => {
         emp.email?.toLowerCase() === session.user.email?.toLowerCase()
       );
       
-      setIsManager(currentUser?.role?.toLowerCase() === 'manager');
+      // Check if real manager (exact match) or fake manager (contains 'manager')
+      const userRole = currentUser?.role?.toLowerCase() || '';
+      const isRealManager = userRole === 'manager';
+      const isFakeManager = userRole.includes('manager');
+      
+      setIsManager(isRealManager || isFakeManager);
       
       setEmployees(prev => ({
         ...prev,
         [companyInfo.id]: companyEmployees
       }));
+
+      setCurrentUser(currentUser);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch company details');
     } finally {
@@ -179,7 +187,10 @@ const Admin: React.FC<AdminProps> = ({ session }) => {
         </div>
       ) : (
         isManager ? (
-          <Feedback companyId={companyInfo?.id} />
+          <Feedback 
+            companyId={companyInfo?.id} 
+            isRealManager={currentUser?.role?.toLowerCase() === 'manager'} 
+          />
         ) : (
           <div className="p-4 text-red-600 text-center bg-red-100 rounded-lg">
             <p className="font-medium">Access Denied</p>

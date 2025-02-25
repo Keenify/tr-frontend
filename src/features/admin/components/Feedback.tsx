@@ -6,9 +6,10 @@ import { FeedbackResponse } from '../../people/feedback/types/feedback';
 
 interface FeedbackProps {
   companyId?: string;
+  isRealManager: boolean;
 }
 
-const Feedback: React.FC<FeedbackProps> = ({ companyId }) => {
+const Feedback: React.FC<FeedbackProps> = ({ companyId, isRealManager }) => {
   const [feedbacks, setFeedbacks] = useState<FeedbackResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +56,27 @@ const Feedback: React.FC<FeedbackProps> = ({ companyId }) => {
     );
   }
 
+  const renderEmployeeName = (feedback: FeedbackResponse) => {
+    if (isRealManager) {
+      return (
+        <>
+          <p className="text-sm font-medium text-gray-900">
+            {feedback.employee.first_name} {feedback.employee.last_name}
+          </p>
+          <p className="text-sm text-gray-500">
+            {feedback.employee.role}
+          </p>
+        </>
+      );
+    } else {
+      return (
+        <p className="text-sm font-medium text-gray-900">
+          Anonymous Employee
+        </p>
+      );
+    }
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold text-gray-900">Company Feedback</h2>
@@ -65,20 +87,19 @@ const Feedback: React.FC<FeedbackProps> = ({ companyId }) => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    {feedback.employee.profile_pic_url && (
+                    {feedback.employee.profile_pic_url && isRealManager ? (
                       <img
                         src={feedback.employee.profile_pic_url}
                         alt=""
                         className="h-10 w-10 rounded-full"
                       />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                        <span className="text-gray-500">A</span>
+                      </div>
                     )}
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {feedback.employee.first_name} {feedback.employee.last_name}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {feedback.employee.role}
-                      </p>
+                      {renderEmployeeName(feedback)}
                     </div>
                   </div>
                   <time className="text-sm text-gray-500">
