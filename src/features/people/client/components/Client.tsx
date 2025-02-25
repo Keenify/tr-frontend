@@ -8,10 +8,15 @@ import { Dialog, Transition, Tab } from "@headlessui/react";
 import { B2BClientData, CreateB2BClientPayload, UpdateB2BClientPayload } from "../types/b2bClient";
 import toast from "react-hot-toast";
 import ClientDetailsModal from './ClientDetailsModal';
+import Select from 'react-select';
+import countryList from 'react-select-country-list';
 
 interface ClientProps {
   session: Session;
 }
+
+// Add type for react-select ref
+type SelectRef = { getValue: () => Array<{ label: string; value: string }> };
 
 const Client: React.FC<ClientProps> = ({ session }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -149,11 +154,20 @@ const Client: React.FC<ClientProps> = ({ session }) => {
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    
+    // Get selected values from react-select
+    const clientCountry = ((form.querySelector('[name="client_country"]') as unknown) as SelectRef)?.getValue()?.[0]?.label;
+    const originCountry = ((form.querySelector('[name="origin_country"]') as unknown) as SelectRef)?.getValue()?.[0]?.label;
+    
     const payload = {
       ...Object.fromEntries(formData.entries()),
       company_id: companyInfo?.id,
+      client_country: clientCountry,
+      origin_country: originCountry,
     };
+    
     createMutation.mutate(payload as CreateB2BClientPayload);
   };
 
@@ -162,6 +176,20 @@ const Client: React.FC<ClientProps> = ({ session }) => {
     await queryClient.invalidateQueries({ 
       queryKey: ['b2bClients', companyInfo?.id, clientId]
     });
+  };
+
+  const getSortedCountries = () => {
+    const countries = countryList().getData();
+    const priorityCountries = ['SG', 'MY']; // Singapore and Malaysia country codes
+    
+    const prioritized = countries.filter(country => 
+      priorityCountries.includes(country.value)
+    );
+    const others = countries.filter(country => 
+      !priorityCountries.includes(country.value)
+    );
+    
+    return [...prioritized, ...others];
   };
 
   if (isLoadingCompanyData || isLoadingClients) {
@@ -485,25 +513,23 @@ const Client: React.FC<ClientProps> = ({ session }) => {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Client Country</label>
-                        <input
-                          title="Client Country"
-                          placeholder="Enter Client Country"
-                          type="text"
+                        <Select
                           name="client_country"
+                          options={getSortedCountries()}
+                          className="mt-1"
+                          placeholder="Select Client Country"
                           required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         />
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Origin Country</label>
-                        <input
-                          title="Origin Country"
-                          placeholder="Enter Origin Country"
-                          type="text"
+                        <Select
                           name="origin_country"
+                          options={getSortedCountries()}
+                          className="mt-1"
+                          placeholder="Select Origin Country"
                           required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         />
                       </div>
 

@@ -4,6 +4,8 @@ import { useDropzone } from 'react-dropzone';
 import { B2BClientData } from '../types/b2bClient';
 import { uploadAttachment, deleteAttachment, getAttachmentSignedUrl } from '../services/useAttachments';
 import { updateB2BAttachment, deleteB2BAttachment } from '../services/useB2BClients';
+import Select from 'react-select';
+import countryList from 'react-select-country-list';
 
 interface ClientDetailsModalProps {
   isOpen: boolean;
@@ -16,6 +18,20 @@ interface ClientDetailsModalProps {
   setAttachments: React.Dispatch<React.SetStateAction<File[]>>;
   refreshClient?: (clientId: string) => Promise<void>;
 }
+
+const getSortedCountries = () => {
+  const countries = countryList().getData();
+  const priorityCountries = ['SG', 'MY'];
+  
+  const prioritized = countries.filter(country => 
+    priorityCountries.includes(country.value)
+  );
+  const others = countries.filter(country => 
+    !priorityCountries.includes(country.value)
+  );
+  
+  return [...prioritized, ...others];
+};
 
 const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
   isOpen,
@@ -288,25 +304,27 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Client Country</label>
-                        <input
-                          title="Client Country"
-                          placeholder="Enter Client Country"
-                          type="text"
+                        <Select
                           name="client_country"
-                          defaultValue={selectedClient?.client_country}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                          options={getSortedCountries()}
+                          className="mt-1"
+                          defaultValue={getSortedCountries().find(
+                            country => country.value === selectedClient?.client_country
+                          )}
+                          placeholder="Select Client Country"
                           required
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Origin Country</label>
-                        <input
-                          title="Origin Country"
-                          placeholder="Enter Origin Country"
-                          type="text"
+                        <Select
                           name="origin_country"
-                          defaultValue={selectedClient?.origin_country}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                          options={getSortedCountries()}
+                          className="mt-1"
+                          defaultValue={getSortedCountries().find(
+                            country => country.value === selectedClient?.origin_country
+                          )}
+                          placeholder="Select Origin Country"
                           required
                         />
                       </div>
