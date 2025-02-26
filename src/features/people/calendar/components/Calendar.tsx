@@ -205,6 +205,15 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
       eventEnd.setHours(0, 0, 0, 0);
       currentDate.setHours(0, 0, 0, 0);
 
+      // Filter out pending or rejected leave requests
+      const isLeaveEvent = ['sick_leave', 'timeoff', 'annual_leave'].includes(event.event_type.toLowerCase());
+      if (isLeaveEvent) {
+        const description = event.description?.toLowerCase() || '';
+        if (description.includes('pending') || description.includes('rejected')) {
+          return false;
+        }
+      }
+
       return currentDate >= eventStart && currentDate <= eventEnd;
     });
 
@@ -260,6 +269,15 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
       eventStart.setHours(0, 0, 0, 0);
       eventEnd.setHours(0, 0, 0, 0);
       currentDate.setHours(0, 0, 0, 0);
+
+      // Filter out pending or rejected leave requests
+      const isLeaveEvent = ['sick_leave', 'timeoff', 'annual_leave'].includes(event.event_type.toLowerCase());
+      if (isLeaveEvent) {
+        const description = event.description?.toLowerCase() || '';
+        if (description.includes('pending') || description.includes('rejected')) {
+          return false;
+        }
+      }
 
       return currentDate >= eventStart && currentDate <= eventEnd;
     });
