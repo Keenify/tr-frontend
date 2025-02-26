@@ -28,6 +28,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(todo.title);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isTrashClicked, setIsTrashClicked] = useState(false);
 
   const handleDragStart = (e: React.DragEvent) => {
     if (isViewOnly) {
@@ -64,13 +65,23 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
   };
 
   const handleDelete = async () => {
-    try {
-      await deleteTodo(todo.id);
-      onDelete(todo.id);
-    } catch (error) {
-      console.error('Failed to delete todo:', error);
-      setIsDeleting(false);
+    if (isTrashClicked) {
+      try {
+        await deleteTodo(todo.id);
+        onDelete(todo.id);
+      } catch (error) {
+        console.error('Failed to delete todo:', error);
+      } finally {
+        setIsDeleting(false);
+        setIsTrashClicked(false);
+      }
+    } else {
+      setIsTrashClicked(true);
     }
+  };
+
+  const handleMouseLeave = () => {
+    setIsTrashClicked(false);
   };
 
   return (
@@ -125,12 +136,13 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
           {!isViewOnly && (
             <button
               onClick={handleDelete}
+              onMouseLeave={handleMouseLeave}
               className={`opacity-0 group-hover:opacity-100 transition-opacity ml-2 ${
                 isDeleting ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
-              }`}
+              } ${isTrashClicked ? 'text-red-500 scale-150' : ''}`}
               title="Delete todo"
             >
-              <FaTrash size={14} />
+              <FaTrash size={isTrashClicked ? 20 : 14} />
             </button>
           )}
         </>
