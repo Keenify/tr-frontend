@@ -40,6 +40,17 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
   };
 
   const handleUpdate = async () => {
+    if (title.trim() === '') {
+      try {
+        await deleteTodo(todo.id);
+        onDelete(todo.id);
+      } catch (error) {
+        console.error('Failed to delete todo:', error);
+        setTitle(todo.title);
+      }
+      return;
+    }
+
     if (title !== todo.title) {
       try {
         const updatedTodo = await updateTodo(todo.id, { title });

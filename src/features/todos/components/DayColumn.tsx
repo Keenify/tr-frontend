@@ -46,8 +46,8 @@ export const DayColumn: React.FC<DayColumnProps> = ({
   const minLines = 20; // Minimum number of lines to show
   const emptyLines = Math.max(minLines - todos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row
 
-  const handleKeyPress = async (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && newTodoText.trim()) {
+  const createNewTodo = async () => {
+    if (newTodoText.trim()) {
       try {
         const newTodo = await createTodo({
           title: newTodoText,
@@ -63,6 +63,16 @@ export const DayColumn: React.FC<DayColumnProps> = ({
         console.error('Failed to create todo:', error);
       }
     }
+  };
+
+  const handleKeyPress = async (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      await createNewTodo();
+    }
+  };
+
+  const handleBlur = async () => {
+    await createNewTodo();
   };
 
   const handleDrop = async (e: React.DragEvent) => {
@@ -127,6 +137,7 @@ export const DayColumn: React.FC<DayColumnProps> = ({
                 value={newTodoText}
                 onChange={(e) => setNewTodoText(e.target.value)}
                 onKeyPress={handleKeyPress}
+                onBlur={handleBlur}
                 placeholder="Add new todo..."
                 className="w-full outline-none bg-transparent"
               />
