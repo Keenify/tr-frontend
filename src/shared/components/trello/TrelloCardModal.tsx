@@ -225,7 +225,9 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                       className="text-blue-500 hover:text-blue-600 cursor-pointer truncate"
                       title={attachment.file_url}
                     >
-                      {attachment.file_url}
+                      {attachment.file_url.split('_').length > 2 
+                        ? attachment.file_url.split('_').slice(2).join('_')
+                        : attachment.file_url}
                     </a>
                   </div>
                   <button
