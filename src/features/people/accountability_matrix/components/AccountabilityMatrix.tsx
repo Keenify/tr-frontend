@@ -115,7 +115,29 @@ const AccountabilityMatrix: React.FC<AccountabilityMatrixProps> = ({ session }) 
       position: 'absolute',
       zIndex: 9999,
       maxHeight: '200px',
-      overflowY: 'auto'
+      overflow: 'hidden'
+    }),
+    menuList: (base) => ({
+      ...base,
+      maxHeight: '200px',
+      overflowY: 'auto',
+      overflowX: 'hidden',
+      '&::-webkit-scrollbar': {
+        width: '8px',
+        height: '8px'
+      },
+      '&::-webkit-scrollbar-track': {
+        background: '#f1f1f1',
+        borderRadius: '4px'
+      },
+      '&::-webkit-scrollbar-thumb': {
+        background: '#888',
+        borderRadius: '4px',
+        '&:hover': {
+          background: '#555'
+        }
+      },
+      scrollbarWidth: 'thin'
     }),
     menuPortal: (base) => ({
       ...base,
@@ -133,9 +155,18 @@ const AccountabilityMatrix: React.FC<AccountabilityMatrixProps> = ({ session }) 
     }),
     valueContainer: (base) => ({
       ...base,
-      flexWrap: 'wrap',
+      padding: '2px 8px',
       maxHeight: '80px',
-      overflowY: 'auto'
+      overflowY: 'hidden',
+      overflowX: 'hidden'
+    }),
+    multiValue: (base) => ({
+      ...base,
+      margin: '2px'
+    }),
+    option: (base) => ({
+      ...base,
+      padding: '8px 12px'
     })
   };
 
