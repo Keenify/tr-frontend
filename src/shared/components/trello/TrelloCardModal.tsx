@@ -53,13 +53,16 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   card,
   isLoadingAttachments,
   userRole,
-  readOnly = userRole !== 'manager',
+  readOnly = !userRole.toLowerCase().includes('manager'),
 }) => {
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description || '');
   const [colorCode, setColorCode] = useState(card.colorCode || '#ffffff');
   const [attachments, setAttachments] = useState<CardAttachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  
+  // Check if user can delete attachments (only managers can)
+  const canDeleteAttachments = userRole.toLowerCase().includes('manager');
 
   useEffect(() => {
     const fetchAttachments = async () => {
@@ -230,13 +233,15 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                         : attachment.file_url}
                     </a>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveAttachment(attachment.id)}
-                    className="text-red-500 hover:text-red-600 flex-shrink-0 ml-2"
-                  >
-                    Remove
-                  </button>
+                  {canDeleteAttachments && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAttachment(attachment.id)}
+                      className="text-red-500 hover:text-red-600 flex-shrink-0 ml-2"
+                    >
+                      Remove
+                    </button>
+                  )}
                 </div>
               ))}
               <div
