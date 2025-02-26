@@ -95,6 +95,11 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
     setStartDate(prevDate => addDays(prevDate, 1));
   };
 
+  const handleEmployeeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedId = e.target.value;
+    setSelectedEmployeeId(selectedId === userInfo?.id ? null : selectedId);
+  };
+
   if (userDataLoading || loading) {
     return <div>Loading...</div>;
   }
@@ -112,7 +117,7 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
           <select
             title="Select Employee"
             value={selectedEmployeeId || userInfo?.id}
-            onChange={(e) => setSelectedEmployeeId(e.target.value)}
+            onChange={handleEmployeeChange}
             className="w-64 p-2 border rounded"
           >
             <option value={userInfo?.id}>My Todos</option>
