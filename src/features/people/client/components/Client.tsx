@@ -1,22 +1,18 @@
-import React, { useState, Fragment, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useUserAndCompanyData } from "../../../../shared/hooks/useUserAndCompanyData";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCompanyB2BClients, updateB2BClient, deleteB2BClient, createB2BClient } from "../services/useB2BClients";
 import { ClipLoader } from "react-spinners";
 import { Session } from "@supabase/supabase-js";
-import { Dialog, Transition, Tab } from "@headlessui/react";
+import { Tab } from "@headlessui/react";
 import { B2BClientData, CreateB2BClientPayload, UpdateB2BClientPayload } from "../types/b2bClient";
 import toast from "react-hot-toast";
 import ClientDetailsModal from './ClientDetailsModal';
-import Select from 'react-select';
-import countryList from 'react-select-country-list';
+import CreateClientModal from './CreateClientModal';
 
 interface ClientProps {
   session: Session;
 }
-
-// Add type for react-select ref
-type SelectRef = { getValue: () => Array<{ label: string; value: string }> };
 
 const Client: React.FC<ClientProps> = ({ session }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,6 +31,10 @@ const Client: React.FC<ClientProps> = ({ session }) => {
   // New state for country filtering
   const [selectedCountry, setSelectedCountry] = useState<string>('All');
   const [countries, setCountries] = useState<string[]>(['All']);
+
+  // Add these new states to store unique values
+  const [uniqueNatureValues, setUniqueNatureValues] = useState<string[]>([]);
+  const [uniqueCreditTermsValues, setUniqueCreditTermsValues] = useState<string[]>([]);
 
   // Mutations
   const updateMutation = useMutation({
@@ -64,10 +64,10 @@ const Client: React.FC<ClientProps> = ({ session }) => {
 
   const createMutation = useMutation({
     mutationFn: (payload: CreateB2BClientPayload) => createB2BClient(payload),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['b2bClients'] });
       toast.success('Client created successfully');
-      setIsCreateModalOpen(false);
+      return data;
     },
     onError: (error) => {
       toast.error(`Error creating client: ${error.message}`);
@@ -84,14 +84,28 @@ const Client: React.FC<ClientProps> = ({ session }) => {
     enabled: !!companyInfo?.id,
   });
 
-  const uniqueNatures = Array.from(new Set(clients?.map(client => client.nature).filter(Boolean) || []));
-  const uniqueCreditTerms = Array.from(new Set(clients?.map(client => client.credit_terms).filter(Boolean) || []));
-
   // Update useEffect to extract unique countries
   useEffect(() => {
     if (clients) {
       const uniqueCountries = Array.from(new Set(clients.map(client => client.origin_country || 'Uncategorized')));
       setCountries(['All', ...uniqueCountries.sort()]);
+    }
+  }, [clients]);
+
+  // Add this useEffect to extract unique values from clients
+  useEffect(() => {
+    if (clients) {
+      // Extract unique nature values
+      const natureValues = Array.from(
+        new Set(clients.map(client => client.nature).filter(Boolean))
+      );
+      setUniqueNatureValues(natureValues);
+
+      // Extract unique credit terms values
+      const creditTermsValues = Array.from(
+        new Set(clients.map(client => client.credit_terms).filter(Boolean))
+      );
+      setUniqueCreditTermsValues(creditTermsValues);
     }
   }, [clients]);
 
@@ -108,17 +122,17 @@ const Client: React.FC<ClientProps> = ({ session }) => {
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
       filtered = filtered.filter(client => 
-        client.client_company.toLowerCase().includes(search) ||
-        client.name.toLowerCase().includes(search) ||
-        client.email.toLowerCase().includes(search)
+        (client.client_company?.toLowerCase() || '').includes(search) ||
+        (client.name?.toLowerCase() || '').includes(search) ||
+        (client.email?.toLowerCase() || '').includes(search)
       );
     }
 
     // Sort if needed
     if (sortOrder === 'asc') {
-      filtered.sort((a, b) => a.client_company.localeCompare(b.client_company));
+      filtered.sort((a, b) => (a.client_company || '').localeCompare(b.client_company || ''));
     } else {
-      filtered.sort((a, b) => b.client_company.localeCompare(a.client_company));
+      filtered.sort((a, b) => (b.client_company || '').localeCompare(a.client_company || ''));
     }
 
     return filtered;
@@ -152,44 +166,11 @@ const Client: React.FC<ClientProps> = ({ session }) => {
     }
   };
 
-  const handleCreate = (e: React.FormEvent) => {
-    e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
-    
-    // Get selected values from react-select
-    const clientCountry = ((form.querySelector('[name="client_country"]') as unknown) as SelectRef)?.getValue()?.[0]?.label;
-    const originCountry = ((form.querySelector('[name="origin_country"]') as unknown) as SelectRef)?.getValue()?.[0]?.label;
-    
-    const payload = {
-      ...Object.fromEntries(formData.entries()),
-      company_id: companyInfo?.id,
-      client_country: clientCountry,
-      origin_country: originCountry,
-    };
-    
-    createMutation.mutate(payload as CreateB2BClientPayload);
-  };
-
   // Add this function to refresh a specific client
   const refreshClient = async (clientId: string) => {
     await queryClient.invalidateQueries({ 
       queryKey: ['b2bClients', companyInfo?.id, clientId]
     });
-  };
-
-  const getSortedCountries = () => {
-    const countries = countryList().getData();
-    const priorityCountries = ['SG', 'MY']; // Singapore and Malaysia country codes
-    
-    const prioritized = countries.filter(country => 
-      priorityCountries.includes(country.value)
-    );
-    const others = countries.filter(country => 
-      !priorityCountries.includes(country.value)
-    );
-    
-    return [...prioritized, ...others];
   };
 
   if (isLoadingCompanyData || isLoadingClients) {
@@ -361,200 +342,22 @@ const Client: React.FC<ClientProps> = ({ session }) => {
           refreshClient={refreshClient}
         />
 
-        {/* Create Modal */}
-        <Transition appear show={isCreateModalOpen} as={Fragment}>
-          <Dialog as="div" className="relative z-10" onClose={() => setIsCreateModalOpen(false)}>
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0"
-              enterTo="opacity-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100"
-              leaveTo="opacity-0"
-            >
-              <div className="fixed inset-0 bg-black bg-opacity-25" />
-            </Transition.Child>
-
-            <div className="fixed inset-0 overflow-y-auto">
-              <div className="flex min-h-full items-center justify-center p-4 text-center">
-                <Transition.Child
-                  as={Fragment}
-                  enter="ease-out duration-300"
-                  enterFrom="opacity-0 scale-95"
-                  enterTo="opacity-100 scale-100"
-                  leave="ease-in duration-200"
-                  leaveFrom="opacity-100 scale-100"
-                  leaveTo="opacity-0 scale-95"
-                >
-                  <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                    <Dialog.Title
-                      as="h3"
-                      className="text-lg font-medium leading-6 text-gray-900"
-                    >
-                      Create New Client
-                    </Dialog.Title>
-                    
-                    <form onSubmit={handleCreate} className="mt-4 space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Company Name</label>
-                        <input
-                          title="Company Name"
-                          placeholder="Enter Company Name"
-                          type="text"
-                          name="client_company"
-                          required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Business Unit</label>
-                        <input
-                          title="Business Unit"
-                          placeholder="Enter Business Unit"
-                          type="text"
-                          name="business_unit"
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Contact Person</label>
-                        <input
-                          title="Contact Person"
-                          placeholder="Enter Contact Person"
-                          type="text"
-                          name="name"
-                          required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Email</label>
-                        <input
-                          title="Email"
-                          placeholder="Enter Email"
-                          type="email"
-                          name="email"
-                          required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Contact Number</label>
-                        <input
-                          title="Contact Number"
-                          placeholder="Enter Contact Number"
-                          type="text"
-                          name="contact_number"
-                          required
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Nature</label>
-                        <input
-                          title="Nature"
-                          placeholder="Enter or select Nature"
-                          type="text"
-                          name="nature"
-                          list="natures"
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        />
-                        <datalist id="natures">
-                          {uniqueNatures.map((nature) => (
-                            <option key={nature} value={nature} />
-                          ))}
-                        </datalist>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Credit Terms</label>
-                        <input
-                          title="Credit Terms"
-                          placeholder="Enter or select Credit Terms"
-                          type="text"
-                          name="credit_terms"
-                          list="creditTerms"
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        />
-                        <datalist id="creditTerms">
-                          {uniqueCreditTerms.map((term) => (
-                            <option key={term} value={term} />
-                          ))}
-                        </datalist>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Last Price</label>
-                        <input
-                          title="Last Price"
-                          placeholder="Enter Last Price"
-                          type="text"
-                          name="last_price"
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Remarks</label>
-                        <textarea
-                          title="Remarks"
-                          placeholder="Enter Remarks"
-                          name="remarks"
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                          rows={3}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Client Country</label>
-                        <Select
-                          name="client_country"
-                          options={getSortedCountries()}
-                          className="mt-1"
-                          placeholder="Select Client Country"
-                          required
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Origin Country</label>
-                        <Select
-                          name="origin_country"
-                          options={getSortedCountries()}
-                          className="mt-1"
-                          placeholder="Select Origin Country"
-                          required
-                        />
-                      </div>
-
-                      <div className="mt-6 flex justify-end space-x-2">
-                        <button
-                          type="button"
-                          className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                          onClick={() => setIsCreateModalOpen(false)}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="submit"
-                          className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                        >
-                          Create
-                        </button>
-                      </div>
-                    </form>
-                  </Dialog.Panel>
-                </Transition.Child>
-              </div>
-            </div>
-          </Dialog>
-        </Transition>
+        <CreateClientModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          handleCreate={async (payload) => {
+            try {
+              const result = await createMutation.mutateAsync(payload);
+              return result;
+            } catch (error) {
+              console.error('Error in create mutation:', error);
+              throw error;
+            }
+          }}
+          companyId={companyInfo?.id || ''}
+          uniqueNatureValues={uniqueNatureValues}
+          uniqueCreditTermsValues={uniqueCreditTermsValues}
+        />
       </div>
     </div>
   );
