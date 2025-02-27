@@ -50,7 +50,9 @@ export interface CreateProductVariantRequest {
     name: string;
     image?: File;
     product_id: number;
-} 
+    product_barcode?: string;
+    carton_barcode?: string;
+}
 
 export interface UpdateProductVariantRequest {
     name?: string;
