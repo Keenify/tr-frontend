@@ -48,6 +48,12 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
     initialize();
   }, [companyInfo, employeeResponses]);
 
+  // Helper function to capitalize the first letter of a string
+  const capitalizeFirstLetter = (string: string) => {
+    if (!string) return '';
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -128,9 +134,11 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                 }}>
                   {response.questions.find((rq) => rq.question_id === q.id)?.answer_text?.split('\n').map((line, i) => {
                     const isGoalOrResult = q.question_text.includes('Today Goals') || q.question_text.includes('Targeted Results');
+                    // Capitalize the first letter of each line
+                    const capitalizedLine = capitalizeFirstLetter(line);
                     return (
                       <React.Fragment key={i}>
-                        {isGoalOrResult ? `• ${line}` : line}
+                        {isGoalOrResult ? `• ${capitalizedLine}` : capitalizedLine}
                         <br />
                       </React.Fragment>
                     );
