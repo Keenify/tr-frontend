@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Calendar,
   Power,
   ThumbsUp,
   ChevronDown,
   Lock,
+  Search,
 } from "react-feather"; // Import Power, ThumbsUp, and Clock icons from react-feather
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "../../../lib/supabase"; // Import supabase client
@@ -267,6 +268,23 @@ export function DashboardLayout({
   if (companyError) {
     console.error("Error fetching company data:", companyError);
   }
+
+  // Add new state for search
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Filter navigation items based on search
+  const filteredNavigation = useMemo(() => {
+    if (!searchTerm.trim()) return navigationConfig;
+
+    const term = searchTerm.toLowerCase();
+    return navigationConfig.filter(tab => {
+      const matchesTab = tab.label.toLowerCase().includes(term);
+      const matchesSubTabs = tab.subTabs?.some(
+        subTab => subTab.label.toLowerCase().includes(term)
+      );
+      return matchesTab || matchesSubTabs;
+    });
+  }, [searchTerm]);
 
   // Update states when props change
   useEffect(() => {
@@ -556,9 +574,28 @@ export function DashboardLayout({
             </svg>
           </button>
 
-          <div className="flex flex-col h-full py-6">
+          <div className="flex flex-col h-full">
+            {/* Search Bar */}
+            {!isSidebarCollapsed && (
+              <div className="px-4 py-3">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search menu..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-700 text-white placeholder-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                    <Search className="h-4 w-4 text-gray-400" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Menu */}
             <nav className="flex-1 space-y-1 px-3 overflow-y-auto [&::-webkit-scrollbar]:w-0">
-              {navigationConfig.map((tab) => (
+              {filteredNavigation.map((tab) => (
                 <div key={tab.id} className="relative">
                   <button
                     onClick={() => handleTabChange(tab.id)}
@@ -575,7 +612,7 @@ export function DashboardLayout({
                       )}
                     </span>
                     {!isSidebarCollapsed && tab.isExpandable && (
-                      <span className={`transition-transform duration-200 ${
+                      <ChevronDown size={16} className={`transition-transform duration-200 ${
                         (tab.id === "people" && isPeopleSubmenuOpen) ||
                         (tab.id === "sales" && isSalesSubmenuOpen) ||
                         (tab.id === "meeting" && isMeetingSubmenuOpen) ||
@@ -586,42 +623,38 @@ export function DashboardLayout({
                         (tab.id === "thePlan" && isThePlanSubmenuOpen)
                           ? "rotate-180"
                           : ""
-                      }`}>
-                        <ChevronDown size={16} />
-                      </span>
+                      }`} />
                     )}
                   </button>
 
-                  {/* Submenu */}
+                  {/* Show submenu if parent matches search or any child matches */}
                   {tab.subTabs && !isSidebarCollapsed && (
-                    <div
-                      className={`mt-1 ml-4 space-y-1 transition-all duration-200 ${
-                        (tab.id === "people" && isPeopleSubmenuOpen) ||
-                        (tab.id === "sales" && isSalesSubmenuOpen) ||
-                        (tab.id === "meeting" && isMeetingSubmenuOpen) ||
-                        (tab.id === "financeData" && isFinanceDataSubmenuOpen) ||
-                        (tab.id === "process" && isProcessSubmenuOpen) ||
-                        (tab.id === "technology" && isTechnologySubmenuOpen) ||
-                        (tab.id === "teamHealth" && isTeamHealthSubmenuOpen) ||
-                        (tab.id === "thePlan" && isThePlanSubmenuOpen)
-                          ? "opacity-100 max-h-screen"
-                          : "opacity-0 max-h-0 overflow-hidden"
-                      }`}
-                    >
-                      {tab.subTabs.map((subTab) => (
-                        <button
-                          key={subTab.id}
-                          onClick={() => handleSubTabClick(subTab.id as SubTabType)}
-                          className={`w-full flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-colors ${
-                            localActiveSubTab === subTab.id
-                              ? "bg-indigo-500/30 text-white"
-                              : "text-gray-400 hover:bg-gray-700/30 hover:text-white"
-                          }`}
-                        >
-                          <subTab.icon size={16} className={localActiveSubTab === subTab.id ? "text-indigo-400" : "text-gray-500"} />
-                          <span className="truncate">{subTab.label}</span>
-                        </button>
-                      ))}
+                    <div className={`mt-1 ml-4 space-y-1 transition-all duration-200 ${
+                      ((tab.id === "people" && isPeopleSubmenuOpen) ||
+                       // ... other submenu conditions ...
+                       searchTerm.trim() !== "") // Always show if searching
+                        ? "opacity-100 max-h-screen"
+                        : "opacity-0 max-h-0 overflow-hidden"
+                    }`}>
+                      {tab.subTabs
+                        .filter(subTab => 
+                          !searchTerm.trim() || 
+                          subTab.label.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        .map((subTab) => (
+                          <button
+                            key={subTab.id}
+                            onClick={() => handleSubTabClick(subTab.id as SubTabType)}
+                            className={`w-full flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-colors ${
+                              localActiveSubTab === subTab.id
+                                ? "bg-indigo-500/30 text-white"
+                                : "text-gray-400 hover:bg-gray-700/30 hover:text-white"
+                            }`}
+                          >
+                            <subTab.icon size={16} className={localActiveSubTab === subTab.id ? "text-indigo-400" : "text-gray-500"} />
+                            <span className="truncate">{subTab.label}</span>
+                          </button>
+                        ))}
                     </div>
                   )}
                 </div>
