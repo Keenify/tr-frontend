@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DragDropContext } from 'react-beautiful-dnd';
 import { TrelloList } from './TrelloList';
 import { TrelloCardModal } from './TrelloCardModal';
 import { useTrelloBoard } from './hooks/useTrelloBoard';
 import { StrictModeDroppable } from './StrictModeDroppable';
+import { Session } from "@supabase/supabase-js";
+import { useUserAndCompanyData } from '../../hooks/useUserAndCompanyData';
+import { directoryService } from '../../../shared/services/directoryService';
+import { Employee } from '@/shared/types/directory.types';
 
 /**
  * Interface representing the possible updates that can be made to a Trello card
@@ -28,6 +32,7 @@ export interface CardUpdate {
  * @property {Function} [onCardDelete] - Callback when a card is deleted
  * @property {Function} [onListDelete] - Callback when a list is deleted
  * @property {string} userRole - Role of the current user (determines permissions)
+ * @property {Session} [session] - Optional Supabase session object
  */
 interface TrelloBoardProps {
   initialLists: Array<{
@@ -56,6 +61,7 @@ interface TrelloBoardProps {
   onCardDelete?: (listId: string, cardId: string) => Promise<void>;
   onListDelete?: (listId: string) => Promise<void>;
   userRole: string;
+  session?: Session;
 }
 
 /**
@@ -80,7 +86,8 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   onListAdd,
   onCardDelete,
   onListDelete,
-  userRole
+  userRole,
+  session
 }) => {
   const { 
     lists, 
@@ -118,6 +125,61 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddingList, setIsAddingList] = useState(false);
   const [newListTitle, setNewListTitle] = useState('');
+  
+  const { companyInfo } = useUserAndCompanyData(session?.user?.id || '');
+
+  // Make sure this is defined at the component level
+  const [employees, setEmployees] = useState<Employee[]>([]);
+
+  // Improved employee fetching using directoryService
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      if (!companyInfo?.id) {
+        console.log('Company info not available yet');
+        return;
+      }
+      
+      console.log('Fetching employees for company:', companyInfo.id);
+      
+      try {
+        // Use directoryService similar to OrgChart component
+        const employeesData = await directoryService.fetchEmployees(companyInfo.id);
+        
+        if (employeesData && employeesData.length > 0) {
+          console.log('Employees fetched successfully:', employeesData);
+          setEmployees(employeesData);
+        } else {
+          console.log('No employees found for company:', companyInfo.id);
+        }
+      } catch (error) {
+        console.error('Exception when fetching employees:', error);
+      }
+    };
+
+    if (companyInfo?.id) {
+      fetchEmployees();
+    }
+  }, [companyInfo]);
+
+  // Debug logging for session and company info
+  useEffect(() => {
+    if (session) {
+      console.log('Session available:', session.user.id);
+    } else {
+      console.log('No session available');
+    }
+    
+    if (companyInfo) {
+      console.log('Company info:', companyInfo);
+    }
+  }, [session, companyInfo]);
+
+  // Use the employees data
+  useEffect(() => {
+    if (employees.length > 0) {
+      console.log(`Found ${employees.length} employees for the board`);
+    }
+  }, [employees]);
 
   const handleAddListSubmit = (e: React.FormEvent) => {
     e.preventDefault();
