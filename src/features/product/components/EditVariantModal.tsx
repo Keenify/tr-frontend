@@ -1,6 +1,7 @@
 import React from 'react';
 import { ProductVariant } from '../../../shared/types/Product';
 import { deleteProductVariant, updateProductVariant } from '../../../services/useProductVariants';
+import toast from 'react-hot-toast';
 
 interface EditVariantModalProps {
     isOpen: boolean;
@@ -75,8 +76,10 @@ const EditVariantModal: React.FC<EditVariantModalProps> = ({ isOpen, onClose, on
             });
             setImage(null);
             onClose();
+            toast.success('Product variant updated successfully');
         } catch (error) {
             console.error('Failed to update variant:', error);
+            toast.error('Failed to update product variant');
         }
     };
 
@@ -86,8 +89,10 @@ const EditVariantModal: React.FC<EditVariantModalProps> = ({ isOpen, onClose, on
                 await deleteProductVariant(variant.id);
                 onDelete?.();
                 onClose();
+                toast.success('Product variant deleted successfully');
             } catch (error) {
                 console.error('Failed to delete variant:', error);
+                toast.error('Failed to delete product variant');
             }
         }
     };

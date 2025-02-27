@@ -24,12 +24,27 @@ export const createProductVariant = async (data: CreateProductVariantRequest): P
         formData.append('image', data.image);
     }
 
-    const response = await fetch(`${BACKEND_API_DOMAIN}/products/variants/?name=${encodeURIComponent(data.name)}&product_id=${data.product_id}`, {
+    const url = new URL(`${BACKEND_API_DOMAIN}/products/variants/`);
+    url.searchParams.append('name', encodeURIComponent(data.name));
+    url.searchParams.append('product_id', data.product_id.toString());
+    
+    // Add barcode parameters if they exist
+    if (data.product_barcode) {
+        url.searchParams.append('product_barcode', data.product_barcode);
+    }
+    
+    if (data.carton_barcode) {
+        url.searchParams.append('carton_barcode', data.carton_barcode);
+    }
+
+    const response = await fetch(url.toString(), {
         method: 'POST',
         body: formData,
     });
 
     if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
         throw new Error('Failed to create product variant');
     }
 
@@ -50,6 +65,15 @@ export const updateProductVariant = async (
     if (data.name) {
         url.searchParams.append('name', data.name);
     }
+    
+    // Add product_barcode and carton_barcode to URL parameters
+    if (data.product_barcode !== undefined) {
+        url.searchParams.append('product_barcode', data.product_barcode);
+    }
+    
+    if (data.carton_barcode !== undefined) {
+        url.searchParams.append('carton_barcode', data.carton_barcode);
+    }
 
     const response = await fetch(url.toString(), {
         method: 'PUT',
@@ -57,6 +81,8 @@ export const updateProductVariant = async (
     });
 
     if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
         throw new Error('Failed to update product variant');
     }
 
