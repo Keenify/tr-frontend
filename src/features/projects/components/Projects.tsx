@@ -180,6 +180,7 @@ const Project: React.FC<ProjectProps> = ({
         onListAdd={handleListAdd}
         onListDelete={handleListDelete}
         userRole={userRole}
+        session={session}
       />
     </div>
   );
