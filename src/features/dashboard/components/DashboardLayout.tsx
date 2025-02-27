@@ -631,7 +631,13 @@ export function DashboardLayout({
                   {tab.subTabs && !isSidebarCollapsed && (
                     <div className={`mt-1 ml-4 space-y-1 transition-all duration-200 ${
                       ((tab.id === "people" && isPeopleSubmenuOpen) ||
-                       // ... other submenu conditions ...
+                       (tab.id === "sales" && isSalesSubmenuOpen) ||
+                       (tab.id === "meeting" && isMeetingSubmenuOpen) ||
+                       (tab.id === "financeData" && isFinanceDataSubmenuOpen) ||
+                       (tab.id === "process" && isProcessSubmenuOpen) ||
+                       (tab.id === "technology" && isTechnologySubmenuOpen) ||
+                       (tab.id === "teamHealth" && isTeamHealthSubmenuOpen) ||
+                       (tab.id === "thePlan" && isThePlanSubmenuOpen) ||
                        searchTerm.trim() !== "") // Always show if searching
                         ? "opacity-100 max-h-screen"
                         : "opacity-0 max-h-0 overflow-hidden"
