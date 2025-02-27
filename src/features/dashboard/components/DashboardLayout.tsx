@@ -557,7 +557,7 @@ export function DashboardLayout({
           </button>
 
           <div className="flex flex-col h-full py-6">
-            <nav className="flex-1 space-y-1 px-3">
+            <nav className="flex-1 space-y-1 px-3 overflow-y-auto [&::-webkit-scrollbar]:w-0">
               {navigationConfig.map((tab) => (
                 <div key={tab.id} className="relative">
                   <button
