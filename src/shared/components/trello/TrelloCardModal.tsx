@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { createCardAttachment, deleteAttachment, getCardAttachments, getAttachmentUrl, CardAttachment } from './services/useCardAttachment';
 import { assignEmployeeToCard, unassignEmployeeFromCard, getCardAssignees } from './services/useCardAssignee';
@@ -57,7 +57,26 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [isUpdatingAssignees, setIsUpdatingAssignees] = useState(false);
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
   
+  // Filter employees based on search term
+  const filteredEmployees = useMemo(() => {
+    if (!searchTerm.trim()) return employees;
+    
+    const term = searchTerm.toLowerCase();
+    return employees.filter(emp => 
+      emp.first_name.toLowerCase().includes(term) || 
+      emp.last_name.toLowerCase().includes(term)
+    );
+  }, [employees, searchTerm]);
+
+  // Show toast message
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   // Check if user can delete attachments (only managers can)
   const canDeleteAttachments = userRole.toLowerCase().includes('manager');
 
@@ -95,11 +114,6 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
     fetchAttachments();
   }, [card.id]);
 
-  useEffect(() => {
-    console.log('TrelloCardModal received employees:', employees);
-    console.log('Current assignees:', assignees);
-  }, [employees, assignees]);
-
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setIsUploading(true);
     console.log('Card ID:', card.id);
@@ -111,8 +125,10 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       });
       const newAttachments = await Promise.all(uploadPromises);
       setAttachments(prev => [...prev, ...newAttachments]);
+      showToast(`${acceptedFiles.length} file(s) uploaded successfully`, 'success');
     } catch (error) {
       console.error('Failed to upload attachments:', error);
+      showToast('Failed to upload attachments', 'error');
     } finally {
       setIsUploading(false);
     }
@@ -132,14 +148,19 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
     setIsUpdatingAssignees(true);
     
     try {
+      const employee = employees.find(emp => emp.id === employeeId);
+      const employeeName = employee ? `${employee.first_name} ${employee.last_name}` : 'Employee';
+      
       if (assignees.includes(employeeId)) {
         // Unassign employee
         console.log(`Unassigning employee ${employeeId} from card ${card.id}`);
         const success = await unassignEmployeeFromCard(card.id, employeeId);
         if (success) {
           setAssignees(prev => prev.filter(id => id !== employeeId));
+          showToast(`${employeeName} unassigned from card`, 'success');
           console.log('Unassign successful');
         } else {
+          showToast(`Failed to unassign ${employeeName}`, 'error');
           console.error('Unassign returned false');
         }
       } else {
@@ -148,16 +169,40 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
         const result = await assignEmployeeToCard(card.id, employeeId);
         if (result) {
           setAssignees(prev => [...prev, employeeId]);
+          showToast(`${employeeName} assigned to card`, 'success');
           console.log('Assign successful');
         } else {
+          showToast(`Failed to assign ${employeeName}`, 'error');
           console.error('Assign failed');
         }
       }
     } catch (error) {
       console.error('Failed to update assignee:', error);
+      showToast('Failed to update assignee', 'error');
     } finally {
       setIsUpdatingAssignees(false);
-      setShowAssigneeDropdown(false);
+      setSearchTerm('');
+    }
+  };
+
+  const handleRemoveAttachment = async (attachmentId: string) => {
+    try {
+      await deleteAttachment(attachmentId);
+      setAttachments(prev => prev.filter(a => a.id !== attachmentId));
+      showToast('Attachment removed successfully', 'success');
+    } catch (error) {
+      console.error('Failed to delete attachment:', error);
+      showToast('Failed to remove attachment', 'error');
+    }
+  };
+
+  const handleOpenAttachment = async (attachmentId: string) => {
+    try {
+      const url = await getAttachmentUrl(attachmentId);
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error('Failed to get attachment URL:', error);
+      showToast('Failed to open attachment', 'error');
     }
   };
 
@@ -172,24 +217,6 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
     console.log('Saving card with assignees:', assignees);
     onSave(updatedCard);
     onClose();
-  };
-
-  const handleRemoveAttachment = async (attachmentId: string) => {
-    try {
-      await deleteAttachment(attachmentId);
-      setAttachments(prev => prev.filter(a => a.id !== attachmentId));
-    } catch (error) {
-      console.error('Failed to delete attachment:', error);
-    }
-  };
-
-  const handleOpenAttachment = async (attachmentId: string) => {
-    try {
-      const url = await getAttachmentUrl(attachmentId);
-      window.open(url, '_blank');
-    } catch (error) {
-      console.error('Failed to get attachment URL:', error);
-    }
   };
 
   if (!isOpen) return null;
@@ -214,10 +241,18 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg w-full max-w-5xl p-6 max-h-[90vh] overflow-hidden flex flex-col">
+      {/* Toast notification */}
+      {toast && (
+        <div className={`fixed top-4 right-4 px-4 py-2 rounded-md shadow-lg z-50 transition-all duration-300 
+          ${toast.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+          {toast.message}
+        </div>
+      )}
+      
+      <div className="bg-white rounded-lg w-full max-w-6xl p-6 max-h-[90vh] overflow-hidden flex flex-col">
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
           <div className="flex-grow overflow-auto">
-            <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex flex-col md:flex-row gap-8">
               {/* Left column - Main card info */}
               <div className="flex-1">
                 <div className="mb-6">
@@ -243,7 +278,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                     title="Enter card description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md min-h-[150px]"
+                    className="w-full px-3 py-2 border rounded-md min-h-[200px]"
                     disabled={readOnly}
                   />
                 </div>
@@ -284,84 +319,92 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                   <label className="block text-gray-700 text-sm font-bold mb-2">
                     Assignees
                   </label>
-                  <div className="relative">
-                    <div 
-                      className={`
-                        w-full px-3 py-2 border rounded-md flex flex-wrap gap-2 min-h-[42px] cursor-pointer
-                        ${isUpdatingAssignees ? 'opacity-50' : ''}
-                      `}
-                      onClick={() => !readOnly && !isUpdatingAssignees && setShowAssigneeDropdown(!showAssigneeDropdown)}
-                    >
-                      {isUpdatingAssignees && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
-                          <span className="animate-spin h-5 w-5 border-2 border-blue-500 rounded-full border-t-transparent"></span>
-                        </div>
-                      )}
-                      {assignedEmployees.length === 0 ? (
-                        <span className="text-gray-500">No assignees</span>
-                      ) : (
-                        assignedEmployees.map(emp => (
-                          <div key={emp.id} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md flex items-center">
-                            <span>{emp.first_name} {emp.last_name}</span>
-                            {!readOnly && (
-                              <button 
-                                type="button"
-                                className="ml-1 text-blue-600 hover:text-blue-800"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleAssigneeToggle(emp.id);
-                                }}
-                              >
-                                ×
-                              </button>
-                            )}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                    
-                    {showAssigneeDropdown && !readOnly && (
-                      <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                        {employees.length === 0 ? (
-                          <div className="p-3 text-gray-500">No employees available</div>
-                        ) : (
-                          employees.map(emp => (
-                            <div 
-                              key={emp.id} 
-                              className={`
-                                p-2 hover:bg-gray-100 cursor-pointer flex items-center
-                                ${assignees.includes(emp.id) ? 'bg-blue-50' : ''}
-                              `}
+                  
+                  {/* Assigned employees display */}
+                  <div className="mb-2 min-h-[42px] flex flex-wrap gap-2">
+                    {assignedEmployees.length === 0 ? (
+                      <span className="text-gray-500 italic">No assignees</span>
+                    ) : (
+                      assignedEmployees.map(emp => (
+                        <div key={emp.id} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md flex items-center">
+                          <span>{emp.first_name} {emp.last_name}</span>
+                          {!readOnly && (
+                            <button 
+                              type="button"
+                              className="ml-1 text-blue-600 hover:text-blue-800"
                               onClick={() => handleAssigneeToggle(emp.id)}
+                              disabled={isUpdatingAssignees}
                             >
-                              <input
-                                title="Assign employee"
-                                type="checkbox"
-                                checked={assignees.includes(emp.id)}
-                                onChange={() => {}}
-                                className="mr-2"
-                              />
-                              <span>{emp.first_name} {emp.last_name}</span>
-                            </div>
-                          ))
-                        )}
-                      </div>
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      ))
                     )}
                   </div>
+                  
+                  {/* Search and assign */}
+                  {!readOnly && (
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search employees to assign..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onFocus={() => setShowAssigneeDropdown(true)}
+                        className="w-full px-3 py-2 border rounded-md"
+                        disabled={isUpdatingAssignees}
+                      />
+                      
+                      {showAssigneeDropdown && (
+                        <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                          {isUpdatingAssignees && (
+                            <div className="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center z-10">
+                              <span className="animate-spin h-5 w-5 border-2 border-blue-500 rounded-full border-t-transparent"></span>
+                            </div>
+                          )}
+                          
+                          {filteredEmployees.length === 0 ? (
+                            <div className="p-3 text-gray-500">No matching employees found</div>
+                          ) : (
+                            filteredEmployees.map(emp => (
+                              <div 
+                                key={emp.id} 
+                                className={`
+                                  p-2 hover:bg-gray-100 cursor-pointer flex items-center
+                                  ${assignees.includes(emp.id) ? 'bg-blue-50' : ''}
+                                `}
+                                onClick={() => handleAssigneeToggle(emp.id)}
+                              >
+                                <input
+                                  title="Assign employee"
+                                  type="checkbox"
+                                  checked={assignees.includes(emp.id)}
+                                  onChange={() => {}}
+                                  className="mr-2"
+                                />
+                                <span>{emp.first_name} {emp.last_name}</span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-gray-700 text-sm font-bold mb-2">
                     Attachments
                   </label>
-                  <div className="space-y-2 mb-4 max-h-[200px] overflow-y-auto">
+                  <div className="space-y-2 mb-4 max-h-[200px] overflow-y-auto border rounded-md p-2">
                     {attachments.length === 0 ? (
-                      <p className="text-gray-500 italic">No attachments</p>
+                      <p className="text-gray-500 italic p-2">No attachments</p>
                     ) : (
                       attachments.map((attachment) => (
                         <div 
                           key={attachment.id}
-                          className="flex items-center justify-between p-2 border rounded-md"
+                          className="flex items-center justify-between p-2 border-b last:border-b-0"
                         >
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             <a
