@@ -5,6 +5,9 @@ import { TrelloCardModal } from './TrelloCardModal';
 import { useTrelloBoard } from './hooks/useTrelloBoard';
 import { StrictModeDroppable } from './StrictModeDroppable';
 
+/**
+ * Interface representing the possible updates that can be made to a Trello card
+ */
 export interface CardUpdate {
   title?: string;
   description?: string;
@@ -12,6 +15,20 @@ export interface CardUpdate {
   thumbnailUrl?: string;
 }
 
+/**
+ * Props for the TrelloBoard component
+ * @interface TrelloBoardProps
+ * @property {Array} initialLists - Initial lists data to populate the board
+ * @property {Function} [onListMove] - Callback when a list is moved
+ * @property {Function} [onCardMove] - Callback when a card is moved
+ * @property {Function} [onCardUpdate] - Callback when a card is updated
+ * @property {Function} [onListTitleChange] - Callback when a list title is changed
+ * @property {Function} [onCardAdd] - Callback when a card is added
+ * @property {Function} [onListAdd] - Callback when a list is added
+ * @property {Function} [onCardDelete] - Callback when a card is deleted
+ * @property {Function} [onListDelete] - Callback when a list is deleted
+ * @property {string} userRole - Role of the current user (determines permissions)
+ */
 interface TrelloBoardProps {
   initialLists: Array<{
     id: string;
@@ -41,6 +58,18 @@ interface TrelloBoardProps {
   userRole: string;
 }
 
+/**
+ * TrelloBoard component - A Kanban-style board with draggable lists and cards
+ * 
+ * Features:
+ * - Drag and drop for lists and cards
+ * - Add, edit, and delete lists and cards
+ * - Search functionality for cards
+ * - Role-based permissions
+ * - Card modal for detailed editing
+ * 
+ * @component
+ */
 export const TrelloBoard: React.FC<TrelloBoardProps> = ({ 
   initialLists,
   onListMove,
