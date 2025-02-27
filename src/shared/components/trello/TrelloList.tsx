@@ -27,6 +27,7 @@ interface TrelloListProps {
     attachments?: CardAttachment[];
   }) => void;
   userRole: string;
+  searchTerm?: string;
 }
 
 /**
@@ -57,6 +58,7 @@ interface TrelloListProps {
  * @param {Function} onDelete - Handler for list delete events
  * @param {Function} onCardUpdate - Handler for card update events
  * @param {string} userRole - User role for permissions
+ * @param {string} searchTerm - Search term for filtering cards
  */
 
 export const TrelloList: React.FC<TrelloListProps> = ({
@@ -70,6 +72,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   onDelete,
   onCardUpdate,
   userRole,
+  searchTerm = '',
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [listTitle, setListTitle] = useState(title);
@@ -117,6 +120,14 @@ export const TrelloList: React.FC<TrelloListProps> = ({
       // Optionally show an error message to the user
     }
   };
+
+  // Filter cards based on search term
+  const filteredCards = searchTerm 
+    ? cards.filter(card => 
+        card.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        (card.description && card.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    : cards;
 
   return (
     <Draggable draggableId={`list-${id}`} index={index}>
@@ -167,7 +178,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
               </div>
               <div className="flex items-center gap-2">
                 <span className="bg-gray-200 px-2 py-1 rounded-full text-sm">
-                  {cards.length}
+                  {filteredCards.length}
                 </span>
                 {canManageList && (
                   <div className="relative">
@@ -215,10 +226,10 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                     rounded-lg
                     transition-colors
                     duration-200
-                    ${cards.length === 0 ? 'border-2 border-dashed border-gray-300' : ''}
+                    ${filteredCards.length === 0 ? 'border-2 border-dashed border-gray-300' : ''}
                   `}
                 >
-                  {cards.map((card, cardIndex) => (
+                  {filteredCards.map((card, cardIndex) => (
                     <TrelloCard
                       key={card.id}
                       {...card}
@@ -229,62 +240,66 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                     />
                   ))}
                   {dropProvided.placeholder}
-                  {cards.length === 0 && !snapshot.isDraggingOver && (
+                  {filteredCards.length === 0 && !snapshot.isDraggingOver && (
                     <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-                      Drop cards here
+                      {searchTerm ? 'No matching cards' : 'Drop cards here'}
                     </div>
                   )}
                 </div>
               )}
             </StrictModeDroppable>
 
-            {/* Add Card Form/Button */}
-            {isAddingCard ? (
-              <form onSubmit={handleCardSubmit} className="mt-2">
-                <textarea
-                  autoFocus
-                  value={newCardTitle}
-                  onChange={(e) => setNewCardTitle(e.target.value)}
-                  placeholder="Enter a title for this card..."
-                  className="w-full p-2 rounded border border-gray-300 shadow-sm min-h-[60px]"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleCardSubmit(e);
-                    }
-                    if (e.key === 'Escape') {
-                      setIsAddingCard(false);
-                      setNewCardTitle('');
-                    }
-                  }}
-                />
-                <div className="flex items-center gap-2 mt-2">
+            {/* Add Card Form/Button - Only show when not searching */}
+            {!searchTerm && (
+              <>
+                {isAddingCard ? (
+                  <form onSubmit={handleCardSubmit} className="mt-2">
+                    <textarea
+                      autoFocus
+                      value={newCardTitle}
+                      onChange={(e) => setNewCardTitle(e.target.value)}
+                      placeholder="Enter a title for this card..."
+                      className="w-full p-2 rounded border border-gray-300 shadow-sm min-h-[60px]"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleCardSubmit(e);
+                        }
+                        if (e.key === 'Escape') {
+                          setIsAddingCard(false);
+                          setNewCardTitle('');
+                        }
+                      }}
+                    />
+                    <div className="flex items-center gap-2 mt-2">
+                      <button
+                        type="submit"
+                        className="px-3 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600"
+                      >
+                        Add Card
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAddingCard(false);
+                          setNewCardTitle('');
+                        }}
+                        className="px-2 py-1.5 text-gray-500 hover:text-gray-700"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </form>
+                ) : (
                   <button
-                    type="submit"
-                    className="px-3 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    onClick={handleAddCardClick}
+                    className="mt-2 w-full py-2 px-3 text-gray-600 hover:bg-gray-200 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
                   >
-                    Add Card
+                    <span>+</span>
+                    Add a Card
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsAddingCard(false);
-                      setNewCardTitle('');
-                    }}
-                    className="px-2 py-1.5 text-gray-500 hover:text-gray-700"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <button
-                onClick={handleAddCardClick}
-                className="mt-2 w-full py-2 px-3 text-gray-600 hover:bg-gray-200 rounded-md transition-colors duration-200 flex items-center justify-center gap-2"
-              >
-                <span>+</span>
-                Add a Card
-              </button>
+                )}
+              </>
             )}
 
             {/* Delete Confirmation Modal */}
