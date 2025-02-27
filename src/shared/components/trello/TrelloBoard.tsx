@@ -8,16 +8,7 @@ import { Session } from "@supabase/supabase-js";
 import { useUserAndCompanyData } from '../../hooks/useUserAndCompanyData';
 import { directoryService } from '../../../shared/services/directoryService';
 import { Employee } from '@/shared/types/directory.types';
-
-/**
- * Interface representing the possible updates that can be made to a Trello card
- */
-export interface CardUpdate {
-  title?: string;
-  description?: string;
-  colorCode?: string;
-  thumbnailUrl?: string;
-}
+import { Card, CardUpdate } from './types/card.types';
 
 /**
  * Props for the TrelloBoard component
@@ -38,13 +29,7 @@ interface TrelloBoardProps {
   initialLists: Array<{
     id: string;
     title: string;
-    cards: Array<{
-      id: string;
-      title: string;
-      description?: string;
-      colorCode?: string;
-      thumbnailUrl?: string;
-    }>;
+    cards: Card[];
   }>;
   onListMove?: (sourceIndex: number, destinationIndex: number) => Promise<void>;
   onCardMove?: (
@@ -114,12 +99,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
 
   const [selectedCard, setSelectedCard] = useState<{
     listId: string;
-    card: {
-      id: string;
-      title: string;
-      description?: string;
-      colorCode?: string;
-    };
+    card: Card;
   } | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -188,6 +168,14 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
       setNewListTitle('');
       setIsAddingList(false);
     }
+  };
+
+  // Handle card click to open modal
+  const handleCardClick = (listId: string, card: Card) => {
+    setSelectedCard({
+      listId,
+      card
+    });
   };
 
   return (
@@ -274,6 +262,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
                   onCardDelete={(cardId) => handleCardDelete(list.id, cardId)}
                   onDelete={() => handleListDelete(list.id)}
                   onCardUpdate={(cardId, updates) => handleCardUpdate(list.id, cardId, updates)}
+                  onCardClick={(card) => handleCardClick(list.id, card)}
                   userRole={userRole}
                   searchTerm={searchTerm}
                 />
@@ -335,6 +324,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
           isLoadingAttachments={false}
           userRole={userRole}
           readOnly={userRole !== 'manager'}
+          employees={employees}
         />
       )}
     </div>

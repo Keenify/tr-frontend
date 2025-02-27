@@ -3,6 +3,7 @@ import { TrelloCard } from './TrelloCard';
 import { StrictModeDroppable } from './StrictModeDroppable';
 import { Draggable } from 'react-beautiful-dnd';
 import { CardAttachment } from './services/useCardAttachment';
+import { Card } from './types/card.types';
 
 interface TrelloListProps {
   id: string;
@@ -28,6 +29,7 @@ interface TrelloListProps {
   }) => void;
   userRole: string;
   searchTerm?: string;
+  onCardClick?: (card: Card) => void;
 }
 
 /**
@@ -59,6 +61,7 @@ interface TrelloListProps {
  * @param {Function} onCardUpdate - Handler for card update events
  * @param {string} userRole - User role for permissions
  * @param {string} searchTerm - Search term for filtering cards
+ * @param {Function} onCardClick - Handler for card click events
  */
 
 export const TrelloList: React.FC<TrelloListProps> = ({
@@ -73,6 +76,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   onCardUpdate,
   userRole,
   searchTerm = '',
+  onCardClick,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [listTitle, setListTitle] = useState(title);
@@ -235,8 +239,12 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                       {...card}
                       index={cardIndex}
                       onDelete={() => onCardDelete?.(card.id)}
-                      onUpdate={(updatedCard) => onCardUpdate?.(card.id, updatedCard)}
+                      onUpdate={(updatedCard) => onCardUpdate?.(card.id, {
+                        ...updatedCard,
+                        title: updatedCard.title || card.title
+                      })}
                       userRole={userRole}
+                      onClick={() => onCardClick?.(card)}
                     />
                   ))}
                   {dropProvided.placeholder}
