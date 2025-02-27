@@ -593,8 +593,17 @@ export function DashboardLayout({
               </div>
             )}
 
-            {/* Navigation Menu */}
-            <nav className="flex-1 space-y-1 px-3 overflow-y-auto [&::-webkit-scrollbar]:w-0">
+            {/* Navigation Menu - Updated scrollbar styling */}
+            <nav className="flex-1 space-y-1 px-3 overflow-y-auto 
+              [&::-webkit-scrollbar]:w-2
+              [&::-webkit-scrollbar-track]:bg-transparent
+              [&::-webkit-scrollbar-thumb]:bg-gray-600
+              [&::-webkit-scrollbar-thumb]:rounded-full
+              [&::-webkit-scrollbar-thumb]:border-2
+              [&::-webkit-scrollbar-thumb]:border-transparent
+              [&::-webkit-scrollbar-thumb]:bg-clip-padding
+              [&::-webkit-scrollbar-thumb]:hover:bg-gray-500
+            ">
               {filteredNavigation.map((tab) => (
                 <div key={tab.id} className="relative">
                   <button
