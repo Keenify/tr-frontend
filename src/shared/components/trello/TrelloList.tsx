@@ -4,6 +4,7 @@ import { StrictModeDroppable } from './StrictModeDroppable';
 import { Draggable } from 'react-beautiful-dnd';
 import { CardAttachment } from './services/useCardAttachment';
 import { Card } from './types/card.types';
+import { Employee } from '@/shared/types/directory.types';
 
 interface TrelloListProps {
   id: string;
@@ -30,6 +31,7 @@ interface TrelloListProps {
   userRole: string;
   searchTerm?: string;
   onCardClick?: (card: Card) => void;
+  employees: Employee[];
 }
 
 /**
@@ -62,6 +64,7 @@ interface TrelloListProps {
  * @param {string} userRole - User role for permissions
  * @param {string} searchTerm - Search term for filtering cards
  * @param {Function} onCardClick - Handler for card click events
+ * @param {Array} employees - Array of employee objects
  */
 
 export const TrelloList: React.FC<TrelloListProps> = ({
@@ -77,6 +80,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   userRole,
   searchTerm = '',
   onCardClick,
+  employees = [],
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [listTitle, setListTitle] = useState(title);
@@ -245,6 +249,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                       })}
                       userRole={userRole}
                       onClick={() => onCardClick?.(card)}
+                      employees={employees}
                     />
                   ))}
                   {dropProvided.placeholder}

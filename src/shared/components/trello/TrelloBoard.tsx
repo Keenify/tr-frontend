@@ -252,6 +252,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
             >
               {lists.map((list, index) => (
                 <TrelloList
+                  employees={employees}
                   key={list.id}
                   id={list.id}
                   index={index}

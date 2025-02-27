@@ -3,6 +3,8 @@ import { Draggable } from 'react-beautiful-dnd';
 import { deleteCard } from './services/useCard';
 import { getCardAttachments, CardAttachment } from './services/useCardAttachment';
 import { TrelloCardModal } from './TrelloCardModal';
+import { Card, CardUpdate } from './types/card.types';
+import { Employee } from '@/shared/types/directory.types';
 
 interface TrelloCardProps {
   id: string;
@@ -11,16 +13,13 @@ interface TrelloCardProps {
   description?: string;
   colorCode?: string;
   thumbnailUrl?: string;
+  assignees?: string[];
   onClick?: () => void;
   onDelete?: () => void;
-  onUpdate?: (updatedCard: {
-    id: string;
-    title: string;
-    description?: string;
-    colorCode?: string;
-    attachments?: CardAttachment[];
-  }) => void;
+  onUpdate?: (updatedCard: CardUpdate & { id: string }) => void;
   userRole: string;
+  onCardClick?: (card: Card) => void;
+  employees: Employee[];
 }
 
 /**
@@ -46,10 +45,13 @@ interface TrelloCardProps {
  * @param {string} description - Optional card description
  * @param {string} colorCode - Optional background color
  * @param {string} thumbnailUrl - Optional thumbnail image URL
+ * @param {string[]} assignees - Array of assignee IDs
  * @param {Function} onClick - Handler for card click
  * @param {Function} onDelete - Handler for card deletion
  * @param {Function} onUpdate - Handler for card update
  * @param {string} userRole - User role for permissions
+ * @param {Function} onCardClick - Handler for card click
+ * @param {Employee[]} employees - Array of employees
  */
 export const TrelloCard: React.FC<TrelloCardProps> = ({
   id,
@@ -58,9 +60,12 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   description,
   colorCode,
   thumbnailUrl,
+  assignees = [],
   onDelete,
   onUpdate,
   userRole,
+  onCardClick,
+  employees = [],
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPosition, setDragStartPosition] = useState({ x: 0, y: 0 });
@@ -140,18 +145,31 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
 
   const handleCardClick = async () => {
     if (!isDragging) {
-      setIsModalOpen(true);
-      setIsLoadingAttachments(true);
-      try {
-        if (!id.startsWith('temp-')) {
-          const attachments = await getCardAttachments(id);
-          setCardAttachments(attachments);
+      if (onCardClick) {
+        // Create a Card object using the Card interface
+        const card: Card = {
+          id,
+          title,
+          description,
+          colorCode,
+          thumbnailUrl,
+          assignees
+        };
+        onCardClick(card);
+      } else {
+        setIsModalOpen(true);
+        setIsLoadingAttachments(true);
+        try {
+          if (!id.startsWith('temp-')) {
+            const attachments = await getCardAttachments(id);
+            setCardAttachments(attachments);
+          }
+        } catch (error) {
+          console.error('Failed to fetch attachments:', error);
+          setCardAttachments([]);
+        } finally {
+          setIsLoadingAttachments(false);
         }
-      } catch (error) {
-        console.error('Failed to fetch attachments:', error);
-        setCardAttachments([]);
-      } finally {
-        setIsLoadingAttachments(false);
       }
     }
   };
@@ -265,14 +283,14 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
           isOpen={true}
           onClose={() => setIsModalOpen(false)}
           onSave={(updatedCard) => {
-            setCardAttachments(updatedCard.attachments || []);
+            console.log('Card updated with assignees:', updatedCard.assignees);
             if (onUpdate) {
               onUpdate({
                 id,
-                title: updatedCard.title,
+                title: updatedCard.title || title,
                 description: updatedCard.description,
                 colorCode: updatedCard.colorCode,
-                attachments: updatedCard.attachments
+                assignees: updatedCard.assignees
               });
             }
             setIsModalOpen(false);
@@ -282,11 +300,13 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
             title,
             description,
             colorCode,
+            assignees,
             attachments: cardAttachments
           }}
           isLoadingAttachments={isLoadingAttachments}
           userRole={userRole}
           readOnly={!canManageCard}
+          employees={employees}
         />
       )}
     </>
