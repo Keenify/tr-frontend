@@ -5,13 +5,21 @@ import {
     createLeaveRequest, 
     updateLeaveRequest
 } from '../services/useLeavesRequest';
-import { LeaveRequest, LeaveType, LeaveStatus, CreateLeaveRequestPayload } from '../types/leaveRequest';
+import { 
+    LeaveRequest, 
+    LeaveType, 
+    LeaveStatus, 
+    CreateLeaveRequestPayload, 
+    HalfDayType,
+    TimeoffType 
+} from '../types/leaveRequest';
 import toast from 'react-hot-toast';
 import { ChevronUpDownIcon } from '@heroicons/react/20/solid';
 import { useUserAndCompanyData } from '../../../../shared/hooks/useUserAndCompanyData';
 import { directoryService } from '../../../../shared/services/directoryService';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
+import { uploadLeaveAttachment, getLeaveAttachmentUrl } from '../services/useLeaveAttachments';
 
 interface LeavesRequestProps {
     session: Session;
@@ -29,16 +37,128 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
     } | null>(null);
     const [employeeNames, setEmployeeNames] = useState<Record<string, string>>({});
 
-    // Form state for new request
+    // Updated and new form state
     const [newRequest, setNewRequest] = useState({
-        leave_type: 'annual_leave' as LeaveType,
+        leave_type: '' as LeaveType,
         start_date: '',
         end_date: '',
-        request_reason: ''
+        request_reason: '',
+        half_day: null as HalfDayType,
+        timeoff_type: 'days' as TimeoffType,
+        timeoff_value: 0,
+        attachment_filepath: '',
     });
 
     const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
     const [startDate, endDate] = dateRange;
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+
+    // Helper function to check if it's a single day request
+    const isSingleDayRequest = useCallback(() => {
+        if (!startDate || !endDate) return false;
+        return startDate.toDateString() === endDate.toDateString();
+    }, [startDate, endDate]);
+
+    // Handle leave type change
+    const handleLeaveTypeChange = (type: LeaveType) => {
+        setNewRequest(prev => ({
+            ...prev,
+            leave_type: type,
+            // Reset related fields
+            half_day: null,
+            timeoff_type: 'days',
+            timeoff_value: 0,
+            attachment_filepath: '',
+        }));
+        setDateRange([null, null]);
+        setSelectedFile(null);
+    };
+
+    // Handle file selection
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setSelectedFile(e.target.files[0]);
+        }
+    };
+
+    // Handle date range selection
+    const handleDateChange = (update: [Date | null, Date | null]) => {
+        setDateRange(update);
+        if (update[0]) {
+            setNewRequest(prev => ({ 
+                ...prev, 
+                start_date: update[0]?.toISOString() || '',
+                // Reset half day if not single day
+                half_day: !update[1] || update[0]?.toDateString() === update[1]?.toDateString() 
+                    ? prev.half_day 
+                    : null
+            }));
+        }
+        if (update[1]) {
+            setNewRequest(prev => ({ 
+                ...prev, 
+                end_date: update[1]?.toISOString() || '' 
+            }));
+        }
+    };
+
+    // Handle form submission
+    const handleSubmitRequest = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!userInfo?.id) {
+            toast.error('Employee ID not found');
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            let attachmentPath = '';
+            if (newRequest.leave_type === 'sick_leave' && selectedFile) {
+                attachmentPath = await uploadLeaveAttachment(selectedFile);
+            }
+
+            const payload: CreateLeaveRequestPayload = {
+                leave_type: newRequest.leave_type,
+                start_date: newRequest.start_date,
+                end_date: newRequest.end_date,
+                request_reason: newRequest.request_reason,
+                half_day: isSingleDayRequest() ? newRequest.half_day : null,
+                attachment_filepath: attachmentPath || undefined,
+            };
+
+            // Add timeoff specific fields
+            if (newRequest.leave_type === 'timeoff') {
+                payload.timeoff_type = newRequest.timeoff_type;
+                payload.timeoff_value = newRequest.timeoff_value;
+            }
+
+            console.log('Submitting leave request:', payload);
+            await createLeaveRequest(userInfo.id, payload);
+            
+            toast.success('Leave request submitted successfully');
+            fetchLeaveRequests();
+            
+            // Reset form
+            setNewRequest({
+                leave_type: '' as LeaveType,
+                start_date: '',
+                end_date: '',
+                request_reason: '',
+                half_day: null,
+                timeoff_type: 'days',
+                timeoff_value: 0,
+                attachment_filepath: '',
+            });
+            setDateRange([null, null]);
+            setSelectedFile(null);
+        } catch (error) {
+            console.error('Error submitting leave request:', error);
+            toast.error('Failed to submit leave request');
+        } finally {
+            setIsUploading(false);
+        }
+    };
 
     const fetchLeaveRequests = useCallback(async () => {
         if (!companyId || !userInfo?.id) return;
@@ -75,34 +195,6 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
             fetchLeaveRequests();
         }
     }, [companyId, fetchLeaveRequests]);
-
-    const handleSubmitRequest = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!userInfo?.id) {
-            toast.error('Employee ID not found');
-            return;
-        }
-        try {
-            const payload: CreateLeaveRequestPayload = {
-                leave_type: newRequest.leave_type,
-                start_date: new Date(newRequest.start_date).toISOString(),
-                end_date: new Date(newRequest.end_date).toISOString(),
-                request_reason: newRequest.request_reason
-            };
-            await createLeaveRequest(userInfo.id, payload);
-            toast.success('Leave request submitted successfully');
-            fetchLeaveRequests();
-            setNewRequest({
-                leave_type: 'annual_leave',
-                start_date: '',
-                end_date: '',
-                request_reason: ''
-            });
-        } catch (error) {
-            console.error('Error submitting leave request:', error);
-            toast.error('Failed to submit leave request');
-        }
-    };
 
     const handleUpdateStatus = async (requestId: string, status: LeaveStatus) => {
         try {
@@ -141,13 +233,14 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
 
     const sortedRequests = getSortedRequests();
 
-    const handleDateChange = (update: [Date | null, Date | null]) => {
-        setDateRange(update);
-        if (update[0]) {
-            setNewRequest(prev => ({ ...prev, start_date: update[0]?.toISOString().split('T')[0] || '' }));
-        }
-        if (update[1]) {
-            setNewRequest(prev => ({ ...prev, end_date: update[1]?.toISOString().split('T')[0] || '' }));
+    // Add this new function to handle attachment viewing
+    const handleViewAttachment = async (filepath: string) => {
+        try {
+            const url = await getLeaveAttachmentUrl(filepath);
+            window.open(url, '_blank');
+        } catch (error) {
+            console.error('Error getting attachment URL:', error);
+            toast.error('Failed to open attachment');
         }
     };
 
@@ -162,60 +255,154 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
                 <h2 className="text-lg font-medium mb-4">Submit New Leave Request</h2>
                 <form onSubmit={handleSubmitRequest} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Leave Type Selection */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Leave Type</label>
                             <select
                                 title="Leave Type"
                                 value={newRequest.leave_type}
-                                onChange={(e) => setNewRequest(prev => ({ ...prev, leave_type: e.target.value as LeaveType }))}
+                                onChange={(e) => handleLeaveTypeChange(e.target.value as LeaveType)}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                 required
                             >
+                                <option value="">Select Leave Type</option>
                                 <option value="annual_leave">Annual Leave</option>
                                 <option value="sick_leave">Sick Leave</option>
                                 <option value="timeoff">Time Off</option>
                             </select>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Select Dates</label>
-                            <div className="mt-1 relative">
-                                <DatePicker
-                                    selectsRange={true}
-                                    startDate={startDate}
-                                    endDate={endDate}
-                                    onChange={handleDateChange}
-                                    isClearable={true}
-                                    placeholderText="Select start date - end date"
-                                    className="block w-full min-w-[300px] rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    dateFormat="dd/MM/yyyy"
-                                    minDate={new Date()}
-                                    required
-                                />
-                                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                                    <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                                    </svg>
+
+                        {/* Date Selection - Only show if leave type is selected */}
+                        {newRequest.leave_type && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Select Dates</label>
+                                <div className="mt-1 relative">
+                                    <DatePicker
+                                        selectsRange={true}
+                                        startDate={startDate}
+                                        endDate={endDate}
+                                        onChange={handleDateChange}
+                                        isClearable={true}
+                                        placeholderText="Select start date - end date"
+                                        className="block w-full min-w-[300px] rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        dateFormat="dd/MM/yyyy"
+                                        minDate={new Date()}
+                                        required
+                                    />
                                 </div>
                             </div>
-                        </div>
+                        )}
+
+                        {/* Half Day Selection - Only show for single day annual leave */}
+                        {isSingleDayRequest() && newRequest.leave_type === 'annual_leave' && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Day Type</label>
+                                <select
+                                    title="Day Type"
+                                    value={newRequest.half_day || ''}
+                                    onChange={(e) => setNewRequest(prev => ({ 
+                                        ...prev, 
+                                        half_day: e.target.value as HalfDayType 
+                                    }))}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                >
+                                    <option value="">Full Day</option>
+                                    <option value="AM">AM Half Day</option>
+                                    <option value="PM">PM Half Day</option>
+                                </select>
+                            </div>
+                        )}
+
+                        {/* Time Off Specific Fields - Show after date selection */}
+                        {newRequest.leave_type === 'timeoff' && startDate && (
+                            <>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Time Off Type</label>
+                                    <select
+                                        title="Time Off Type"
+                                        value={newRequest.timeoff_type}
+                                        onChange={(e) => setNewRequest(prev => ({ 
+                                            ...prev, 
+                                            timeoff_type: e.target.value as TimeoffType 
+                                        }))}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        required
+                                    >
+                                        <option value="days">Days</option>
+                                        <option value="hours">Hours</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        {newRequest.timeoff_type === 'hours' ? 'Hours' : 'Days'} Requested
+                                    </label>
+                                    <input
+                                        title="Time Off Value"
+                                        type="number"
+                                        min="1"
+                                        max={newRequest.timeoff_type === 'hours' ? "8" : "365"}
+                                        value={newRequest.timeoff_value}
+                                        onChange={(e) => setNewRequest(prev => ({ 
+                                            ...prev, 
+                                            timeoff_value: parseInt(e.target.value) 
+                                        }))}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        required
+                                    />
+                                </div>
+                            </>
+                        )}
+
+                        {/* File Upload for Sick Leave */}
+                        {newRequest.leave_type === 'sick_leave' && (
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700">Medical Certificate</label>
+                                <input
+                                    title="Medical Certificate"
+                                    type="file"
+                                    accept=".pdf,.jpg,.jpeg,.png"
+                                    onChange={handleFileChange}
+                                    className="mt-1 block w-full text-sm text-gray-500
+                                        file:mr-4 file:py-2 file:px-4
+                                        file:rounded-md file:border-0
+                                        file:text-sm file:font-semibold
+                                        file:bg-blue-50 file:text-blue-700
+                                        hover:file:bg-blue-100"
+                                    required
+                                />
+                                <p className="mt-1 text-sm text-gray-500">
+                                    Please upload your medical certificate (PDF, JPG, PNG)
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Reason Field */}
                         <div className="md:col-span-2">
                             <label className="block text-sm font-medium text-gray-700">Reason</label>
                             <textarea
                                 title="Reason"
                                 value={newRequest.request_reason}
-                                onChange={(e) => setNewRequest(prev => ({ ...prev, request_reason: e.target.value }))}
+                                onChange={(e) => setNewRequest(prev => ({ 
+                                    ...prev, 
+                                    request_reason: e.target.value 
+                                }))}
                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                 rows={3}
                                 required
                             />
                         </div>
                     </div>
+
+                    {/* Submit Button */}
                     <div className="flex justify-end mt-4">
                         <button
                             type="submit"
-                            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            disabled={isUploading}
+                            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 
+                                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                                     disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Submit Request
+                            {isUploading ? 'Submitting...' : 'Submit Request'}
                         </button>
                     </div>
                 </form>
@@ -257,7 +444,16 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
                                 </div>
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Day Type
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Time Off Details
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Reason
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Attachment
                             </th>
                             <th 
                                 onClick={() => sortData('status')}
@@ -290,8 +486,26 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {new Date(request.end_date).toLocaleDateString()}
                                 </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {request.half_day ? `${request.half_day} Half Day` : 'Full Day'}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {request.leave_type === 'timeoff' && request.timeoff_type && (
+                                        `${request.timeoff_value} ${request.timeoff_type}`
+                                    )}
+                                </td>
                                 <td className="px-6 py-4 text-sm text-gray-900">
                                     {request.request_reason}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {request.leave_type === 'sick_leave' && request.attachment_filepath && (
+                                        <button
+                                            onClick={() => handleViewAttachment(request.attachment_filepath!)}
+                                            className="text-blue-600 hover:text-blue-900 underline"
+                                        >
+                                            View Attachment
+                                        </button>
+                                    )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
