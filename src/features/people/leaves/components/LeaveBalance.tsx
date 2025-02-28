@@ -163,6 +163,7 @@ export function LeaveBalanceTable({
               <th 
                 onClick={() => sortData('name')}
                 className="w-40 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 border-r border-gray-200"
+                rowSpan={2}
               >
                 <div className="flex items-center justify-center gap-2">
                   Employee
@@ -180,6 +181,7 @@ export function LeaveBalanceTable({
               <th 
                 onClick={() => sortData('annual_leave_balance')}
                 className="w-24 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 border-r border-gray-200"
+                rowSpan={2}
               >
                 <div className="flex items-center justify-center gap-2">
                   Annual Leave
@@ -197,6 +199,7 @@ export function LeaveBalanceTable({
               <th 
                 onClick={() => sortData('sick_leave_balance')}
                 className="w-24 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 border-r border-gray-200"
+                rowSpan={2}
               >
                 <div className="flex items-center justify-center gap-2">
                   Sick Leave
@@ -212,11 +215,27 @@ export function LeaveBalanceTable({
                 </div>
               </th>
               <th 
+                colSpan={2}
+                className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 bg-gray-100"
+              >
+                Time Off Balance
+              </th>
+              {isManager && (
+                <th 
+                  className="w-24 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200"
+                  rowSpan={2}
+                >
+                  Actions
+                </th>
+              )}
+            </tr>
+            <tr className="bg-gray-50">
+              <th 
                 onClick={() => sortData('timeoff_days_balance')}
-                className="w-24 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 border-r border-gray-200"
+                className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 border-r border-gray-200"
               >
                 <div className="flex items-center justify-center gap-2">
-                  Time Off (Days)
+                  Days
                   {sortConfig?.key === 'timeoff_days_balance' ? (
                     sortConfig.direction === 'asc' ? (
                       <ChevronUpIcon className="h-4 w-4" />
@@ -230,10 +249,10 @@ export function LeaveBalanceTable({
               </th>
               <th 
                 onClick={() => sortData('timeoff_hours_balance')}
-                className="w-24 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 border-r border-gray-200"
+                className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 border-r border-gray-200"
               >
                 <div className="flex items-center justify-center gap-2">
-                  Time Off (Hours)
+                  Hours
                   {sortConfig?.key === 'timeoff_hours_balance' ? (
                     sortConfig.direction === 'asc' ? (
                       <ChevronUpIcon className="h-4 w-4" />
@@ -245,11 +264,6 @@ export function LeaveBalanceTable({
                   )}
                 </div>
               </th>
-              {isManager && (
-                <th className="w-24 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                  Actions
-                </th>
-              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
