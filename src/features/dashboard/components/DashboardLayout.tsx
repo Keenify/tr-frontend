@@ -29,7 +29,6 @@ import { IconUsers, IconTargetArrow, IconDeviceComputerCamera, IconChartArrowsVe
 
 /**
  * Defines the available navigation tabs in the dashboard.
- * @constant {Object[]}
  */
 const navigationConfig = [
   {
@@ -153,7 +152,7 @@ const navigationConfig = [
     isExpandable: true,
     subTabs: [{ id: "peak", label: "Peak", shortForm: "Pe", icon: ThumbsUp }],
   },
-] as const;
+]
 
 /**
  * Type representing the possible tab values.
@@ -262,7 +261,7 @@ export function DashboardLayout({
   const [confirmPassword, setConfirmPassword] = useState("");
 
   // Company data
-  const { companyInfo, error: companyError } = useUserAndCompanyData(
+  const { companyInfo, userInfo, error: companyError } = useUserAndCompanyData(
     session.user.id
   );
   if (companyError) {
@@ -272,19 +271,48 @@ export function DashboardLayout({
   // Add new state for search
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Filter navigation items based on search
+  // Filter navigation items based on search and user role
   const filteredNavigation = useMemo(() => {
-    if (!searchTerm.trim()) return navigationConfig;
+    // Log user role for debugging
+    console.log("User role:", userInfo?.role);
+    
+    if (!searchTerm.trim()) {
+      // When not searching, filter based on user role
+      return navigationConfig.map(tab => {
+        // Only show hiring tab for managers
+        if (tab.id === 'people') {
+          const filteredSubTabs = tab.subTabs.filter(subTab => 
+            subTab.id !== 'hiring' || (userInfo?.role && userInfo.role.toLowerCase().includes('manager'))
+          );
+          return { ...tab, subTabs: filteredSubTabs };
+        }
+        return tab;
+      });
+    }
 
+    // When searching, maintain role-based filtering
     const term = searchTerm.toLowerCase();
-    return navigationConfig.filter(tab => {
-      const matchesTab = tab.label.toLowerCase().includes(term);
-      const matchesSubTabs = tab.subTabs?.some(
-        subTab => subTab.label.toLowerCase().includes(term)
-      );
-      return matchesTab || matchesSubTabs;
-    });
-  }, [searchTerm]);
+    return navigationConfig
+      .map(tab => {
+        // Filter hiring tab based on role first
+        const filteredTab = { ...tab };
+        if (tab.id === 'people') {
+          const filteredSubTabs = tab.subTabs.filter(subTab => 
+            subTab.id !== 'hiring' || (userInfo?.role && userInfo.role.toLowerCase().includes('manager'))
+          );
+          filteredTab.subTabs = filteredSubTabs;
+        }
+        return filteredTab;
+      })
+      .filter(tab => {
+        // Then apply search filter
+        const matchesTab = tab.label.toLowerCase().includes(term);
+        const matchesSubTabs = tab.subTabs.some(
+          subTab => subTab.label.toLowerCase().includes(term)
+        );
+        return matchesTab || matchesSubTabs;
+      });
+  }, [searchTerm, userInfo?.role]);
 
   // Update states when props change
   useEffect(() => {
@@ -595,83 +623,77 @@ export function DashboardLayout({
 
             {/* Navigation Menu - Updated scrollbar styling */}
             <nav className="flex-1 space-y-1 px-3 overflow-y-auto 
-              [&::-webkit-scrollbar]:w-2
-              [&::-webkit-scrollbar-track]:bg-transparent
-              [&::-webkit-scrollbar-thumb]:bg-gray-600
-              [&::-webkit-scrollbar-thumb]:rounded-full
-              [&::-webkit-scrollbar-thumb]:border-2
-              [&::-webkit-scrollbar-thumb]:border-transparent
-              [&::-webkit-scrollbar-thumb]:bg-clip-padding
-              [&::-webkit-scrollbar-thumb]:hover:bg-gray-500
-            ">
-              {filteredNavigation.map((tab) => (
-                <div key={tab.id} className="relative">
-                  <button
-                    onClick={() => handleTabChange(tab.id)}
-                    className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
-                      activeTabState === tab.id
-                        ? "bg-indigo-600 text-white shadow-lg"
-                        : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
-                    }`}
-                  >
-                    <span className="flex items-center gap-3">
-                      <tab.icon size={18} className={activeTabState === tab.id ? "text-white" : "text-gray-400"} />
-                      {!isSidebarCollapsed && (
-                        <span className="truncate">{tab.label}</span>
+              scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800">
+              {filteredNavigation.map((item) => (
+                <div key={item.id} className="py-1">
+                  <div className="relative">
+                    <button
+                      onClick={() => handleTabChange(item.id as TabType)}
+                      className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                        activeTabState === item.id
+                          ? "bg-indigo-600 text-white shadow-lg"
+                          : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
+                      }`}
+                    >
+                      <span className="flex items-center gap-3">
+                        <item.icon size={18} className={activeTabState === item.id ? "text-white" : "text-gray-400"} />
+                        {!isSidebarCollapsed && (
+                          <span className="truncate">{item.label}</span>
+                        )}
+                      </span>
+                      {!isSidebarCollapsed && item.isExpandable && (
+                        <ChevronDown size={16} className={`transition-transform duration-200 ${
+                          (item.id === "people" && isPeopleSubmenuOpen) ||
+                          (item.id === "sales" && isSalesSubmenuOpen) ||
+                          (item.id === "meeting" && isMeetingSubmenuOpen) ||
+                          (item.id === "financeData" && isFinanceDataSubmenuOpen) ||
+                          (item.id === "process" && isProcessSubmenuOpen) ||
+                          (item.id === "technology" && isTechnologySubmenuOpen) ||
+                          (item.id === "teamHealth" && isTeamHealthSubmenuOpen) ||
+                          (item.id === "thePlan" && isThePlanSubmenuOpen)
+                            ? "rotate-180"
+                            : ""
+                        }`} />
                       )}
-                    </span>
-                    {!isSidebarCollapsed && tab.isExpandable && (
-                      <ChevronDown size={16} className={`transition-transform duration-200 ${
-                        (tab.id === "people" && isPeopleSubmenuOpen) ||
-                        (tab.id === "sales" && isSalesSubmenuOpen) ||
-                        (tab.id === "meeting" && isMeetingSubmenuOpen) ||
-                        (tab.id === "financeData" && isFinanceDataSubmenuOpen) ||
-                        (tab.id === "process" && isProcessSubmenuOpen) ||
-                        (tab.id === "technology" && isTechnologySubmenuOpen) ||
-                        (tab.id === "teamHealth" && isTeamHealthSubmenuOpen) ||
-                        (tab.id === "thePlan" && isThePlanSubmenuOpen)
-                          ? "rotate-180"
-                          : ""
-                      }`} />
-                    )}
-                  </button>
+                    </button>
 
-                  {/* Show submenu if parent matches search or any child matches */}
-                  {tab.subTabs && !isSidebarCollapsed && (
-                    <div className={`mt-1 ml-4 space-y-1 transition-all duration-200 ${
-                      ((tab.id === "people" && isPeopleSubmenuOpen) ||
-                       (tab.id === "sales" && isSalesSubmenuOpen) ||
-                       (tab.id === "meeting" && isMeetingSubmenuOpen) ||
-                       (tab.id === "financeData" && isFinanceDataSubmenuOpen) ||
-                       (tab.id === "process" && isProcessSubmenuOpen) ||
-                       (tab.id === "technology" && isTechnologySubmenuOpen) ||
-                       (tab.id === "teamHealth" && isTeamHealthSubmenuOpen) ||
-                       (tab.id === "thePlan" && isThePlanSubmenuOpen) ||
-                       searchTerm.trim() !== "") // Always show if searching
-                        ? "opacity-100 max-h-screen"
-                        : "opacity-0 max-h-0 overflow-hidden"
-                    }`}>
-                      {tab.subTabs
-                        .filter(subTab => 
-                          !searchTerm.trim() || 
-                          subTab.label.toLowerCase().includes(searchTerm.toLowerCase())
-                        )
-                        .map((subTab) => (
-                          <button
-                            key={subTab.id}
-                            onClick={() => handleSubTabClick(subTab.id as SubTabType)}
-                            className={`w-full flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-colors ${
-                              localActiveSubTab === subTab.id
-                                ? "bg-indigo-500/30 text-white"
-                                : "text-gray-400 hover:bg-gray-700/30 hover:text-white"
-                            }`}
-                          >
-                            <subTab.icon size={16} className={localActiveSubTab === subTab.id ? "text-indigo-400" : "text-gray-500"} />
-                            <span className="truncate">{subTab.label}</span>
-                          </button>
-                        ))}
-                    </div>
-                  )}
+                    {/* Show submenu if parent matches search or any child matches */}
+                    {item.subTabs && !isSidebarCollapsed && (
+                      <div className={`mt-1 ml-4 space-y-1 transition-all duration-200 ${
+                        ((item.id === "people" && isPeopleSubmenuOpen) ||
+                         (item.id === "sales" && isSalesSubmenuOpen) ||
+                         (item.id === "meeting" && isMeetingSubmenuOpen) ||
+                         (item.id === "financeData" && isFinanceDataSubmenuOpen) ||
+                         (item.id === "process" && isProcessSubmenuOpen) ||
+                         (item.id === "technology" && isTechnologySubmenuOpen) ||
+                         (item.id === "teamHealth" && isTeamHealthSubmenuOpen) ||
+                         (item.id === "thePlan" && isThePlanSubmenuOpen) ||
+                         searchTerm.trim() !== "") // Always show if searching
+                          ? "opacity-100 max-h-screen"
+                          : "opacity-0 max-h-0 overflow-hidden"
+                      }`}>
+                        {item.subTabs
+                          .filter(subTab => 
+                            !searchTerm.trim() || 
+                            subTab.label.toLowerCase().includes(searchTerm.toLowerCase())
+                          )
+                          .map((subTab) => (
+                            <button
+                              key={subTab.id}
+                              onClick={() => handleSubTabClick(subTab.id as SubTabType)}
+                              className={`w-full flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-colors ${
+                                localActiveSubTab === subTab.id
+                                  ? "bg-indigo-500/30 text-white"
+                                  : "text-gray-400 hover:bg-gray-700/30 hover:text-white"
+                              }`}
+                            >
+                              <subTab.icon size={16} className={localActiveSubTab === subTab.id ? "text-indigo-400" : "text-gray-500"} />
+                              <span className="truncate">{subTab.label}</span>
+                            </button>
+                          ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </nav>
