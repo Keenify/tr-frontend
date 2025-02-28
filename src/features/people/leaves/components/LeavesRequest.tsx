@@ -295,42 +295,92 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
 
                         {/* Half Day Selection - Only show for single day annual leave */}
                         {isSingleDayRequest() && newRequest.leave_type === 'annual_leave' && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Day Type</label>
-                                <select
-                                    title="Day Type"
-                                    value={newRequest.half_day || ''}
-                                    onChange={(e) => setNewRequest(prev => ({ 
-                                        ...prev, 
-                                        half_day: e.target.value as HalfDayType 
-                                    }))}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                >
-                                    <option value="">Full Day</option>
-                                    <option value="AM">AM Half Day</option>
-                                    <option value="PM">PM Half Day</option>
-                                </select>
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Day Type</label>
+                                <div className="space-x-4 flex items-center">
+                                    <label className="inline-flex items-center">
+                                        <input
+                                            title="Full Day"
+                                            type="radio"
+                                            value=""
+                                            checked={!newRequest.half_day}
+                                            onChange={() => setNewRequest(prev => ({
+                                                ...prev,
+                                                half_day: null
+                                            }))}
+                                            className="form-radio h-4 w-4 text-blue-600"
+                                        />
+                                        <span className="ml-2">Full Day</span>
+                                    </label>
+                                    <label className="inline-flex items-center">
+                                        <input
+                                            title="AM Half Day"
+                                            type="radio"
+                                            value="AM"
+                                            checked={newRequest.half_day === 'AM'}
+                                            onChange={() => setNewRequest(prev => ({
+                                                ...prev,
+                                                half_day: 'AM'
+                                            }))}
+                                            className="form-radio h-4 w-4 text-blue-600"
+                                        />
+                                        <span className="ml-2">AM Half Day</span>
+                                    </label>
+                                    <label className="inline-flex items-center">
+                                        <input
+                                            title="PM Half Day"
+                                            type="radio"
+                                            value="PM"
+                                            checked={newRequest.half_day === 'PM'}
+                                            onChange={() => setNewRequest(prev => ({
+                                                ...prev,
+                                                half_day: 'PM'
+                                            }))}
+                                            className="form-radio h-4 w-4 text-blue-600"
+                                        />
+                                        <span className="ml-2">PM Half Day</span>
+                                    </label>
+                                </div>
                             </div>
                         )}
 
                         {/* Time Off Specific Fields - Show after date selection */}
                         {newRequest.leave_type === 'timeoff' && startDate && (
                             <>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Time Off Type</label>
-                                    <select
-                                        title="Time Off Type"
-                                        value={newRequest.timeoff_type}
-                                        onChange={(e) => setNewRequest(prev => ({ 
-                                            ...prev, 
-                                            timeoff_type: e.target.value as TimeoffType 
-                                        }))}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                        required
-                                    >
-                                        <option value="days">Days</option>
-                                        <option value="hours">Hours</option>
-                                    </select>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Time Off Type</label>
+                                    <div className="space-x-4 flex items-center">
+                                        <label className="inline-flex items-center">
+                                            <input
+                                                title="Days"
+                                                type="radio"
+                                                value="days"
+                                                checked={newRequest.timeoff_type === 'days'}
+                                                onChange={() => setNewRequest(prev => ({
+                                                    ...prev,
+                                                    timeoff_type: 'days',
+                                                    timeoff_value: 1 // Reset value when changing type
+                                                }))}
+                                                className="form-radio h-4 w-4 text-blue-600"
+                                            />
+                                            <span className="ml-2">Days</span>
+                                        </label>
+                                        <label className="inline-flex items-center">
+                                            <input
+                                                title="Hours"
+                                                type="radio"
+                                                value="hours"
+                                                checked={newRequest.timeoff_type === 'hours'}
+                                                onChange={() => setNewRequest(prev => ({
+                                                    ...prev,
+                                                    timeoff_type: 'hours',
+                                                    timeoff_value: 1 // Reset value when changing type
+                                                }))}
+                                                className="form-radio h-4 w-4 text-blue-600"
+                                            />
+                                            <span className="ml-2">Hours</span>
+                                        </label>
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">
@@ -342,9 +392,9 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
                                         min="1"
                                         max={newRequest.timeoff_type === 'hours' ? "8" : "365"}
                                         value={newRequest.timeoff_value}
-                                        onChange={(e) => setNewRequest(prev => ({ 
-                                            ...prev, 
-                                            timeoff_value: parseInt(e.target.value) 
+                                        onChange={(e) => setNewRequest(prev => ({
+                                            ...prev,
+                                            timeoff_value: parseInt(e.target.value)
                                         }))}
                                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                         required
