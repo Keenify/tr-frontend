@@ -268,7 +268,7 @@ const Client: React.FC<ClientProps> = ({ session }) => {
                     <thead className="bg-gray-50">
                       <tr>
                         <th 
-                          className="w-1/3 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          className="w-1/3 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                           onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                         >
                           Company Name
@@ -276,13 +276,13 @@ const Client: React.FC<ClientProps> = ({ session }) => {
                             {sortOrder === 'asc' ? '↑' : '↓'}
                           </span>
                         </th>
-                        <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="w-1/4 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Contact Person
                         </th>
-                        <th className="w-1/6 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="w-1/6 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Contact Number
                         </th>
-                        <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="w-1/4 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Email
                         </th>
                       </tr>
@@ -297,19 +297,19 @@ const Client: React.FC<ClientProps> = ({ session }) => {
                             setIsModalOpen(true);
                           }}
                         >
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 text-center">
                             <div className="text-sm font-medium text-gray-900 break-words">
                               {client.client_company}
                               {client.business_unit && ` - ${client.business_unit}`}
                             </div>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 text-center">
                             <div className="text-sm text-gray-900 break-words">{client.name}</div>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 text-center">
                             <div className="text-sm text-gray-900 break-words">{client.contact_number}</div>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 text-center">
                             <div className="text-sm text-gray-900 break-words">{client.email}</div>
                           </td>
                         </tr>
