@@ -27,24 +27,65 @@ export function LeaveBalanceTable({
   } | null>(null);
 
   const handleInputChange = (employeeId: string, field: keyof LeaveBalance, value: number) => {
-    setEditedBalances(prev => ({
-      ...prev,
-      [employeeId]: {
+    setEditedBalances(prev => {
+      const newBalance = {
         ...(prev[employeeId] || {}),
         [field]: value
+      };
+
+      // If updating timeoff_days_balance, adjust hours if needed
+      if (field === 'timeoff_days_balance') {
+        const minimumHours = value * 8;
+        const currentHours = newBalance.timeoff_hours_balance ?? 
+          leaveBalances[employeeId]?.timeoff_hours_balance ?? 
+          0;
+        
+        if (currentHours < minimumHours) {
+          newBalance.timeoff_hours_balance = minimumHours;
+        }
       }
-    }));
+
+      // If updating timeoff_hours_balance, validate against days
+      if (field === 'timeoff_hours_balance') {
+        const days = newBalance.timeoff_days_balance ?? 
+          leaveBalances[employeeId]?.timeoff_days_balance ?? 
+          0;
+        const minimumHours = days * 8;
+        
+        if (value < minimumHours) {
+          toast.error(`Time off hours must be at least ${minimumHours} (${days} days × 8 hours)`);
+          return prev;
+        }
+      }
+
+      return {
+        ...prev,
+        [employeeId]: newBalance
+      };
+    });
   };
 
   const handleUpdateBalance = async (employeeId: string) => {
     if (!isManager || !editedBalances[employeeId]) return;
+
+    // Validate time off hours before updating
+    const timeoffDays = editedBalances[employeeId].timeoff_days_balance ?? 
+      leaveBalances[employeeId]?.timeoff_days_balance ?? 
+      0;
+    const timeoffHours = editedBalances[employeeId].timeoff_hours_balance ?? 
+      leaveBalances[employeeId]?.timeoff_hours_balance ?? 
+      0;
+    
+    if (timeoffHours < timeoffDays * 8) {
+      toast.error(`Time off hours must be at least ${timeoffDays * 8} (${timeoffDays} days × 8 hours)`);
+      return;
+    }
 
     try {
       let updatedBalance;
       const existingBalance = leaveBalances[employeeId];
       
       if (!existingBalance) {
-        // If no existing balance, create new one with all fields
         updatedBalance = await createLeaveBalance(employeeId, {
           annual_leave_balance: editedBalances[employeeId].annual_leave_balance ?? 0,
           sick_leave_balance: editedBalances[employeeId].sick_leave_balance ?? 0,
@@ -52,7 +93,6 @@ export function LeaveBalanceTable({
           timeoff_hours_balance: editedBalances[employeeId].timeoff_hours_balance ?? 0
         });
       } else {
-        // If balance exists, update it
         updatedBalance = await updateLeaveBalance(employeeId, editedBalances[employeeId]);
       }
 
