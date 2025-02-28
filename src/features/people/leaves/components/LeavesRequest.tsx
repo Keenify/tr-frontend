@@ -460,133 +460,123 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
 
             {/* Leave Requests Table */}
             <div className="bg-white rounded-lg shadow overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Employee Name
-                            </th>
-                            <th 
-                                onClick={() => sortData('leave_type')}
-                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                            >
-                                <div className="flex items-center">
-                                    Type
-                                    <ChevronUpDownIcon className="h-4 w-4 ml-1" />
-                                </div>
-                            </th>
-                            <th 
-                                onClick={() => sortData('start_date')}
-                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                            >
-                                <div className="flex items-center">
-                                    Start Date
-                                    <ChevronUpDownIcon className="h-4 w-4 ml-1" />
-                                </div>
-                            </th>
-                            <th 
-                                onClick={() => sortData('end_date')}
-                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                            >
-                                <div className="flex items-center">
-                                    End Date
-                                    <ChevronUpDownIcon className="h-4 w-4 ml-1" />
-                                </div>
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Day Type
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Time Off Details
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Reason
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Attachment
-                            </th>
-                            <th 
-                                onClick={() => sortData('status')}
-                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                            >
-                                <div className="flex items-center">
-                                    Status
-                                    <ChevronUpDownIcon className="h-4 w-4 ml-1" />
-                                </div>
-                            </th>
-                            {isManager && (
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Actions
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 table-fixed">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
+                                    Employee Name
                                 </th>
-                            )}
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {sortedRequests.map((request) => (
-                            <tr key={request.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {employeeNames[request.employee_id] || 'Loading...'}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {request.leave_type.replace('_', ' ').toUpperCase()}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {new Date(request.start_date).toLocaleDateString()}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {new Date(request.end_date).toLocaleDateString()}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {request.half_day ? `${request.half_day} Half Day` : 'Full Day'}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {request.leave_type === 'timeoff' && request.timeoff_type && (
-                                        `${request.timeoff_value} ${request.timeoff_type}`
-                                    )}
-                                </td>
-                                <td className="px-6 py-4 text-sm text-gray-900">
-                                    {request.request_reason}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {request.leave_type === 'sick_leave' && request.attachment_filepath && (
-                                        <button
-                                            onClick={() => handleViewAttachment(request.attachment_filepath!)}
-                                            className="text-blue-600 hover:text-blue-900 underline"
-                                        >
-                                            View Attachment
-                                        </button>
-                                    )}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                        ${request.status === 'approved' ? 'bg-green-100 text-green-800' : ''}
-                                        ${request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ''}
-                                        ${request.status === 'rejected' ? 'bg-red-100 text-red-800' : ''}
-                                        ${request.status === 'canceled' ? 'bg-gray-100 text-gray-800' : ''}
-                                    `}>
-                                        {request.status.toUpperCase()}
-                                    </span>
-                                </td>
-                                {isManager && request.status === 'pending' && (
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                                        <button
-                                            onClick={() => handleUpdateStatus(request.id, 'approved')}
-                                            className="text-green-600 hover:text-green-900"
-                                        >
-                                            Approve
-                                        </button>
-                                        <button
-                                            onClick={() => handleUpdateStatus(request.id, 'rejected')}
-                                            className="text-red-600 hover:text-red-900"
-                                        >
-                                            Reject
-                                        </button>
-                                    </td>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                    <div className="flex items-center cursor-pointer" onClick={() => sortData('leave_type')}>
+                                        Type
+                                        <ChevronUpDownIcon className="h-4 w-4 ml-1" />
+                                    </div>
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                    <div className="flex items-center cursor-pointer" onClick={() => sortData('start_date')}>
+                                        Start Date
+                                        <ChevronUpDownIcon className="h-4 w-4 ml-1" />
+                                    </div>
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                    <div className="flex items-center cursor-pointer" onClick={() => sortData('end_date')}>
+                                        End Date
+                                        <ChevronUpDownIcon className="h-4 w-4 ml-1" />
+                                    </div>
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                    Day Type
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
+                                    Time Off Details
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
+                                    Reason
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                    Attachment
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                    <div className="flex items-center cursor-pointer" onClick={() => sortData('status')}>
+                                        Status
+                                        <ChevronUpDownIcon className="h-4 w-4 ml-1" />
+                                    </div>
+                                </th>
+                                {isManager && (
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                        Actions
+                                    </th>
                                 )}
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {sortedRequests.map((request) => (
+                                <tr key={request.id} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {employeeNames[request.employee_id] || 'Loading...'}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {request.leave_type.replace('_', ' ').toUpperCase()}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {new Date(request.start_date).toLocaleDateString()}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {new Date(request.end_date).toLocaleDateString()}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {request.half_day ? `${request.half_day} Half Day` : 'Full Day'}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {request.leave_type === 'timeoff' && request.timeoff_type && (
+                                            `${request.timeoff_value} ${request.timeoff_type}`
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-gray-900 truncate max-w-xs">
+                                        {request.request_reason}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {request.leave_type === 'sick_leave' && request.attachment_filepath && (
+                                            <button
+                                                onClick={() => handleViewAttachment(request.attachment_filepath!)}
+                                                className="text-blue-600 hover:text-blue-900 underline"
+                                            >
+                                                View Attachment
+                                            </button>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                            ${request.status === 'approved' ? 'bg-green-100 text-green-800' : ''}
+                                            ${request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ''}
+                                            ${request.status === 'rejected' ? 'bg-red-100 text-red-800' : ''}
+                                            ${request.status === 'canceled' ? 'bg-gray-100 text-gray-800' : ''}
+                                        `}>
+                                            {request.status.toUpperCase()}
+                                        </span>
+                                    </td>
+                                    {isManager && request.status === 'pending' && (
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                            <button
+                                                onClick={() => handleUpdateStatus(request.id, 'approved')}
+                                                className="text-green-600 hover:text-green-900"
+                                            >
+                                                Approve
+                                            </button>
+                                            <button
+                                                onClick={() => handleUpdateStatus(request.id, 'rejected')}
+                                                className="text-red-600 hover:text-red-900"
+                                            >
+                                                Reject
+                                            </button>
+                                        </td>
+                                    )}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );
