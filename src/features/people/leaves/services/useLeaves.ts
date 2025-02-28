@@ -3,7 +3,7 @@ import { LeaveBalance, CreateLeaveBalancePayload, UpdateLeaveBalancePayload } fr
 const API_DOMAIN = import.meta.env.VITE_BACKEND_API_DOMAIN;
 
 /**
- * Creates or updates leave balance for an employee
+ * Creates leave balance for an employee
  * @param {string} employeeId - The ID of the employee
  * @param {CreateLeaveBalancePayload} payload - The leave balance data to create
  * @returns {Promise<LeaveBalance>} - A promise that resolves to the created leave balance data
