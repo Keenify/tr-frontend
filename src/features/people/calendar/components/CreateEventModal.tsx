@@ -111,19 +111,19 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Create Event</h2>
+      <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-gray-800">Create Event</h2>
           <button 
             onClick={onClose} 
-            className="text-gray-500 hover:text-gray-700" 
+            className="text-gray-500 hover:text-gray-700 transition-colors" 
             title="Close"
           >
             <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700">
               Title
@@ -246,34 +246,65 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
           </div>
 
           <div>
-            <label htmlFor="participants" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="participants" className="block text-sm font-medium text-gray-700 mb-1">
               Participants
             </label>
             <Select
               isMulti
               name="participants"
               options={employeeOptions}
-              className="mt-1"
+              className="basic-multi-select"
               classNamePrefix="select"
-              placeholder="Select participants..."
+              placeholder="Search and select participants..."
               onChange={handleParticipantChange}
               value={employeeOptions.filter(option => 
                 formData.participant_ids?.includes(option.value)
               )}
+              closeMenuOnSelect={false}
+              isClearable={true}
+              isSearchable={true}
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  borderColor: '#D1D5DB',
+                  boxShadow: 'none',
+                  '&:hover': {
+                    borderColor: '#6366F1'
+                  }
+                }),
+                multiValue: (base) => ({
+                  ...base,
+                  backgroundColor: '#EEF2FF',
+                  borderRadius: '0.375rem'
+                }),
+                multiValueLabel: (base) => ({
+                  ...base,
+                  color: '#4F46E5',
+                  fontWeight: 500
+                }),
+                multiValueRemove: (base) => ({
+                  ...base,
+                  color: '#4F46E5',
+                  '&:hover': {
+                    backgroundColor: '#E0E7FF',
+                    color: '#4338CA'
+                  }
+                })
+              }}
             />
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100 mt-6">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
             >
               Create
             </button>

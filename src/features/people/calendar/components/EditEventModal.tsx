@@ -114,15 +114,15 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Edit Event</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700" title="Close">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-gray-800">Edit Event</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors" title="Close">
             <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
             <input
@@ -239,34 +239,65 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
           </div>
 
           <div>
-            <label htmlFor="participants" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="participants" className="block text-sm font-medium text-gray-700 mb-1">
               Participants
             </label>
             <Select
               isMulti
               name="participants"
               options={employeeOptions}
-              className="mt-1"
+              className="basic-multi-select"
               classNamePrefix="select"
-              placeholder="Select participants..."
+              placeholder="Search and select participants..."
               onChange={handleParticipantChange}
               value={employeeOptions.filter(option => 
                 formData.participant_ids?.includes(option.value)
               )}
+              closeMenuOnSelect={false}
+              isClearable={true}
+              isSearchable={true}
+              styles={{
+                control: (base) => ({
+                  ...base,
+                  borderColor: '#D1D5DB',
+                  boxShadow: 'none',
+                  '&:hover': {
+                    borderColor: '#3B82F6'
+                  }
+                }),
+                multiValue: (base) => ({
+                  ...base,
+                  backgroundColor: '#EFF6FF',
+                  borderRadius: '0.375rem'
+                }),
+                multiValueLabel: (base) => ({
+                  ...base,
+                  color: '#2563EB',
+                  fontWeight: 500
+                }),
+                multiValueRemove: (base) => ({
+                  ...base,
+                  color: '#2563EB',
+                  '&:hover': {
+                    backgroundColor: '#DBEAFE',
+                    color: '#1D4ED8'
+                  }
+                })
+              }}
             />
           </div>
 
-          <div className="flex justify-end space-x-3">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100 mt-6">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
               Save Changes
             </button>
