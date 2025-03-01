@@ -54,6 +54,9 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
 
+    const [cancellationReason, setCancellationReason] = useState<string>('');
+    const [cancelRequestId, setCancelRequestId] = useState<string | null>(null);
+
     // Helper function to check if it's a single day request
     const isSingleDayRequest = useCallback(() => {
         if (!startDate || !endDate) return false;
@@ -244,12 +247,70 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
         }
     };
 
+    const handleCancelRequest = async (requestId: string) => {
+        setCancelRequestId(requestId);
+    };
+
+    const submitCancellation = async () => {
+        if (!cancelRequestId) return;
+        
+        try {
+            await updateLeaveRequest(cancelRequestId, { 
+                status: 'canceled', 
+                cancellation_reason: cancellationReason 
+            });
+            toast.success('Leave request canceled successfully');
+            fetchLeaveRequests();
+            setCancelRequestId(null);
+            setCancellationReason('');
+        } catch (error) {
+            console.error('Error canceling leave request:', error);
+            toast.error('Failed to cancel leave request');
+        }
+    };
+
     if (isLoading) {
         return <div>Loading...</div>;
     }
 
     return (
         <div className="space-y-6">
+            {/* Cancellation Modal */}
+            {cancelRequestId && (
+                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full">
+                        <h3 className="text-lg font-medium mb-4">Cancel Leave Request</h3>
+                        <p className="mb-4 text-gray-600">Please provide a reason for cancellation:</p>
+                        <textarea
+                            value={cancellationReason}
+                            onChange={(e) => setCancellationReason(e.target.value)}
+                            className="w-full border rounded-md p-2 mb-4"
+                            rows={3}
+                            placeholder="Reason for cancellation"
+                            required
+                        />
+                        <div className="flex justify-end space-x-2">
+                            <button
+                                onClick={() => {
+                                    setCancelRequestId(null);
+                                    setCancellationReason('');
+                                }}
+                                className="px-4 py-2 border rounded-md hover:bg-gray-100"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={submitCancellation}
+                                disabled={!cancellationReason.trim()}
+                                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                            >
+                                Confirm Cancellation
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* New Leave Request Form */}
             <div className="bg-white p-6 rounded-lg shadow">
                 <h2 className="text-lg font-medium mb-4">Submit New Leave Request</h2>
@@ -560,23 +621,41 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
                                         `}>
                                             {request.status.toUpperCase()}
                                         </span>
+                                        {request.status === 'canceled' && request.cancellation_reason && (
+                                            <div className="mt-1 text-xs text-gray-500">
+                                                Reason: {request.cancellation_reason}
+                                            </div>
+                                        )}
                                     </td>
-                                    {isManager && request.status === 'pending' && (
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                        {isManager && request.status === 'pending' && (
+                                            <>
+                                                <button
+                                                    onClick={() => handleUpdateStatus(request.id, 'approved')}
+                                                    className="text-green-600 hover:text-green-900"
+                                                >
+                                                    Approve
+                                                </button>
+                                                <button
+                                                    onClick={() => handleUpdateStatus(request.id, 'rejected')}
+                                                    className="text-red-600 hover:text-red-900"
+                                                >
+                                                    Reject
+                                                </button>
+                                            </>
+                                        )}
+                                        {/* Allow users to cancel their own pending or approved requests that haven't started yet */}
+                                        {request.employee_id === userInfo?.id && 
+                                         (request.status === 'pending' || request.status === 'approved') && 
+                                         (new Date(request.start_date) > new Date()) && (
                                             <button
-                                                onClick={() => handleUpdateStatus(request.id, 'approved')}
-                                                className="text-green-600 hover:text-green-900"
+                                                onClick={() => handleCancelRequest(request.id)}
+                                                className="text-gray-600 hover:text-gray-900"
                                             >
-                                                Approve
+                                                Cancel
                                             </button>
-                                            <button
-                                                onClick={() => handleUpdateStatus(request.id, 'rejected')}
-                                                className="text-red-600 hover:text-red-900"
-                                            >
-                                                Reject
-                                            </button>
-                                        </td>
-                                    )}
+                                        )}
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
