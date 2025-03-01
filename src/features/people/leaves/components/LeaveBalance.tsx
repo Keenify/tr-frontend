@@ -24,7 +24,7 @@ export function LeaveBalanceTable({
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: 'asc' | 'desc';
-  } | null>(null);
+  }>({ key: 'annual_leave_balance', direction: 'desc' });
 
   const handleInputChange = (employeeId: string, field: keyof LeaveBalance, value: number) => {
     setEditedBalances(prev => {
@@ -32,31 +32,6 @@ export function LeaveBalanceTable({
         ...(prev[employeeId] || {}),
         [field]: value
       };
-
-      // If updating timeoff_days_balance, adjust hours if needed
-      if (field === 'timeoff_days_balance') {
-        const minimumHours = value * 8;
-        const currentHours = newBalance.timeoff_hours_balance ?? 
-          leaveBalances[employeeId]?.timeoff_hours_balance ?? 
-          0;
-        
-        if (currentHours < minimumHours) {
-          newBalance.timeoff_hours_balance = minimumHours;
-        }
-      }
-
-      // If updating timeoff_hours_balance, validate against days
-      if (field === 'timeoff_hours_balance') {
-        const days = newBalance.timeoff_days_balance ?? 
-          leaveBalances[employeeId]?.timeoff_days_balance ?? 
-          0;
-        const minimumHours = days * 8;
-        
-        if (value < minimumHours) {
-          toast.error(`Time off hours must be at least ${minimumHours} (${days} days × 8 hours)`);
-          return prev;
-        }
-      }
 
       return {
         ...prev,
@@ -67,19 +42,6 @@ export function LeaveBalanceTable({
 
   const handleUpdateBalance = async (employeeId: string) => {
     if (!isManager || !editedBalances[employeeId]) return;
-
-    // Validate time off hours before updating
-    const timeoffDays = editedBalances[employeeId].timeoff_days_balance ?? 
-      leaveBalances[employeeId]?.timeoff_days_balance ?? 
-      0;
-    const timeoffHours = editedBalances[employeeId].timeoff_hours_balance ?? 
-      leaveBalances[employeeId]?.timeoff_hours_balance ?? 
-      0;
-    
-    if (timeoffHours < timeoffDays * 8) {
-      toast.error(`Time off hours must be at least ${timeoffDays * 8} (${timeoffDays} days × 8 hours)`);
-      return;
-    }
 
     try {
       let updatedBalance;
@@ -135,8 +97,6 @@ export function LeaveBalanceTable({
   };
 
   const getSortedEmployees = () => {
-    if (!sortConfig) return employees;
-
     return [...employees].sort((a, b) => {
       if (sortConfig.key === 'name') {
         const nameA = `${a.first_name} ${a.last_name}`;
