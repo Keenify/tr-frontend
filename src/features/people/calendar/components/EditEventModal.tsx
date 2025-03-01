@@ -57,7 +57,18 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
       end_time: event.end_time,
       location: event.location || '',
       description: event.description || '',
+      participant_ids: event.participants?.map(p => p.id) || [],
     });
+
+    if (event.location) {
+      const locationName = event.location.split(' - ')[0];
+      setLocationValue({
+        label: locationName,
+        value: { place_id: '' }
+      });
+    } else {
+      setLocationValue(null);
+    }
 
     loadGoogleMapsScript()
       .then(() => {
