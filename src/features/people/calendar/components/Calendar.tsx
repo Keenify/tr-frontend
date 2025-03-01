@@ -12,6 +12,8 @@ import { CalendarEvent, CreateCalendarEventPayload } from '../types/calendar';
 import { getEventTypeColor } from '../utils/eventUtils';
 import '../styles/calendar.css';
 import { Value } from 'react-calendar/dist/esm/shared/types.js';
+import { directoryService } from '../../../../shared/services/directoryService';
+import { Employee } from '../../../../shared/types/directory.types';
 
 interface CalendarProps {
   session?: Session;
@@ -33,6 +35,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [activeDate, setActiveDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [employees, setEmployees] = useState<Employee[]>([]);
 
   // Add new modal state management
   type ActiveModal = 'none' | 'create' | 'dayEvents' | 'edit';
@@ -78,6 +81,17 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
       setError(err instanceof Error ? err.message : 'Failed to load calendar events');
     } finally {
       setLoading(false);
+    }
+  }, [companyId]);
+
+  const fetchEmployees = useCallback(async () => {
+    if (!companyId) return;
+    
+    try {
+      const employeesData = await directoryService.fetchEmployees(companyId);
+      setEmployees(employeesData);
+    } catch (err) {
+      console.error('Error fetching employees:', err);
     }
   }, [companyId]);
 
@@ -135,8 +149,9 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
   useEffect(() => {
     if (!companyLoading && companyId) {
       fetchEvents(new Date());
+      fetchEmployees();
     }
-  }, [fetchEvents, companyLoading, companyId]);
+  }, [fetchEvents, fetchEmployees, companyLoading, companyId]);
 
   /**
    * Determines if an event should be displayed as a continuation
@@ -342,6 +357,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
           setActiveModal('none');
         }}
         initialDate={selectedDate || undefined}
+        employees={employees}
       />
 
       {(selectedDate || selectedEvent) && (
@@ -379,6 +395,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
             setActiveModal('none');
           }}
           event={editingEvent}
+          employees={employees}
         />
       )}
     </div>

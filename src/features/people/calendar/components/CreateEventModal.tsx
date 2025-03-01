@@ -4,12 +4,16 @@ import { CreateCalendarEventPayload, EventType } from '../types/calendar';
 import { formatDateTimeForInput } from '../utils/dateUtils';
 import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
 import { loadGoogleMapsScript } from '../../../../utils/loadGoogleMapsScript';
+import { Employee } from '../../../../shared/types/directory.types';
+import Select from 'react-select';
+import { MultiValue } from 'react-select';
 
 interface CreateEventModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (event: CreateCalendarEventPayload) => void;
   initialDate?: Date;
+  employees: Employee[];
 }
 
 interface GooglePlace {
@@ -19,6 +23,11 @@ interface GooglePlace {
   };
 }
 
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
 const EVENT_TYPES: EventType[] = ['Booth', 'Meeting', 'Other'];
 
 const CreateEventModal: React.FC<CreateEventModalProps> = ({
@@ -26,6 +35,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
   onClose,
   onSubmit,
   initialDate,
+  employees,
 }) => {
   const [formData, setFormData] = useState<CreateCalendarEventPayload>({
     title: '',
@@ -34,6 +44,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     end_time: initialDate ? formatDateTimeForInput(initialDate.toISOString()) : '',
     location: '',
     description: '',
+    participant_ids: [],
   });
 
   const [locationValue, setLocationValue] = useState<GooglePlace | null>(null);
@@ -83,7 +94,20 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     }));
   };
 
+  const handleParticipantChange = (selectedOptions: MultiValue<SelectOption>) => {
+    const selectedIds = selectedOptions ? selectedOptions.map(option => option.value) : [];
+    setFormData(prev => ({
+      ...prev,
+      participant_ids: selectedIds,
+    }));
+  };
+
   if (!isOpen) return null;
+
+  const employeeOptions = employees.map(employee => ({
+    value: employee.id,
+    label: `${employee.first_name} ${employee.last_name}`,
+  }));
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -218,6 +242,24 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
               onChange={handleInputChange}
               rows={3}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="participants" className="block text-sm font-medium text-gray-700">
+              Participants
+            </label>
+            <Select
+              isMulti
+              name="participants"
+              options={employeeOptions}
+              className="mt-1"
+              classNamePrefix="select"
+              placeholder="Select participants..."
+              onChange={handleParticipantChange}
+              value={employeeOptions.filter(option => 
+                formData.participant_ids?.includes(option.value)
+              )}
             />
           </div>
 

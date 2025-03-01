@@ -135,6 +135,21 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
                         {formatDescription(event.description)}
                       </p>
                     )}
+                    {event.participants && event.participants.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm font-medium">Participants:</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {event.participants.map(participant => (
+                            <span 
+                              key={participant.id}
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                            >
+                              {participant.first_name} {participant.last_name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <p className="text-sm mt-2 text-gray-600">
                       Created by: {eventCreators[event.created_by] 
                         ? `${eventCreators[event.created_by].first_name} ${eventCreators[event.created_by].last_name}`
