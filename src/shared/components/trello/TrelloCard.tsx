@@ -174,6 +174,18 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
     }
   };
 
+  // Find employee data for assignees
+  const assigneeEmployees = assignees
+    .map(assignee => {
+      // Handle both string IDs and object format with employee_id
+      const employeeId = typeof assignee === 'string' 
+        ? assignee 
+        : (assignee as { employee_id: string }).employee_id;
+      
+      return employees.find(emp => emp.id === employeeId);
+    })
+    .filter(Boolean) as Employee[];
+
   return (
     <>
       <Draggable draggableId={`card-${id}`} index={index}>
@@ -248,6 +260,28 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
               <h3 className="font-medium text-gray-900 select-none truncate">{title}</h3>
               {description && (
                 <p className="text-sm text-gray-600 mt-1 select-none line-clamp-2">{description}</p>
+              )}
+              
+              {/* Assignees section - Make sure this is visible */}
+              {assignees && assignees.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1">
+                  {assigneeEmployees.slice(0, 3).map((employee, i) => (
+                    <div 
+                      key={`${employee?.id || i}`}
+                      className="flex-shrink-0 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium"
+                      title={employee?.first_name || employee?.email || 'Assignee'}
+                    >
+                      {employee?.first_name || employee?.email?.split('@')[0] || 'Assignee'}
+                    </div>
+                  ))}
+                  
+                  {/* Show count for additional assignees */}
+                  {assignees.length > 3 && (
+                    <div className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs font-medium" title={`${assignees.length - 3} more assignees`}>
+                      +{assignees.length - 3}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
