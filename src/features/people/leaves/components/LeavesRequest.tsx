@@ -426,21 +426,26 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
                             </div>
                         )}
 
-                        {/* Reason Field */}
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700">Reason</label>
-                            <textarea
-                                title="Reason"
-                                value={newRequest.request_reason}
-                                onChange={(e) => setNewRequest(prev => ({ 
-                                    ...prev, 
-                                    request_reason: e.target.value 
-                                }))}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                rows={3}
-                                required
-                            />
-                        </div>
+                        {/* Reason Field - Only show for non-sick leave types */}
+                        {newRequest.leave_type && newRequest.leave_type !== 'sick_leave' && (
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Reason
+                                    <span className="text-red-500 ml-1">*</span>
+                                </label>
+                                <textarea
+                                    title="Reason"
+                                    value={newRequest.request_reason}
+                                    onChange={(e) => setNewRequest(prev => ({ 
+                                        ...prev, 
+                                        request_reason: e.target.value 
+                                    }))}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    rows={3}
+                                    required
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {/* Submit Button */}
