@@ -130,13 +130,38 @@ export const TrelloList: React.FC<TrelloListProps> = ({
     }
   };
 
-  // Filter cards based on search term
+  // Filter cards based on search term - now including assignees
   const filteredCards = searchTerm 
-    ? cards.filter(card => 
-        card.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        (card.description && card.description.toLowerCase().includes(searchTerm.toLowerCase()))
-      )
+    ? cards.filter(card => {
+        // Search in title and description
+        const titleMatch = card.title.toLowerCase().includes(searchTerm.toLowerCase());
+        const descriptionMatch = card.description && card.description.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        // Search in assignees
+        const assigneeMatch = card.assignees && card.assignees.some(assignee => {
+          // Handle both string IDs and object format
+          const assigneeId = typeof assignee === 'string' 
+            ? assignee 
+            : (assignee as { employee_id: string }).employee_id;
+          
+          const employee = employees.find(emp => emp.id === assigneeId);
+          
+          // Match against employee name or email
+          return employee && (
+            (employee.first_name && employee.first_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (employee.last_name && employee.last_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (employee.email && employee.email.toLowerCase().includes(searchTerm.toLowerCase()))
+          );
+        });
+        
+        return titleMatch || descriptionMatch || assigneeMatch;
+      })
     : cards;
+
+  // Don't render the list at all if searching and no matches found
+  if (searchTerm && filteredCards.length === 0) {
+    return null;
+  }
 
   return (
     <Draggable draggableId={`list-${id}`} index={index}>
@@ -257,7 +282,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                   {dropProvided.placeholder}
                   {filteredCards.length === 0 && !snapshot.isDraggingOver && (
                     <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-                      {searchTerm ? 'No matching cards' : 'Drop cards here'}
+                      {searchTerm ? 'No matching cards or assignees' : 'Drop cards here'}
                     </div>
                   )}
                 </div>
