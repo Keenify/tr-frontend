@@ -1,5 +1,15 @@
 export type EventType = 'Employee Leave' | 'Booth' | 'Meeting' | 'Other';
 
+export interface Participant {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  phone: string;
+  profile_pic_url?: string;
+}
+
 export interface CalendarEvent {
   id: string;
   title: string;
@@ -12,6 +22,7 @@ export interface CalendarEvent {
   created_by: string;
   created_at: string;
   updated_at: string;
+  participants: Participant[];
 }
 
 export interface CreateCalendarEventPayload {
@@ -21,4 +32,15 @@ export interface CreateCalendarEventPayload {
   end_time: string;
   location?: string;
   description?: string;
+  participant_ids?: string[];
+}
+
+export interface UpdateCalendarEventPayload {
+  title?: string;
+  event_type?: string;
+  location?: string;
+  description?: string;
+  start_time?: string;
+  end_time?: string;
+  participant_ids?: string[];
 } 

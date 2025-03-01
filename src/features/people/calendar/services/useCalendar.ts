@@ -8,51 +8,24 @@
  * @module CalendarService
  */
 
+import { 
+    CalendarEvent, 
+    CreateCalendarEventPayload, 
+    UpdateCalendarEventPayload, 
+    Participant 
+} from '../types/calendar';
+
 const API_DOMAIN = import.meta.env.VITE_BACKEND_API_DOMAIN;
 
-/**
- * Represents the payload required to create a new calendar event
- * All fields except optional ones (location, description) are required
- */
-export interface CreateCalendarEventPayload {
-    title: string;
-    event_type: string;
-    start_time: string;  // ISO 8601 format
-    end_time: string;    // ISO 8601 format
-    location?: string;
-    description?: string;
-}
+// Use CalendarEvent type from imported types
+export type CalendarEventData = CalendarEvent;
 
-/**
- * Represents a calendar event as stored in the system
- * Contains all event details including metadata like creation and update timestamps
- */
-export interface CalendarEventData {
-    id: string;
-    title: string;
-    event_type: string;
-    location?: string;
-    description?: string;
-    start_time: string;
-    end_time: string;
-    company_id: string;
-    created_by: string;
-    created_at: string;
-    updated_at: string;
-}
-
-/**
- * Represents the payload for updating an existing calendar event
- * All fields are optional, allowing partial updates
- */
-export interface UpdateCalendarEventPayload {
-    title?: string;
-    event_type?: string;
-    location?: string;
-    description?: string;
-    start_time?: string;
-    end_time?: string;
-}
+// Re-export the imported types for convenience
+export type { 
+    CreateCalendarEventPayload, 
+    UpdateCalendarEventPayload, 
+    Participant 
+};
 
 /**
  * Creates a new calendar event
