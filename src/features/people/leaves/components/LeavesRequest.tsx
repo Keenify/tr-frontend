@@ -512,16 +512,22 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
                                     <input
                                         title="Time Off Value"
                                         type="number"
-                                        min="1"
+                                        min={newRequest.timeoff_type === 'hours' ? "0.25" : "1"}
                                         max={newRequest.timeoff_type === 'hours' ? "8" : "365"}
+                                        step={newRequest.timeoff_type === 'hours' ? "0.25" : "1"}
                                         value={newRequest.timeoff_value}
                                         onChange={(e) => setNewRequest(prev => ({
                                             ...prev,
-                                            timeoff_value: parseInt(e.target.value)
+                                            timeoff_value: parseFloat(e.target.value)
                                         }))}
                                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                         required
                                     />
+                                    {newRequest.timeoff_type === 'hours' && (
+                                        <p className="mt-1 text-xs text-gray-500">
+                                            Hours can be entered in 0.25 increments (0.25, 0.50, 0.75, etc.)
+                                        </p>
+                                    )}
                                 </div>
                             </>
                         )}

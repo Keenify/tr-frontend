@@ -36,4 +36,6 @@ export interface UpdateLeaveRequestPayload {
     status?: LeaveStatus;
     cancellation_reason?: string;
     attachment_filepath?: string;
+    timeoff_type?: TimeoffType;
+    timeoff_value?: number;
 } 

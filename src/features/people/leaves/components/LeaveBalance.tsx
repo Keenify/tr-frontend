@@ -291,6 +291,8 @@ export function LeaveBalanceTable({
                         title="Time Off (Hours)"
                         placeholder="Time Off (Hours)"
                         type="number"
+                        step="0.25"
+                        min="0"
                         onChange={(e) => handleInputChange(employee.id, 'timeoff_hours_balance', Number(e.target.value))}
                         className="w-16 text-center border rounded-md"
                         value={editedBalance?.timeoff_hours_balance ?? leaveBalance?.timeoff_hours_balance ?? 0}
