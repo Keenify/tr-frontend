@@ -368,12 +368,14 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
                                     onChange={(e) => setSelectedEmployeeId(e.target.value)}
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                 >
-                                    <option value="">Select Employee (or leave empty for yourself)</option>
-                                    {companyEmployees.map(employee => (
-                                        <option key={employee.id} value={employee.id}>
-                                            {employee.name}
-                                        </option>
-                                    ))}
+                                    <option value="">Myself</option>
+                                    {companyEmployees
+                                        .filter(employee => employee.id !== userInfo?.id) // Filter out the current user
+                                        .map(employee => (
+                                            <option key={employee.id} value={employee.id}>
+                                                {employee.name}
+                                            </option>
+                                        ))}
                                 </select>
                             </div>
                         )}
