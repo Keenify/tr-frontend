@@ -249,10 +249,9 @@ export function LeaveBalanceTable({
                         title="Annual Leave Balance"
                         placeholder="Annual Leave Balance"
                         type="number"
-                        min="0"
-                        value={editedBalance?.annual_leave_balance ?? leaveBalance?.annual_leave_balance ?? 0}
                         onChange={(e) => handleInputChange(employee.id, 'annual_leave_balance', Number(e.target.value))}
                         className="w-16 text-center border rounded-md"
+                        value={editedBalance?.annual_leave_balance ?? leaveBalance?.annual_leave_balance ?? 0}
                       />
                     ) : (
                       leaveBalance?.annual_leave_balance ?? 0
@@ -264,10 +263,9 @@ export function LeaveBalanceTable({
                         title="Sick Leave Balance"
                         placeholder="Sick Leave Balance"
                         type="number"
-                        min="0"
-                        value={editedBalance?.sick_leave_balance ?? leaveBalance?.sick_leave_balance ?? 0}
                         onChange={(e) => handleInputChange(employee.id, 'sick_leave_balance', Number(e.target.value))}
                         className="w-16 text-center border rounded-md"
+                        value={editedBalance?.sick_leave_balance ?? leaveBalance?.sick_leave_balance ?? 0}
                       />
                     ) : (
                       leaveBalance?.sick_leave_balance ?? 0
@@ -279,10 +277,9 @@ export function LeaveBalanceTable({
                         title="Time Off (Days)"
                         placeholder="Time Off (Days)"
                         type="number"
-                        min="0"
-                        value={editedBalance?.timeoff_days_balance ?? leaveBalance?.timeoff_days_balance ?? 0}
                         onChange={(e) => handleInputChange(employee.id, 'timeoff_days_balance', Number(e.target.value))}
                         className="w-16 text-center border rounded-md"
+                        value={editedBalance?.timeoff_days_balance ?? leaveBalance?.timeoff_days_balance ?? 0}
                       />
                     ) : (
                       leaveBalance?.timeoff_days_balance ?? 0
@@ -294,10 +291,9 @@ export function LeaveBalanceTable({
                         title="Time Off (Hours)"
                         placeholder="Time Off (Hours)"
                         type="number"
-                        min="0"
-                        value={editedBalance?.timeoff_hours_balance ?? leaveBalance?.timeoff_hours_balance ?? 0}
                         onChange={(e) => handleInputChange(employee.id, 'timeoff_hours_balance', Number(e.target.value))}
                         className="w-16 text-center border rounded-md"
+                        value={editedBalance?.timeoff_hours_balance ?? leaveBalance?.timeoff_hours_balance ?? 0}
                       />
                     ) : (
                       leaveBalance?.timeoff_hours_balance ?? 0
