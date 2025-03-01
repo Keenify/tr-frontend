@@ -36,6 +36,10 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
         direction: 'asc' | 'desc';
     } | null>(null);
     const [employeeNames, setEmployeeNames] = useState<Record<string, string>>({});
+    
+    // Add state for company employees and selected employee
+    const [companyEmployees, setCompanyEmployees] = useState<{id: string, name: string}[]>([]);
+    const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
 
     // Updated and new form state
     const [newRequest, setNewRequest] = useState({
@@ -106,63 +110,24 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
         }
     };
 
-    // Handle form submission
-    const handleSubmitRequest = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!userInfo?.id) {
-            toast.error('Employee ID not found');
-            return;
-        }
-
-        setIsUploading(true);
+    // Add function to fetch company employees
+    const fetchCompanyEmployees = useCallback(async () => {
+        if (!companyId || !isManager) return;
+        
         try {
-            let attachmentPath = '';
-            if (newRequest.leave_type === 'sick_leave' && selectedFile) {
-                attachmentPath = await uploadLeaveAttachment(selectedFile);
-            }
-
-            const payload: CreateLeaveRequestPayload = {
-                leave_type: newRequest.leave_type,
-                start_date: newRequest.start_date,
-                end_date: newRequest.end_date,
-                request_reason: newRequest.request_reason,
-                half_day: isSingleDayRequest() ? newRequest.half_day : null,
-                attachment_filepath: attachmentPath || undefined,
-            };
-
-            // Add timeoff specific fields
-            if (newRequest.leave_type === 'timeoff') {
-                payload.timeoff_type = newRequest.timeoff_type;
-                payload.timeoff_value = newRequest.timeoff_value;
-            }
-
-            console.log('Submitting leave request:', payload);
-            await createLeaveRequest(userInfo.id, payload);
-            
-            toast.success('Leave request submitted successfully');
-            fetchLeaveRequests();
-            
-            // Reset form
-            setNewRequest({
-                leave_type: '' as LeaveType,
-                start_date: '',
-                end_date: '',
-                request_reason: '',
-                half_day: null,
-                timeoff_type: 'days',
-                timeoff_value: 0,
-                attachment_filepath: '',
-            });
-            setDateRange([null, null]);
-            setSelectedFile(null);
+            const employees = await directoryService.fetchEmployees(companyId);
+            const formattedEmployees = employees.map(emp => ({
+                id: emp.id,
+                name: `${emp.first_name} ${emp.last_name}`
+            }));
+            setCompanyEmployees(formattedEmployees);
         } catch (error) {
-            console.error('Error submitting leave request:', error);
-            toast.error('Failed to submit leave request');
-        } finally {
-            setIsUploading(false);
+            console.error('Error fetching company employees:', error);
+            toast.error('Failed to fetch company employees');
         }
-    };
+    }, [companyId, isManager]);
 
+    // Move fetchLeaveRequests definition above the useEffect that uses it
     const fetchLeaveRequests = useCallback(async () => {
         if (!companyId || !userInfo?.id) return;
         
@@ -196,8 +161,83 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
     useEffect(() => {
         if (companyId) {
             fetchLeaveRequests();
+            if (isManager) {
+                fetchCompanyEmployees();
+            }
         }
-    }, [companyId, fetchLeaveRequests]);
+    }, [companyId, fetchLeaveRequests, isManager, fetchCompanyEmployees]);
+
+    // Reset selected employee when form is reset
+    useEffect(() => {
+        if (!newRequest.leave_type) {
+            setSelectedEmployeeId('');
+        }
+    }, [newRequest.leave_type]);
+
+    // Handle form submission
+    const handleSubmitRequest = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        // Determine which employee ID to use
+        const employeeId = isManager && selectedEmployeeId ? selectedEmployeeId : userInfo?.id;
+        
+        if (!employeeId) {
+            toast.error('Employee ID not found');
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            let attachmentPath = '';
+            if (newRequest.leave_type === 'sick_leave' && selectedFile) {
+                attachmentPath = await uploadLeaveAttachment(selectedFile);
+            }
+
+            const payload: CreateLeaveRequestPayload = {
+                leave_type: newRequest.leave_type,
+                start_date: newRequest.start_date,
+                end_date: newRequest.end_date,
+                request_reason: newRequest.request_reason,
+                half_day: isSingleDayRequest() ? newRequest.half_day : null,
+                attachment_filepath: attachmentPath || undefined,
+            };
+
+            // Add timeoff specific fields
+            if (newRequest.leave_type === 'timeoff') {
+                payload.timeoff_type = newRequest.timeoff_type;
+                payload.timeoff_value = newRequest.timeoff_value;
+            }
+
+            console.log('Submitting leave request:', payload);
+            await createLeaveRequest(employeeId, payload);
+            
+            const employeeName = isManager && selectedEmployeeId ? 
+                companyEmployees.find(emp => emp.id === selectedEmployeeId)?.name || 'employee' : 
+                'your';
+            toast.success(`Leave request for ${employeeName} submitted successfully`);
+            fetchLeaveRequests();
+            
+            // Reset form
+            setNewRequest({
+                leave_type: '' as LeaveType,
+                start_date: '',
+                end_date: '',
+                request_reason: '',
+                half_day: null,
+                timeoff_type: 'days',
+                timeoff_value: 0,
+                attachment_filepath: '',
+            });
+            setDateRange([null, null]);
+            setSelectedFile(null);
+            setSelectedEmployeeId('');
+        } catch (error) {
+            console.error('Error submitting leave request:', error);
+            toast.error('Failed to submit leave request');
+        } finally {
+            setIsUploading(false);
+        }
+    };
 
     const handleUpdateStatus = async (requestId: string, status: LeaveStatus) => {
         try {
@@ -313,9 +353,31 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
 
             {/* New Leave Request Form */}
             <div className="bg-white p-6 rounded-lg shadow">
-                <h2 className="text-lg font-medium mb-4">Submit New Leave Request</h2>
+                <h2 className="text-lg font-medium mb-4">
+                    {isManager ? 'Submit Leave Request' : 'Submit New Leave Request'}
+                </h2>
                 <form onSubmit={handleSubmitRequest} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Employee Selection for Managers */}
+                        {isManager && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Employee</label>
+                                <select
+                                    title="Employee"
+                                    value={selectedEmployeeId}
+                                    onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                >
+                                    <option value="">Select Employee (or leave empty for yourself)</option>
+                                    {companyEmployees.map(employee => (
+                                        <option key={employee.id} value={employee.id}>
+                                            {employee.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
                         {/* Leave Type Selection */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Leave Type</label>
