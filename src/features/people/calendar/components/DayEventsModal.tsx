@@ -137,13 +137,24 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
                     )}
                     {event.participants && event.participants.length > 0 && (
                       <div className="mt-2">
-                        <p className="text-sm font-medium">Participants:</p>
-                        <div className="flex flex-wrap gap-1 mt-1">
+                        <p className="text-sm font-medium mb-1">Participants:</p>
+                        <div className="flex flex-wrap gap-1.5 mt-1">
                           {event.participants.map(participant => (
                             <span 
                               key={participant.id}
-                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                              className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100"
                             >
+                              {participant.profile_pic_url ? (
+                                <img 
+                                  src={participant.profile_pic_url} 
+                                  alt={`${participant.first_name} ${participant.last_name}`}
+                                  className="w-4 h-4 rounded-full mr-1 object-cover"
+                                />
+                              ) : (
+                                <span className="w-4 h-4 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center mr-1 text-[10px] font-bold">
+                                  {participant.first_name[0]}
+                                </span>
+                              )}
                               {participant.first_name} {participant.last_name}
                             </span>
                           ))}
