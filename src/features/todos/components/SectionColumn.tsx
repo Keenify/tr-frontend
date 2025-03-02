@@ -1,63 +1,72 @@
 import React, { useState, KeyboardEvent } from 'react';
-import { TodoData } from '../types/todo';
-import { format } from 'date-fns';
-import { createTodo, updateTodo } from '../services/useTodos';
+import { TodoData, SectionData } from '../types/todo';
+import { createTodo, updateTodo, updateSection } from '../services/useTodos';
 import { TodoItem } from './TodoItem';
 
-interface DayColumnProps {
-  date: Date;
+interface SectionColumnProps {
+  section: SectionData;
   todos: TodoData[];
   employeeId: string;
   companyId: string;
   onTodoCreated: (todo: TodoData) => void;
   onTodoUpdated: (todo: TodoData) => void;
   onTodoDeleted: (todoId: string) => void;
+  onSectionUpdated?: () => void;
   isViewOnly?: boolean;
 }
 
 /**
- * Represents a single day column in the todo list view
+ * Component for displaying a single section column
  * This component:
- * - Displays todos for a specific date
- * - Handles creation of new todos for that date
- * - Manages drag and drop functionality for moving todos between dates
- * - Updates todo due dates when todos are dropped
+ * - Displays todos for a specific section
+ * - Handles creation of new todos for that section
+ * - Manages drag and drop functionality for moving todos between sections
  * 
  * @component
- * @param {Date} date - The date this column represents
- * @param {TodoData[]} todos - Array of todos for this date
+ * @param {SectionData} section - The section this column represents
+ * @param {TodoData[]} todos - Array of todos for this section
  * @param {string} employeeId - Current employee's ID
  * @param {string} companyId - Current company's ID
  * @param {Function} onTodoCreated - Callback when a new todo is created
  * @param {Function} onTodoUpdated - Callback when a todo is updated
  * @param {Function} onTodoDeleted - Callback when a todo is deleted
+ * @param {Function} onSectionUpdated - Callback when the section is updated
+ * @param {boolean} isViewOnly - Whether the component is in view-only mode
  */
-export const DayColumn: React.FC<DayColumnProps> = ({
-  date,
+export const SectionColumn: React.FC<SectionColumnProps> = ({
+  section,
   todos,
   employeeId,
   companyId,
   onTodoCreated,
   onTodoUpdated,
   onTodoDeleted,
+  onSectionUpdated,
   isViewOnly = false
 }) => {
   const [newTodoText, setNewTodoText] = useState('');
-  const minLines = 10; // Reduced from 20 since we're now splitting the view
-  const emptyLines = Math.max(minLines - todos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row
+  const [isEditingSection, setIsEditingSection] = useState(false);
+  const [sectionName, setSectionName] = useState(section.name);
+  const minLines = 5;
+  const emptyLines = Math.max(minLines - todos.length - (isViewOnly ? 0 : 1), 0);
 
   const createNewTodo = async () => {
     if (newTodoText.trim()) {
       try {
-        const newTodo = await createTodo({
+        console.log('Creating todo in section:', section.id);
+        
+        const payload = {
           title: newTodoText,
           description: '',
-          due_date: format(date, 'yyyy-MM-dd'),
           color_code: '#7924C2',
           employee_id: employeeId,
           company_id: companyId,
-          section_id: undefined, // For daily todos
-        });
+          section_id: section.id
+        };
+        
+        console.log('Todo payload:', JSON.stringify(payload, null, 2));
+        
+        const newTodo = await createTodo(payload);
         onTodoCreated(newTodo);
         setNewTodoText('');
       } catch (error) {
@@ -73,7 +82,9 @@ export const DayColumn: React.FC<DayColumnProps> = ({
   };
 
   const handleBlur = async () => {
-    await createNewTodo();
+    if (newTodoText.trim()) {
+      await createNewTodo();
+    }
   };
 
   const handleDrop = async (e: React.DragEvent) => {
@@ -87,36 +98,69 @@ export const DayColumn: React.FC<DayColumnProps> = ({
     
     try {
       const updatedTodo = await updateTodo(todoId, {
-        due_date: format(date, 'yyyy-MM-dd')
+        section_id: section.id
       });
       onTodoUpdated(updatedTodo);
     } catch (error) {
-      console.error('Failed to update todo date:', error);
+      console.error('Failed to update todo section:', error);
     }
+  };
+
+  const handleUpdateSection = async () => {
+    if (sectionName.trim() === '') return;
+    
+    try {
+      await updateSection(section.id, {
+        name: sectionName
+      });
+      
+      setIsEditingSection(false);
+      
+      if (onSectionUpdated) {
+        onSectionUpdated();
+      }
+    } catch (error) {
+      console.error('Failed to update section:', error);
+    }
+  };
+
+  const startEditing = () => {
+    if (isViewOnly) return;
+    setIsEditingSection(true);
   };
 
   return (
     <div 
-      className="flex-1 min-h-[500px] border-r border-gray-200 bg-white flex flex-col"
+      className="flex-1 border-r border-gray-200 bg-white"
       onDrop={handleDrop}
       onDragOver={(e) => e.preventDefault()}
     >
-      {/* Header with date and arrows */}
-      <div className="p-4 border-b border-gray-200 bg-gray-50">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-lg font-semibold text-gray-700">
-              {format(date, 'EEEE')}
-            </div>
-            <div className="text-sm text-gray-500">
-              {format(date, 'dd MMM yyyy')}
-            </div>
+      {/* Header with section name */}
+      <div className="p-3 border-b border-gray-200 bg-gray-50">
+        {isEditingSection ? (
+          <input
+            title="Section name"
+            placeholder="Section name"
+            type="text"
+            value={sectionName}
+            onChange={(e) => setSectionName(e.target.value)}
+            onBlur={handleUpdateSection}
+            onKeyPress={(e) => e.key === 'Enter' && handleUpdateSection()}
+            className="w-full px-2 py-1 font-semibold border rounded"
+            autoFocus
+          />
+        ) : (
+          <div 
+            className="font-semibold text-gray-700"
+            onDoubleClick={startEditing}
+          >
+            {section.name}
           </div>
-        </div>
+        )}
       </div>
       
       {/* Content area with fixed height rows */}
-      <div className="flex-1">
+      <div>
         {/* All todo items */}
         {todos.map((todo) => (
           <div key={todo.id} className="h-[40px] border-b border-gray-200">

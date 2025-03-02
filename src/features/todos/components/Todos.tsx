@@ -7,6 +7,7 @@ import { addDays, startOfToday, format, subDays } from 'date-fns';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import { directoryService } from '../../../shared/services/directoryService';
 import { Employee } from '../../../shared/types/directory.types';
+import { TodoSection } from './TodoSection';
 
 interface TodosProps {
   session: Session;
@@ -19,6 +20,7 @@ interface TodosProps {
  * - Loads todos for the current user
  * - Creates a 5-column layout (today + next 4 days)
  * - Manages the global todo state and passes update handlers to child components
+ * - Displays both daily todos and section todos in separate panels
  * 
  * @component
  * @param {Session} session - The current user's session
@@ -132,45 +134,75 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
         </div>
       )}
 
-      <div className="flex flex-1">
-        {/* Left arrow */}
-        <button
-          onClick={handlePrevDay}
-          className="p-1 hover:bg-gray-200 rounded-full transition-colors self-start mt-4"
-          title="Previous day"
-        >
-          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
+      {/* Split the view into two sections */}
+      <div className="flex flex-col flex-1">
+        {/* Daily Todos - Upper Half */}
+        <div className="flex flex-1 border-b border-gray-300">
+          {/* Left arrow */}
+          <div className="flex items-center justify-center w-8">
+            <button
+              onClick={handlePrevDay}
+              className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+              title="Previous day"
+            >
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          </div>
 
-        {/* Columns */}
-        <div className="flex flex-1">
-          {dates.map((date) => (
-            <DayColumn
-              key={date.toISOString()}
-              date={date}
-              todos={todos.filter(todo => todo.due_date === format(date, 'yyyy-MM-dd'))}
-              employeeId={userInfo?.id || ''}
-              companyId={companyInfo?.id || ''}
-              onTodoCreated={handleTodoCreated}
-              onTodoUpdated={handleTodoUpdated}
-              onTodoDeleted={handleTodoDeleted}
-              isViewOnly={selectedEmployeeId !== null}
-            />
-          ))}
+          {/* Columns */}
+          <div className="flex flex-1">
+            {dates.map((date) => (
+              <DayColumn
+                key={date.toISOString()}
+                date={date}
+                todos={todos.filter(todo => 
+                  todo.due_date === format(date, 'yyyy-MM-dd') && 
+                  todo.section_id === null // Only show todos without a section
+                )}
+                employeeId={selectedEmployeeId || userInfo?.id || ''}
+                companyId={companyInfo?.id || ''}
+                onTodoCreated={handleTodoCreated}
+                onTodoUpdated={handleTodoUpdated}
+                onTodoDeleted={handleTodoDeleted}
+                isViewOnly={selectedEmployeeId !== null}
+              />
+            ))}
+          </div>
+
+          {/* Right arrow */}
+          <div className="flex items-center justify-center w-8">
+            <button
+              onClick={handleNextDay}
+              className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+              title="Next day"
+            >
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
         </div>
 
-        {/* Right arrow */}
-        <button
-          onClick={handleNextDay}
-          className="p-1 hover:bg-gray-200 rounded-full transition-colors self-start mt-4"
-          title="Next day"
-        >
-          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+        {/* Section Todos - Lower Half */}
+        <div className="flex-1">
+          <div className="flex h-full">
+            <div className="w-8"></div> {/* Spacer to align with upper section */}
+            <div className="flex-1">
+              <TodoSection 
+                todos={todos.filter(todo => todo.section_id !== null)} // Only show todos with a section
+                employeeId={selectedEmployeeId || userInfo?.id || ''}
+                companyId={companyInfo?.id || ''}
+                onTodoCreated={handleTodoCreated}
+                onTodoUpdated={handleTodoUpdated}
+                onTodoDeleted={handleTodoDeleted}
+                isViewOnly={selectedEmployeeId !== null}
+              />
+            </div>
+            <div className="w-8"></div> {/* Spacer to align with upper section */}
+          </div>
+        </div>
       </div>
     </div>
   );
