@@ -67,8 +67,8 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
         console.log('Todo payload:', JSON.stringify(payload, null, 2));
         
         const newTodo = await createTodo(payload);
-        onTodoCreated(newTodo);
         setNewTodoText('');
+        onTodoCreated(newTodo);
       } catch (error) {
         console.error('Failed to create todo:', error);
       }
@@ -81,12 +81,6 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
     } else if (e.key === 'Escape') {
       setIsEditingSection(false);
       setSectionName(section.name);
-    }
-  };
-
-  const handleBlur = async () => {
-    if (newTodoText.trim()) {
-      await createNewTodo();
     }
   };
 
@@ -142,7 +136,7 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
 
   return (
     <div 
-      className="flex-1 border-r border-gray-200 bg-white"
+      className="flex-1 border-r border-gray-200 bg-white overflow-y-auto scrollbar-hide"
       onDrop={handleDrop}
       onDragOver={(e) => e.preventDefault()}
     >
@@ -192,8 +186,12 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
                 type="text"
                 value={newTodoText}
                 onChange={(e) => setNewTodoText(e.target.value)}
-                onKeyPress={handleKeyPress}
-                onBlur={handleBlur}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    createNewTodo();
+                  }
+                }}
                 placeholder="Add new todo..."
                 className="w-full outline-none bg-transparent"
               />
