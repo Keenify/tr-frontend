@@ -66,7 +66,11 @@ export const TabList: React.FC<TabListProps> = ({
   };
 
   const handleUpdateTab = async (tabId: string) => {
-    if (editingTabName.trim() === '') return;
+    if (editingTabName.trim() === '' || editingTabName === tabs.find(t => t.id === tabId)?.name) {
+      setEditingTabId(null);
+      setEditingTabName('');
+      return;
+    }
     
     try {
       await updateTab(tabId, {
@@ -79,10 +83,21 @@ export const TabList: React.FC<TabListProps> = ({
       if (onTabUpdated) {
         onTabUpdated();
       } else {
-        onTabCreated(); // Use the existing refresh function if no specific update handler
+        onTabCreated();
       }
     } catch (error) {
       console.error('Failed to update tab:', error);
+      setEditingTabId(null);
+      setEditingTabName('');
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent, tabId: string) => {
+    if (e.key === 'Enter') {
+      handleUpdateTab(tabId);
+    } else if (e.key === 'Escape') {
+      setEditingTabId(null);
+      setEditingTabName('');
     }
   };
 
@@ -115,7 +130,7 @@ export const TabList: React.FC<TabListProps> = ({
                   value={editingTabName}
                   onChange={(e) => setEditingTabName(e.target.value)}
                   onBlur={() => handleUpdateTab(tab.id)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleUpdateTab(tab.id)}
+                  onKeyDown={(e) => handleKeyPress(e, tab.id)}
                   className="px-2 py-1 bg-white text-gray-800 border rounded w-full"
                   autoFocus
                 />

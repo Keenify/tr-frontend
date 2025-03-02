@@ -79,8 +79,16 @@ export const TodoSection: React.FC<TodoSectionProps> = ({
 
   // Handle section creation or update
   const handleSectionChange = useCallback(() => {
-    fetchTabs();
-  }, [fetchTabs]);
+    // Save the current active tab ID
+    const currentActiveTabId = activeTabId;
+    
+    // Fetch tabs and then restore the active tab
+    fetchTabs().then(() => {
+      if (currentActiveTabId) {
+        setActiveTabId(currentActiveTabId);
+      }
+    });
+  }, [fetchTabs, activeTabId]);
 
   if (loading && tabs.length === 0) {
     return <div className="p-4">Loading sections...</div>;

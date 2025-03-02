@@ -1,4 +1,4 @@
-import React, { useState, KeyboardEvent } from 'react';
+import React, { useState } from 'react';
 import { TodoData, SectionData } from '../types/todo';
 import { createTodo, updateTodo, updateSection } from '../services/useTodos';
 import { TodoItem } from './TodoItem';
@@ -75,9 +75,12 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
     }
   };
 
-  const handleKeyPress = async (e: KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      await createNewTodo();
+      handleUpdateSection();
+    } else if (e.key === 'Escape') {
+      setIsEditingSection(false);
+      setSectionName(section.name);
     }
   };
 
@@ -107,7 +110,11 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
   };
 
   const handleUpdateSection = async () => {
-    if (sectionName.trim() === '') return;
+    if (sectionName.trim() === '' || sectionName === section.name) {
+      setIsEditingSection(false);
+      setSectionName(section.name);
+      return;
+    }
     
     try {
       await updateSection(section.id, {
@@ -117,10 +124,14 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
       setIsEditingSection(false);
       
       if (onSectionUpdated) {
-        onSectionUpdated();
+        setTimeout(() => {
+          onSectionUpdated();
+        }, 10);
       }
     } catch (error) {
       console.error('Failed to update section:', error);
+      setSectionName(section.name);
+      setIsEditingSection(false);
     }
   };
 
@@ -145,7 +156,7 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
             value={sectionName}
             onChange={(e) => setSectionName(e.target.value)}
             onBlur={handleUpdateSection}
-            onKeyPress={(e) => e.key === 'Enter' && handleUpdateSection()}
+            onKeyDown={handleKeyPress}
             className="w-full px-2 py-1 font-semibold border rounded"
             autoFocus
           />
