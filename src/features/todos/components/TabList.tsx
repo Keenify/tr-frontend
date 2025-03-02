@@ -242,17 +242,21 @@ export const TabList: React.FC<TabListProps> = ({
           .map(tab => (
             <div
               key={tab.id}
-              className={`px-4 py-2 mr-2 rounded-t-lg font-medium relative ${
+              className={`px-4 py-2 mr-2 rounded-t-lg font-medium relative cursor-pointer ${
                 activeTabId === tab.id
                   ? 'bg-blue-500 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
+              onClick={() => onTabChange(tab.id)}
             >
               <div className="flex items-center">
                 {!isViewOnly && (
                   <button
                     ref={el => menuButtonRefs.current[tab.id] = el}
-                    onClick={() => toggleMenu(tab.id)}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent tab activation when clicking menu
+                      toggleMenu(tab.id);
+                    }}
                     className={`mr-2 focus:outline-none rounded-full p-1 transition-colors duration-150 ${
                       activeTabId === tab.id 
                         ? 'text-white hover:bg-white hover:bg-opacity-30' 
@@ -275,18 +279,21 @@ export const TabList: React.FC<TabListProps> = ({
                     onChange={(e) => setEditingTabName(e.target.value)}
                     onBlur={() => handleUpdateTab(tab.id)}
                     onKeyDown={(e) => handleKeyPress(e, tab.id)}
+                    onClick={(e) => e.stopPropagation()} // Prevent tab activation when editing
                     className="px-2 py-1 bg-white text-gray-800 border rounded w-full"
                     autoFocus
                   />
                 ) : (
-                  <div className="flex items-center">
-                    <button
-                      onClick={() => onTabChange(tab.id)}
-                      onDoubleClick={() => startEditing(tab)}
+                  <div className="flex items-center w-full">
+                    <div
+                      onDoubleClick={(e) => {
+                        e.stopPropagation(); // Prevent tab activation on double click
+                        startEditing(tab);
+                      }}
                       className="text-left flex-grow"
                     >
                       {tab.name}
-                    </button>
+                    </div>
                     
                     {/* Section count badge */}
                     <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
