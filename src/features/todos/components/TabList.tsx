@@ -253,10 +253,10 @@ export const TabList: React.FC<TabListProps> = ({
                   <button
                     ref={el => menuButtonRefs.current[tab.id] = el}
                     onClick={() => toggleMenu(tab.id)}
-                    className={`mr-2 focus:outline-none rounded-full p-1 hover:bg-opacity-20 ${
+                    className={`mr-2 focus:outline-none rounded-full p-1 transition-colors duration-150 ${
                       activeTabId === tab.id 
-                        ? 'text-white hover:bg-white' 
-                        : 'text-gray-600 hover:bg-gray-300'
+                        ? 'text-white hover:bg-white hover:bg-opacity-30' 
+                        : 'text-gray-600 hover:bg-gray-300 hover:text-gray-800'
                     }`}
                     aria-label="Tab options"
                   >
