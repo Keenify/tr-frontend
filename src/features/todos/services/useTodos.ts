@@ -33,16 +33,18 @@ export async function createTodo(payload: CreateTodoPayload): Promise<TodoData> 
     // Add default value for is_completed if not provided
     const todoPayload = {
         ...payload,
-        is_completed: payload.is_completed ?? false
+        is_completed: payload.is_completed ?? false,
+        // Convert undefined section_id to null for API compatibility
+        section_id: payload.section_id || null
     };
 
     const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
         },
-        body: JSON.stringify(todoPayload),
+        body: JSON.stringify(todoPayload)
     });
 
     const data = await response.json();
@@ -51,7 +53,7 @@ export async function createTodo(payload: CreateTodoPayload): Promise<TodoData> 
         return handleApiError(response, data, 'Failed to create todo');
     }
 
-    return data as TodoData;
+    return data;
 }
 
 /**

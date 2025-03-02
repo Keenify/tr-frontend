@@ -3,24 +3,25 @@ export interface TodoData {
     title: string;
     description: string;
     due_date: string;
+    is_completed?: boolean;
     color_code: string;
-    is_completed: boolean;
-    company_id: string;
     employee_id: string;
-    section_id?: string;
-    created_at: string;
-    updated_at: string;
+    company_id: string;
+    created_at?: string;
+    updated_at?: string;
+    section_id: string | null | undefined;
+    section_name: string | null | undefined;
 }
 
 export interface CreateTodoPayload {
     title: string;
     description: string;
-    due_date: string;
+    due_date?: string | null; // Make due_date optional
     color_code: string;
     is_completed?: boolean;  // Optional, defaults to false
     employee_id: string;
     company_id: string;
-    section_id?: string;
+    section_id?: string | null;
 }
 
 export interface UpdateTodoPayload {
