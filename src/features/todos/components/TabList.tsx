@@ -279,13 +279,24 @@ export const TabList: React.FC<TabListProps> = ({
                     autoFocus
                   />
                 ) : (
-                  <button
-                    onClick={() => onTabChange(tab.id)}
-                    onDoubleClick={() => startEditing(tab)}
-                    className="text-left flex-grow"
-                  >
-                    {tab.name}
-                  </button>
+                  <div className="flex items-center">
+                    <button
+                      onClick={() => onTabChange(tab.id)}
+                      onDoubleClick={() => startEditing(tab)}
+                      className="text-left flex-grow"
+                    >
+                      {tab.name}
+                    </button>
+                    
+                    {/* Section count badge */}
+                    <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                      activeTabId === tab.id
+                        ? 'bg-white text-blue-500'
+                        : 'bg-gray-200 text-gray-700'
+                    }`}>
+                      {tab.sections.length}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
