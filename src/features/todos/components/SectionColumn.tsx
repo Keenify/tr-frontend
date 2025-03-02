@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { TodoData, SectionData } from '../types/todo';
-import { createTodo, updateTodo, updateSection } from '../services/useTodos';
+import { createTodo, updateTodo, updateSection, deleteSection } from '../services/useTodos';
 import { TodoItem } from './TodoItem';
 
 interface SectionColumnProps {
@@ -12,6 +13,7 @@ interface SectionColumnProps {
   onTodoUpdated: (todo: TodoData) => void;
   onTodoDeleted: (todoId: string) => void;
   onSectionUpdated?: () => void;
+  onSectionDeleted?: () => void;
   isViewOnly?: boolean;
 }
 
@@ -31,6 +33,7 @@ interface SectionColumnProps {
  * @param {Function} onTodoUpdated - Callback when a todo is updated
  * @param {Function} onTodoDeleted - Callback when a todo is deleted
  * @param {Function} onSectionUpdated - Callback when the section is updated
+ * @param {Function} onSectionDeleted - Callback when the section is deleted
  * @param {boolean} isViewOnly - Whether the component is in view-only mode
  */
 export const SectionColumn: React.FC<SectionColumnProps> = ({
@@ -42,13 +45,40 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
   onTodoUpdated,
   onTodoDeleted,
   onSectionUpdated,
+  onSectionDeleted,
   isViewOnly = false
 }) => {
   const [newTodoText, setNewTodoText] = useState('');
   const [isEditingSection, setIsEditingSection] = useState(false);
   const [sectionName, setSectionName] = useState(section.name);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<{top: number, left: number} | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
   const minLines = 5;
   const emptyLines = Math.max(minLines - todos.length - (isViewOnly ? 0 : 1), 0);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuOpen) {
+        const isMenuButtonClick = menuButtonRef.current && 
+          menuButtonRef.current.contains(event.target as Node);
+        
+        const menuElement = document.getElementById('section-dropdown-menu');
+        const isMenuClick = menuElement && menuElement.contains(event.target as Node);
+        
+        if (!isMenuButtonClick && !isMenuClick) {
+          setMenuOpen(false);
+          setMenuPosition(null);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuOpen]);
 
   const createNewTodo = async () => {
     if (newTodoText.trim()) {
@@ -129,9 +159,78 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
     }
   };
 
+  const handleDeleteSection = async () => {
+    try {
+      setMenuOpen(false);
+      
+      await deleteSection(section.id);
+      
+      if (onSectionDeleted) {
+        onSectionDeleted();
+      } else if (onSectionUpdated) {
+        onSectionUpdated();
+      }
+    } catch (error) {
+      console.error('Failed to delete section:', error);
+      alert('Failed to delete section. Please try again later.');
+    }
+  };
+
+  const toggleMenu = () => {
+    if (isViewOnly) return;
+    
+    if (menuOpen) {
+      setMenuOpen(false);
+      setMenuPosition(null);
+    } else {
+      setMenuOpen(true);
+      if (menuButtonRef.current) {
+        const rect = menuButtonRef.current.getBoundingClientRect();
+        setMenuPosition({
+          top: rect.bottom + window.scrollY,
+          left: rect.left + window.scrollX
+        });
+      }
+    }
+  };
+
   const startEditing = () => {
     if (isViewOnly) return;
+    setMenuOpen(false);
     setIsEditingSection(true);
+  };
+
+  // Render dropdown menu in a portal
+  const renderMenu = () => {
+    if (!menuOpen || !menuPosition) return null;
+    
+    return createPortal(
+      <div 
+        id="section-dropdown-menu"
+        className="fixed bg-white rounded-md shadow-lg z-50 border border-gray-200"
+        style={{
+          top: `${menuPosition.top}px`,
+          left: `${menuPosition.left}px`,
+          width: '12rem'
+        }}
+      >
+        <div className="py-1">
+          <button
+            onClick={startEditing}
+            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          >
+            Edit
+          </button>
+          <button
+            onClick={handleDeleteSection}
+            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+          >
+            Delete
+          </button>
+        </div>
+      </div>,
+      document.body
+    );
   };
 
   return (
@@ -141,27 +240,42 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
       onDragOver={(e) => e.preventDefault()}
     >
       {/* Header with section name */}
-      <div className="p-3 border-b border-gray-200 bg-gray-50">
-        {isEditingSection ? (
-          <input
-            title="Section name"
-            placeholder="Section name"
-            type="text"
-            value={sectionName}
-            onChange={(e) => setSectionName(e.target.value)}
-            onBlur={handleUpdateSection}
-            onKeyDown={handleKeyPress}
-            className="w-full px-2 py-1 font-semibold border rounded"
-            autoFocus
-          />
-        ) : (
-          <div 
-            className="font-semibold text-gray-700"
-            onDoubleClick={startEditing}
-          >
-            {section.name}
-          </div>
-        )}
+      <div className="p-3 border-b border-gray-200 bg-gray-50 group">
+        <div className="flex items-center">
+          {!isViewOnly && (
+            <button
+              ref={menuButtonRef}
+              onClick={toggleMenu}
+              className="mr-2 focus:outline-none rounded-full p-1 transition-colors duration-150 text-gray-600 hover:bg-gray-300 hover:text-gray-800 opacity-0 group-hover:opacity-100"
+              aria-label="Section options"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+              </svg>
+            </button>
+          )}
+          
+          {isEditingSection ? (
+            <input
+              title="Section name"
+              placeholder="Section name"
+              type="text"
+              value={sectionName}
+              onChange={(e) => setSectionName(e.target.value)}
+              onBlur={handleUpdateSection}
+              onKeyDown={handleKeyPress}
+              className="w-full px-2 py-1 font-semibold border rounded"
+              autoFocus
+            />
+          ) : (
+            <div 
+              className="font-semibold text-gray-700 flex-grow"
+              onDoubleClick={startEditing}
+            >
+              {section.name}
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Content area with fixed height rows */}
@@ -207,6 +321,8 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
           />
         ))}
       </div>
+      
+      {renderMenu()}
     </div>
   );
 }; 

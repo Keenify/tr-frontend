@@ -13,6 +13,7 @@ interface SectionListProps {
   onTodoDeleted: (todoId: string) => void;
   onSectionCreated: () => void;
   onSectionUpdated?: () => void;
+  onSectionDeleted?: () => void;
   isViewOnly?: boolean;
 }
 
@@ -33,6 +34,7 @@ interface SectionListProps {
  * @param {Function} onTodoDeleted - Callback when a todo is deleted
  * @param {Function} onSectionCreated - Callback when a new section is created
  * @param {Function} onSectionUpdated - Callback when a section is updated
+ * @param {Function} onSectionDeleted - Callback when a section is deleted
  * @param {boolean} isViewOnly - Whether the component is in view-only mode
  */
 export const SectionList: React.FC<SectionListProps> = ({
@@ -45,6 +47,7 @@ export const SectionList: React.FC<SectionListProps> = ({
   onTodoDeleted,
   onSectionCreated,
   onSectionUpdated,
+  onSectionDeleted,
   isViewOnly = false
 }) => {
   const [isCreatingSection, setIsCreatingSection] = useState(false);
@@ -82,7 +85,7 @@ export const SectionList: React.FC<SectionListProps> = ({
     <div className="flex-1 overflow-auto">
       <div className="flex flex-col h-full">
         {/* Horizontal section layout */}
-        <div className="flex flex-1 overflow-x-auto">
+        <div className="flex flex-1 overflow-x-auto scrollbar-hide">
           {tab.sections
             .slice() // Create a copy to avoid mutating the original array
             .sort((a, b) => a.name.localeCompare(b.name)) // Sort alphabetically
@@ -97,6 +100,7 @@ export const SectionList: React.FC<SectionListProps> = ({
                   onTodoUpdated={onTodoUpdated}
                   onTodoDeleted={onTodoDeleted}
                   onSectionUpdated={onSectionUpdated}
+                  onSectionDeleted={onSectionDeleted || onSectionUpdated}
                   isViewOnly={isViewOnly}
                 />
               </div>
@@ -113,7 +117,12 @@ export const SectionList: React.FC<SectionListProps> = ({
                     onChange={(e) => setNewSectionName(e.target.value)}
                     placeholder="Section name..."
                     className="px-2 py-1 border rounded w-full mb-2"
-                    onKeyPress={(e) => e.key === 'Enter' && handleCreateSection()}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleCreateSection();
+                      }
+                    }}
                     autoFocus
                   />
                   <div className="flex">
