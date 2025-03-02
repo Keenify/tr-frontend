@@ -83,21 +83,24 @@ export const SectionList: React.FC<SectionListProps> = ({
       <div className="flex flex-col h-full">
         {/* Horizontal section layout */}
         <div className="flex flex-1 overflow-x-auto">
-          {tab.sections.map(section => (
-            <div key={section.id} style={{ width: columnWidth }}>
-              <SectionColumn
-                section={section}
-                todos={todosBySection[section.id] || []}
-                employeeId={employeeId}
-                companyId={companyId}
-                onTodoCreated={onTodoCreated}
-                onTodoUpdated={onTodoUpdated}
-                onTodoDeleted={onTodoDeleted}
-                onSectionUpdated={onSectionUpdated}
-                isViewOnly={isViewOnly}
-              />
-            </div>
-          ))}
+          {tab.sections
+            .slice() // Create a copy to avoid mutating the original array
+            .sort((a, b) => a.name.localeCompare(b.name)) // Sort alphabetically
+            .map(section => (
+              <div key={section.id} style={{ width: columnWidth }}>
+                <SectionColumn
+                  section={section}
+                  todos={todosBySection[section.id] || []}
+                  employeeId={employeeId}
+                  companyId={companyId}
+                  onTodoCreated={onTodoCreated}
+                  onTodoUpdated={onTodoUpdated}
+                  onTodoDeleted={onTodoDeleted}
+                  onSectionUpdated={onSectionUpdated}
+                  isViewOnly={isViewOnly}
+                />
+              </div>
+            ))}
           
           {/* Add new section button - displayed as a column */}
           {!isViewOnly && (

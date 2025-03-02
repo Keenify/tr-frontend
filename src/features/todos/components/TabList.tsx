@@ -95,38 +95,41 @@ export const TabList: React.FC<TabListProps> = ({
   return (
     <div className="border-b border-gray-200">
       <div className="flex items-center px-4 py-2 overflow-x-auto">
-        {tabs.map(tab => (
-          <div
-            key={tab.id}
-            className={`px-4 py-2 mr-2 rounded-t-lg font-medium ${
-              activeTabId === tab.id
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            {editingTabId === tab.id ? (
-              <input
-                title="Tab name"
-                placeholder="Tab name"
-                type="text"
-                value={editingTabName}
-                onChange={(e) => setEditingTabName(e.target.value)}
-                onBlur={() => handleUpdateTab(tab.id)}
-                onKeyPress={(e) => e.key === 'Enter' && handleUpdateTab(tab.id)}
-                className="px-2 py-1 bg-white text-gray-800 border rounded w-full"
-                autoFocus
-              />
-            ) : (
-              <button
-                onClick={() => onTabChange(tab.id)}
-                onDoubleClick={() => startEditing(tab)}
-                className="w-full text-left"
-              >
-                {tab.name}
-              </button>
-            )}
-          </div>
-        ))}
+        {tabs
+          .slice()
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map(tab => (
+            <div
+              key={tab.id}
+              className={`px-4 py-2 mr-2 rounded-t-lg font-medium ${
+                activeTabId === tab.id
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {editingTabId === tab.id ? (
+                <input
+                  title="Tab name"
+                  placeholder="Tab name"
+                  type="text"
+                  value={editingTabName}
+                  onChange={(e) => setEditingTabName(e.target.value)}
+                  onBlur={() => handleUpdateTab(tab.id)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleUpdateTab(tab.id)}
+                  className="px-2 py-1 bg-white text-gray-800 border rounded w-full"
+                  autoFocus
+                />
+              ) : (
+                <button
+                  onClick={() => onTabChange(tab.id)}
+                  onDoubleClick={() => startEditing(tab)}
+                  className="w-full text-left"
+                >
+                  {tab.name}
+                </button>
+              )}
+            </div>
+          ))}
         
         {!isViewOnly && (
           isCreatingTab ? (
