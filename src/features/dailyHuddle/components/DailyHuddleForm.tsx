@@ -140,15 +140,21 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
           question_id: question.id
         }));
         await updateResponse(responseId, updateData);
+        console.log("Successfully updated response");
       } else {
         // Use submitResponse for new submissions
-        await submitResponse(responseData);
+        const result = await submitResponse(responseData);
+        // Store the response ID for potential future edits
+        if (result && result.response_id) {
+          setResponseId(result.response_id);
+        }
       }
       
       setHasSubmitted(true);
       setIsEditing(false); // Reset editing state after successful submission
     } catch (error) {
       console.error("Submission failed:", error);
+      alert("Failed to submit your response. Please try again.");
     }
   };
 
