@@ -29,8 +29,10 @@ export interface SubmitResponseResult {
 export interface ResponseData {
     response_id: string;
     submitted_date: string;
+    submitted_at: string;
     questions: Array<{
         question_id: string;
+        question_text?: string;
         answer_text: string;
     }>;
 }

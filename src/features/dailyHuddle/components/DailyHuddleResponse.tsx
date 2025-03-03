@@ -54,6 +54,34 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
     return string.charAt(0).toUpperCase() + string.slice(1);
   };
 
+  /**
+   * Formats a date string into a readable time format
+   * @param dateString - ISO date string
+   * @returns Formatted time string (e.g., "10:30 AM")
+   */
+  const formatSubmissionTime = (dateString: string | undefined) => {
+    if (!dateString) return 'Not submitted';
+    
+    try {
+      const date = new Date(dateString);
+      
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        return 'Invalid date';
+      }
+      
+      // Format the time as HH:MM AM/PM
+      return date.toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      });
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return 'Invalid date';
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -92,10 +120,10 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
         <thead>
           <tr>
             <th style={{ border: '1px solid black', width: '5%' }}>No.</th>
-            <th style={{ border: '1px solid black', width: '15%' }}>Team Member</th>
+            <th style={{ border: '1px solid black', width: '10%' }}>Team Member</th>
             {questions.map((q, index) => {
               const replacements: { [key: string]: string } = {
-                "One-word opener": "One-Word Opener",
+                "One-word opener": "One-Word",
                 "Wins(1 work + 1 personal)": "Wins (1 Work + 1 Personal)",
                 "I need critical help on": "I Need Critical Help On",
                 "Main Priority": "Main Priority for Today"
@@ -104,11 +132,13 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
               const displayText = replacements[q.question_text] || q.question_text;
               
               // Determine column width based on question type
-              let columnWidth = '18%';
+              let columnWidth = '15%';
               if (q.question_text.includes('need critical help')) {
-                columnWidth = '25%';
+                columnWidth = '20%';
               } else if (q.question_text.includes('One-word opener')) {
-                columnWidth = '12%';
+                columnWidth = '7%';
+              } else if (q.question_text.includes('Today Goals and Targeted Results')) {
+                columnWidth = '28%'; // Allocate more space for this column
               }
               
               return (
@@ -119,10 +149,11 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                 }}>{displayText}</th>
               );
             })}
+            <th style={{ border: '1px solid black', width: '10%' }}>Submitted At</th>
           </tr>
         </thead>
         <tbody>
-          {allResponses.map(({ id, name, response }, index) => (
+          {allResponses.map(({ id, name, response, submittedTime }, index) => (
             <tr key={id}>
               <td style={{ border: '1px solid black', textAlign: 'center' }}>{index + 1}</td>
               <td style={{ border: '1px solid black', textAlign: 'center' }}>{name}</td>
@@ -145,6 +176,9 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                   }) || ''}
                 </td>
               ))}
+              <td style={{ border: '1px solid black', textAlign: 'center' }}>
+                {formatSubmissionTime(submittedTime)}
+              </td>
             </tr>
           ))}
         </tbody>

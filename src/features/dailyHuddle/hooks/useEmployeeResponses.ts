@@ -7,6 +7,7 @@ interface EmployeeResponse {
   id: string;
   name: string;
   response: ResponseData | null;
+  submittedTime?: string;
 }
 
 export function useEmployeeResponses(companyId: string | undefined, selectedDate: string) {
@@ -26,10 +27,17 @@ export function useEmployeeResponses(companyId: string | undefined, selectedDate
             id: employee.id,
             name: `${employee.first_name} ${employee.last_name}`,
             response,
+            submittedTime: response?.submitted_at || response?.submitted_date || '',
           };
         }));
 
-        setEmployeeResponses(responses);
+        const sortedResponses = responses.sort((a, b) => {
+          if (!a.submittedTime) return 1;
+          if (!b.submittedTime) return -1;
+          return new Date(b.submittedTime).getTime() - new Date(a.submittedTime).getTime();
+        });
+
+        setEmployeeResponses(sortedResponses);
       } catch (err) {
         setError(err as Error);
         console.error('Error fetching employee responses:', err);
