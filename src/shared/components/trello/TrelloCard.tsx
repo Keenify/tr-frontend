@@ -201,6 +201,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
               ${snapshot.isDragging ? 'shadow-2xl scale-105 rotate-3 z-50 ring-2 ring-blue-500 bg-blue-50' : ''}
               ${isDragging ? 'rotate-2 shadow-lg ring-1 ring-blue-400 bg-blue-50/50' : 'shadow-sm'}
               select-none
+              group
             `}
             style={{
               backgroundColor: colorCode || 'white',
@@ -210,10 +211,10 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
             }}
             onClick={!isDragging ? handleCardClick : undefined}
           >
-            {/* Replace edit button with edit icon for everyone */}
+            {/* Replace edit button with edit icon that only appears on hover */}
             <button
               title="Edit card"
-              className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100 z-10"
+              className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
               onClick={handleMenuClick}
               onMouseDown={(e) => e.stopPropagation()}
             >
