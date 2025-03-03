@@ -65,6 +65,7 @@ export const fetchQuestions = async (): Promise<Question[]> => {
  */
 export async function fetchResponse(date: string, employeeId: string): Promise<ResponseData | null> {
   const url = `${API_DOMAIN}/forms/responses/?date=${date}&employee_id=${employeeId}&questionnaire_id=${FORM_ID}`;
+  console.log("Fetching response from:", url);
 
   try {
     const response = await fetch(url, {
@@ -75,20 +76,27 @@ export async function fetchResponse(date: string, employeeId: string): Promise<R
     });
 
     if (!response.ok) {
-      if(response.status === 404) {
-        const errorData = await response.json();
-        if (errorData.detail === "Response not found") {
-          return null; // Employee hasn't submitted
-        }
+      if (response.status === 404) {
+        console.log("No response found for this date and employee");
+        return null; // Employee hasn't submitted
       } else {
-        console.log('Error Data:', await response.json()); // Log other errors
+        console.error(`Error ${response.status}: ${response.statusText}`);
+        try {
+          const errorData = await response.json();
+          console.error('Error Data:', errorData);
+        } catch {
+          console.error('Could not parse error response as JSON');
+        }
+        return null;
       }
     }
 
-    return await response.json() as ResponseData;
+    const data = await response.json();
+    console.log("Response data retrieved:", data);
+    return data as ResponseData;
   } catch (error) {
     console.error('Failed to fetch response:', error);
-    throw error;
+    return null; // Return null instead of throwing to prevent app crashes
   }
 }
 
@@ -146,6 +154,8 @@ export const updateResponse = async (
   answers: UpdateAnswerData[]
 ): Promise<UpdateResponseResult> => {
   const url = `${API_DOMAIN}/forms/responses/${responseId}/update-answers/`;
+  console.log("Updating response at:", url);
+  console.log("Update data:", JSON.stringify(answers, null, 2));
 
   try {
     const response = await fetch(url, {
@@ -158,10 +168,19 @@ export const updateResponse = async (
     });
 
     if (!response.ok) {
+      console.error(`Error ${response.status}: ${response.statusText}`);
+      try {
+        const errorText = await response.text();
+        console.error('Error Response:', errorText);
+      } catch {
+        console.error('Could not read error response');
+      }
       throw new Error(`Error updating response: ${response.statusText}`);
     }
 
-    return await response.json() as UpdateResponseResult;
+    const result = await response.json();
+    console.log("Update successful:", result);
+    return result as UpdateResponseResult;
   } catch (error) {
     console.error('Failed to update response:', error);
     throw error;
