@@ -46,7 +46,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   card,
   isLoadingAttachments,
   userRole,
-  readOnly = !userRole.toLowerCase().includes('manager'),
+  readOnly = false,
   employees
 }) => {
   const [title, setTitle] = useState(card.title);

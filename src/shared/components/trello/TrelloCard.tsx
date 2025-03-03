@@ -75,7 +75,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   const [cardAttachments, setCardAttachments] = useState<CardAttachment[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const canManageCard = userRole === 'manager';
+  const canManageCard = true; // Everyone can edit
 
   // Prevent page scroll when dragging
   useEffect(() => {
@@ -210,23 +210,16 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
             }}
             onClick={!isDragging ? handleCardClick : undefined}
           >
-            {/* Replace edit button with role-based icon */}
+            {/* Replace edit button with edit icon for everyone */}
             <button
-              title={canManageCard ? "Edit card" : "Read only"}
+              title="Edit card"
               className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100 z-10"
-              onClick={canManageCard ? handleMenuClick : undefined}
+              onClick={handleMenuClick}
               onMouseDown={(e) => e.stopPropagation()}
             >
-              {canManageCard ? (
-                <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-              )}
+              <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+              </svg>
             </button>
 
             {/* Dropdown menu */}

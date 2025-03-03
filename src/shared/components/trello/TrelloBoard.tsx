@@ -324,7 +324,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
           card={selectedCard.card}
           isLoadingAttachments={false}
           userRole={userRole}
-          readOnly={userRole !== 'manager'}
+          readOnly={false}
           employees={employees}
         />
       )}
