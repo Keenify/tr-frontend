@@ -108,6 +108,20 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
       return;
     }
 
+    // Check for empty goals in the "Today Goals and Targeted Results" question
+    const goalsQuestion = questions.find(q => q.question_text.includes("Today Goals and Targeted Results"));
+    if (goalsQuestion) {
+      const goalsAnswer = answers[goalsQuestion.id];
+      if (goalsAnswer) {
+        const goals = goalsAnswer.split('\n');
+        // Check if any goal is empty
+        if (goals.some(goal => goal.trim() === '')) {
+          alert("Please fill in all goals or remove empty ones before submitting.");
+          return;
+        }
+      }
+    }
+
     const responseData = {
       response_data: {
         employee_id: employeeId,
@@ -247,31 +261,10 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
                 {formatQuestionText(question.question_text)}
               </label>
               {question.question_text.includes("Today Goals and Targeted Results") ? (
-                <div>
-                  {[1, 2, 3].map((num) => (
-                    <input
-                      key={`${question.id}-${num}`}
-                      title={`${question.question_text} #${num}`}
-                      type="text"
-                      value={(answers[question.id] || "").split('\n')[num - 1] || ""}
-                      onChange={(e) => {
-                        const currentAnswers = (answers[question.id] || "").split('\n');
-                        currentAnswers[num - 1] = e.target.value;
-                        handleInputChange(question.id, currentAnswers.join('\n'));
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        borderRadius: "4px",
-                        border: "1px solid #ddd",
-                        boxSizing: "border-box",
-                        marginBottom: "8px",
-                        textAlign: "center",
-                      }}
-                      placeholder={`Goal ${num}`}
-                    />
-                  ))}
-                </div>
+                <GoalsInput
+                  value={answers[question.id] || ""}
+                  onChange={(goals) => handleInputChange(question.id, goals.join('\n'))}
+                />
               ) : (
                 <input
                   title={question.question_text}
@@ -326,6 +319,116 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
           draggable={false}
         />
       </div>
+    </div>
+  );
+};
+
+/**
+ * GoalsInput Component
+ * A custom component for entering multiple goals with automatic numbering
+ */
+const GoalsInput: React.FC<{
+  value: string;
+  onChange: (goals: string[]) => void;
+}> = ({ value, onChange }) => {
+  // Create a local state to manage goals
+  const [localGoals, setLocalGoals] = useState<string[]>(
+    value ? value.split('\n') : ['']
+  );
+  
+  const MAX_GOALS = 6;
+  
+  // Handle changes to a specific goal
+  const handleGoalChange = (index: number, text: string) => {
+    const newGoals = [...localGoals];
+    newGoals[index] = text;
+    setLocalGoals(newGoals);
+    onChange(newGoals);
+  };
+  
+  // Add a new goal
+  const addNewGoal = () => {
+    if (localGoals.length >= MAX_GOALS) {
+      // Show a message or tooltip that max goals reached
+      alert(`Maximum of ${MAX_GOALS} goals allowed`);
+      return;
+    }
+    
+    console.log("Adding new goal");
+    const newGoals = [...localGoals, ''];
+    setLocalGoals(newGoals);
+    onChange(newGoals);
+  };
+  
+  // Remove a goal
+  const removeGoal = (index: number) => {
+    if (localGoals.length > 1) {
+      const newGoals = [...localGoals];
+      newGoals.splice(index, 1);
+      setLocalGoals(newGoals);
+      onChange(newGoals);
+    }
+  };
+  
+  // Only update local state when value prop changes significantly
+  useEffect(() => {
+    const propsGoals = value ? value.split('\n') : [''];
+    // Only update if the arrays are different in length
+    if (propsGoals.length !== localGoals.length) {
+      setLocalGoals(propsGoals);
+    }
+  }, [value, localGoals.length]);
+  
+  return (
+    <div className="goals-input-container">
+      {localGoals.map((goal, index) => (
+        <div key={`goal-${index}`} className="goal-row">
+          <div className="goal-number">{index + 1}</div>
+          <input
+            type="text"
+            value={goal}
+            onChange={(e) => handleGoalChange(index, e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addNewGoal();
+              } else if (e.key === 'Backspace' && goal === '' && localGoals.length > 1) {
+                e.preventDefault();
+                removeGoal(index);
+              }
+            }}
+            placeholder={`Goal ${index + 1}`}
+            className="goal-input"
+          />
+          {localGoals.length > 1 && (
+            <button
+              type="button"
+              onClick={() => removeGoal(index)}
+              title="Remove this goal"
+              className="remove-goal-button"
+            >
+              ×
+            </button>
+          )}
+        </div>
+      ))}
+      
+      {localGoals.length < MAX_GOALS && (
+        <button 
+          type="button" 
+          onClick={addNewGoal}
+          className="add-goal-button"
+        >
+          <span className="add-icon">+</span> 
+          Add Another Goal <span className="goal-counter">({localGoals.length}/{MAX_GOALS})</span>
+        </button>
+      )}
+      
+      {localGoals.length >= MAX_GOALS && (
+        <div className="max-goals-message">
+          Maximum of {MAX_GOALS} goals reached
+        </div>
+      )}
     </div>
   );
 };
