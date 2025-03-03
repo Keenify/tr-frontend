@@ -10,6 +10,7 @@ import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyDa
 import { getUserData } from '../../../services/useUser';
 import { Tab } from '@headlessui/react';
 import Learning from './Learning';
+import { getCardAttachments } from "../../../shared/components/trello/services/useCardAttachment";
 
 interface ResourcesProps {
   session: Session;
@@ -49,17 +50,41 @@ const Resources: React.FC<ResourcesProps> = ({
       try {
         setIsLoading(true);
         const boardDetails = await getBoardDetails(boardId);
-        // Keep all original properties while transforming what TrelloBoard needs
-        const transformedLists = boardDetails.map(list => ({
-          ...list,
-          title: list.name, // Add title alias for TrelloBoard
-          cards: list.cards.map(card => ({
-            ...card,
-            thumbnailUrl: card.thumbnail_url,
-            colorCode: card.color_code,
-          })),
-        }));
-        setLists(transformedLists);
+        
+        // Fetch attachments for each card
+        const listsWithAttachments = await Promise.all(
+          boardDetails.map(async (list) => {
+            const cardsWithAttachments = await Promise.all(
+              list.cards.map(async (card) => {
+                try {
+                  const attachments = await getCardAttachments(card.id);
+                  return {
+                    ...card,
+                    thumbnailUrl: card.thumbnail_url,
+                    colorCode: card.color_code,
+                    attachments: attachments
+                  };
+                } catch (error) {
+                  console.error(`Failed to fetch attachments for card ${card.id}:`, error);
+                  return {
+                    ...card,
+                    thumbnailUrl: card.thumbnail_url,
+                    colorCode: card.color_code,
+                    attachments: []
+                  };
+                }
+              })
+            );
+            
+            return {
+              ...list,
+              title: list.name,
+              cards: cardsWithAttachments,
+            };
+          })
+        );
+        
+        setLists(listsWithAttachments);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load board details');
       } finally {

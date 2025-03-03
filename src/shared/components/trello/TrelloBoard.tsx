@@ -178,6 +178,10 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
     });
   };
 
+  // In the TrelloBoard component, add this after the initialLists log
+  console.log('TrelloBoard initialLists:', initialLists);
+  console.log('TrelloBoard lists with attachments:', lists);
+
   return (
     <div className="flex flex-col gap-4 h-full">
       <div className="flex items-center justify-between gap-4">
