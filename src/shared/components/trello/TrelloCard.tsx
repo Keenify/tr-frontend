@@ -14,6 +14,7 @@ interface TrelloCardProps {
   colorCode?: string;
   thumbnailUrl?: string;
   assignees?: string[];
+  attachments?: CardAttachment[];
   onClick?: () => void;
   onDelete?: () => void;
   onUpdate?: (updatedCard: CardUpdate & { id: string }) => void;
@@ -46,6 +47,7 @@ interface TrelloCardProps {
  * @param {string} colorCode - Optional background color
  * @param {string} thumbnailUrl - Optional thumbnail image URL
  * @param {string[]} assignees - Array of assignee IDs
+ * @param {CardAttachment[]} attachments - Array of card attachments
  * @param {Function} onClick - Handler for card click
  * @param {Function} onDelete - Handler for card deletion
  * @param {Function} onUpdate - Handler for card update
@@ -61,6 +63,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   colorCode,
   thumbnailUrl,
   assignees = [],
+  attachments = [],
   onDelete,
   onUpdate,
   userRole,
@@ -186,6 +189,9 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
     })
     .filter(Boolean) as Employee[];
 
+  // Add this after the assigneeEmployees calculation
+  const attachmentCount = attachments?.length || 0;
+
   return (
     <>
       <Draggable draggableId={`card-${id}`} index={index}>
@@ -211,7 +217,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
             }}
             onClick={!isDragging ? handleCardClick : undefined}
           >
-            {/* Replace edit button with edit icon that only appears on hover */}
+            {/* Edit button - only visible on hover */}
             <button
               title="Edit card"
               className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-100 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
@@ -256,27 +262,40 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
                 <p className="text-sm text-gray-600 mt-1 select-none line-clamp-2">{description}</p>
               )}
               
-              {/* Assignees section - Make sure this is visible */}
-              {assignees && assignees.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1">
-                  {assigneeEmployees.slice(0, 3).map((employee, i) => (
-                    <div 
-                      key={`${employee?.id || i}`}
-                      className="flex-shrink-0 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium"
-                      title={employee?.first_name || employee?.email || 'Assignee'}
-                    >
-                      {employee?.first_name || employee?.email?.split('@')[0] || 'Assignee'}
-                    </div>
-                  ))}
-                  
-                  {/* Show count for additional assignees */}
-                  {assignees.length > 3 && (
-                    <div className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs font-medium" title={`${assignees.length - 3} more assignees`}>
-                      +{assignees.length - 3}
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* Card metadata section - attachments and assignees */}
+              <div className="mt-3 flex items-center justify-between">
+                {/* Attachment count with icon */}
+                {attachmentCount > 0 && (
+                  <div className="flex items-center text-gray-500 text-xs">
+                    <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
+                    </svg>
+                    {attachmentCount}
+                  </div>
+                )}
+                
+                {/* Assignees section */}
+                {assignees && assignees.length > 0 && (
+                  <div className="flex flex-wrap gap-1 ml-auto">
+                    {assigneeEmployees.slice(0, 3).map((employee, i) => (
+                      <div 
+                        key={`${employee?.id || i}`}
+                        className="flex-shrink-0 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium"
+                        title={employee?.first_name || employee?.email || 'Assignee'}
+                      >
+                        {employee?.first_name || employee?.email?.split('@')[0] || 'Assignee'}
+                      </div>
+                    ))}
+                    
+                    {/* Show count for additional assignees */}
+                    {assignees.length > 3 && (
+                      <div className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs font-medium" title={`${assignees.length - 3} more assignees`}>
+                        +{assignees.length - 3}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

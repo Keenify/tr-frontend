@@ -17,6 +17,7 @@ interface TrelloListProps {
     colorCode?: string;
     thumbnailUrl?: string;
     assignees?: string[];
+    attachments?: CardAttachment[];
   }>;
   onTitleChange?: (newTitle: string) => void;
   onAddCard?: (title: string) => void;
@@ -277,6 +278,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                       onClick={() => onCardClick?.(card)}
                       employees={employees}
                       assignees={card.assignees || []}
+                      attachments={card.attachments || []}
                     />
                   ))}
                   {dropProvided.placeholder}
