@@ -303,7 +303,7 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
               margin: "0 auto",
             }}
           >
-            Submit
+            {isEditing ? "Update" : "Submit"}
           </button>
         </form>
       </div>
