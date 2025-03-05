@@ -10,6 +10,7 @@ interface TrelloListProps {
   id: string;
   index: number;
   title: string;
+  country?: string;
   cards: Array<{
     id: string;
     title: string;
@@ -20,6 +21,7 @@ interface TrelloListProps {
     attachments?: CardAttachment[];
   }>;
   onTitleChange?: (newTitle: string) => void;
+  onCountryChange?: (newCountry: string) => void;
   onAddCard?: (title: string) => void;
   onCardDelete?: (cardId: string) => void;
   onDelete?: () => void;
@@ -57,8 +59,10 @@ interface TrelloListProps {
  * @param {string} id - Unique identifier for the list
  * @param {number} index - Index of the list in the board
  * @param {string} title - List title
+ * @param {string} country - List country
  * @param {Array} cards - Array of card objects
  * @param {Function} onTitleChange - Handler for title change events
+ * @param {Function} onCountryChange - Handler for country change events
  * @param {Function} onAddCard - Handler for add card button click
  * @param {Function} onCardDelete - Handler for card delete events
  * @param {Function} onDelete - Handler for list delete events
@@ -73,8 +77,10 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   id,
   index,
   title,
+  country = '',
   cards,
   onTitleChange,
+  onCountryChange,
   onAddCard,
   onCardDelete,
   onDelete,
@@ -85,19 +91,42 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   employees = [],
 }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingCountry, setIsEditingCountry] = useState(false);
   const [listTitle, setListTitle] = useState(title);
+  const [listCountry, setListCountry] = useState(country);
   const [isAddingCard, setIsAddingCard] = useState(false);
   const [newCardTitle, setNewCardTitle] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
 
   const canManageList = userRole === 'manager';
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const handleTitleSubmit = () => {
     if (onTitleChange) {
       onTitleChange(listTitle);
     }
     setIsEditing(false);
+  };
+
+  const handleCountrySubmit = async () => {
+    if (onCountryChange) {
+      try {
+        await onCountryChange(listCountry);
+        showToast('Country updated successfully', 'success');
+      } catch (error) {
+        console.error('Failed to update country:', error);
+        showToast('Failed to update country', 'error');
+        // Reset to original value on error
+        setListCountry(country);
+      }
+    }
+    setIsEditingCountry(false);
   };
 
   const handleAddCardClick = () => {
@@ -172,7 +201,17 @@ export const TrelloList: React.FC<TrelloListProps> = ({
           {...provided.draggableProps}
           className="flex-shrink-0 w-80"
         >
-          <div className="bg-gray-100 rounded-lg p-4 flex flex-col h-full min-h-[150px]">
+          <div className="bg-gray-100 rounded-lg p-4 flex flex-col h-full min-h-[150px] relative">
+            {/* Toast notification */}
+            {toast && (
+              <div 
+                className={`absolute top-2 right-2 left-2 px-4 py-2 rounded-md shadow-lg z-50 transition-all duration-300 text-white text-sm
+                  ${toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}
+              >
+                {toast.message}
+              </div>
+            )}
+            
             {/* List Header with Drag Handle and Menu */}
             <div 
               {...provided.dragHandleProps}
@@ -235,6 +274,15 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                     {showMenu && (
                       <div className="absolute right-0 top-full mt-1 bg-white shadow-lg rounded-md py-1 z-50 min-w-[100px]">
                         <button
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50"
+                          onClick={() => {
+                            setShowMenu(false);
+                            setIsEditingCountry(true);
+                          }}
+                        >
+                          Edit Country
+                        </button>
+                        <button
                           className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
                           onClick={handleDeleteClick}
                         >
@@ -246,6 +294,74 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                 )}
               </div>
             </div>
+
+            {/* Country Editor */}
+            {isEditingCountry && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Country
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="w-full">
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setListCountry("SG")}
+                        className={`flex-1 px-3 py-2 rounded-md border ${
+                          listCountry === "SG" 
+                            ? "bg-blue-50 border-blue-300 text-blue-700" 
+                            : "border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        SG
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setListCountry("MY")}
+                        className={`flex-1 px-3 py-2 rounded-md border ${
+                          listCountry === "MY" 
+                            ? "bg-blue-50 border-blue-300 text-blue-700" 
+                            : "border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        MY
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleCountrySubmit}
+                    className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEditingCountry(false);
+                      setListCountry(country);
+                    }}
+                    className="px-2 py-1 text-gray-500 hover:text-gray-700"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Country Display (when not editing) */}
+            {!isEditingCountry && country && (
+              <div className="mb-4 flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                    <path d="M2 12h20" />
+                  </svg>
+                  <span className="text-sm text-gray-600 font-medium px-2 py-0.5 bg-gray-100 rounded-full">
+                    {country}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Cards Container */}
             <StrictModeDroppable droppableId={`list-${id}`} type="card">

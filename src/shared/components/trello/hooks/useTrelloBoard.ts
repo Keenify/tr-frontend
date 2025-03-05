@@ -10,6 +10,8 @@ interface TrelloList {
   id: string;
   /** Title of the list */
   title: string;
+  /** Country of the list */
+  country?: string;
   /** Array of cards contained in the list */
   cards: TrelloCard[];
 }
@@ -50,10 +52,12 @@ interface TrelloBoardHookProps {
   onCardUpdate?: (listId: string, cardId: string, updates: Partial<TrelloCard>) => Promise<void>;
   /** Callback function when a list's title is changed */
   onListTitleChange?: (listId: string, newTitle: string) => Promise<void>;
+  /** Callback function when a list's country is changed */
+  onListCountryChange?: (listId: string, newCountry: string) => Promise<void>;
   /** Callback function when a new card is added to a list */
   onCardAdd?: (listId: string, title: string) => Promise<string>;
   /** Callback function when a new list is added to the board */
-  onListAdd?: (title: string) => Promise<string>;
+  onListAdd?: (title: string, country?: string) => Promise<string>;
   /** Callback function when a card is deleted */
   onCardDelete?: (listId: string, cardId: string) => Promise<void>;
   /** Callback function when a list is deleted */
@@ -91,6 +95,7 @@ export const useTrelloBoard = (
     onCardMove,
     onCardUpdate,
     onListTitleChange,
+    onListCountryChange,
     onCardAdd,
     onListAdd,
     onCardDelete,
@@ -220,6 +225,31 @@ export const useTrelloBoard = (
     }
   }, [lists, initialLists, onListTitleChange]);
 
+  const handleCountryChange = useCallback(async (
+    listId: string,
+    newCountry: string
+  ) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Optimistic update
+      setLists(lists.map(list => 
+        list.id === listId ? { ...list, country: newCountry } : list
+      ));
+
+      // API call
+      if (onListCountryChange) {
+        await onListCountryChange(listId, newCountry);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      setLists(initialLists);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [lists, initialLists, onListCountryChange]);
+
   const handleAddCard = useCallback(async (listId: string, title: string) => {
     setIsLoading(true);
     setError(null);
@@ -266,39 +296,36 @@ export const useTrelloBoard = (
     }
   }, [lists, initialLists, onCardAdd]);
 
-  const handleAddList = useCallback(async (title: string) => {
+  const handleAddList = useCallback(async (
+    title: string,
+    country?: string
+  ) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const tempId = `temp-${Date.now()}`;
-      const newList: TrelloList = {
-        id: tempId,
-        title,
-        cards: []
-      };
-
-      setLists([...lists, newList]);
-
       if (onListAdd) {
-        const realId = await onListAdd(title);
-        if (realId) {
-          setLists(currentLists => 
-            currentLists.map(list => 
-              list.id === tempId 
-                ? { ...list, id: realId }
-                : list
-            )
-          );
-        }
+        const newListId = await onListAdd(title, country);
+        
+        // Add the new list to the state
+        setLists([
+          ...lists,
+          {
+            id: newListId,
+            title,
+            country,
+            cards: []
+          }
+        ]);
+        
+        return newListId;
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-      setLists(initialLists);
     } finally {
       setIsLoading(false);
     }
-  }, [lists, initialLists, onListAdd]);
+  }, [lists, onListAdd]);
 
   const handleCardDelete = useCallback(async (listId: string, cardId: string) => {
     setIsLoading(true);
@@ -350,6 +377,7 @@ export const useTrelloBoard = (
     handleDragEnd,
     handleCardUpdate,
     handleTitleChange,
+    handleCountryChange,
     handleAddCard,
     handleAddList,
     handleCardDelete,

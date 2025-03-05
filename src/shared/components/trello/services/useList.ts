@@ -5,13 +5,14 @@ import { ListResponse, UpdateListRequest } from '../types/list.types';
 interface CreateListRequest {
     name: string;
     position: number;
+    country: string;
     board_id: string;
 }
 
 /**
  * Updates a Trello list by ID
  * @param {string} listId - The ID of the list to update
- * @param {UpdateListPayload} updateData - The data to update (name and/or position)
+ * @param {UpdateListPayload} updateData - The data to update (name and/or position and/or country)
  * @returns {Promise<TrelloList>} - A promise that resolves to the updated list data
  */
 export async function updateList(listId: string, updateData: UpdateListRequest): Promise<ListResponse> {
@@ -25,6 +26,7 @@ export async function updateList(listId: string, updateData: UpdateListRequest):
         },
         body: JSON.stringify(updateData),
     });
+    
 
     const data = await response.json();
 
@@ -42,7 +44,7 @@ export async function updateList(listId: string, updateData: UpdateListRequest):
 
 /**
  * Creates a new Trello list
- * @param {CreateListRequest} createData - The data for the new list (name, position, and board_id)
+ * @param {CreateListRequest} createData - The data for the new list (name, position, country, and board_id)
  * @returns {Promise<ListResponse>} - A promise that resolves to the created list data
  */
 export async function createList(createData: CreateListRequest): Promise<ListResponse> {

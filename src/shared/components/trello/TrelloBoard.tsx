@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { DragDropContext } from 'react-beautiful-dnd';
 import { TrelloList } from './TrelloList';
 import { TrelloCardModal } from './TrelloCardModal';
@@ -9,6 +9,7 @@ import { useUserAndCompanyData } from '../../hooks/useUserAndCompanyData';
 import { directoryService } from '../../../shared/services/directoryService';
 import { Employee } from '@/shared/types/directory.types';
 import { Card, CardUpdate } from './types/card.types';
+import { Tab } from '@headlessui/react';
 
 /**
  * Props for the TrelloBoard component
@@ -18,6 +19,7 @@ import { Card, CardUpdate } from './types/card.types';
  * @property {Function} [onCardMove] - Callback when a card is moved
  * @property {Function} [onCardUpdate] - Callback when a card is updated
  * @property {Function} [onListTitleChange] - Callback when a list title is changed
+ * @property {Function} [onListCountryChange] - Callback when a list country is changed
  * @property {Function} [onCardAdd] - Callback when a card is added
  * @property {Function} [onListAdd] - Callback when a list is added
  * @property {Function} [onCardDelete] - Callback when a card is deleted
@@ -29,6 +31,7 @@ interface TrelloBoardProps {
   initialLists: Array<{
     id: string;
     title: string;
+    country?: string;
     cards: Card[];
   }>;
   onListMove?: (sourceIndex: number, destinationIndex: number) => Promise<void>;
@@ -41,8 +44,9 @@ interface TrelloBoardProps {
   ) => Promise<void>;
   onCardUpdate?: (listId: string, cardId: string, updates: CardUpdate) => Promise<void>;
   onListTitleChange?: (listId: string, newTitle: string) => Promise<void>;
+  onListCountryChange?: (listId: string, newCountry: string) => Promise<void>;
   onCardAdd?: (listId: string, title: string) => Promise<string>;
-  onListAdd?: (title: string) => Promise<string>;
+  onListAdd?: (title: string, country?: string) => Promise<string>;
   onCardDelete?: (listId: string, cardId: string) => Promise<void>;
   onListDelete?: (listId: string) => Promise<void>;
   userRole: string;
@@ -58,6 +62,7 @@ interface TrelloBoardProps {
  * - Search functionality for cards
  * - Role-based permissions
  * - Card modal for detailed editing
+ * - Country-based tabs for filtering lists
  * 
  * @component
  */
@@ -67,6 +72,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   onCardMove,
   onCardUpdate,
   onListTitleChange,
+  onListCountryChange,
   onCardAdd,
   onListAdd,
   onCardDelete,
@@ -79,6 +85,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
     handleDragEnd, 
     handleCardUpdate, 
     handleTitleChange, 
+    handleCountryChange,
     handleAddCard,
     handleAddList,
     handleCardDelete,
@@ -90,6 +97,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
       onCardMove,
       onCardUpdate,
       onListTitleChange,
+      onListCountryChange,
       onCardAdd,
       onListAdd,
       onCardDelete,
@@ -105,11 +113,32 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddingList, setIsAddingList] = useState(false);
   const [newListTitle, setNewListTitle] = useState('');
+  const [newListCountry, setNewListCountry] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState<string>('all');
   
   const { companyInfo } = useUserAndCompanyData(session?.user?.id || '');
 
   // Make sure this is defined at the component level
   const [employees, setEmployees] = useState<Employee[]>([]);
+
+  // Extract unique countries from lists
+  const countries = useMemo(() => {
+    const uniqueCountries = new Set<string>();
+    lists.forEach(list => {
+      if (list.country) {
+        uniqueCountries.add(list.country);
+      }
+    });
+    return Array.from(uniqueCountries).sort();
+  }, [lists]);
+
+  // Filter lists by selected country
+  const filteredLists = useMemo(() => {
+    if (selectedCountry === 'all') {
+      return lists;
+    }
+    return lists.filter(list => list.country === selectedCountry);
+  }, [lists, selectedCountry]);
 
   // Improved employee fetching using directoryService
   useEffect(() => {
@@ -164,8 +193,9 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   const handleAddListSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newListTitle.trim()) {
-      handleAddList(newListTitle);
+      handleAddList(newListTitle, newListCountry);
       setNewListTitle('');
+      setNewListCountry('');
       setIsAddingList(false);
     }
   };
@@ -237,6 +267,52 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
         </div>
       )}
 
+      {/* Country Tabs */}
+      <Tab.Group onChange={(index) => {
+        if (index === 0) {
+          setSelectedCountry('all');
+        } else {
+          setSelectedCountry(countries[index - 1]);
+        }
+      }}>
+        <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1 mb-6">
+          <Tab
+            className={({ selected }) =>
+              `flex items-center justify-center px-4 py-2.5 text-sm font-medium leading-5 rounded-lg
+              ${selected 
+                ? 'bg-white text-blue-700 shadow'
+                : 'text-gray-600 hover:bg-white/[0.12] hover:text-gray-800'
+              }`
+            }
+          >
+            <span>All Countries</span>
+            <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+              {lists.length}
+            </span>
+          </Tab>
+          {countries.map((country) => {
+            const countryListCount = lists.filter(list => list.country === country).length;
+            return (
+              <Tab
+                key={country}
+                className={({ selected }) =>
+                  `flex items-center justify-center px-4 py-2.5 text-sm font-medium leading-5 rounded-lg
+                  ${selected 
+                    ? 'bg-white text-blue-700 shadow'
+                    : 'text-gray-600 hover:bg-white/[0.12] hover:text-gray-800'
+                  }`
+                }
+              >
+                <span>{country}</span>
+                <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                  {countryListCount}
+                </span>
+              </Tab>
+            );
+          })}
+        </Tab.List>
+      </Tab.Group>
+
       <DragDropContext onDragEnd={handleDragEnd}>
         <StrictModeDroppable
           droppableId="board"
@@ -254,15 +330,17 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
                 ${snapshot.isDraggingOver ? 'bg-gray-50' : ''}
               `}
             >
-              {lists.map((list, index) => (
+              {filteredLists.map((list, index) => (
                 <TrelloList
                   employees={employees}
                   key={list.id}
                   id={list.id}
                   index={index}
                   title={list.title}
+                  country={list.country}
                   cards={list.cards}
                   onTitleChange={(newTitle) => handleTitleChange(list.id, newTitle)}
+                  onCountryChange={(newCountry) => handleCountryChange(list.id, newCountry)}
                   onAddCard={(title) => handleAddCard(list.id, title)}
                   onCardDelete={(cardId) => handleCardDelete(list.id, cardId)}
                   onDelete={() => handleListDelete(list.id)}
@@ -284,12 +362,13 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
                       onChange={(e) => setNewListTitle(e.target.value)}
                       placeholder="Enter list title..."
                       className="w-full px-3 py-2 border rounded-md mb-2"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Escape') {
-                          setIsAddingList(false);
-                          setNewListTitle('');
-                        }
-                      }}
+                    />
+                    <input
+                      type="text"
+                      value={newListCountry}
+                      onChange={(e) => setNewListCountry(e.target.value)}
+                      placeholder="Enter country (optional)..."
+                      className="w-full px-3 py-2 border rounded-md mb-2"
                     />
                     <div className="flex items-center gap-2">
                       <button
@@ -303,6 +382,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
                         onClick={() => {
                           setIsAddingList(false);
                           setNewListTitle('');
+                          setNewListCountry('');
                         }}
                         className="px-2 py-1.5 text-gray-500 hover:text-gray-700"
                       >

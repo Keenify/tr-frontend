@@ -121,6 +121,14 @@ const Project: React.FC<ProjectProps> = ({
     }
   };
 
+  const handleListCountryChange = async (listId: string, newCountry: string) => {
+    try {
+      await updateList(listId, { country: newCountry });
+    } catch (error) {
+      console.error('Failed to update list country:', error);
+    }
+  };
+
   const handleCardAdd = async (listId: string, title: string) => {
     try {
       if (!title) throw new Error('Card title is required');
@@ -138,7 +146,7 @@ const Project: React.FC<ProjectProps> = ({
     }
   };
 
-  const handleListAdd = async (title: string) => {
+  const handleListAdd = async (title: string, country: string = '') => {
     try {
       if (!title) throw new Error('List title is required');
       const maxPosition = lists.reduce((max, list) => 
@@ -146,6 +154,7 @@ const Project: React.FC<ProjectProps> = ({
       const newList = await createList({
         name: title,
         position: maxPosition + 1,
+        country: country,
         board_id: HARDCODED_BOARD_ID
       });
       return newList.id;
@@ -177,6 +186,7 @@ const Project: React.FC<ProjectProps> = ({
         onCardMove={handleCardMove}
         onCardUpdate={handleCardUpdate}
         onListTitleChange={handleListTitleChange}
+        onListCountryChange={handleListCountryChange}
         onCardAdd={handleCardAdd}
         onListAdd={handleListAdd}
         onListDelete={handleListDelete}
