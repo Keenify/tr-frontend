@@ -9,6 +9,10 @@ import { directoryService } from '../../../shared/services/directoryService';
 import { Employee } from '../../../shared/types/directory.types';
 import { TodoSection } from './TodoSection';
 
+// Protected email constants
+const PROTECTED_EMAIL = 'czy199162@gmail.com';
+const REQUIRED_PASSWORD = 'Qweewq4414';
+
 interface TodosProps {
   session: Session;
 }
@@ -31,8 +35,16 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState(startOfToday());
+  const [password, setPassword] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
   const { userInfo, companyInfo, error: userDataError, isLoading: userDataLoading } = 
     useUserAndCompanyData(session.user.id);
+    
+  const isProtectedUser = session.user.email === PROTECTED_EMAIL;
+  const isViewingProtectedUser = selectedEmployeeId ? 
+    employees.find(emp => emp.id === selectedEmployeeId)?.email === PROTECTED_EMAIL : 
+    isProtectedUser;
 
   // Fetch all employees in the company
   const fetchEmployees = useCallback(async () => {
@@ -102,12 +114,56 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
     setSelectedEmployeeId(selectedId === userInfo?.id ? null : selectedId);
   };
 
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === REQUIRED_PASSWORD) {
+      setIsAuthenticated(true);
+    } else {
+      alert('Incorrect password');
+    }
+  };
+
+  // Check if authentication is needed (either viewing as or viewing the protected user)
+  const needsAuthentication = isViewingProtectedUser && !isAuthenticated;
+
   if (userDataLoading || loading) {
     return <div>Loading...</div>;
   }
 
   if (userDataError || !userInfo || !companyInfo) {
     return <div>Error loading user data</div>;
+  }
+
+  // Password protection for viewing the protected user's todos
+  if (needsAuthentication) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="bg-white p-8 rounded-lg shadow-md w-96">
+          <h2 className="text-2xl font-bold mb-6 text-center">Authentication Required</h2>
+          <form onSubmit={handlePasswordSubmit}>
+            <div className="mb-4">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                Enter Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors"
+            >
+              Submit
+            </button>
+          </form>
+        </div>
+      </div>
+    );
   }
 
   const dates = Array.from({ length: 5 }, (_, i) => addDays(startDate, i));
@@ -122,12 +178,15 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
             onChange={handleEmployeeChange}
             className="w-64 p-2 border rounded"
           >
-            <option value={userInfo?.id}>My Todos</option>
+            <option value={userInfo?.id}>
+              {isProtectedUser ? "My Todos (protected)" : "My Todos"}
+            </option>
             {employees
               .filter(emp => emp.id !== userInfo?.id)
               .map(emp => (
                 <option key={emp.id} value={emp.id}>
                   {emp.first_name} {emp.last_name}'s Todos
+                  {emp.email === PROTECTED_EMAIL ? " (protected)" : ""}
                 </option>
               ))}
           </select>
