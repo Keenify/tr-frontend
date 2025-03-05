@@ -47,6 +47,11 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     participant_ids: [],
   });
 
+  const [dateTimeInputs, setDateTimeInputs] = useState({
+    start_time: initialDate ? formatDateTimeForInput(initialDate.toISOString()) : '',
+    end_time: initialDate ? formatDateTimeForInput(initialDate.toISOString()) : '',
+  });
+
   const [locationValue, setLocationValue] = useState<GooglePlace | null>(null);
   const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
 
@@ -73,11 +78,24 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    console.log(`Field: ${name}, Value: ${value}`);
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    
+    if (name === 'start_time' || name === 'end_time') {
+      setDateTimeInputs(prev => ({
+        ...prev,
+        [name]: value
+      }));
+      
+      const isoString = value ? createISOString(value) : '';
+      setFormData((prev) => ({
+        ...prev,
+        [name]: isoString,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handlePlaceSelect = (place: GooglePlace | null) => {
@@ -174,15 +192,8 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   type="datetime-local"
                   id="start_time"
                   name="start_time"
-                  value={formData.start_time}
-                  onChange={(e) => {
-                    const { name, value } = e.target;
-                    const isoString = createISOString(value);
-                    setFormData(prev => ({
-                      ...prev,
-                      [name]: isoString
-                    }));
-                  }}
+                  value={dateTimeInputs.start_time}
+                  onChange={handleInputChange}
                   className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors text-sm"
                   required
                   style={{ minWidth: "100%", width: "100%" }}
@@ -198,15 +209,8 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   type="datetime-local"
                   id="end_time"
                   name="end_time"
-                  value={formData.end_time}
-                  onChange={(e) => {
-                    const { name, value } = e.target;
-                    const isoString = createISOString(value);
-                    setFormData(prev => ({
-                      ...prev,
-                      [name]: isoString
-                    }));
-                  }}
+                  value={dateTimeInputs.end_time}
+                  onChange={handleInputChange}
                   className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors text-sm"
                   required
                   style={{ minWidth: "100%", width: "100%" }}
