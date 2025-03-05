@@ -205,35 +205,14 @@ const Integration: React.FC<IntegrationProps> = ({ session }) => {
             </p>
             
             {googleConnected && googleTokenExpiry && (
-              <div className="mb-6 bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Connection Details</h3>
-                <p className="text-sm text-gray-600">
-                  Token expires: <span className="font-medium">{formatDate(googleTokenExpiry)}</span>
-                </p>
-              </div>
-            )}
-            
-            <div className="flex flex-wrap gap-3">
-              {!googleConnected ? (
-                <button
-                  onClick={handleConnectGoogle}
-                  disabled={isConnecting || !userInfo || !companyInfo}
-                  className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isConnecting ? (
-                    <>
-                      <RefreshCw size={16} className="mr-2 animate-spin" />
-                      Connecting...
-                    </>
-                  ) : (
-                    <>
-                      <ExternalLink size={16} className="mr-2" />
-                      Connect with Google
-                    </>
-                  )}
-                </button>
-              ) : (
-                <>
+              <div className="mb-6 bg-gray-50 p-4 rounded-lg flex justify-between items-center">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Connection Details</h3>
+                  <p className="text-sm text-gray-600">
+                    Token expires: <span className="font-medium">{formatDate(googleTokenExpiry)}</span>
+                  </p>
+                </div>
+                <div className="flex gap-3">
                   <button
                     onClick={handleRefreshToken}
                     disabled={isValidating}
@@ -269,7 +248,29 @@ const Integration: React.FC<IntegrationProps> = ({ session }) => {
                       </>
                     )}
                   </button>
-                </>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex flex-wrap gap-3">
+              {!googleConnected && (
+                <button
+                  onClick={handleConnectGoogle}
+                  disabled={isConnecting || !userInfo || !companyInfo}
+                  className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isConnecting ? (
+                    <>
+                      <RefreshCw size={16} className="mr-2 animate-spin" />
+                      Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <ExternalLink size={16} className="mr-2" />
+                      Connect with Google
+                    </>
+                  )}
+                </button>
               )}
             </div>
           </div>
