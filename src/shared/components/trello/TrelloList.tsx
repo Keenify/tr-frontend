@@ -351,12 +351,20 @@ export const TrelloList: React.FC<TrelloListProps> = ({
             {!isEditingCountry && country && (
               <div className="mb-4 flex items-center gap-2">
                 <div className="flex items-center gap-1.5">
-                  <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                    <path d="M2 12h20" />
-                  </svg>
-                  <span className="text-sm text-gray-600 font-medium px-2 py-0.5 bg-gray-100 rounded-full">
+                  <span 
+                    className={`text-sm font-medium px-2.5 py-1 rounded-full flex items-center gap-1.5
+                      ${country === 'SG' 
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' 
+                        : country === 'MY' 
+                          ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                          : 'bg-gray-100 text-gray-800 border border-gray-200'
+                      }`}
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                      <path d="M2 12h20" />
+                    </svg>
                     {country}
                   </span>
                 </div>
