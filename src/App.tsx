@@ -49,6 +49,8 @@ import Admin from "./features/admin/components/Admin";
 import Milestone from "./features/teamHealth/components/Milestone";
 import Award from "./features/teamHealth/components/Award";
 import Leaderboard from "./features/teamHealth/components/Leaderboard";
+import Integration from "./features/integration/components/Integration";
+import GoogleOAuthCallback from "./features/integration/components/GoogleOAuthCallback";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -629,6 +631,29 @@ const App: React.FC = () => {
                       }
                     />
                   }
+                />
+                <Route
+                  path="/:userId/integration"
+                  element={
+                    <ProtectedRoute
+                      session={session}
+                      element={
+                        <DashboardLayout
+                          session={session}
+                          signOut={signOut}
+                          activeTab="technology"
+                          activeSubTab="integration"
+                          onTabChange={() => {}}
+                        >
+                          <Integration session={session} />
+                        </DashboardLayout>
+                      }
+                    />
+                  }
+                />
+                <Route
+                  path="/google/oauth/callback"
+                  element={<GoogleOAuthCallback session={session} />}
                 />
               </>
             )}

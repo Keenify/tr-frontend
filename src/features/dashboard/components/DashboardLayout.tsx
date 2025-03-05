@@ -123,6 +123,7 @@ const navigationConfig = [
       { id: "resources", label: "Resources", shortForm: "Rs", icon: ThumbsUp },
       { id: "sandbox", label: "Sandbox", shortForm: "Sb", icon: ThumbsUp },
       { id: "todo", label: "Todo", shortForm: "Td", icon: ThumbsUp },
+      { id: "integration", label: "Integration", shortForm: "In", icon: ThumbsUp },
     ],
   },
   {
@@ -188,7 +189,8 @@ type SubTabType =
   | "award"
   | "leaderboard"
   | "milestone"
-  | "peak";
+  | "peak"
+  | "integration";
 
 interface LayoutProps {
   children: React.ReactNode;
