@@ -18,12 +18,12 @@ interface TrelloCardModalProps {
 
 // Predefined color options for quick selection
 const PREDEFINED_COLORS = [
-  '#FFFFFF', // White
-  '#F8D7DA', // Light Red
-  '#D4EDDA', // Light Green
-  '#CCE5FF', // Light Blue
-  '#FFF3CD', // Light Yellow
-  '#E2E3E5', // Light Gray
+  { hex: '#FFFFFF', name: 'White' },
+  { hex: '#F8D7DA', name: 'Light Red' },
+  { hex: '#D4EDDA', name: 'Light Green' },
+  { hex: '#CCE5FF', name: 'Light Blue' },
+  { hex: '#FFF3CD', name: 'Light Yellow' },
+  { hex: '#E2E3E5', name: 'Light Gray' },
 ];
 
 /**
@@ -332,19 +332,23 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                       <div className="text-sm text-gray-700 mb-2">Quick Colors</div>
                       <div className="grid grid-cols-6 gap-2">
                         {PREDEFINED_COLORS.map((color, index) => (
-                          <button
-                            key={index}
-                            type="button"
-                            title={color}
-                            onClick={() => setColorCode(color)}
-                            disabled={readOnly}
-                            className={`
-                              w-full h-10 rounded-md border border-gray-300 
-                              hover:shadow-md transition-all duration-200
-                              ${colorCode === color ? 'ring-2 ring-blue-500 ring-offset-1' : ''}
-                            `}
-                            style={{ backgroundColor: color }}
-                          />
+                          <div key={index} className="relative group">
+                            <button
+                              type="button"
+                              title={`${color.name} (${color.hex})`}
+                              onClick={() => setColorCode(color.hex)}
+                              disabled={readOnly}
+                              className={`
+                                w-full h-10 rounded-md border border-gray-300 
+                                hover:shadow-md transition-all duration-200
+                                ${colorCode === color.hex ? 'ring-2 ring-blue-500 ring-offset-1' : ''}
+                              `}
+                              style={{ backgroundColor: color.hex }}
+                            />
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none z-10">
+                              {color.name} ({color.hex})
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </div>
