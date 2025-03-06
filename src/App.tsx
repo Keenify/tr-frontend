@@ -52,6 +52,9 @@ import Leaderboard from "./features/teamHealth/components/Leaderboard";
 import Integration from "./features/integration/components/Integration";
 import GoogleOAuthCallback from "./features/integration/components/GoogleOAuthCallback";
 
+// Import the public daily huddle component
+import PublicDailyHuddle from "./features/dailyHuddle/components/PublicDailyHuddle";
+
 // Create a client
 const queryClient = new QueryClient();
 
@@ -92,6 +95,8 @@ const App: React.FC = () => {
               path="/anonymous_feedback"
               element={<AnonymousFeedbackPage />}
             />
+            {/* Public Daily Huddle routes */}
+            <Route path="/daily_huddle/:userid" element={<PublicDailyHuddle />} />
 
             {/* Protected Routes */}
             {session && (
