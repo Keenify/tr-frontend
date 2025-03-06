@@ -29,6 +29,7 @@ const PublicDailyHuddle: React.FC = () => {
   const [employeeId, setEmployeeId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [responseId, setResponseId] = useState<string | null>(null);
+  const [userError, setUserError] = useState<string | null>(null);
   
   const location = useLocation();
   const params = useParams();
@@ -44,6 +45,12 @@ const PublicDailyHuddle: React.FC = () => {
         if (userId) {
           try {
             const userData = await getUserData(userId);
+            if (!userData || !userData.id) {
+              setUserError("Invalid user ID. Unable to load user data.");
+              setLoading(false);
+              return;
+            }
+            
             setEmployeeId(userData.id);
             console.log('Employee ID set:', userData.id);
             
@@ -68,6 +75,9 @@ const PublicDailyHuddle: React.FC = () => {
             }
           } catch (error) {
             console.error("Failed to get employee data:", error);
+            setUserError("Failed to retrieve user data. The user ID may be invalid.");
+            setLoading(false);
+            return;
           }
         }
 
@@ -75,13 +85,16 @@ const PublicDailyHuddle: React.FC = () => {
         setQuestions(fetchedQuestions);
       } catch (error) {
         console.error("Failed to fetch questions:", error);
+        if (!userError) {
+          setUserError("An error occurred while loading the form. Please try again later.");
+        }
       } finally {
         setLoading(false);
       }
     };
 
     initializeForm();
-  }, [location, params]);
+  }, [location, params, userError]);
 
   useEffect(() => {
     const style = document.createElement('style');
@@ -208,6 +221,30 @@ const PublicDailyHuddle: React.FC = () => {
         <div className="text-center">
           <ClipLoader size={60} color={"#4F46E5"} loading={loading} />
           <p className="mt-4 text-gray-600 animate-pulse">Loading your daily huddle...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (userError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto">
+          <div className="bg-white shadow-xl rounded-2xl p-8 text-center">
+            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">Error</h2>
+            <p className="text-gray-600 text-lg mb-8">{userError}</p>
+            <a 
+              href="/"
+              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-1"
+            >
+              Return to Home
+            </a>
+          </div>
         </div>
       </div>
     );
