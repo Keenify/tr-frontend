@@ -295,51 +295,58 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
 
                 <div className="mb-6">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Color
+                    Card Color
                   </label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      title="Select card color"
-                      type="color"
-                      value={colorCode}
-                      onChange={(e) => setColorCode(e.target.value)}
-                      className="w-12 h-12 p-1 rounded border"
-                      disabled={readOnly}
-                    />
-                    <input
-                      type="text"
-                      value={colorCode}
-                      onChange={(e) => {
-                        const hex = e.target.value;
-                        if (hex.match(/^#[0-9A-Fa-f]{0,6}$/)) {
-                          setColorCode(hex);
-                        }
-                      }}
-                      placeholder="#000000"
-                      className="px-3 py-2 border rounded-md w-32"
-                      disabled={readOnly}
-                    />
-                  </div>
-                  
-                  {/* Quick color selection */}
-                  <div className="mt-3">
-                    <label className="block text-gray-700 text-sm mb-2">
-                      Quick Colors
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {PREDEFINED_COLORS.map((color, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          title={color}
-                          onClick={() => setColorCode(color)}
+                  <div className="border rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="relative">
+                        <input
+                          title="Select card color"
+                          type="color"
+                          value={colorCode}
+                          onChange={(e) => setColorCode(e.target.value)}
+                          className="w-12 h-12 p-0.5 rounded cursor-pointer"
                           disabled={readOnly}
-                          className={`w-8 h-8 rounded-md border hover:scale-110 transition-transform ${
-                            colorCode === color ? 'ring-2 ring-blue-500' : ''
-                          }`}
-                          style={{ backgroundColor: color }}
                         />
-                      ))}
+                        <div className="absolute inset-0 pointer-events-none rounded border border-gray-300"></div>
+                      </div>
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          value={colorCode}
+                          onChange={(e) => {
+                            const hex = e.target.value;
+                            if (hex.match(/^#[0-9A-Fa-f]{0,6}$/)) {
+                              setColorCode(hex);
+                            }
+                          }}
+                          placeholder="#000000"
+                          className="px-3 py-2 border rounded-md w-full"
+                          disabled={readOnly}
+                        />
+                        <div className="mt-1 text-xs text-gray-500">Enter hex color code</div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <div className="text-sm text-gray-700 mb-2">Quick Colors</div>
+                      <div className="grid grid-cols-6 gap-2">
+                        {PREDEFINED_COLORS.map((color, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            title={color}
+                            onClick={() => setColorCode(color)}
+                            disabled={readOnly}
+                            className={`
+                              w-full h-10 rounded-md border border-gray-300 
+                              hover:shadow-md transition-all duration-200
+                              ${colorCode === color ? 'ring-2 ring-blue-500 ring-offset-1' : ''}
+                            `}
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
