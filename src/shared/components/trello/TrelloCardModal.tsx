@@ -16,6 +16,16 @@ interface TrelloCardModalProps {
   employees: Employee[];
 }
 
+// Predefined color options for quick selection
+const PREDEFINED_COLORS = [
+  '#FFFFFF', // White
+  '#F8D7DA', // Light Red
+  '#D4EDDA', // Light Green
+  '#CCE5FF', // Light Blue
+  '#FFF3CD', // Light Yellow
+  '#E2E3E5', // Light Gray
+];
+
 /**
  * TrelloCardModal Component
  * 
@@ -309,6 +319,28 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                       className="px-3 py-2 border rounded-md w-32"
                       disabled={readOnly}
                     />
+                  </div>
+                  
+                  {/* Quick color selection */}
+                  <div className="mt-3">
+                    <label className="block text-gray-700 text-sm mb-2">
+                      Quick Colors
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {PREDEFINED_COLORS.map((color, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          title={color}
+                          onClick={() => setColorCode(color)}
+                          disabled={readOnly}
+                          className={`w-8 h-8 rounded-md border hover:scale-110 transition-transform ${
+                            colorCode === color ? 'ring-2 ring-blue-500' : ''
+                          }`}
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
