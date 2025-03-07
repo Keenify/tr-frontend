@@ -21,6 +21,7 @@ import OrgChartPage from "./features/directory/components/OrgChart/OrgChartPage"
 
 // Import all components
 import AuthForm from "./features/auth/components/Auth";
+import ResetPassword from "./features/auth/components/ResetPassword";
 import Home from "./features/home/components/Home";
 import Editor from "./features/content/components/Editor";
 import DirectoryPage from "./features/directory/routes/DirectoryPage";
@@ -91,6 +92,7 @@ const App: React.FC = () => {
 
             {/* Public Routes */}
             <Route path="/login" element={<AuthForm />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route
               path="/anonymous_feedback"
               element={<AnonymousFeedbackPage />}
