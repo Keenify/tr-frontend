@@ -105,6 +105,7 @@ const navigationConfig = [
     subTabs: [
       { id: "playbook", label: "Playbook", shortForm: "Pb", icon: ThumbsUp },
       { id: "projects", label: "Projects", shortForm: "Pj", icon: ThumbsUp },
+      { id: "todo", label: "Todo", shortForm: "Td", icon: ThumbsUp },
     ],
   },
   {
@@ -122,7 +123,6 @@ const navigationConfig = [
       },
       { id: "resources", label: "Resources", shortForm: "Rs", icon: ThumbsUp },
       { id: "sandbox", label: "Sandbox", shortForm: "Sb", icon: ThumbsUp },
-      { id: "todo", label: "Todo", shortForm: "Td", icon: ThumbsUp },
       { id: "integration", label: "Integration", shortForm: "In", icon: ThumbsUp },
     ],
   },
