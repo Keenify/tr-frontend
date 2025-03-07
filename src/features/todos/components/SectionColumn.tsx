@@ -200,6 +200,11 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
     setIsEditingSection(true);
   };
 
+  // Handle blur event for new todo input
+  const handleBlur = async () => {
+    await createNewTodo();
+  };
+
   // Render dropdown menu in a portal
   const renderMenu = () => {
     if (!menuOpen || !menuPosition) return null;
@@ -306,6 +311,7 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
                     createNewTodo();
                   }
                 }}
+                onBlur={handleBlur}
                 placeholder="Add new todo..."
                 className="w-full outline-none bg-transparent"
               />
