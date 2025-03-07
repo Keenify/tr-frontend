@@ -21,7 +21,6 @@ import OrgChartPage from "./features/directory/components/OrgChart/OrgChartPage"
 
 // Import all components
 import AuthForm from "./features/auth/components/Auth";
-import ResetPassword from "./features/auth/components/ResetPassword";
 import Home from "./features/home/components/Home";
 import Editor from "./features/content/components/Editor";
 import DirectoryPage from "./features/directory/routes/DirectoryPage";
@@ -55,7 +54,7 @@ import GoogleOAuthCallback from "./features/integration/components/GoogleOAuthCa
 
 // Import the public daily huddle component
 import PublicDailyHuddle from "./features/dailyHuddle/components/PublicDailyHuddle";
-
+import ResetPassword from "./features/auth/components/ResetPassword";
 // Create a client
 const queryClient = new QueryClient();
 

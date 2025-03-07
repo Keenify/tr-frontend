@@ -18,6 +18,7 @@ const ResetPassword: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [passwordMatch, setPasswordMatch] = useState<boolean | null>(null);
   const { session } = useSession();
   const navigate = useNavigate();
   const location = useLocation();
@@ -46,6 +47,15 @@ const ResetPassword: React.FC = () => {
       navigate('/reset-password');
     }
   }, [session, navigate, location]);
+
+  // Check if passwords match whenever either password field changes
+  useEffect(() => {
+    if (password && confirmPassword) {
+      setPasswordMatch(password === confirmPassword);
+    } else {
+      setPasswordMatch(null);
+    }
+  }, [password, confirmPassword]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,10 +120,13 @@ const ResetPassword: React.FC = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className={`shadow appearance-none border ${password.length > 0 && password.length < 6 ? 'border-red-500' : 'border-gray-300'} rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-indigo-500`}
               placeholder="Enter your new password"
               required
             />
+            {password.length > 0 && password.length < 6 && (
+              <p className="text-red-500 text-xs italic mt-1">Password must be at least 6 characters</p>
+            )}
           </div>
           
           <div className="mb-6">
@@ -125,22 +138,40 @@ const ResetPassword: React.FC = () => {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className={`shadow appearance-none border ${passwordMatch === false ? 'border-red-500' : passwordMatch === true ? 'border-green-500' : 'border-gray-300'} rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-indigo-500`}
               placeholder="Confirm your new password"
               required
             />
+            {passwordMatch === false && (
+              <p className="text-red-500 text-xs italic mt-1">Passwords do not match</p>
+            )}
+            {passwordMatch === true && (
+              <p className="text-green-500 text-xs italic mt-1">Passwords match</p>
+            )}
           </div>
           
           <div className="flex items-center justify-center">
             <button
               type="submit"
-              disabled={loading}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full"
+              disabled={loading || passwordMatch === false || (password.length > 0 && password.length < 6)}
+              className={`w-full py-2 px-4 rounded font-bold text-white ${loading || passwordMatch === false || (password.length > 0 && password.length < 6) ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'} focus:outline-none focus:shadow-outline transition duration-150 ease-in-out`}
             >
               {loading ? 'Updating...' : 'Reset Password'}
             </button>
           </div>
         </form>
+        
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            Remember your password?{' '}
+            <a 
+              href="/login" 
+              className="text-indigo-600 hover:text-indigo-800 font-medium"
+            >
+              Sign in
+            </a>
+          </p>
+        </div>
       </div>
     </div>
   );

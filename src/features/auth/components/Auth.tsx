@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 
@@ -22,7 +22,6 @@ import { useSession } from '../../../shared/hooks/useSession';
 const AuthForm: React.FC = () => {
   const { session } = useSession();
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     if (session) {
@@ -33,14 +32,6 @@ const AuthForm: React.FC = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="max-w-md w-full p-4 sm:p-6 bg-white rounded-lg shadow-md">
-        {location.hash.includes('auth-forgot-password') && (
-          <div className="mb-4 p-3 bg-blue-50 text-blue-800 rounded-md">
-            <p className="text-sm">
-              Enter your email address below and we'll send you a link to reset your password.
-              After clicking the link in your email, you'll be redirected to set a new password.
-            </p>
-          </div>
-        )}
         <Auth
           supabaseClient={supabase}
           showLinks={true}
