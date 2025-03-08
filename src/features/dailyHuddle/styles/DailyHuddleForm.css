@@ -182,6 +182,107 @@
   border-radius: 4px;
 }
 
+/* New styles moved from inline CSS */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.thank-you-container {
+  text-align: center;
+  padding: 20px;
+}
+
+.thank-you-message {
+  color: #28a745;
+  font-size: 1.1em;
+  margin-bottom: 15px;
+}
+
+.edit-button {
+  padding: 8px 16px;
+  background-color: #6c757d;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.effective-date-container {
+  text-align: center;
+  padding: 8px 16px;
+  background-color: #f0f4ff;
+  border: 1px solid #d0d8ff;
+  border-radius: 6px;
+  display: inline-block;
+  margin: 0 auto 40px; /* Increased bottom margin for more space */
+  width: auto;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.effective-date-text {
+  font-weight: 500;
+  color: #4a5568;
+  font-size: 0.95rem;
+}
+
+.effective-date-value {
+  font-weight: 600;
+  color: #3182ce;
+}
+
+.huddle-form {
+  margin-top: 30px;
+}
+
+.question-container {
+  margin-bottom: 20px;
+}
+
+.first-question {
+  margin-top: 20px;
+  margin-bottom: 40px; /* More space after the first question */
+}
+
+.question-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #555;
+  text-align: center;
+}
+
+.text-input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.submit-button {
+  padding: 12px 24px;
+  background-color: #007BFF;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: block;
+  margin: 0 auto;
+}
+
+.emotion-wheel {
+  width: 100%;
+  max-width: 600px;
+  cursor: grab;
+  user-select: none;
+}
+
 @media (max-width: 1200px) {
   .daily-huddle-container {
     flex-direction: column;

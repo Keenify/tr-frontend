@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { fetchQuestions, submitResponse, fetchResponse, updateResponse } from "../services/huddleService";
-import { hasSubmittedResponseToday } from "../services/huddleService";
 import { getUserData } from "../../../services/useUser";
 import { Question, ResponseData } from "../types/huddle.types";
 import { Session } from "@supabase/supabase-js";
@@ -12,6 +11,31 @@ import '../styles/DailyHuddleForm.css';  // We'll create this file for the CSS
 interface DailyHuddleFormProps {
   session: Session;
 }
+
+// Define cutoff time constant - 6 PM (18:00)
+const CUTOFF_HOUR = 18;
+
+/**
+ * Gets the effective date for submissions based on cutoff time
+ * If current time is after cutoff, returns tomorrow's date
+ * Otherwise returns today's date
+ * 
+ * @returns {string} Date string in YYYY-MM-DD format
+ */
+const getEffectiveDate = (): string => {
+  const now = new Date();
+  const currentHour = now.getHours();
+  
+  // If it's after 6 PM, use tomorrow's date
+  if (currentHour >= CUTOFF_HOUR) {
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  }
+  
+  // Otherwise use today's date
+  return now.toISOString().split('T')[0];
+};
 
 /**
  * DailyHuddleForm Component
@@ -35,12 +59,13 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
   const [wheelRotation, setWheelRotation] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [startAngle, setStartAngle] = useState(0);
+  const [effectiveDate, setEffectiveDate] = useState<string>(getEffectiveDate());
 
   /**
    * Initializes the form by fetching necessary data
    * - Retrieves user data
    * - Fetches questions
-   * - Checks if user has already submitted today
+   * - Checks if user has already submitted for the effective date
    */
   useEffect(() => {
     const initializeForm = async () => {
@@ -54,22 +79,22 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
         setQuestions(fetchedQuestions);
 
         if (userData.id) {
-          const submitted = await hasSubmittedResponseToday(userData.id);
-          setHasSubmitted(submitted);
+          // Get the effective date (today or tomorrow based on cutoff time)
+          const currentEffectiveDate = getEffectiveDate();
+          setEffectiveDate(currentEffectiveDate);
+          
+          // Check if user has already submitted for the effective date
+          const effectiveResponse = await fetchResponse(currentEffectiveDate, userData.id);
+          setHasSubmitted(!!effectiveResponse);
 
-          if (submitted) {
-            const today = new Date().toISOString().split('T')[0];
-            const todayResponses = await fetchResponse(today, userData.id);
-            
-            if (todayResponses) {
-              const typedResponse = todayResponses as ResponseData;
-              setResponseId(typedResponse.response_id);
-              const previousAnswers = typedResponse.questions.reduce((acc, response) => ({
-                ...acc,
-                [response.question_id]: response.answer_text,
-              }), {});
-              setAnswers(previousAnswers);
-            }
+          if (effectiveResponse) {
+            const typedResponse = effectiveResponse as ResponseData;
+            setResponseId(typedResponse.response_id);
+            const previousAnswers = typedResponse.questions.reduce((acc, response) => ({
+              ...acc,
+              [response.question_id]: response.answer_text,
+            }), {});
+            setAnswers(previousAnswers);
           }
         }
       } catch (error) {
@@ -98,6 +123,7 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
   /**
    * Handles form submission
    * Constructs response data and submits it to the server
+   * Uses the effective date based on cutoff time
    * 
    * @param {React.FormEvent} event - Form submission event
    */
@@ -122,10 +148,12 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
       }
     }
 
+    // Use the effective date for the submission
     const responseData = {
       response_data: {
         employee_id: employeeId,
         questionnaire_id: FORM_ID,
+        date: effectiveDate, // Use the effective date
       },
       answers_data: questions.map((question) => ({
         answer_text: answers[question.id] || "",
@@ -252,18 +280,39 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
   return (
     <div className="daily-huddle-container">
       <div className="form-container">
-        <form onSubmit={handleSubmit}>
-          {questions.map((question) => (
-            <div key={question.id} style={{ marginBottom: "20px" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "8px",
-                  fontWeight: "bold",
-                  color: "#555",
-                  textAlign: "center",
-                }}
-              >
+        {/* Enhanced effective date display */}
+        <div style={{ 
+          textAlign: "center", 
+          marginBottom: "25px", 
+          padding: "8px 16px",
+          backgroundColor: "#f0f4ff",
+          border: "1px solid #d0d8ff",
+          borderRadius: "6px",
+          display: "inline-block",
+          margin: "0 auto",
+          width: "auto",
+          position: "relative",
+          left: "50%",
+          transform: "translateX(-50%)"
+        }}>
+          <span style={{ 
+            fontWeight: "500", 
+            color: "#4a5568",
+            fontSize: "0.95rem"
+          }}>
+            Submitting for: <span style={{ fontWeight: "600", color: "#3182ce" }}>
+              {new Date(effectiveDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </span>
+          </span>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="huddle-form">
+          {questions.map((question, index) => (
+            <div 
+              key={question.id} 
+              className={`question-container ${index === 0 ? 'first-question' : ''}`}
+            >
+              <label className="question-label">
                 {formatQuestionText(question.question_text)}
               </label>
               {question.question_text.includes("Today Goals and Targeted Results") ? (
