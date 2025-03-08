@@ -33,12 +33,16 @@ const TodoDescriptionDrawer: React.FC<TodoDescriptionDrawerProps> = ({
   onUpdate,
   isViewOnly = false
 }) => {
+  const [title, setTitle] = useState(todo.title);
   const [description, setDescription] = useState(todo.description || '');
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const titleInputRef = useRef<HTMLTextAreaElement>(null);
   
   // Update local state when todo changes
   useEffect(() => {
+    setTitle(todo.title);
     setDescription(todo.description || '');
   }, [todo]);
   
@@ -48,24 +52,63 @@ const TodoDescriptionDrawer: React.FC<TodoDescriptionDrawerProps> = ({
       textareaRef.current.focus();
     }
   }, [isOpen, isViewOnly]);
+
+  // Focus title input when editing title
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      
+      // Auto-resize the textarea to fit content
+      const textarea = titleInputRef.current;
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, [isEditingTitle]);
+  
+  // Auto-resize title textarea when content changes
+  const handleTitleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setTitle(e.target.value);
+    
+    // Auto-resize the textarea
+    const textarea = e.target;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  };
   
   const handleSave = useCallback(async () => {
-    if (description === todo.description) {
+    if (title === todo.title && description === todo.description) {
       onClose();
       return;
     }
     
     try {
       setIsSaving(true);
-      const updatedTodo = await updateTodo(todo.id, { description });
+      const updatedTodo = await updateTodo(todo.id, { 
+        title: title.trim() ? title : todo.title, 
+        description 
+      });
       onUpdate(updatedTodo);
       onClose();
     } catch (error) {
-      console.error('Failed to update todo description:', error);
+      console.error('Failed to update todo:', error);
     } finally {
       setIsSaving(false);
     }
-  }, [description, todo.description, todo.id, onClose, onUpdate]);
+  }, [title, description, todo.title, todo.description, todo.id, onClose, onUpdate]);
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      setIsEditingTitle(false);
+    } else if (e.key === 'Escape') {
+      setTitle(todo.title);
+      setIsEditingTitle(false);
+    }
+  };
+
+  const handleTitleBlur = () => {
+    setIsEditingTitle(false);
+  };
   
   // Handle click outside to save and close
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -115,15 +158,56 @@ const TodoDescriptionDrawer: React.FC<TodoDescriptionDrawerProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Todo title and close button */}
-        <div className="p-6 flex justify-between items-center border-b border-gray-100">
-          <h2 className="text-xl font-medium text-gray-800 truncate flex-1">{todo.title}</h2>
-          <button 
-            onClick={() => handleSave()}
-            className="text-gray-500 hover:text-gray-700 transition-colors todo-icon ml-4"
-            title="Close"
-          >
-            <FaTimes size={18} />
-          </button>
+        <div className="p-6 flex flex-col border-b border-gray-100">
+          <div className="flex justify-between items-start">
+            {isEditingTitle && !isViewOnly ? (
+              <div className="flex-1 pr-2 w-full">
+                <textarea
+                  ref={titleInputRef}
+                  value={title}
+                  onChange={handleTitleChange}
+                  onKeyDown={handleTitleKeyDown}
+                  onBlur={handleTitleBlur}
+                  className="text-xl font-medium text-gray-800 w-full border border-purple-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 rounded px-2 py-1 resize-none overflow-hidden"
+                  aria-label="Edit todo title"
+                  placeholder="Enter todo title"
+                  title="Edit todo title"
+                  rows={1}
+                  style={{ minHeight: '2.5rem' }}
+                />
+                <div className="text-xs text-gray-500 mt-1">
+                  Press Enter to save, Shift+Enter for new line
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 pr-2">
+                <h2 
+                  className="text-xl font-medium text-gray-800 break-words group cursor-pointer w-full"
+                  onClick={() => !isViewOnly && setIsEditingTitle(true)}
+                  onDoubleClick={() => !isViewOnly && setIsEditingTitle(true)}
+                  title={title}
+                >
+                  <span className="inline-flex items-start">
+                    {title}
+                    {!isViewOnly && (
+                      <span className="ml-2 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </span>
+                    )}
+                  </span>
+                </h2>
+              </div>
+            )}
+            <button 
+              onClick={() => handleSave()}
+              className="text-gray-500 hover:text-gray-700 transition-colors todo-icon flex-shrink-0"
+              title="Close"
+            >
+              <FaTimes size={18} />
+            </button>
+          </div>
         </div>
         
         {/* Main content area */}
@@ -180,7 +264,7 @@ const TodoDescriptionDrawer: React.FC<TodoDescriptionDrawerProps> = ({
               disabled={isSaving}
               className="w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:bg-purple-300 font-medium"
             >
-              {isSaving ? 'Saving...' : 'Save Description'}
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         )}
