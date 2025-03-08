@@ -43,7 +43,7 @@ export const DayColumn: React.FC<DayColumnProps> = ({
   isViewOnly = false
 }) => {
   const [newTodoText, setNewTodoText] = useState('');
-  const minLines = 20; // Increased to ensure more empty lines are shown
+  const minLines = 10; // Reduced to 10 max empty lines
   const emptyLines = Math.max(minLines - todos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row
 
   const createNewTodo = async () => {

@@ -54,7 +54,8 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<{top: number, left: number} | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
-  const minLines = 20; // Increased to ensure more empty lines are shown
+  const menuRef = useRef<HTMLDivElement>(null);
+  const minLines = 10; // Reduced to 10 max empty lines
   const emptyLines = Math.max(minLines - todos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row
 
   // Close menu when clicking outside
