@@ -120,6 +120,9 @@ export const hasSubmittedResponseToday = async (employeeId: string): Promise<boo
  */
 export const submitResponse = async (data: SubmitResponseData): Promise<SubmitResponseResult> => {
   const url = `${API_DOMAIN}/forms/responses-with-answers/`;
+  
+  console.log("Submitting response to:", url);
+  console.log("Request payload:", JSON.stringify(data, null, 2));
 
   try {
     const response = await fetch(url, {
@@ -132,9 +135,18 @@ export const submitResponse = async (data: SubmitResponseData): Promise<SubmitRe
     });
 
     if (!response.ok) {
+      console.error(`Error ${response.status}: ${response.statusText}`);
+      try {
+        const errorData = await response.text();
+        console.error('Error Response:', errorData);
+      } catch {
+        console.error('Could not parse error response');
+      }
       throw new Error(`Error submitting response: ${response.statusText}`);
     }
-    const responseData = await response.json(); // Read the response body once
+    
+    const responseData = await response.json();
+    console.log("Response submission successful:", JSON.stringify(responseData, null, 2));
     return responseData as SubmitResponseResult;
   } catch (error) {
     console.error('Failed to submit response:', error);
@@ -154,8 +166,9 @@ export const updateResponse = async (
   answers: UpdateAnswerData[]
 ): Promise<UpdateResponseResult> => {
   const url = `${API_DOMAIN}/forms/responses/${responseId}/update-answers/`;
+  
   console.log("Updating response at:", url);
-  console.log("Update data:", JSON.stringify(answers, null, 2));
+  console.log("Update payload:", JSON.stringify(answers, null, 2));
 
   try {
     const response = await fetch(url, {
@@ -179,7 +192,7 @@ export const updateResponse = async (
     }
 
     const result = await response.json();
-    console.log("Update successful:", result);
+    console.log("Update response successful:", JSON.stringify(result, null, 2));
     return result as UpdateResponseResult;
   } catch (error) {
     console.error('Failed to update response:', error);
