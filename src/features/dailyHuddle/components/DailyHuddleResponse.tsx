@@ -5,10 +5,34 @@ import { useEmployeeResponses } from '../hooks/useEmployeeResponses';
 import { fetchQuestions } from '../services/huddleService';
 import { ClipLoader } from 'react-spinners';
 import { Question } from '../types/huddle.types';
+import { CUTOFF_HOUR } from '../constants';
+import '../styles/DailyHuddle.css';
 
 interface DailyHuddleResponseProps {
   session: Session;
 }
+
+/**
+ * Gets the effective date for submissions based on cutoff time
+ * If current time is after cutoff, returns tomorrow's date
+ * Otherwise returns today's date
+ * 
+ * @returns {string} Date string in YYYY-MM-DD format
+ */
+const getEffectiveDate = (): string => {
+  const now = new Date();
+  const currentHour = now.getHours();
+  
+  // If it's after 6 PM, use tomorrow's date
+  if (currentHour >= CUTOFF_HOUR) {
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  }
+  
+  // Otherwise use today's date
+  return now.toISOString().split('T')[0];
+};
 
 /**
  * DailyHuddleResponse Component
@@ -24,7 +48,7 @@ interface DailyHuddleResponseProps {
 const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) => {
   const [loading, setLoading] = React.useState(true);
   const [questions, setQuestions] = React.useState<Question[]>([]);
-  const [selectedDate, setSelectedDate] = React.useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = React.useState(getEffectiveDate());
   const { companyInfo, error: dataError } = useUserAndCompanyData(session.user.id);
   const { employeeResponses, error } = useEmployeeResponses(companyInfo?.id, selectedDate);
 
@@ -92,14 +116,14 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <div className="loading-center">
         <ClipLoader size={50} color={"#007BFF"} loading={loading} />
       </div>
     );
   }
 
   if (error || dataError) {
-    return <div>Error loading employee responses: {error?.message || dataError?.message}</div>;
+    return <div className="error-message">Error loading employee responses: {error?.message || dataError?.message}</div>;
   }
 
   const allResponses = employeeResponses.map(emp => ({
@@ -108,27 +132,23 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
   }));
 
   return (
-    <div>
-      <div style={{ marginBottom: '20px' }}>
-        <label htmlFor="datePicker" style={{ marginRight: '10px' }}>Select Date: </label>
+    <div className="response-container">
+      <div className="date-picker-container">
+        <label htmlFor="datePicker" className="date-picker-label">Select Date: </label>
         <input
           type="date"
           id="datePicker"
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
-          style={{
-            padding: '8px',
-            borderRadius: '4px',
-            border: '1px solid #ccc'
-          }}
+          className="date-picker"
         />
       </div>
-      <h3 style={{ fontWeight: 'bold', fontSize: '1.5em', marginBottom: '10px' }}>Submitted Responses</h3>
-      <table style={{ border: '1px solid black', borderCollapse: 'collapse', width: '100%' }}>
+      <h3 className="response-title">Submitted Responses</h3>
+      <table className="response-table">
         <thead>
           <tr>
-            <th style={{ border: '1px solid black', width: '5%' }}>No.</th>
-            <th style={{ border: '1px solid black', width: '10%' }}>Team Member</th>
+            <th style={{ width: '5%' }}>No.</th>
+            <th style={{ width: '10%' }}>Team Member</th>
             {questions.map((q, index) => {
               const replacements: { [key: string]: string } = {
                 "One-word opener": "One-Word",
@@ -150,27 +170,19 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
               }
               
               return (
-                <th key={index} style={{ 
-                  border: '1px solid black',
-                  width: columnWidth,
-                  textAlign: 'center'
-                }}>{displayText}</th>
+                <th key={index} style={{ width: columnWidth }}>{displayText}</th>
               );
             })}
-            <th style={{ border: '1px solid black', width: '18%' }}>Submitted At</th>
+            <th style={{ width: '18%' }}>Submitted At</th>
           </tr>
         </thead>
         <tbody>
           {allResponses.map(({ id, name, response, submittedTime }, index) => (
             <tr key={id}>
-              <td style={{ border: '1px solid black', textAlign: 'center' }}>{index + 1}</td>
-              <td style={{ border: '1px solid black', textAlign: 'center' }}>{name}</td>
+              <td>{index + 1}</td>
+              <td>{name}</td>
               {questions.map((q, qIndex) => (
-                <td key={qIndex} style={{ 
-                  border: '1px solid black', 
-                  textAlign: 'center',
-                  padding: '8px'
-                }}>
+                <td key={qIndex}>
                   {response.questions.find((rq) => rq.question_id === q.id)?.answer_text?.split('\n').map((line, i) => {
                     const isGoalOrResult = q.question_text.includes('Today Goals') || q.question_text.includes('Targeted Results');
                     // Capitalize the first letter of each line
@@ -184,7 +196,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                   }) || ''}
                 </td>
               ))}
-              <td style={{ border: '1px solid black', textAlign: 'center' }}>
+              <td className="submitted-time">
                 {formatSubmissionTime(submittedTime)}
               </td>
             </tr>

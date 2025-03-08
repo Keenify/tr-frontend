@@ -3,17 +3,14 @@ import { fetchQuestions, submitResponse, fetchResponse, updateResponse } from ".
 import { getUserData } from "../../../services/useUser";
 import { Question, ResponseData } from "../types/huddle.types";
 import { Session } from "@supabase/supabase-js";
-import { FORM_ID } from "../constants";
+import { FORM_ID, CUTOFF_HOUR, MAX_GOALS } from "../constants";
 import { ClipLoader } from "react-spinners";
 import wheelImage from '../assets/wheel.png';
-import '../styles/DailyHuddleForm.css';  // We'll create this file for the CSS
+import '../styles/DailyHuddleForm.css';
 
 interface DailyHuddleFormProps {
   session: Session;
 }
-
-// Define cutoff time constant - 6 PM (18:00)
-const CUTOFF_HOUR = 18;
 
 /**
  * Gets the effective date for submissions based on cutoff time
@@ -234,14 +231,7 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
 
   if (loading) {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
+      <div className="loading-container">
         <ClipLoader size={50} color={"#007BFF"} loading={loading} />
       </div>
     );
@@ -249,12 +239,8 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
 
   if (hasSubmitted) {
     return (
-      <div style={{ textAlign: "center", padding: "20px" }}>
-        <div style={{ 
-          color: "#28a745",
-          fontSize: "1.1em",
-          marginBottom: "15px"
-        }}>
+      <div className="thank-you-container">
+        <div className="thank-you-message">
           Thank you! Your daily huddle has been submitted for today.
         </div>
         <button
@@ -262,14 +248,7 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
             setIsEditing(true);
             setHasSubmitted(false);
           }}
-          style={{
-            padding: "8px 16px",
-            backgroundColor: "#6c757d",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer"
-          }}
+          className="edit-button"
         >
           Edit Response
         </button>
@@ -281,26 +260,9 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
     <div className="daily-huddle-container">
       <div className="form-container">
         {/* Enhanced effective date display */}
-        <div style={{ 
-          textAlign: "center", 
-          marginBottom: "25px", 
-          padding: "8px 16px",
-          backgroundColor: "#f0f4ff",
-          border: "1px solid #d0d8ff",
-          borderRadius: "6px",
-          display: "inline-block",
-          margin: "0 auto",
-          width: "auto",
-          position: "relative",
-          left: "50%",
-          transform: "translateX(-50%)"
-        }}>
-          <span style={{ 
-            fontWeight: "500", 
-            color: "#4a5568",
-            fontSize: "0.95rem"
-          }}>
-            Submitting for: <span style={{ fontWeight: "600", color: "#3182ce" }}>
+        <div className="effective-date-container">
+          <span className="effective-date-text">
+            Submitting for: <span className="effective-date-value">
               {new Date(effectiveDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </span>
           </span>
@@ -326,30 +288,14 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
                   type="text"
                   value={answers[question.id] || ""}
                   onChange={(e) => handleInputChange(question.id, e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    borderRadius: "4px",
-                    border: "1px solid #ddd",
-                    boxSizing: "border-box",
-                    textAlign: "center",
-                  }}
+                  className="text-input"
                 />
               )}
             </div>
           ))}
           <button
             type="submit"
-            style={{
-              padding: "12px 24px",
-              backgroundColor: "#007BFF",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              display: "block",
-              margin: "0 auto",
-            }}
+            className="submit-button"
           >
             {isEditing ? "Update" : "Submit"}
           </button>
@@ -362,13 +308,10 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
           id="emotion-wheel"
           src={wheelImage}
           alt="Emotion Wheel"
+          className="emotion-wheel"
           style={{
-            width: '100%',
-            maxWidth: '600px',
-            cursor: 'grab',
             transform: `rotate(${wheelRotation}deg)`,
-            transition: isDragging ? 'none' : 'transform 0.1s ease-out',
-            userSelect: 'none'
+            transition: isDragging ? 'none' : 'transform 0.1s ease-out'
           }}
           onMouseDown={handleMouseDown}
           draggable={false}
@@ -390,8 +333,6 @@ const GoalsInput: React.FC<{
   const [localGoals, setLocalGoals] = useState<string[]>(
     value ? value.split('\n') : ['']
   );
-  
-  const MAX_GOALS = 6;
   
   // Handle changes to a specific goal
   const handleGoalChange = (index: number, text: string) => {
