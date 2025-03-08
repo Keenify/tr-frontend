@@ -13,6 +13,7 @@ interface DayColumnProps {
   onTodoUpdated: (todo: TodoData) => void;
   onTodoDeleted: (todoId: string) => void;
   isViewOnly?: boolean;
+  maxTodosAcrossColumns?: number; // New prop to ensure consistent notelines
 }
 
 /**
@@ -31,6 +32,8 @@ interface DayColumnProps {
  * @param {Function} onTodoCreated - Callback when a new todo is created
  * @param {Function} onTodoUpdated - Callback when a todo is updated
  * @param {Function} onTodoDeleted - Callback when a todo is deleted
+ * @param {boolean} isViewOnly - Whether the column is in view-only mode
+ * @param {number} maxTodosAcrossColumns - Maximum number of todos across all columns
  */
 export const DayColumn: React.FC<DayColumnProps> = ({
   date,
@@ -40,11 +43,15 @@ export const DayColumn: React.FC<DayColumnProps> = ({
   onTodoCreated,
   onTodoUpdated,
   onTodoDeleted,
-  isViewOnly = false
+  isViewOnly = false,
+  maxTodosAcrossColumns = 0 // Default to 0 if not provided
 }) => {
   const [newTodoText, setNewTodoText] = useState('');
-  const minLines = 10; // Reduced to 10 max empty lines
-  const emptyLines = Math.max(minLines - todos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row
+  const minLines = 10; // Minimum number of lines (including todos and empty lines)
+  
+  // Calculate empty lines based on the maximum todos across all columns or the minimum lines
+  const totalLines = Math.max(maxTodosAcrossColumns, minLines);
+  const emptyLines = Math.max(totalLines - todos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row
 
   const createNewTodo = async () => {
     if (newTodoText.trim()) {

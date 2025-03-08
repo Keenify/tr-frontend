@@ -213,22 +213,34 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
 
           {/* Columns */}
           <div className="flex flex-1">
-            {dates.map((date) => (
-              <DayColumn
-                key={date.toISOString()}
-                date={date}
-                todos={todos.filter(todo => 
+            {(() => {
+              // Calculate the maximum number of todos across all columns
+              const todosPerDate = dates.map(date => 
+                todos.filter(todo => 
                   todo.due_date === format(date, 'yyyy-MM-dd') && 
-                  todo.section_id === null // Only show todos without a section
-                )}
-                employeeId={selectedEmployeeId || userInfo?.id || ''}
-                companyId={companyInfo?.id || ''}
-                onTodoCreated={handleTodoCreated}
-                onTodoUpdated={handleTodoUpdated}
-                onTodoDeleted={handleTodoDeleted}
-                isViewOnly={selectedEmployeeId !== null}
-              />
-            ))}
+                  todo.section_id === null
+                ).length
+              );
+              const maxTodos = Math.max(...todosPerDate);
+              
+              return dates.map((date) => (
+                <DayColumn
+                  key={date.toISOString()}
+                  date={date}
+                  todos={todos.filter(todo => 
+                    todo.due_date === format(date, 'yyyy-MM-dd') && 
+                    todo.section_id === null // Only show todos without a section
+                  )}
+                  employeeId={selectedEmployeeId || userInfo?.id || ''}
+                  companyId={companyInfo?.id || ''}
+                  onTodoCreated={handleTodoCreated}
+                  onTodoUpdated={handleTodoUpdated}
+                  onTodoDeleted={handleTodoDeleted}
+                  isViewOnly={selectedEmployeeId !== null}
+                  maxTodosAcrossColumns={maxTodos}
+                />
+              ));
+            })()}
           </div>
 
           {/* Right arrow */}
