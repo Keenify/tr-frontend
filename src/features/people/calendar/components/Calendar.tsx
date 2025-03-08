@@ -23,6 +23,7 @@ import {
   deleteSyncedCalendarEvent
 } from '../services/useGoogleSyncCalendar';
 import { validateGoogleToken } from '../../../integration/services/useGoogle';
+import { toast } from 'react-hot-toast';
 
 interface CalendarProps {
   session?: Session;
@@ -108,37 +109,57 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
   }, [companyId]);
 
   const handleDeleteEvent = async (eventId: string) => {
-    if (!companyId || !userId) return;
+    if (!companyId || !userId) {
+      console.error('❌ Delete event failed: Missing companyId or userId', { companyId, userId });
+      return;
+    }
+
+    console.log('🔄 Attempting to delete event:', {
+      eventId,
+      companyId,
+      userId
+    });
 
     try {
-      await deleteCalendarEvent(eventId, companyId);
+      // First check if Google Calendar is integrated
+      console.log('🔄 Checking Google Calendar integration status...');
+      const validationResponse = await validateGoogleToken({
+        employee_id: userId,
+        company_id: companyId,
+        refresh: false
+      });
+      
+      console.log('📥 Google Calendar validation response:', validationResponse);
+      
+      // If Google Calendar is integrated, delete the sync first
+      if (validationResponse.is_valid) {
+        console.log('🔄 Deleting Google Calendar sync first...');
+        try {
+          const deleteGoogleResult = await deleteSyncedCalendarEvent(eventId, userId, companyId);
+          console.log('✅ Google Calendar sync deleted:', deleteGoogleResult);
+        } catch (deleteError) {
+          console.log('ℹ️ Google Calendar sync deletion result:', deleteError);
+          // Continue even if the Google sync deletion fails
+        }
+      } else {
+        console.log('ℹ️ Google Calendar not integrated, skipping sync deletion');
+      }
+      
+      // Then delete the event from our calendar
+      console.log('🔄 Now deleting the calendar event...');
+      const deleteResult = await deleteCalendarEvent(eventId, companyId);
+      console.log('✅ Calendar event deleted successfully:', deleteResult);
+      
+      // Update UI to remove the deleted event
       setEvents(events.filter(event => event.id !== eventId));
       
-      // Delete the synced event from Google Calendar if integration is active
-      try {
-        const validationResponse = await validateGoogleToken({
-          employee_id: userId,
-          company_id: companyId,
-          refresh: false
-        });
-        
-        if (validationResponse.is_valid) {
-          // Check if the event is synced before attempting to delete
-          const syncStatus = await checkEventSyncStatus(eventId, userId);
-          
-          if (syncStatus.is_synced) {
-            // Delete the synced event
-            await deleteSyncedCalendarEvent(eventId, userId, companyId);
-          }
-          
-          await checkGoogleCalendarStatus();
-        }
-      } catch (syncError) {
-        console.error('Error deleting synced event from Google Calendar:', syncError);
-      }
+      // Update the Google Calendar integration status
+      await checkGoogleCalendarStatus();
+      
     } catch (err) {
-      console.error('Error deleting event:', err);
-      // Add error handling UI feedback here
+      console.error('❌ Error deleting event:', err);
+      // Show error message to user
+      toast.error('Failed to delete event. Please try again.');
     }
   };
 
