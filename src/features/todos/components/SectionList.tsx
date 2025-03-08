@@ -81,9 +81,9 @@ export const SectionList: React.FC<SectionListProps> = ({
     return acc;
   }, {} as Record<string, TodoData[]>);
 
-  // Calculate the number of columns including the "New Section" column if not in view-only mode
-  const columnWidth = `${100 / 7}%`; // Match the 7 columns in the upper part
-  const columnMinWidth = 160; // Reduced minimum width for more compact look
+  // Fixed column width to match DayColumn
+  const columnWidth = '14.28%';
+  const columnMinWidth = 160; // Same minimum width as DayColumn
   
   // Get sections to display - sorted alphabetically
   const allSections = tab.sections
@@ -151,25 +151,27 @@ export const SectionList: React.FC<SectionListProps> = ({
         >
           {/* Display all sections */}
           {allSections.map(section => (
-            <div key={section.id} style={{ width: columnWidth, minWidth: `${columnMinWidth}px`, flex: '0 0 auto' }}>
-              <SectionColumn
-                section={section}
-                todos={todosBySection[section.id] || []}
-                employeeId={employeeId}
-                companyId={companyId}
-                onTodoCreated={onTodoCreated}
-                onTodoUpdated={onTodoUpdated}
-                onTodoDeleted={onTodoDeleted}
-                onSectionUpdated={onSectionUpdated}
-                onSectionDeleted={onSectionDeleted || onSectionUpdated}
-                isViewOnly={isViewOnly}
-              />
-            </div>
+            <SectionColumn
+              key={section.id}
+              section={section}
+              todos={todosBySection[section.id] || []}
+              employeeId={employeeId}
+              companyId={companyId}
+              onTodoCreated={onTodoCreated}
+              onTodoUpdated={onTodoUpdated}
+              onTodoDeleted={onTodoDeleted}
+              onSectionUpdated={onSectionUpdated}
+              onSectionDeleted={onSectionDeleted || onSectionUpdated}
+              isViewOnly={isViewOnly}
+            />
           ))}
           
           {/* Add new section button - always displayed as the last column when not in view-only mode */}
           {!isViewOnly && (
-            <div style={{ width: columnWidth, minWidth: `${columnMinWidth}px`, flex: '0 0 auto' }} className="flex flex-col">
+            <div 
+              className="flex flex-col border-r border-gray-100 bg-white"
+              style={{ width: columnWidth, minWidth: `${columnMinWidth}px`, flex: '0 0 auto' }}
+            >
               {isCreatingSection ? (
                 <div className="p-2 border-b border-gray-100 sticky top-0 z-10 bg-white">
                   <input

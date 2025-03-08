@@ -105,6 +105,7 @@ export const DayColumn: React.FC<DayColumnProps> = ({
   return (
     <div 
       className="flex-1 border-r border-gray-100 bg-white flex flex-col"
+      style={{ width: '14.28%', minWidth: '160px', flex: '0 0 auto' }}
       onDrop={handleDrop}
       onDragOver={(e) => e.preventDefault()}
     >

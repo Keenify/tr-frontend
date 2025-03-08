@@ -347,7 +347,7 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
           </div>
 
           {/* Columns */}
-          <div className="flex flex-1 border-l border-r border-gray-100">
+          <div className="flex flex-1 border-l border-r border-gray-100 overflow-x-auto">
             {(() => {
               // Calculate the maximum number of todos across all columns
               const todosPerDate = dates.map(date => 
