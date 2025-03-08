@@ -55,9 +55,9 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
   };
 
   /**
-   * Formats a date string into a readable time format
+   * Formats a date string into a readable date and time format
    * @param dateString - ISO date string
-   * @returns Formatted time string (e.g., "10:30 AM")
+   * @returns Formatted date and time string (e.g., "7 Mar 10:30 PM")
    */
   const formatSubmissionTime = (dateString: string | undefined) => {
     if (!dateString) return 'Not submitted';
@@ -70,12 +70,20 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
         return 'Invalid date';
       }
       
-      // Format the time as HH:MM AM/PM
-      return date.toLocaleTimeString([], { 
+      // Format the date without year
+      const formattedDate = date.toLocaleDateString([], { 
+        day: 'numeric',
+        month: 'short'
+      });
+      
+      // Format the time
+      const formattedTime = date.toLocaleTimeString([], { 
         hour: '2-digit', 
         minute: '2-digit',
         hour12: true 
       });
+      
+      return `${formattedDate} ${formattedTime}`;
     } catch (error) {
       console.error("Error formatting date:", error);
       return 'Invalid date';
@@ -132,13 +140,13 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
               const displayText = replacements[q.question_text] || q.question_text;
               
               // Determine column width based on question type
-              let columnWidth = '15%';
+              let columnWidth = '14%';
               if (q.question_text.includes('need critical help')) {
-                columnWidth = '20%';
+                columnWidth = '18%';
               } else if (q.question_text.includes('One-word opener')) {
                 columnWidth = '7%';
               } else if (q.question_text.includes('Today Goals and Targeted Results')) {
-                columnWidth = '28%'; // Allocate more space for this column
+                columnWidth = '23%'; // Further reduced to accommodate wider Submitted At column
               }
               
               return (
@@ -149,7 +157,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                 }}>{displayText}</th>
               );
             })}
-            <th style={{ border: '1px solid black', width: '10%' }}>Submitted At</th>
+            <th style={{ border: '1px solid black', width: '18%' }}>Submitted At</th>
           </tr>
         </thead>
         <tbody>
