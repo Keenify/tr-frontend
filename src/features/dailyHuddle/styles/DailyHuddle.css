@@ -71,8 +71,9 @@
 /* New styles for DailyHuddleResponse */
 .response-container {
   width: 100%;
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
+  padding: 0 20px;
 }
 
 .date-picker-container {
@@ -106,6 +107,7 @@
   width: 100%;
   background-color: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  table-layout: fixed;
 }
 
 .response-table th,
@@ -113,6 +115,9 @@
   border: 1px solid #ddd;
   padding: 8px;
   text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-wrap: break-word;
 }
 
 .response-table th {
@@ -131,6 +136,39 @@
 .submitted-time {
   white-space: nowrap;
   font-size: 0.9em;
+}
+
+/* Column width classes for better control */
+.col-number {
+  width: 5%;
+}
+
+.col-member {
+  width: 10%;
+}
+
+.col-one-word {
+  width: 7%;
+}
+
+.col-wins {
+  width: 14%;
+}
+
+.col-priority {
+  width: 14%;
+}
+
+.col-goals {
+  width: 23%;
+}
+
+.col-help {
+  width: 18%;
+}
+
+.col-submitted {
+  width: 9%;
 }
 
 .loading-center {

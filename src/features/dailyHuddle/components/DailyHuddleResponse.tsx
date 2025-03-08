@@ -147,8 +147,8 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
       <table className="response-table">
         <thead>
           <tr>
-            <th style={{ width: '5%' }}>No.</th>
-            <th style={{ width: '10%' }}>Team Member</th>
+            <th className="col-number">No.</th>
+            <th className="col-member">Team Member</th>
             {questions.map((q, index) => {
               const replacements: { [key: string]: string } = {
                 "One-word opener": "One-Word",
@@ -159,21 +159,23 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
               
               const displayText = replacements[q.question_text] || q.question_text;
               
-              // Determine column width based on question type
-              let columnWidth = '14%';
+              // Determine column class based on question type
+              let columnClass = 'col-wins';
               if (q.question_text.includes('need critical help')) {
-                columnWidth = '18%';
+                columnClass = 'col-help';
               } else if (q.question_text.includes('One-word opener')) {
-                columnWidth = '7%';
+                columnClass = 'col-one-word';
               } else if (q.question_text.includes('Today Goals and Targeted Results')) {
-                columnWidth = '23%'; // Further reduced to accommodate wider Submitted At column
+                columnClass = 'col-goals';
+              } else if (q.question_text.includes('Main Priority')) {
+                columnClass = 'col-priority';
               }
               
               return (
-                <th key={index} style={{ width: columnWidth }}>{displayText}</th>
+                <th key={index} className={columnClass}>{displayText}</th>
               );
             })}
-            <th style={{ width: '18%' }}>Submitted At</th>
+            <th className="col-submitted">Submitted At</th>
           </tr>
         </thead>
         <tbody>
@@ -181,22 +183,38 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
             <tr key={id}>
               <td>{index + 1}</td>
               <td>{name}</td>
-              {questions.map((q, qIndex) => (
-                <td key={qIndex}>
-                  {response.questions.find((rq) => rq.question_id === q.id)?.answer_text?.split('\n').map((line, i) => {
-                    const isGoalOrResult = q.question_text.includes('Today Goals') || q.question_text.includes('Targeted Results');
-                    // Capitalize the first letter of each line
-                    const capitalizedLine = capitalizeFirstLetter(line);
-                    return (
-                      <React.Fragment key={i}>
-                        {isGoalOrResult ? `• ${capitalizedLine}` : capitalizedLine}
-                        <br />
-                      </React.Fragment>
-                    );
-                  }) || ''}
-                </td>
-              ))}
-              <td className="submitted-time">
+              {questions.map((q, qIndex) => {
+                // Determine column class based on question type
+                let columnClass = '';
+                if (q.question_text.includes('need critical help')) {
+                  columnClass = 'col-help';
+                } else if (q.question_text.includes('One-word opener')) {
+                  columnClass = 'col-one-word';
+                } else if (q.question_text.includes('Today Goals and Targeted Results')) {
+                  columnClass = 'col-goals';
+                } else if (q.question_text.includes('Main Priority')) {
+                  columnClass = 'col-priority';
+                } else {
+                  columnClass = 'col-wins';
+                }
+                
+                return (
+                  <td key={qIndex} className={columnClass}>
+                    {response.questions.find((rq) => rq.question_id === q.id)?.answer_text?.split('\n').map((line, i) => {
+                      const isGoalOrResult = q.question_text.includes('Today Goals') || q.question_text.includes('Targeted Results');
+                      // Capitalize the first letter of each line
+                      const capitalizedLine = capitalizeFirstLetter(line);
+                      return (
+                        <React.Fragment key={i}>
+                          {isGoalOrResult ? `• ${capitalizedLine}` : capitalizedLine}
+                          <br />
+                        </React.Fragment>
+                      );
+                    }) || ''}
+                  </td>
+                );
+              })}
+              <td className="submitted-time col-submitted">
                 {formatSubmissionTime(submittedTime)}
               </td>
             </tr>
