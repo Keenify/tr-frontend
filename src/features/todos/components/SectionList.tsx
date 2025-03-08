@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { TodoData, TabData } from '../types/todo';
 import { createSection } from '../services/useTodos';
 import { SectionColumn } from './SectionColumn';
@@ -21,8 +21,9 @@ interface SectionListProps {
  * Component for displaying sections within a tab
  * This component:
  * - Displays sections as horizontal columns (similar to day columns)
- * - Allows creating new sections
+ * - Allows creating unlimited sections with horizontal scrolling
  * - Organizes todos by section
+ * - Provides navigation when there are more than 7 sections
  * 
  * @component
  * @param {TabData} tab - The active tab
@@ -52,7 +53,8 @@ export const SectionList: React.FC<SectionListProps> = ({
 }) => {
   const [isCreatingSection, setIsCreatingSection] = useState(false);
   const [newSectionName, setNewSectionName] = useState('');
-
+  const sectionsContainerRef = useRef<HTMLDivElement>(null);
+  
   const handleCreateSection = async () => {
     if (newSectionName.trim() === '') return;
     
@@ -79,36 +81,90 @@ export const SectionList: React.FC<SectionListProps> = ({
   }, {} as Record<string, TodoData[]>);
 
   // Calculate the number of columns including the "New Section" column if not in view-only mode
-  const columnWidth = `${100 / 5}%`; // Match the 5 columns in the upper part
+  const columnWidth = `${100 / 7}%`; // Match the 7 columns in the upper part
+  const columnMinWidth = 200; // Minimum width in pixels
+  
+  // Get sections to display - sorted alphabetically
+  const allSections = tab.sections
+    .slice() // Create a copy to avoid mutating the original array
+    .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
+  
+  // Scroll to the newly created section when sections are updated
+  useEffect(() => {
+    if (sectionsContainerRef.current && allSections.length > 0) {
+      // If there's a new section, scroll to the end to show it
+      if (!isViewOnly) {
+        sectionsContainerRef.current.scrollLeft = sectionsContainerRef.current.scrollWidth;
+      }
+    }
+  }, [allSections.length, isViewOnly]);
+  
+  // Handle navigation
+  const handlePrevSection = () => {
+    if (sectionsContainerRef.current) {
+      // Scroll left by one column width
+      sectionsContainerRef.current.scrollLeft -= columnMinWidth;
+    }
+  };
+  
+  const handleNextSection = () => {
+    if (sectionsContainerRef.current) {
+      // Scroll right by one column width
+      sectionsContainerRef.current.scrollLeft += columnMinWidth;
+    }
+  };
+  
+  // Check if we need navigation buttons
+  const showNavigation = allSections.length > (isViewOnly ? 7 : 6);
   
   return (
-    <div className="flex-1 overflow-auto">
-      <div className="flex flex-col h-full">
-        {/* Horizontal section layout */}
-        <div className="flex flex-1 overflow-x-auto scrollbar-hide">
-          {tab.sections
-            .slice() // Create a copy to avoid mutating the original array
-            .sort((a, b) => a.name.localeCompare(b.name)) // Sort alphabetically
-            .map(section => (
-              <div key={section.id} style={{ width: columnWidth }}>
-                <SectionColumn
-                  section={section}
-                  todos={todosBySection[section.id] || []}
-                  employeeId={employeeId}
-                  companyId={companyId}
-                  onTodoCreated={onTodoCreated}
-                  onTodoUpdated={onTodoUpdated}
-                  onTodoDeleted={onTodoDeleted}
-                  onSectionUpdated={onSectionUpdated}
-                  onSectionDeleted={onSectionDeleted || onSectionUpdated}
-                  isViewOnly={isViewOnly}
-                />
-              </div>
-            ))}
+    <div className="flex flex-col h-full">
+      {/* Horizontal section layout */}
+      <div className="flex flex-1">
+        {/* Left navigation button - always show to maintain layout consistency with upper section */}
+        <div className="flex items-center justify-center w-8">
+          {showNavigation ? (
+            <button
+              onClick={handlePrevSection}
+              className="p-1 hover:bg-gray-200 text-gray-600 rounded-full transition-colors"
+              title="Scroll left"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          ) : (
+            // Empty spacer to maintain layout
+            <div className="w-4 h-4"></div>
+          )}
+        </div>
+
+        {/* Sections container with horizontal scrolling */}
+        <div 
+          ref={sectionsContainerRef}
+          className="flex flex-1 overflow-x-auto scrollbar-hide scroll-smooth"
+        >
+          {/* Display all sections */}
+          {allSections.map(section => (
+            <div key={section.id} style={{ width: columnWidth, minWidth: `${columnMinWidth}px`, flex: '0 0 auto' }}>
+              <SectionColumn
+                section={section}
+                todos={todosBySection[section.id] || []}
+                employeeId={employeeId}
+                companyId={companyId}
+                onTodoCreated={onTodoCreated}
+                onTodoUpdated={onTodoUpdated}
+                onTodoDeleted={onTodoDeleted}
+                onSectionUpdated={onSectionUpdated}
+                onSectionDeleted={onSectionDeleted || onSectionUpdated}
+                isViewOnly={isViewOnly}
+              />
+            </div>
+          ))}
           
-          {/* Add new section button - displayed as a column */}
+          {/* Add new section button - always displayed as the last column when not in view-only mode */}
           {!isViewOnly && (
-            <div style={{ width: columnWidth }} className="border-r border-gray-200 bg-white">
+            <div style={{ width: columnWidth, minWidth: `${columnMinWidth}px`, flex: '0 0 auto' }} className="border-r border-gray-200 bg-white">
               {isCreatingSection ? (
                 <div className="p-3 border-b border-gray-200">
                   <input
@@ -154,6 +210,24 @@ export const SectionList: React.FC<SectionListProps> = ({
                 </div>
               )}
             </div>
+          )}
+        </div>
+        
+        {/* Right navigation button - always show to maintain layout consistency with upper section */}
+        <div className="flex items-center justify-center w-8">
+          {showNavigation ? (
+            <button
+              onClick={handleNextSection}
+              className="p-1 hover:bg-gray-200 text-gray-600 rounded-full transition-colors"
+              title="Scroll right"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          ) : (
+            // Empty spacer to maintain layout
+            <div className="w-4 h-4"></div>
           )}
         </div>
       </div>

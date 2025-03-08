@@ -18,11 +18,11 @@ interface TodosProps {
 }
 
 /**
- * Main Todo list component that displays a 5-day view of todos
+ * Main Todo list component that displays a 7-day view of todos
  * This component:
  * - Fetches user and company data using useUserAndCompanyData hook
  * - Loads todos for the current user
- * - Creates a 5-column layout (today + next 4 days)
+ * - Creates a 7-column layout (today + next 6 days)
  * - Manages the global todo state and passes update handlers to child components
  * - Displays both daily todos and section todos in separate panels
  * 
@@ -166,7 +166,8 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
     );
   }
 
-  const dates = Array.from({ length: 5 }, (_, i) => addDays(startDate, i));
+  // Create an array of 7 dates starting from startDate
+  const dates = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -246,21 +247,15 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
 
         {/* Section Todos - Lower Half */}
         <div className="flex-1">
-          <div className="flex h-full">
-            <div className="w-8"></div> {/* Spacer to align with upper section */}
-            <div className="flex-1">
-              <TodoSection 
-                todos={todos.filter(todo => todo.section_id !== null)} // Only show todos with a section
-                employeeId={selectedEmployeeId || userInfo?.id || ''}
-                companyId={companyInfo?.id || ''}
-                onTodoCreated={handleTodoCreated}
-                onTodoUpdated={handleTodoUpdated}
-                onTodoDeleted={handleTodoDeleted}
-                isViewOnly={selectedEmployeeId !== null}
-              />
-            </div>
-            <div className="w-8"></div> {/* Spacer to align with upper section */}
-          </div>
+          <TodoSection 
+            todos={todos.filter(todo => todo.section_id !== null)} // Only show todos with a section
+            employeeId={selectedEmployeeId || userInfo?.id || ''}
+            companyId={companyInfo?.id || ''}
+            onTodoCreated={handleTodoCreated}
+            onTodoUpdated={handleTodoUpdated}
+            onTodoDeleted={handleTodoDeleted}
+            isViewOnly={selectedEmployeeId !== null}
+          />
         </div>
       </div>
     </div>

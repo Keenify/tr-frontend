@@ -20,6 +20,8 @@ interface TodoSectionProps {
  * - Fetches and displays tabs and their sections
  * - Organizes todos by sections within tabs
  * - Allows creating new todos within sections
+ * - Displays sections in a 7-column layout with horizontal scrolling
+ * - Supports unlimited section creation
  * 
  * @component
  * @param {TodoData[]} todos - Array of todos with section IDs
@@ -113,21 +115,23 @@ export const TodoSection: React.FC<TodoSectionProps> = ({
       
       {/* Sections for the active tab */}
       {activeTab && (
-        <SectionList
-          tab={activeTab}
-          todos={todos.filter(todo => 
-            // Find todos that belong to sections in the active tab
-            activeTab.sections.some(section => section.id === todo.section_id)
-          )}
-          employeeId={employeeId}
-          companyId={companyId}
-          onTodoCreated={onTodoCreated}
-          onTodoUpdated={onTodoUpdated}
-          onTodoDeleted={onTodoDeleted}
-          onSectionCreated={handleSectionChange}
-          onSectionUpdated={handleSectionChange}
-          isViewOnly={isViewOnly}
-        />
+        <div className="flex-1 overflow-hidden">
+          <SectionList
+            tab={activeTab}
+            todos={todos.filter(todo => 
+              // Find todos that belong to sections in the active tab
+              activeTab.sections.some(section => section.id === todo.section_id)
+            )}
+            employeeId={employeeId}
+            companyId={companyId}
+            onTodoCreated={onTodoCreated}
+            onTodoUpdated={onTodoUpdated}
+            onTodoDeleted={onTodoDeleted}
+            onSectionCreated={handleSectionChange}
+            onSectionUpdated={handleSectionChange}
+            isViewOnly={isViewOnly}
+          />
+        </div>
       )}
     </div>
   );
