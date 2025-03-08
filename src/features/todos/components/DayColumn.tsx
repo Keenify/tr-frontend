@@ -43,7 +43,7 @@ export const DayColumn: React.FC<DayColumnProps> = ({
   isViewOnly = false
 }) => {
   const [newTodoText, setNewTodoText] = useState('');
-  const minLines = 10; // Reduced from 20 since we're now splitting the view
+  const minLines = 5; // Reduced to show fewer empty lines since we're allowing extension
   const emptyLines = Math.max(minLines - todos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row
 
   const createNewTodo = async () => {
@@ -97,29 +97,29 @@ export const DayColumn: React.FC<DayColumnProps> = ({
 
   return (
     <div 
-      className="flex-1 min-h-[500px] border-r border-gray-200 bg-white flex flex-col"
+      className="flex-1 border-r border-gray-200 bg-white flex flex-col"
       onDrop={handleDrop}
       onDragOver={(e) => e.preventDefault()}
     >
-      {/* Header with date and arrows */}
-      <div className="p-4 border-b border-gray-200 bg-gray-50">
+      {/* Header with date and arrows - sticky */}
+      <div className="py-2 px-3 border-b border-gray-200 bg-gray-50 sticky top-0 z-10">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-lg font-semibold text-gray-700">
+            <div className="text-base font-semibold text-gray-700">
               {format(date, 'EEEE')}
             </div>
-            <div className="text-sm text-gray-500">
+            <div className="text-xs text-gray-500">
               {format(date, 'dd MMM yyyy')}
             </div>
           </div>
         </div>
       </div>
       
-      {/* Content area with fixed height rows */}
+      {/* Content area with todos that can extend */}
       <div className="flex-1">
         {/* All todo items */}
         {todos.map((todo) => (
-          <div key={todo.id} className="h-[40px] border-b border-gray-200">
+          <div key={todo.id} className="h-[32px] border-b border-gray-100">
             <TodoItem 
               todo={todo} 
               onUpdate={onTodoUpdated}
@@ -131,8 +131,8 @@ export const DayColumn: React.FC<DayColumnProps> = ({
         
         {/* Add new todo input - only show if not view only */}
         {!isViewOnly && (
-          <div className="h-[40px] border-b border-gray-200">
-            <div className="h-full flex items-center px-4">
+          <div className="h-[32px] border-b border-gray-100">
+            <div className="h-full flex items-center px-2">
               <input
                 type="text"
                 value={newTodoText}
@@ -140,7 +140,7 @@ export const DayColumn: React.FC<DayColumnProps> = ({
                 onKeyPress={handleKeyPress}
                 onBlur={handleBlur}
                 placeholder="Add new todo..."
-                className="w-full outline-none bg-transparent"
+                className="w-full outline-none bg-transparent text-sm"
               />
             </div>
           </div>
@@ -150,7 +150,7 @@ export const DayColumn: React.FC<DayColumnProps> = ({
         {Array.from({ length: emptyLines }).map((_, index) => (
           <div 
             key={`empty-${index}`} 
-            className="h-[40px] border-b border-gray-200"
+            className="h-[32px] border-b border-gray-100"
           />
         ))}
       </div>
