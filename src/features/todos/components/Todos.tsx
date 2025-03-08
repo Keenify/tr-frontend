@@ -197,7 +197,7 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
       {/* Main container with single scrollbar */}
       <div className="flex flex-col flex-1 overflow-auto">
         {/* Daily Todos - Upper Half */}
-        <div className="min-h-[50%] flex border-b border-gray-200">
+        <div className="min-h-[50%] flex mb-4">
           {/* Left arrow */}
           <div className="flex items-start justify-center w-6 pt-1 sticky top-0">
             <button

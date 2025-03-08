@@ -240,12 +240,12 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
 
   return (
     <div 
-      className="flex-1 border-r border-gray-200 bg-white flex flex-col"
+      className="flex-1 border-r border-gray-100 bg-white flex flex-col"
       onDrop={handleDrop}
       onDragOver={(e) => e.preventDefault()}
     >
       {/* Header with section name */}
-      <div className="py-1 px-2 border-b border-gray-200 bg-white group sticky top-0 z-10">
+      <div className="py-1 px-2 border-b border-gray-100 bg-white group sticky top-0 z-10">
         <div className="flex items-center">
           {!isViewOnly && (
             <button
@@ -288,7 +288,7 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
         {/* All todo items */}
         <div className="flex-grow">
           {todos.map((todo) => (
-            <div key={todo.id} className="h-[28px] border-b border-gray-200">
+            <div key={todo.id} className="h-[28px] border-b border-gray-100">
               <TodoItem 
                 todo={todo} 
                 onUpdate={onTodoUpdated}
@@ -300,7 +300,7 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
           
           {/* Add new todo input - positioned right after the last todo */}
           {!isViewOnly && (
-            <div className="h-[28px] border-b border-gray-200">
+            <div className="h-[28px] border-b border-gray-100">
               <div className="h-full flex items-center px-2">
                 <input
                   type="text"
@@ -324,7 +324,7 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
           {Array.from({ length: emptyLines }).map((_, index) => (
             <div 
               key={`empty-${index}`} 
-              className="h-[28px] border-b border-gray-200"
+              className="h-[28px] border-b border-gray-100"
             />
           ))}
         </div>

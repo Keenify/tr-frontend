@@ -102,7 +102,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
           onChange={(e) => setTitle(e.target.value)}
           onBlur={handleUpdate}
           onKeyPress={(e) => e.key === 'Enter' && handleUpdate()}
-          className="w-full outline-none border-b border-blue-500 py-0.5 text-xs"
+          className="w-full outline-none border-b border-gray-100 py-0.5 text-xs"
           autoFocus
         />
       ) : (

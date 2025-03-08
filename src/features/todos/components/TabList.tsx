@@ -234,7 +234,7 @@ export const TabList: React.FC<TabListProps> = ({
   };
 
   return (
-    <div className="border-b border-gray-200 bg-white">
+    <div className="bg-white mb-2">
       <div className="flex items-center px-1.5 py-1 overflow-x-auto">
         {tabs
           .slice()

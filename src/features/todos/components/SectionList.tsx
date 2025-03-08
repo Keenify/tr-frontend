@@ -166,7 +166,7 @@ export const SectionList: React.FC<SectionListProps> = ({
           {!isViewOnly && (
             <div style={{ width: columnWidth, minWidth: `${columnMinWidth}px`, flex: '0 0 auto' }} className="bg-white flex flex-col">
               {isCreatingSection ? (
-                <div className="p-2 border-b border-gray-200 sticky top-0 z-10 bg-white">
+                <div className="p-2 border-b border-gray-100 sticky top-0 z-10 bg-white">
                   <input
                     type="text"
                     value={newSectionName}
