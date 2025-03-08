@@ -14,7 +14,14 @@ import '../styles/calendar.css';
 import { Value } from 'react-calendar/dist/esm/shared/types.js';
 import { directoryService } from '../../../../shared/services/directoryService';
 import { Employee } from '../../../../shared/types/directory.types';
-import { getEmployeeSyncRecords, syncAllCalendarEvents } from '../services/useGoogleSyncCalendar';
+import { 
+  getEmployeeSyncRecords, 
+  syncAllCalendarEvents, 
+  syncCalendarEvent, 
+  updateSyncedCalendarEvent,
+  checkEventSyncStatus,
+  deleteSyncedCalendarEvent
+} from '../services/useGoogleSyncCalendar';
 import { validateGoogleToken } from '../../../integration/services/useGoogle';
 
 interface CalendarProps {
@@ -101,11 +108,34 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
   }, [companyId]);
 
   const handleDeleteEvent = async (eventId: string) => {
-    if (!companyId) return;
+    if (!companyId || !userId) return;
 
     try {
       await deleteCalendarEvent(eventId, companyId);
       setEvents(events.filter(event => event.id !== eventId));
+      
+      // Delete the synced event from Google Calendar if integration is active
+      try {
+        const validationResponse = await validateGoogleToken({
+          employee_id: userId,
+          company_id: companyId,
+          refresh: false
+        });
+        
+        if (validationResponse.is_valid) {
+          // Check if the event is synced before attempting to delete
+          const syncStatus = await checkEventSyncStatus(eventId, userId);
+          
+          if (syncStatus.is_synced) {
+            // Delete the synced event
+            await deleteSyncedCalendarEvent(eventId, userId, companyId);
+          }
+          
+          await checkGoogleCalendarStatus();
+        }
+      } catch (syncError) {
+        console.error('Error deleting synced event from Google Calendar:', syncError);
+      }
     } catch (err) {
       console.error('Error deleting event:', err);
       // Add error handling UI feedback here
@@ -124,6 +154,22 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
       const newEvent = await createCalendarEvent(companyId, userId, eventData);
       console.log('Created event response:', newEvent);
       setEvents(prev => [...prev, newEvent as CalendarEvent]);
+      
+      // Sync the newly created event with Google Calendar if integration is active
+      try {
+        const validationResponse = await validateGoogleToken({
+          employee_id: userId,
+          company_id: companyId,
+          refresh: false
+        });
+        
+        if (validationResponse.is_valid) {
+          await syncCalendarEvent(newEvent.id, userId, companyId);
+          await checkGoogleCalendarStatus();
+        }
+      } catch (syncError) {
+        console.error('Error syncing new event to Google Calendar:', syncError);
+      }
     } catch (err) {
       console.error('Error creating event:', err);
       setError(err instanceof Error ? err.message : 'Failed to create event');
@@ -131,13 +177,39 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
   };
 
   const handleUpdateEvent = async (eventData: CreateCalendarEventPayload) => {
-    if (!companyId || !editingEvent) return;
+    if (!companyId || !editingEvent || !userId) return;
 
     try {
       const updatedEvent = await updateCalendarEvent(editingEvent.id, companyId, eventData);
       setEvents(prev => prev.map(event => 
         event.id === updatedEvent.id ? (updatedEvent as CalendarEvent) : event
       ));
+      
+      // Update the synced event in Google Calendar if integration is active
+      try {
+        const validationResponse = await validateGoogleToken({
+          employee_id: userId,
+          company_id: companyId,
+          refresh: false
+        });
+        
+        if (validationResponse.is_valid) {
+          // Check if the event is already synced
+          const syncStatus = await checkEventSyncStatus(updatedEvent.id, userId);
+          
+          if (syncStatus.is_synced) {
+            // Update the existing synced event
+            await updateSyncedCalendarEvent(updatedEvent.id, userId, companyId);
+          } else {
+            // Create a new sync if not already synced
+            await syncCalendarEvent(updatedEvent.id, userId, companyId);
+          }
+          
+          await checkGoogleCalendarStatus();
+        }
+      } catch (syncError) {
+        console.error('Error syncing updated event to Google Calendar:', syncError);
+      }
     } catch (err) {
       console.error('Error updating event:', err);
       setError(err instanceof Error ? err.message : 'Failed to update event');
