@@ -143,11 +143,11 @@ export const SectionList: React.FC<SectionListProps> = ({
       )}
 
       {/* Horizontal section layout */}
-      <div className="flex flex-1 bg-gray-50">
+      <div className="flex flex-1">
         {/* Sections container with horizontal scrolling only */}
         <div 
           ref={sectionsContainerRef}
-          className="flex flex-1 overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth border-t border-l border-r border-gray-100 bg-gray-50"
+          className="flex flex-1 overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth border-t border-l border-r border-gray-100"
         >
           {/* Display all sections */}
           {allSections.map(section => (

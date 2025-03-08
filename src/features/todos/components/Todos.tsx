@@ -384,7 +384,7 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
         <div className="h-4"></div>
 
         {/* Section Todos - Lower Half */}
-        <div className="bg-gray-50">
+        <div className="">
           <TodoSection 
             todos={todos.filter(todo => todo.section_id !== null)} // Only show todos with a section
             employeeId={selectedEmployeeId || userInfo?.id || ''}

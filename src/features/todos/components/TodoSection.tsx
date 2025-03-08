@@ -117,7 +117,7 @@ export const TodoSection: React.FC<TodoSectionProps> = ({
       
       {/* Sections for the active tab - with light background */}
       {activeTab && (
-        <div className="flex-1 overflow-visible bg-gray-50 h-full">
+        <div className="flex-1 overflow-visible h-full">
           <SectionList
             tab={activeTab}
             todos={todos.filter(todo => 
