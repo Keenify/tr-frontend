@@ -1,13 +1,16 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { TodoData } from '../types/todo';
 import { getEmployeeTodos } from '../services/useTodos';
 import { DayColumn } from './DayColumn';
-import { addDays, startOfToday, format, subDays } from 'date-fns';
+import { addDays, startOfToday, format, subDays, addWeeks, subWeeks } from 'date-fns';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import { directoryService } from '../../../shared/services/directoryService';
 import { Employee } from '../../../shared/types/directory.types';
 import { TodoSection } from './TodoSection';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+import { FaAngleLeft, FaAngleRight, FaAngleDoubleLeft, FaAngleDoubleRight, FaCalendarAlt } from 'react-icons/fa';
 
 // Protected email constants
 const PROTECTED_EMAIL = 'czy199162@gmail.com';
@@ -37,6 +40,8 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
   const [startDate, setStartDate] = useState(startOfToday());
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const calendarRef = useRef<HTMLDivElement>(null);
   
   const { userInfo, companyInfo, error: userDataError, isLoading: userDataLoading } = 
     useUserAndCompanyData(session.user.id);
@@ -109,6 +114,21 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
     setStartDate(prevDate => addDays(prevDate, 1));
   };
 
+  const handlePrevWeek = () => {
+    setStartDate(prevDate => subWeeks(prevDate, 1));
+  };
+
+  const handleNextWeek = () => {
+    setStartDate(prevDate => addWeeks(prevDate, 1));
+  };
+
+  const handleDateChange = (date: Date | null) => {
+    if (date) {
+      setStartDate(date);
+      setIsCalendarOpen(false);
+    }
+  };
+
   const handleEmployeeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedId = e.target.value;
     setSelectedEmployeeId(selectedId === userInfo?.id ? null : selectedId);
@@ -125,6 +145,23 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
 
   // Check if authentication is needed (either viewing as or viewing the protected user)
   const needsAuthentication = isViewingProtectedUser && !isAuthenticated;
+
+  // Handle click outside to close calendar
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (calendarRef.current && !calendarRef.current.contains(event.target as Node)) {
+        setIsCalendarOpen(false);
+      }
+    };
+    
+    if (isCalendarOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCalendarOpen]);
 
   if (userDataLoading || loading) {
     return <div>Loading...</div>;
@@ -168,6 +205,9 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
 
   // Create an array of 7 dates starting from startDate
   const dates = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
+  
+  // Format the date range for display (e.g., "Mar 1 - Mar 7, 2025")
+  const dateRangeText = `${format(dates[0], 'MMM d')} - ${format(dates[6], 'MMM d, yyyy')}`;
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -197,22 +237,66 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
       {/* Main container without any scrollbars - let DashboardLayout handle scrolling */}
       <div className="flex flex-col flex-1">
         {/* Daily Todos - Upper Half - Allow to grow as needed */}
-        <div className="flex mb-6">
-          {/* Left arrow */}
-          <div className="flex items-start justify-center w-6 pt-1 sticky top-0">
-            <button
-              onClick={handlePrevDay}
-              className="p-0.5 hover:bg-gray-100 rounded-full transition-colors"
-              title="Previous day"
-            >
-              <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
+        <div className="flex flex-col mb-6">
+          {/* Navigation controls */}
+          <div className="flex justify-between items-center p-2 border-b border-gray-100 bg-white sticky top-0 z-20">
+            <div className="text-sm font-medium text-gray-700">
+              {dateRangeText}
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={handlePrevWeek}
+                className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+                title="Previous week"
+              >
+                <FaAngleDoubleLeft className="text-gray-600" size={14} />
+              </button>
+              <button
+                onClick={handlePrevDay}
+                className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+                title="Previous day"
+              >
+                <FaAngleLeft className="text-gray-600" size={14} />
+              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+                  className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+                  title="Select date"
+                >
+                  <FaCalendarAlt className="text-gray-600" size={14} />
+                </button>
+                {isCalendarOpen && (
+                  <div ref={calendarRef} className="absolute right-0 mt-1 z-30">
+                    <DatePicker
+                      selected={startDate}
+                      onChange={handleDateChange}
+                      inline
+                      highlightDates={[new Date()]}
+                      calendarClassName="shadow-lg"
+                    />
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={handleNextDay}
+                className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+                title="Next day"
+              >
+                <FaAngleRight className="text-gray-600" size={14} />
+              </button>
+              <button
+                onClick={handleNextWeek}
+                className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+                title="Next week"
+              >
+                <FaAngleDoubleRight className="text-gray-600" size={14} />
+              </button>
+            </div>
           </div>
 
           {/* Columns */}
-          <div className="flex flex-1">
+          <div className="flex flex-1 border-l border-r border-gray-100">
             {(() => {
               // Calculate the maximum number of todos across all columns
               const todosPerDate = dates.map(date => 
@@ -242,19 +326,6 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
                 />
               ));
             })()}
-          </div>
-
-          {/* Right arrow */}
-          <div className="flex items-start justify-center w-6 pt-1 sticky top-0">
-            <button
-              onClick={handleNextDay}
-              className="p-0.5 hover:bg-gray-100 rounded-full transition-colors"
-              title="Next day"
-            >
-              <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
           </div>
         </div>
 

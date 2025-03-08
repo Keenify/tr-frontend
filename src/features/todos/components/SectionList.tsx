@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { TodoData, TabData } from '../types/todo';
 import { createSection } from '../services/useTodos';
 import { SectionColumn } from './SectionColumn';
+import { FaAngleLeft, FaAngleRight } from 'react-icons/fa';
 
 interface SectionListProps {
   tab: TabData;
@@ -119,30 +120,34 @@ export const SectionList: React.FC<SectionListProps> = ({
   
   return (
     <div className="flex flex-col h-full">
-      {/* Horizontal section layout */}
-      <div className="flex flex-1">
-        {/* Left navigation button - always show to maintain layout consistency with upper section */}
-        <div className="flex items-start justify-center w-6 pt-1 sticky top-0">
-          {showNavigation ? (
+      {/* Navigation controls if needed */}
+      {showNavigation && (
+        <div className="flex justify-end items-center p-2 border-b border-gray-100 bg-white sticky top-0 z-10">
+          <div className="flex space-x-2">
             <button
               onClick={handlePrevSection}
-              className="p-0.5 hover:bg-gray-200 text-gray-600 rounded-full transition-colors"
+              className="p-1.5 hover:bg-gray-100 rounded transition-colors"
               title="Scroll left"
             >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
+              <FaAngleLeft className="text-gray-600" size={14} />
             </button>
-          ) : (
-            // Empty spacer to maintain layout
-            <div className="w-3 h-3"></div>
-          )}
+            <button
+              onClick={handleNextSection}
+              className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+              title="Scroll right"
+            >
+              <FaAngleRight className="text-gray-600" size={14} />
+            </button>
+          </div>
         </div>
+      )}
 
+      {/* Horizontal section layout */}
+      <div className="flex flex-1">
         {/* Sections container with horizontal scrolling only */}
         <div 
           ref={sectionsContainerRef}
-          className="flex flex-1 overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth"
+          className="flex flex-1 overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth border-l border-r border-gray-100"
         >
           {/* Display all sections */}
           {allSections.map(section => (
@@ -215,24 +220,6 @@ export const SectionList: React.FC<SectionListProps> = ({
                 {/* Intentionally left empty */}
               </div>
             </div>
-          )}
-        </div>
-        
-        {/* Right navigation button - always show to maintain layout consistency with upper section */}
-        <div className="flex items-start justify-center w-6 pt-1 sticky top-0">
-          {showNavigation ? (
-            <button
-              onClick={handleNextSection}
-              className="p-0.5 hover:bg-gray-200 text-gray-600 rounded-full transition-colors"
-              title="Scroll right"
-            >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          ) : (
-            // Empty spacer to maintain layout
-            <div className="w-3 h-3"></div>
           )}
         </div>
       </div>
