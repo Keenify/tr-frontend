@@ -196,8 +196,8 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
 
       {/* Main container with single scrollbar */}
       <div className="flex flex-col flex-1 overflow-auto">
-        {/* Daily Todos - Upper Half */}
-        <div className="min-h-[50%] flex mb-6">
+        {/* Daily Todos - Upper Half - Allow to grow as needed */}
+        <div className="flex mb-6">
           {/* Left arrow */}
           <div className="flex items-start justify-center w-6 pt-1 sticky top-0">
             <button
@@ -246,7 +246,7 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
         </div>
 
         {/* Section Todos - Lower Half */}
-        <div className="min-h-[50%]">
+        <div>
           <TodoSection 
             todos={todos.filter(todo => todo.section_id !== null)} // Only show todos with a section
             employeeId={selectedEmployeeId || userInfo?.id || ''}

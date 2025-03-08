@@ -43,7 +43,7 @@ export const DayColumn: React.FC<DayColumnProps> = ({
   isViewOnly = false
 }) => {
   const [newTodoText, setNewTodoText] = useState('');
-  const minLines = 10; // Number of empty lines to show after "Add new todo..."
+  const minLines = 20; // Increased to ensure more empty lines are shown
   const emptyLines = Math.max(minLines - todos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row
 
   const createNewTodo = async () => {
@@ -114,9 +114,9 @@ export const DayColumn: React.FC<DayColumnProps> = ({
       </div>
       
       {/* Content area with todos that can extend */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex flex-col">
         {/* All todo items */}
-        <div className="flex-grow">
+        <div>
           {todos.map((todo) => (
             <div key={todo.id} className="h-[28px] border-b border-gray-100">
               <TodoItem 
