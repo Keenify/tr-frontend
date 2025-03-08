@@ -1,4 +1,5 @@
 @import './shared/styles/animations.css'; /* Place all @import statements at the top */
+@import './features/todos/styles/animation.css'; /* Todo-specific animations */
 
 /* @tailwind base; */
 @tailwind base;
