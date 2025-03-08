@@ -54,7 +54,6 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<{top: number, left: number} | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
   const minLines = 10; // Reduced to 10 max empty lines
   const emptyLines = Math.max(minLines - todos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row
 
@@ -284,8 +283,8 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
         </div>
       </div>
       
-      {/* Content area with fixed height rows */}
-      <div className="flex flex-col">
+      {/* Content area with todos that can extend */}
+      <div className="flex flex-col bg-white">
         {/* All todo items */}
         <div>
           {todos.map((todo) => (

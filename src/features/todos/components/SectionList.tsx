@@ -143,11 +143,11 @@ export const SectionList: React.FC<SectionListProps> = ({
       )}
 
       {/* Horizontal section layout */}
-      <div className="flex flex-1">
+      <div className="flex flex-1 bg-gray-50">
         {/* Sections container with horizontal scrolling only */}
         <div 
           ref={sectionsContainerRef}
-          className="flex flex-1 overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth border-l border-r border-gray-100"
+          className="flex flex-1 overflow-x-auto overflow-y-hidden scrollbar-hide scroll-smooth border-t border-l border-r border-gray-100 bg-gray-50"
         >
           {/* Display all sections */}
           {allSections.map(section => (
@@ -169,7 +169,7 @@ export const SectionList: React.FC<SectionListProps> = ({
           
           {/* Add new section button - always displayed as the last column when not in view-only mode */}
           {!isViewOnly && (
-            <div style={{ width: columnWidth, minWidth: `${columnMinWidth}px`, flex: '0 0 auto' }} className="bg-white flex flex-col">
+            <div style={{ width: columnWidth, minWidth: `${columnMinWidth}px`, flex: '0 0 auto' }} className="flex flex-col">
               {isCreatingSection ? (
                 <div className="p-2 border-b border-gray-100 sticky top-0 z-10 bg-white">
                   <input
@@ -215,12 +215,15 @@ export const SectionList: React.FC<SectionListProps> = ({
                 </div>
               )}
               
-              {/* Empty content area with no lines or placeholders */}
+              {/* Empty content area with background matching the section columns */}
               <div className="flex-1 bg-white">
                 {/* Intentionally left empty */}
               </div>
             </div>
           )}
+          
+          {/* Add an extra div to fill any remaining space with the background color */}
+          <div className="flex-grow bg-gray-50 min-w-[50px]"></div>
         </div>
       </div>
     </div>

@@ -101,21 +101,23 @@ export const TodoSection: React.FC<TodoSectionProps> = ({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Tab navigation */}
-      <TabList 
-        tabs={tabs} 
-        activeTabId={activeTabId} 
-        onTabChange={setActiveTabId}
-        employeeId={employeeId}
-        companyId={companyId}
-        onTabCreated={handleTabChange}
-        onTabUpdated={handleTabChange}
-        isViewOnly={isViewOnly}
-      />
+      {/* Tab navigation - keep original styling */}
+      <div className="bg-white">
+        <TabList 
+          tabs={tabs} 
+          activeTabId={activeTabId} 
+          onTabChange={setActiveTabId}
+          employeeId={employeeId}
+          companyId={companyId}
+          onTabCreated={handleTabChange}
+          onTabUpdated={handleTabChange}
+          isViewOnly={isViewOnly}
+        />
+      </div>
       
-      {/* Sections for the active tab */}
+      {/* Sections for the active tab - with light background */}
       {activeTab && (
-        <div className="flex-1 overflow-visible">
+        <div className="flex-1 overflow-visible bg-gray-50 h-full">
           <SectionList
             tab={activeTab}
             todos={todos.filter(todo => 

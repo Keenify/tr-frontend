@@ -212,7 +212,7 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
   return (
     <div className="flex flex-col h-full bg-white">
       {isManager() && (
-        <div className="p-1 border-b border-gray-100 bg-white sticky top-0 z-20">
+        <div className="p-1 bg-white sticky top-0 z-20">
           <select
             title="Select Employee"
             value={selectedEmployeeId || userInfo?.id}
@@ -237,7 +237,7 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
       {/* Main container without any scrollbars - let DashboardLayout handle scrolling */}
       <div className="flex flex-col flex-1">
         {/* Daily Todos - Upper Half - Allow to grow as needed */}
-        <div className="flex flex-col mb-6">
+        <div className="flex flex-col">
           {/* Navigation controls */}
           <div className="flex justify-between items-center p-2 border-b border-gray-100 bg-white sticky top-0 z-20">
             <div className="text-sm font-medium text-gray-700">
@@ -329,8 +329,11 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
           </div>
         </div>
 
+        {/* Invisible spacer between sections */}
+        <div className="h-4"></div>
+
         {/* Section Todos - Lower Half */}
-        <div>
+        <div className="bg-gray-50">
           <TodoSection 
             todos={todos.filter(todo => todo.section_id !== null)} // Only show todos with a section
             employeeId={selectedEmployeeId || userInfo?.id || ''}
