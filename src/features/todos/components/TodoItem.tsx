@@ -111,7 +111,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
             {!isViewOnly && (
               <button
                 onClick={handleToggleComplete}
-                className={`${
+                className={`opacity-0 group-hover:opacity-100 transition-opacity ${
                   todo.is_completed ? 'text-green-500' : 'text-gray-400 hover:text-gray-600'
                 }`}
                 title={todo.is_completed ? "Mark as incomplete" : "Mark as complete"}
@@ -125,12 +125,8 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
             )}
             <div
               onClick={() => !isViewOnly && setIsEditing(true)}
-              className={`flex items-center space-x-1.5 flex-grow min-w-0 overflow-hidden ${!isViewOnly ? 'cursor-pointer' : ''}`}
+              className={`flex items-center flex-grow min-w-0 overflow-hidden ${!isViewOnly ? 'cursor-pointer' : ''}`}
             >
-              <div
-                className="w-2 h-2 flex-shrink-0 rounded-full"
-                style={{ backgroundColor: todo.color_code }}
-              />
               <span className={`truncate text-xs ${todo.is_completed ? 'line-through text-gray-400' : ''}`}>
                 {todo.title}
               </span>
