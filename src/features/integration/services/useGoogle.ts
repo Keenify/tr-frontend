@@ -40,7 +40,9 @@ interface TokenRevokeResponse {
  * @returns {Promise<GoogleAuthUrlResponse>} - A promise that resolves to the authorization URL
  */
 export async function getGoogleAuthUrl(): Promise<GoogleAuthUrlResponse> {
-  const endpoint = `${API_DOMAIN}/google-tokens/auth/url`;
+  // Generate callback URL based on current origin
+  const callbackUrl = `${window.location.origin}/google/oauth/callback`;
+  const endpoint = `${API_DOMAIN}/google-tokens/auth/url?redirect_uri=${encodeURIComponent(callbackUrl)}`;
 
   const response = await fetch(endpoint, {
     method: 'GET',
@@ -75,7 +77,9 @@ export async function handleGoogleCallback(
   employeeId: string,
   companyId: string
 ): Promise<GoogleTokenResponse> {
-  const endpoint = `${API_DOMAIN}/google-tokens/auth/callback?code=${encodeURIComponent(code)}&employee_id=${employeeId}&company_id=${companyId}`;
+  // Include the same callback URL used in the authorization request
+  const callbackUrl = `${window.location.origin}/google/oauth/callback`;
+  const endpoint = `${API_DOMAIN}/google-tokens/auth/callback?code=${encodeURIComponent(code)}&employee_id=${employeeId}&company_id=${companyId}&redirect_uri=${encodeURIComponent(callbackUrl)}`;
 
   const response = await fetch(endpoint, {
     method: 'POST',

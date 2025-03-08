@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
-import { getGoogleAuthUrl, validateGoogleToken, revokeGoogleToken } from "../services/useGoogle";
+import { getGoogleAuthUrl, validateGoogleToken, revokeGoogleToken, handleGoogleCallback } from "../services/useGoogle";
 import toast from "react-hot-toast";
 import { ExternalLink, Check, X, RefreshCw } from "react-feather";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface IntegrationProps {
   session: Session;
@@ -17,6 +18,54 @@ const Integration: React.FC<IntegrationProps> = ({ session }) => {
   const [isValidating, setIsValidating] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Check if the current URL is the OAuth callback
+  useEffect(() => {
+    const handleOAuthCallback = async () => {
+      // Check if this is the Google OAuth callback route
+      if (location.pathname === "/google/oauth/callback") {
+        const urlParams = new URLSearchParams(location.search);
+        const code = urlParams.get("code");
+        const error = urlParams.get("error");
+        
+        // Get employee and company IDs from localStorage
+        const employeeId = localStorage.getItem('google_oauth_employee_id');
+        const companyId = localStorage.getItem('google_oauth_company_id');
+        
+        // Clear localStorage items
+        localStorage.removeItem('google_oauth_employee_id');
+        localStorage.removeItem('google_oauth_company_id');
+        
+        if (error) {
+          console.error("Google OAuth error:", error);
+          toast.error("Failed to connect to Google: " + error);
+          navigate("/integration");
+          return;
+        }
+        
+        if (!code || !employeeId || !companyId) {
+          toast.error("Missing required parameters for Google integration");
+          navigate("/integration");
+          return;
+        }
+        
+        try {
+          // Handle the callback
+          await handleGoogleCallback(code, employeeId, companyId);
+          toast.success("Successfully connected to Google!");
+          navigate("/integration");
+        } catch (error) {
+          console.error("Failed to handle Google callback:", error);
+          toast.error("Failed to complete Google integration");
+          navigate("/integration");
+        }
+      }
+    };
+    
+    handleOAuthCallback();
+  }, [location, navigate]);
 
   // Check if the user is connected to Google
   useEffect(() => {
