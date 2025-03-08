@@ -240,21 +240,21 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
 
   return (
     <div 
-      className="flex-1 border-r border-gray-200 bg-white overflow-y-auto scrollbar-hide"
+      className="flex-1 border-r border-gray-200 bg-white flex flex-col"
       onDrop={handleDrop}
       onDragOver={(e) => e.preventDefault()}
     >
       {/* Header with section name */}
-      <div className="p-3 border-b border-gray-200 bg-gray-50 group">
+      <div className="py-1 px-2 border-b border-gray-200 bg-white group sticky top-0 z-10">
         <div className="flex items-center">
           {!isViewOnly && (
             <button
               ref={menuButtonRef}
               onClick={toggleMenu}
-              className="mr-2 focus:outline-none rounded-full p-1 transition-colors duration-150 text-gray-600 hover:bg-gray-300 hover:text-gray-800 opacity-0 group-hover:opacity-100"
+              className="mr-1 focus:outline-none rounded-full p-0.5 transition-colors duration-150 text-gray-600 hover:bg-gray-300 hover:text-gray-800 opacity-0 group-hover:opacity-100"
               aria-label="Section options"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
               </svg>
             </button>
@@ -269,12 +269,12 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
               onChange={(e) => setSectionName(e.target.value)}
               onBlur={handleUpdateSection}
               onKeyDown={handleKeyPress}
-              className="w-full px-2 py-1 font-semibold border rounded"
+              className="w-full px-1 py-0.5 text-xs font-medium border rounded"
               autoFocus
             />
           ) : (
             <div 
-              className="font-semibold text-gray-700 flex-grow"
+              className="font-medium text-xs text-gray-700 flex-grow uppercase"
               onDoubleClick={startEditing}
             >
               {section.name}
@@ -284,48 +284,50 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
       </div>
       
       {/* Content area with fixed height rows */}
-      <div>
+      <div className="flex-1 flex flex-col">
         {/* All todo items */}
-        {todos.map((todo) => (
-          <div key={todo.id} className="h-[40px] border-b border-gray-200">
-            <TodoItem 
-              todo={todo} 
-              onUpdate={onTodoUpdated}
-              onDelete={onTodoDeleted}
-              isViewOnly={isViewOnly}
-            />
-          </div>
-        ))}
-        
-        {/* Add new todo input - only show if not view only */}
-        {!isViewOnly && (
-          <div className="h-[40px] border-b border-gray-200">
-            <div className="h-full flex items-center px-4">
-              <input
-                type="text"
-                value={newTodoText}
-                onChange={(e) => setNewTodoText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    createNewTodo();
-                  }
-                }}
-                onBlur={handleBlur}
-                placeholder="Add new todo..."
-                className="w-full outline-none bg-transparent"
+        <div className="flex-grow">
+          {todos.map((todo) => (
+            <div key={todo.id} className="h-[28px] border-b border-gray-200">
+              <TodoItem 
+                todo={todo} 
+                onUpdate={onTodoUpdated}
+                onDelete={onTodoDeleted}
+                isViewOnly={isViewOnly}
               />
             </div>
-          </div>
-        )}
-
-        {/* Empty lines to fill remaining space */}
-        {Array.from({ length: emptyLines }).map((_, index) => (
-          <div 
-            key={`empty-${index}`} 
-            className="h-[40px] border-b border-gray-200"
-          />
-        ))}
+          ))}
+          
+          {/* Add new todo input - positioned right after the last todo */}
+          {!isViewOnly && (
+            <div className="h-[28px] border-b border-gray-200">
+              <div className="h-full flex items-center px-2">
+                <input
+                  type="text"
+                  value={newTodoText}
+                  onChange={(e) => setNewTodoText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      createNewTodo();
+                    }
+                  }}
+                  onBlur={handleBlur}
+                  placeholder="Add new todo..."
+                  className="w-full outline-none bg-transparent text-xs"
+                />
+              </div>
+            </div>
+          )}
+          
+          {/* Empty lines to fill remaining space - styled like note paper with visible lines */}
+          {Array.from({ length: emptyLines }).map((_, index) => (
+            <div 
+              key={`empty-${index}`} 
+              className="h-[28px] border-b border-gray-200"
+            />
+          ))}
+        </div>
       </div>
       
       {renderMenu()}

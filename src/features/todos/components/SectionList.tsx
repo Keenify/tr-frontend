@@ -82,7 +82,7 @@ export const SectionList: React.FC<SectionListProps> = ({
 
   // Calculate the number of columns including the "New Section" column if not in view-only mode
   const columnWidth = `${100 / 7}%`; // Match the 7 columns in the upper part
-  const columnMinWidth = 200; // Minimum width in pixels
+  const columnMinWidth = 160; // Reduced minimum width for more compact look
   
   // Get sections to display - sorted alphabetically
   const allSections = tab.sections
@@ -122,24 +122,24 @@ export const SectionList: React.FC<SectionListProps> = ({
       {/* Horizontal section layout */}
       <div className="flex flex-1">
         {/* Left navigation button - always show to maintain layout consistency with upper section */}
-        <div className="flex items-center justify-center w-8">
+        <div className="flex items-start justify-center w-6 pt-1 sticky top-0">
           {showNavigation ? (
             <button
               onClick={handlePrevSection}
-              className="p-1 hover:bg-gray-200 text-gray-600 rounded-full transition-colors"
+              className="p-0.5 hover:bg-gray-200 text-gray-600 rounded-full transition-colors"
               title="Scroll left"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
           ) : (
             // Empty spacer to maintain layout
-            <div className="w-4 h-4"></div>
+            <div className="w-3 h-3"></div>
           )}
         </div>
 
-        {/* Sections container with horizontal scrolling */}
+        {/* Sections container with horizontal scrolling only */}
         <div 
           ref={sectionsContainerRef}
           className="flex flex-1 overflow-x-auto scrollbar-hide scroll-smooth"
@@ -164,15 +164,15 @@ export const SectionList: React.FC<SectionListProps> = ({
           
           {/* Add new section button - always displayed as the last column when not in view-only mode */}
           {!isViewOnly && (
-            <div style={{ width: columnWidth, minWidth: `${columnMinWidth}px`, flex: '0 0 auto' }} className="border-r border-gray-200 bg-white">
+            <div style={{ width: columnWidth, minWidth: `${columnMinWidth}px`, flex: '0 0 auto' }} className="bg-white flex flex-col">
               {isCreatingSection ? (
-                <div className="p-3 border-b border-gray-200">
+                <div className="p-2 border-b border-gray-200 sticky top-0 z-10 bg-white">
                   <input
                     type="text"
                     value={newSectionName}
                     onChange={(e) => setNewSectionName(e.target.value)}
                     placeholder="Section name..."
-                    className="px-2 py-1 border rounded w-full mb-2"
+                    className="px-1.5 py-0.5 border rounded w-full mb-1 text-xs"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -184,7 +184,7 @@ export const SectionList: React.FC<SectionListProps> = ({
                   <div className="flex">
                     <button
                       onClick={handleCreateSection}
-                      className="bg-blue-500 text-white px-2 py-1 rounded"
+                      className="bg-purple-700 text-white px-1.5 py-0.5 rounded text-xs"
                     >
                       Add
                     </button>
@@ -193,41 +193,46 @@ export const SectionList: React.FC<SectionListProps> = ({
                         setIsCreatingSection(false);
                         setNewSectionName('');
                       }}
-                      className="ml-2 text-gray-500 hover:text-gray-700"
+                      className="ml-1 text-xs text-gray-500 hover:text-gray-700"
                     >
                       Cancel
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="p-3 border-b border-gray-200 bg-gray-50 h-full flex items-start justify-center">
+                <div className="p-2 bg-white sticky top-0 z-10 flex items-center justify-center">
                   <button
                     onClick={() => setIsCreatingSection(true)}
-                    className="px-3 py-1 text-blue-500 hover:text-blue-700"
+                    className="px-3 py-1 text-xs text-purple-700 hover:text-purple-900 font-medium"
                   >
                     + New Section
                   </button>
                 </div>
               )}
+              
+              {/* Empty content area with no lines or placeholders */}
+              <div className="flex-1 bg-white">
+                {/* Intentionally left empty */}
+              </div>
             </div>
           )}
         </div>
         
         {/* Right navigation button - always show to maintain layout consistency with upper section */}
-        <div className="flex items-center justify-center w-8">
+        <div className="flex items-start justify-center w-6 pt-1 sticky top-0">
           {showNavigation ? (
             <button
               onClick={handleNextSection}
-              className="p-1 hover:bg-gray-200 text-gray-600 rounded-full transition-colors"
+              className="p-0.5 hover:bg-gray-200 text-gray-600 rounded-full transition-colors"
               title="Scroll right"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
           ) : (
             // Empty spacer to maintain layout
-            <div className="w-4 h-4"></div>
+            <div className="w-3 h-3"></div>
           )}
         </div>
       </div>

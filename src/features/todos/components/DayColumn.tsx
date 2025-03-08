@@ -102,57 +102,57 @@ export const DayColumn: React.FC<DayColumnProps> = ({
       onDragOver={(e) => e.preventDefault()}
     >
       {/* Header with date and arrows - sticky */}
-      <div className="py-2 px-3 border-b border-gray-200 bg-gray-50 sticky top-0 z-10">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-base font-semibold text-gray-700">
-              {format(date, 'EEEE')}
-            </div>
-            <div className="text-xs text-gray-500">
-              {format(date, 'dd MMM yyyy')}
-            </div>
+      <div className="py-1 px-2 border-b border-gray-200 bg-white sticky top-0 z-10">
+        <div className="flex flex-col">
+          <div className="text-xs text-gray-500">
+            {format(date, 'd MMM yyyy')}
+          </div>
+          <div className="text-sm font-semibold text-purple-700 uppercase">
+            {format(date, 'EEEE')}
           </div>
         </div>
       </div>
       
       {/* Content area with todos that can extend */}
-      <div className="flex-1">
+      <div className="flex-1 flex flex-col">
         {/* All todo items */}
-        {todos.map((todo) => (
-          <div key={todo.id} className="h-[32px] border-b border-gray-100">
-            <TodoItem 
-              todo={todo} 
-              onUpdate={onTodoUpdated}
-              onDelete={onTodoDeleted}
-              isViewOnly={isViewOnly}
-            />
-          </div>
-        ))}
-        
-        {/* Add new todo input - only show if not view only */}
-        {!isViewOnly && (
-          <div className="h-[32px] border-b border-gray-100">
-            <div className="h-full flex items-center px-2">
-              <input
-                type="text"
-                value={newTodoText}
-                onChange={(e) => setNewTodoText(e.target.value)}
-                onKeyPress={handleKeyPress}
-                onBlur={handleBlur}
-                placeholder="Add new todo..."
-                className="w-full outline-none bg-transparent text-sm"
+        <div className="flex-grow">
+          {todos.map((todo) => (
+            <div key={todo.id} className="h-[28px] border-b border-gray-200">
+              <TodoItem 
+                todo={todo} 
+                onUpdate={onTodoUpdated}
+                onDelete={onTodoDeleted}
+                isViewOnly={isViewOnly}
               />
             </div>
-          </div>
-        )}
-
-        {/* Empty lines to fill remaining space */}
-        {Array.from({ length: emptyLines }).map((_, index) => (
-          <div 
-            key={`empty-${index}`} 
-            className="h-[32px] border-b border-gray-100"
-          />
-        ))}
+          ))}
+          
+          {/* Add new todo input - positioned right after the last todo */}
+          {!isViewOnly && (
+            <div className="h-[28px] border-b border-gray-200">
+              <div className="h-full flex items-center px-2">
+                <input
+                  type="text"
+                  value={newTodoText}
+                  onChange={(e) => setNewTodoText(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  onBlur={handleBlur}
+                  placeholder="Add new todo..."
+                  className="w-full outline-none bg-transparent text-xs"
+                />
+              </div>
+            </div>
+          )}
+          
+          {/* Empty lines to fill remaining space - styled like note paper with visible lines */}
+          {Array.from({ length: emptyLines }).map((_, index) => (
+            <div 
+              key={`empty-${index}`} 
+              className="h-[28px] border-b border-gray-200"
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

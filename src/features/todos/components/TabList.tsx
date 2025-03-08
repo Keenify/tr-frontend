@@ -234,18 +234,18 @@ export const TabList: React.FC<TabListProps> = ({
   };
 
   return (
-    <div className="border-b border-gray-200">
-      <div className="flex items-center px-4 py-2 overflow-x-auto">
+    <div className="border-b border-gray-200 bg-white">
+      <div className="flex items-center px-1.5 py-1 overflow-x-auto">
         {tabs
           .slice()
           .sort((a, b) => a.name.localeCompare(b.name))
           .map(tab => (
             <div
               key={tab.id}
-              className={`px-4 py-2 mr-2 rounded-t-lg font-medium relative cursor-pointer ${
+              className={`px-3 py-1 mr-2 font-medium relative cursor-pointer text-xs group ${
                 activeTabId === tab.id
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'border-b-2 border-purple-700 text-purple-700'
+                  : 'text-gray-700 hover:text-purple-700'
               }`}
               onClick={() => onTabChange(tab.id)}
             >
@@ -257,14 +257,14 @@ export const TabList: React.FC<TabListProps> = ({
                       e.stopPropagation(); // Prevent tab activation when clicking menu
                       toggleMenu(tab.id);
                     }}
-                    className={`mr-2 focus:outline-none rounded-full p-1 transition-colors duration-150 ${
+                    className={`mr-1 focus:outline-none rounded-full p-0.5 transition-colors duration-150 opacity-0 group-hover:opacity-100 ${
                       activeTabId === tab.id 
-                        ? 'text-white hover:bg-white hover:bg-opacity-30' 
-                        : 'text-gray-600 hover:bg-gray-300 hover:text-gray-800'
+                        ? 'text-purple-700 hover:bg-purple-100' 
+                        : 'text-gray-600 hover:bg-gray-100'
                     }`}
                     aria-label="Tab options"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-2 w-2" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                     </svg>
                   </button>
@@ -280,7 +280,7 @@ export const TabList: React.FC<TabListProps> = ({
                     onBlur={() => handleUpdateTab(tab.id)}
                     onKeyDown={(e) => handleKeyPress(e, tab.id)}
                     onClick={(e) => e.stopPropagation()} // Prevent tab activation when editing
-                    className="px-2 py-1 bg-white text-gray-800 border rounded w-full"
+                    className="px-1 py-0.5 text-xs bg-white text-gray-800 border rounded w-full"
                     autoFocus
                   />
                 ) : (
@@ -290,19 +290,37 @@ export const TabList: React.FC<TabListProps> = ({
                         e.stopPropagation(); // Prevent tab activation on double click
                         startEditing(tab);
                       }}
-                      className="text-left flex-grow"
+                      className="text-left flex-grow uppercase"
                     >
                       {tab.name}
                     </div>
                     
                     {/* Section count badge */}
-                    <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                    <span className={`ml-1 px-1 py-0.5 text-xs rounded-full ${
                       activeTabId === tab.id
-                        ? 'bg-white text-blue-500'
-                        : 'bg-gray-200 text-gray-700'
+                        ? 'bg-purple-100 text-purple-700'
+                        : 'bg-gray-100 text-gray-700'
                     }`}>
                       {tab.sections.length}
                     </span>
+
+                    {/* Delete button */}
+                    {!isViewOnly && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent tab activation when clicking delete
+                          if (window.confirm(`Are you sure you want to delete the tab "${tab.name}"?`)) {
+                            handleDeleteTab(tab.id);
+                          }
+                        }}
+                        className="ml-1 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
+                        title="Delete tab"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -317,13 +335,13 @@ export const TabList: React.FC<TabListProps> = ({
                 value={newTabName}
                 onChange={(e) => setNewTabName(e.target.value)}
                 placeholder="Tab name..."
-                className="px-2 py-1 border rounded-l"
+                className="px-1.5 py-0.5 text-xs border rounded-l"
                 onKeyPress={(e) => e.key === 'Enter' && handleCreateTab()}
                 autoFocus
               />
               <button
                 onClick={handleCreateTab}
-                className="bg-blue-500 text-white px-2 py-1 rounded-r"
+                className="bg-purple-700 text-white px-1.5 py-0.5 text-xs rounded-r"
               >
                 Add
               </button>
@@ -332,7 +350,7 @@ export const TabList: React.FC<TabListProps> = ({
                   setIsCreatingTab(false);
                   setNewTabName('');
                 }}
-                className="ml-2 text-gray-500 hover:text-gray-700"
+                className="ml-1 text-xs text-gray-500 hover:text-gray-700"
               >
                 Cancel
               </button>
@@ -340,7 +358,7 @@ export const TabList: React.FC<TabListProps> = ({
           ) : (
             <button
               onClick={() => setIsCreatingTab(true)}
-              className="px-3 py-1 text-blue-500 hover:text-blue-700"
+              className="px-1.5 py-0.5 text-xs text-purple-700 hover:text-purple-900"
             >
               + New Tab
             </button>

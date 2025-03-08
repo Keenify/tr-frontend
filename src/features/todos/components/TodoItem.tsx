@@ -91,7 +91,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
     <div
       draggable={!isViewOnly}
       onDragStart={handleDragStart}
-      className={`h-full ${!isViewOnly ? 'cursor-move' : ''} hover:bg-gray-50 group flex items-center justify-between px-4`}
+      className={`h-full ${!isViewOnly ? 'cursor-move' : ''} hover:bg-gray-50 group flex items-center justify-between px-1.5`}
     >
       {isEditing && !isViewOnly ? (
         <input
@@ -102,36 +102,36 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
           onChange={(e) => setTitle(e.target.value)}
           onBlur={handleUpdate}
           onKeyPress={(e) => e.key === 'Enter' && handleUpdate()}
-          className="w-full outline-none border-b border-blue-500"
+          className="w-full outline-none border-b border-blue-500 py-0.5 text-xs"
           autoFocus
         />
       ) : (
         <>
-          <div className="flex items-center space-x-3 flex-grow min-w-0">
+          <div className="flex items-center space-x-1.5 flex-grow min-w-0">
             {!isViewOnly && (
               <button
                 onClick={handleToggleComplete}
-                className={`opacity-0 group-hover:opacity-100 transition-opacity ${
+                className={`${
                   todo.is_completed ? 'text-green-500' : 'text-gray-400 hover:text-gray-600'
                 }`}
                 title={todo.is_completed ? "Mark as incomplete" : "Mark as complete"}
               >
                 {todo.is_completed ? (
-                  <FaRegCheckSquare size={16} />
+                  <FaRegCheckSquare size={12} />
                 ) : (
-                  <FaRegSquare size={16} />
+                  <FaRegSquare size={12} />
                 )}
               </button>
             )}
             <div
               onClick={() => !isViewOnly && setIsEditing(true)}
-              className={`flex items-center space-x-2 flex-grow min-w-0 overflow-hidden ${!isViewOnly ? 'cursor-pointer' : ''}`}
+              className={`flex items-center space-x-1.5 flex-grow min-w-0 overflow-hidden ${!isViewOnly ? 'cursor-pointer' : ''}`}
             >
               <div
                 className="w-2 h-2 flex-shrink-0 rounded-full"
                 style={{ backgroundColor: todo.color_code }}
               />
-              <span className={`truncate ${todo.is_completed ? 'line-through text-gray-400' : ''}`}>
+              <span className={`truncate text-xs ${todo.is_completed ? 'line-through text-gray-400' : ''}`}>
                 {todo.title}
               </span>
             </div>
@@ -141,12 +141,12 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
               onClick={handleDelete}
               onMouseEnter={() => setIsTrashHovered(true)}
               onMouseLeave={() => setIsTrashHovered(false)}
-              className={`opacity-0 group-hover:opacity-100 transition-opacity ml-2 ${
+              className={`opacity-0 group-hover:opacity-100 transition-opacity ml-1 ${
                 isDeleting ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
-              } ${isTrashHovered ? 'scale-125' : ''} transform transition-all duration-150`}
+              } ${isTrashHovered ? 'scale-110' : ''} transform transition-all duration-150`}
               title="Delete todo"
             >
-              <FaTrash size={isTrashHovered ? 28 : 14} />
+              <FaTrash size={isTrashHovered ? 12 : 10} />
             </button>
           )}
         </>

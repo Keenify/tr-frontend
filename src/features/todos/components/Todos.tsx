@@ -172,12 +172,12 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
   return (
     <div className="flex flex-col h-screen bg-white">
       {isManager() && (
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-1 border-b border-gray-200 bg-white">
           <select
             title="Select Employee"
             value={selectedEmployeeId || userInfo?.id}
             onChange={handleEmployeeChange}
-            className="w-64 p-2 border rounded"
+            className="w-48 p-0.5 text-xs border rounded"
           >
             <option value={userInfo?.id}>
               {isProtectedUser ? "My Todos (protected)" : "My Todos"}
@@ -194,18 +194,18 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
         </div>
       )}
 
-      {/* Split the view into two sections */}
-      <div className="flex flex-col flex-1">
+      {/* Main container with single scrollbar */}
+      <div className="flex flex-col flex-1 overflow-auto">
         {/* Daily Todos - Upper Half */}
-        <div className="flex flex-1 border-b border-gray-300">
+        <div className="min-h-[50%] flex border-b border-gray-200">
           {/* Left arrow */}
-          <div className="flex items-center justify-center w-8">
+          <div className="flex items-start justify-center w-6 pt-1 sticky top-0">
             <button
               onClick={handlePrevDay}
-              className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+              className="p-0.5 hover:bg-gray-100 rounded-full transition-colors"
               title="Previous day"
             >
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -232,13 +232,13 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
           </div>
 
           {/* Right arrow */}
-          <div className="flex items-center justify-center w-8">
+          <div className="flex items-start justify-center w-6 pt-1 sticky top-0">
             <button
               onClick={handleNextDay}
-              className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+              className="p-0.5 hover:bg-gray-100 rounded-full transition-colors"
               title="Next day"
             >
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -246,7 +246,7 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
         </div>
 
         {/* Section Todos - Lower Half */}
-        <div className="flex-1">
+        <div className="min-h-[50%]">
           <TodoSection 
             todos={todos.filter(todo => todo.section_id !== null)} // Only show todos with a section
             employeeId={selectedEmployeeId || userInfo?.id || ''}

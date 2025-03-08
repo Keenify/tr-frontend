@@ -93,7 +93,7 @@ export const TodoSection: React.FC<TodoSectionProps> = ({
   }, [fetchTabs, activeTabId]);
 
   if (loading && tabs.length === 0) {
-    return <div className="p-4">Loading sections...</div>;
+    return <div className="p-2 text-xs">Loading sections...</div>;
   }
 
   // Get the active tab
@@ -115,7 +115,7 @@ export const TodoSection: React.FC<TodoSectionProps> = ({
       
       {/* Sections for the active tab */}
       {activeTab && (
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1">
           <SectionList
             tab={activeTab}
             todos={todos.filter(todo => 
