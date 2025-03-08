@@ -3,7 +3,7 @@ import { Session } from '@supabase/supabase-js';
 import { TodoData } from '../types/todo';
 import { getEmployeeTodos } from '../services/useTodos';
 import { DayColumn } from './DayColumn';
-import { addDays, startOfToday, format, subDays, addWeeks, subWeeks } from 'date-fns';
+import { addDays, startOfToday, format, subDays, addWeeks, subWeeks, parseISO } from 'date-fns';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import { directoryService } from '../../../shared/services/directoryService';
 import { Employee } from '../../../shared/types/directory.types';
@@ -11,6 +11,7 @@ import { TodoSection } from './TodoSection';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { FaAngleLeft, FaAngleRight, FaAngleDoubleLeft, FaAngleDoubleRight, FaCalendarAlt } from 'react-icons/fa';
+import TodoSearch from './TodoSearch';
 
 // Protected email constants
 const PROTECTED_EMAIL = 'czy199162@gmail.com';
@@ -41,7 +42,9 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [searchTrigger, setSearchTrigger] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
+  const keyPressesRef = useRef<{key: string, time: number}[]>([]);
   
   const { userInfo, companyInfo, error: userDataError, isLoading: userDataLoading } = 
     useUserAndCompanyData(session.user.id);
@@ -129,6 +132,13 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
     }
   };
 
+  // Handle selecting a todo from search results
+  const handleSelectSearchResult = (todo: TodoData) => {
+    // Parse the due date and set it as the start date
+    const dueDate = parseISO(todo.due_date);
+    setStartDate(dueDate);
+  };
+
   const handleEmployeeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedId = e.target.value;
     setSelectedEmployeeId(selectedId === userInfo?.id ? null : selectedId);
@@ -162,6 +172,46 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isCalendarOpen]);
+
+  // Handle keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only trigger if not in an input field
+      if (e.target instanceof HTMLInputElement || 
+          e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      const now = Date.now();
+      
+      // Add current keypress to the array
+      if (e.key === 's' || e.key === 'S') {
+        keyPressesRef.current.push({ key: 's', time: now });
+        
+        // Only keep the last 3 keypresses
+        if (keyPressesRef.current.length > 3) {
+          keyPressesRef.current.shift();
+        }
+        
+        // Check if we have 3 's' keypresses within 500ms
+        if (keyPressesRef.current.length === 3) {
+          const firstPress = keyPressesRef.current[0].time;
+          if (now - firstPress < 500) {
+            setSearchTrigger(prev => !prev);
+            keyPressesRef.current = [];
+          }
+        }
+      } else {
+        // Reset for any other key
+        keyPressesRef.current = [];
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   if (userDataLoading || loading) {
     return <div>Loading...</div>;
@@ -206,9 +256,6 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
   // Create an array of 7 dates starting from startDate
   const dates = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
   
-  // Format the date range for display (e.g., "Mar 1 - Mar 7, 2025")
-  const dateRangeText = `${format(dates[0], 'MMM d')} - ${format(dates[6], 'MMM d, yyyy')}`;
-
   return (
     <div className="flex flex-col h-full bg-white">
       {isManager() && (
@@ -240,8 +287,12 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
         <div className="flex flex-col">
           {/* Navigation controls */}
           <div className="flex justify-between items-center p-2 border-b border-gray-100 bg-white sticky top-0 z-20">
-            <div className="text-sm font-medium text-gray-700">
-              {dateRangeText}
+            <div className="flex items-center space-x-2">
+              <TodoSearch 
+                todos={todos} 
+                onSelectTodo={handleSelectSearchResult}
+                triggerSearch={searchTrigger}
+              />
             </div>
             <div className="flex space-x-2">
               <button
