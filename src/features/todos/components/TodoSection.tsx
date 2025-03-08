@@ -115,7 +115,7 @@ export const TodoSection: React.FC<TodoSectionProps> = ({
       
       {/* Sections for the active tab */}
       {activeTab && (
-        <div className="flex-1">
+        <div className="flex-1 overflow-visible">
           <SectionList
             tab={activeTab}
             todos={todos.filter(todo => 

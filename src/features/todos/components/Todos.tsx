@@ -170,9 +170,9 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
   const dates = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
 
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col h-full bg-white">
       {isManager() && (
-        <div className="p-1 border-b border-gray-100 bg-white">
+        <div className="p-1 border-b border-gray-100 bg-white sticky top-0 z-20">
           <select
             title="Select Employee"
             value={selectedEmployeeId || userInfo?.id}
@@ -194,8 +194,8 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
         </div>
       )}
 
-      {/* Main container with single scrollbar */}
-      <div className="flex flex-col flex-1 overflow-auto">
+      {/* Main container without any scrollbars - let DashboardLayout handle scrolling */}
+      <div className="flex flex-col flex-1">
         {/* Daily Todos - Upper Half - Allow to grow as needed */}
         <div className="flex mb-6">
           {/* Left arrow */}
