@@ -506,7 +506,12 @@ export function DashboardLayout({
         <div className="flex items-center space-x-4">
           {/* Todo Shortcut Button - High contrast design that stands out from navbar */}
           <button
-            onClick={() => handleSubTabClick("todo")}
+            onClick={() => {
+              // First set the parent tab to "process"
+              handleTabChange("process");
+              // Then navigate to the todo subtab
+              handleSubTabClick("todo");
+            }}
             className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl border border-indigo-500 mr-2 animate-pulse-subtle"
           >
             <span className="text-sm font-bold text-white flex items-center">
@@ -514,6 +519,24 @@ export function DashboardLayout({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
               <span className="tracking-wide">Todo</span>
+            </span>
+          </button>
+
+          {/* Daily Huddle Shortcut Button */}
+          <button
+            onClick={() => {
+              // First set the parent tab to "meeting"
+              handleTabChange("meeting");
+              // Then navigate to the dailyHuddle subtab
+              handleSubTabClick("dailyHuddle");
+            }}
+            className="flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl border border-emerald-500 mr-2"
+          >
+            <span className="text-sm font-bold text-white flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span className="tracking-wide">Daily Huddle</span>
             </span>
           </button>
           
