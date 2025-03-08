@@ -15,6 +15,7 @@ import { Value } from 'react-calendar/dist/esm/shared/types.js';
 import { directoryService } from '../../../../shared/services/directoryService';
 import { Employee } from '../../../../shared/types/directory.types';
 import { getEmployeeSyncRecords, syncAllCalendarEvents } from '../services/useGoogleSyncCalendar';
+import { validateGoogleToken } from '../../../integration/services/useGoogle';
 
 interface CalendarProps {
   session?: Session;
@@ -154,11 +155,17 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
     if (!userId || !companyId) return;
     
     try {
-      // Check if there are any synced events for this employee
-      const syncRecords = await getEmployeeSyncRecords(userId);
-      setGoogleCalendarIntegrated(syncRecords.total > 0);
+      // First check if Google is actually connected via token validation
+      const validationResponse = await validateGoogleToken({
+        employee_id: userId,
+        company_id: companyId,
+        refresh: false
+      });
       
-      // Check if all events are synced
+      setGoogleCalendarIntegrated(validationResponse.is_valid);
+      
+      // Then check sync status of events
+      const syncRecords = await getEmployeeSyncRecords(userId);
       if (syncRecords.total > 0 && events.length > 0) {
         setAllEventsSynced(syncRecords.total >= events.length);
       } else {
