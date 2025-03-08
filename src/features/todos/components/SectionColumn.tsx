@@ -54,8 +54,6 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<{top: number, left: number} | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
-  const minLines = 5;
-  const emptyLines = Math.max(minLines - todos.length - (isViewOnly ? 0 : 1), 0);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -320,13 +318,7 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
             </div>
           )}
           
-          {/* Empty lines to fill remaining space - styled like note paper with visible lines */}
-          {Array.from({ length: emptyLines }).map((_, index) => (
-            <div 
-              key={`empty-${index}`} 
-              className="h-[28px] border-b border-gray-100"
-            />
-          ))}
+          {/* No empty lines after "Add new todo..." */}
         </div>
       </div>
       

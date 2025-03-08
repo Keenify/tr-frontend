@@ -43,8 +43,6 @@ export const DayColumn: React.FC<DayColumnProps> = ({
   isViewOnly = false
 }) => {
   const [newTodoText, setNewTodoText] = useState('');
-  const minLines = 5; // Reduced to show fewer empty lines since we're allowing extension
-  const emptyLines = Math.max(minLines - todos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row
 
   const createNewTodo = async () => {
     if (newTodoText.trim()) {
@@ -145,13 +143,7 @@ export const DayColumn: React.FC<DayColumnProps> = ({
             </div>
           )}
           
-          {/* Empty lines to fill remaining space - styled like note paper with visible lines */}
-          {Array.from({ length: emptyLines }).map((_, index) => (
-            <div 
-              key={`empty-${index}`} 
-              className="h-[28px] border-b border-gray-100"
-            />
-          ))}
+          {/* No empty lines after "Add new todo..." */}
         </div>
       </div>
     </div>
