@@ -14,6 +14,7 @@ import '../styles/calendar.css';
 import { Value } from 'react-calendar/dist/esm/shared/types.js';
 import { directoryService } from '../../../../shared/services/directoryService';
 import { Employee } from '../../../../shared/types/directory.types';
+import { getEmployeeSyncRecords, syncAllCalendarEvents } from '../services/useGoogleSyncCalendar';
 
 interface CalendarProps {
   session?: Session;
@@ -29,13 +30,16 @@ interface CalendarProps {
  */
 const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [activeDate, setActiveDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [googleCalendarIntegrated, setGoogleCalendarIntegrated] = useState<boolean>(false);
+  const [allEventsSynced, setAllEventsSynced] = useState<boolean>(false);
+  const [syncingEvents, setSyncingEvents] = useState<boolean>(false);
 
   // Add new modal state management
   type ActiveModal = 'none' | 'create' | 'dayEvents' | 'edit';
@@ -146,12 +150,48 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
     setSelectedEvent(null);
   };
 
+  const checkGoogleCalendarStatus = useCallback(async () => {
+    if (!userId || !companyId) return;
+    
+    try {
+      // Check if there are any synced events for this employee
+      const syncRecords = await getEmployeeSyncRecords(userId);
+      setGoogleCalendarIntegrated(syncRecords.total > 0);
+      
+      // Check if all events are synced
+      if (syncRecords.total > 0 && events.length > 0) {
+        setAllEventsSynced(syncRecords.total >= events.length);
+      } else {
+        setAllEventsSynced(false);
+      }
+    } catch (error) {
+      console.error('Error checking Google Calendar status:', error);
+      setGoogleCalendarIntegrated(false);
+      setAllEventsSynced(false);
+    }
+  }, [userId, companyId, events.length]);
+
   useEffect(() => {
     if (!companyLoading && companyId) {
       fetchEvents(new Date());
       fetchEmployees();
+      checkGoogleCalendarStatus();
     }
-  }, [fetchEvents, fetchEmployees, companyLoading, companyId]);
+  }, [fetchEvents, fetchEmployees, companyLoading, companyId, checkGoogleCalendarStatus]);
+
+  const handleSyncAllEvents = async () => {
+    if (!userId || !companyId) return;
+    
+    try {
+      setSyncingEvents(true);
+      await syncAllCalendarEvents(userId, companyId);
+      await checkGoogleCalendarStatus();
+    } catch (error) {
+      console.error('Error syncing all events:', error);
+    } finally {
+      setSyncingEvents(false);
+    }
+  };
 
   /**
    * Determines if an event should be displayed as a continuation
@@ -318,7 +358,37 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
   return (
     <div className="p-4">
       <div className="mb-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Calendar</h1>
+        <div className="flex items-center">
+          <h1 className="text-2xl font-bold">Calendar</h1>
+          <div className="ml-4 flex items-center space-x-2">
+            <div className="flex items-center" title={googleCalendarIntegrated ? "Google Calendar is connected" : "Google Calendar is not connected"}>
+              <span className="mr-1">Google Calendar:</span>
+              {googleCalendarIntegrated ? (
+                <span className="text-green-500 text-xl">✓</span>
+              ) : (
+                <span className="text-red-500 text-xl">✗</span>
+              )}
+            </div>
+            
+            <div className="flex items-center" title={allEventsSynced ? "All events are synced" : "Not all events are synced"}>
+              <span className="mr-1">All Events Synced:</span>
+              {allEventsSynced ? (
+                <span className="text-green-500 text-xl">✓</span>
+              ) : (
+                <span className="text-red-500 text-xl">✗</span>
+              )}
+              {!allEventsSynced && (
+                <button 
+                  onClick={handleSyncAllEvents}
+                  disabled={syncingEvents}
+                  className="ml-2 px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 disabled:bg-blue-300"
+                >
+                  {syncingEvents ? "Syncing..." : "Sync All"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
         <button
           onClick={() => setActiveModal('create')}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
