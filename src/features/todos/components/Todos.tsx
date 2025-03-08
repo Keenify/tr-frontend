@@ -221,7 +221,8 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
                   todo.section_id === null
                 ).length
               );
-              const maxTodos = Math.max(...todosPerDate);
+              // Add 1 to ensure there's always at least one empty row with a noteline
+              const maxTodos = Math.max(...todosPerDate) + 1;
               
               return dates.map((date) => (
                 <DayColumn
