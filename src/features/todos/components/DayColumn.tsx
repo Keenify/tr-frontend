@@ -47,6 +47,7 @@ export const DayColumn: React.FC<DayColumnProps> = ({
   maxTodosAcrossColumns = 0 // Default to 0 if not provided
 }) => {
   const [newTodoText, setNewTodoText] = useState('');
+  const [isDragOver, setIsDragOver] = useState(false);
   const minLines = 10; // Minimum number of lines (including todos and empty lines)
   
   // Calculate empty lines based on the maximum todos across all columns or the minimum lines
@@ -90,6 +91,7 @@ export const DayColumn: React.FC<DayColumnProps> = ({
     }
     
     e.preventDefault();
+    setIsDragOver(false);
     const todoId = e.dataTransfer.getData('todoId');
     
     try {
@@ -102,12 +104,29 @@ export const DayColumn: React.FC<DayColumnProps> = ({
     }
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!isDragOver) {
+      setIsDragOver(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only set isDragOver to false if we're leaving the column (not entering a child element)
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
+  };
+
   return (
     <div 
-      className="flex-1 border-r border-gray-100 bg-white flex flex-col overflow-hidden"
+      className={`flex-1 border-r border-gray-100 bg-white flex flex-col overflow-hidden ${
+        isDragOver ? 'bg-blue-50 shadow-inner' : ''
+      }`}
       style={{ width: '14.28%', minWidth: '160px', flex: '0 0 auto' }}
       onDrop={handleDrop}
-      onDragOver={(e) => e.preventDefault()}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
     >
       {/* Header with date and arrows - sticky */}
       <div className="py-1 px-2 border-b border-gray-100 bg-white sticky top-0 z-10">

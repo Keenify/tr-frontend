@@ -67,6 +67,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
   const [isItalicActive, setIsItalicActive] = useState(false);
   const [selectionRange, setSelectionRange] = useState<{start: number, end: number} | null>(null);
   const [showHighlightMenu, setShowHighlightMenu] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Get highlight color from color_code
@@ -281,6 +282,11 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
     }
     e.dataTransfer.setData('todoId', todo.id);
     e.dataTransfer.effectAllowed = 'move';
+    setIsDragging(true);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
   };
 
   const handleUpdate = async () => {
@@ -401,7 +407,10 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
       <div
         draggable={!isViewOnly}
         onDragStart={handleDragStart}
-        className={`h-full ${!isViewOnly ? 'cursor-move' : ''} hover:bg-gray-50 group grid grid-cols-[24px_1fr] gap-2 items-center pr-1.5 ${rowHighlightClass} overflow-hidden`}
+        onDragEnd={handleDragEnd}
+        className={`h-full ${!isViewOnly ? 'cursor-move' : ''} hover:bg-gray-50 group grid grid-cols-[24px_1fr] gap-2 items-center pr-1.5 ${rowHighlightClass} overflow-hidden ${
+          isDragging ? 'opacity-50 shadow-inner bg-gray-100 border border-dashed border-gray-300' : ''
+        }`}
       >
         {/* Checkbox column - only visible on hover */}
         {!isViewOnly && (

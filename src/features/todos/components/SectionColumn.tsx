@@ -53,6 +53,7 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
   const [sectionName, setSectionName] = useState(section.name);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<{top: number, left: number} | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
   const minLines = 10; // Reduced to 10 max empty lines
   const emptyLines = Math.max(minLines - todos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row
@@ -121,6 +122,7 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
     }
     
     e.preventDefault();
+    setIsDragOver(false);
     const todoId = e.dataTransfer.getData('todoId');
     
     try {
@@ -130,6 +132,20 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
       onTodoUpdated(updatedTodo);
     } catch (error) {
       console.error('Failed to update todo section:', error);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!isDragOver) {
+      setIsDragOver(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only set isDragOver to false if we're leaving the column (not entering a child element)
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
     }
   };
 
@@ -177,8 +193,6 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
   };
 
   const toggleMenu = () => {
-    if (isViewOnly) return;
-    
     if (menuOpen) {
       setMenuOpen(false);
       setMenuPosition(null);
@@ -240,10 +254,13 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
 
   return (
     <div 
-      className="flex-1 border-r border-gray-100 bg-white flex flex-col"
-      style={{ width: '14.28%', minWidth: '160px', flex: '0 0 auto' }}
+      className={`flex-1 border-r border-gray-100 bg-white flex flex-col overflow-hidden ${
+        isDragOver ? 'bg-blue-50 shadow-inner' : ''
+      }`}
+      style={{ width: '14.28%', minWidth: '160px', flex: '0 0 auto', height: '100%' }}
       onDrop={handleDrop}
-      onDragOver={(e) => e.preventDefault()}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
     >
       {/* Header with section name */}
       <div className="py-1 px-2 border-b border-gray-100 bg-white group sticky top-0 z-10">
@@ -285,9 +302,9 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
       </div>
       
       {/* Content area with todos that can extend */}
-      <div className="flex flex-col bg-white">
+      <div className="flex flex-col overflow-hidden">
         {/* All todo items */}
-        <div>
+        <div className="overflow-hidden">
           {todos.map((todo) => (
             <div key={todo.id} className="h-[28px] relative">
               <div className="absolute bottom-0 left-[24px] right-0 border-b border-gray-100"></div>
@@ -308,7 +325,7 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
                 <div className="flex justify-center items-center h-full">
                   {/* Empty space to align with checkbox column */}
                 </div>
-                <div className="flex items-center pr-2">
+                <div className="flex items-center pr-2 overflow-hidden">
                   <input
                     type="text"
                     value={newTodoText}
@@ -321,7 +338,7 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
                     }}
                     onBlur={handleBlur}
                     placeholder="Add new todo..."
-                    className="w-full outline-none bg-transparent text-xs"
+                    className="w-full outline-none bg-transparent text-xs whitespace-nowrap overflow-hidden text-ellipsis"
                   />
                 </div>
               </div>

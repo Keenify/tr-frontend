@@ -80,15 +80,25 @@ export const SectionList: React.FC<SectionListProps> = ({
     acc[section.id] = todos.filter(todo => todo.section_id === section.id);
     return acc;
   }, {} as Record<string, TodoData[]>);
-
-  // Fixed column width to match DayColumn
-  const columnWidth = '14.28%';
-  const columnMinWidth = 160; // Same minimum width as DayColumn
   
-  // Get sections to display - sorted alphabetically
+  // All sections from the tab - sorted alphabetically
   const allSections = tab.sections
     .slice() // Create a copy to avoid mutating the original array
     .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
+  
+  // Define column width to match DayColumn
+  const columnWidth = '14.28%';
+  const columnMinWidth = 160; // Same minimum width as DayColumn
+  
+  // Focus the input when creating a new section
+  useEffect(() => {
+    if (isCreatingSection) {
+      const input = document.getElementById('new-section-input');
+      if (input) {
+        input.focus();
+      }
+    }
+  }, [isCreatingSection]);
   
   // Scroll to the newly created section when sections are updated
   useEffect(() => {
@@ -187,6 +197,7 @@ export const SectionList: React.FC<SectionListProps> = ({
                       }
                     }}
                     autoFocus
+                    id="new-section-input"
                   />
                   <div className="flex">
                     <button
