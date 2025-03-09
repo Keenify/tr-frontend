@@ -85,10 +85,6 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
         const hasItalicBefore = start >= 2 && fullText.substring(start - 2, start) === '__';
         const hasItalicAfter = end + 2 <= fullText.length && fullText.substring(end, end + 2) === '__';
         setIsItalicActive(hasItalicBefore && hasItalicAfter);
-        
-        console.log('Selection:', fullText.substring(start, end));
-        console.log('Bold markers:', hasBoldBefore, hasBoldAfter);
-        console.log('Italic markers:', hasItalicBefore, hasItalicAfter);
       } else {
         setSelectionRange(null);
       }
@@ -199,8 +195,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
       try {
         await deleteTodo(todo.id);
         onDelete(todo.id);
-      } catch (error) {
-        console.error('Failed to delete todo:', error);
+      } catch {
         setTitle(todo.title);
       }
       return;
@@ -210,8 +205,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
       try {
         const updatedTodo = await updateTodo(todo.id, { title });
         onUpdate(updatedTodo);
-      } catch (error) {
-        console.error('Failed to update todo:', error);
+      } catch {
         setTitle(todo.title);
       }
     }
@@ -225,8 +219,8 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
         is_completed: !todo.is_completed 
       });
       onUpdate(updatedTodo);
-    } catch (error) {
-      console.error('Failed to update todo completion:', error);
+    } catch {
+      // Silently handle error
     }
   };
 
@@ -236,8 +230,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
       setIsDeleting(true);
       await deleteTodo(todo.id);
       onDelete(todo.id);
-    } catch (error) {
-      console.error('Failed to delete todo:', error);
+    } catch {
       setIsDeleting(false);
     }
   };
