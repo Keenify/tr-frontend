@@ -99,38 +99,43 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
       <div
         draggable={!isViewOnly}
         onDragStart={handleDragStart}
-        className={`h-full ${!isViewOnly ? 'cursor-move' : ''} hover:bg-gray-50 group flex items-center justify-between px-1.5`}
+        className={`h-full ${!isViewOnly ? 'cursor-move' : ''} hover:bg-gray-50 group grid grid-cols-[24px_1fr] gap-2 items-center pr-1.5`}
       >
-        {isEditing && !isViewOnly ? (
-          <input
-            title="Todo Title"
-            placeholder="Enter Todo Title"
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={handleUpdate}
-            onKeyPress={(e) => e.key === 'Enter' && handleUpdate()}
-            className="w-full outline-none border-b border-gray-100 py-0.5 text-xs"
-            autoFocus
-          />
-        ) : (
-          <>
-            <div className="flex items-center space-x-1.5 flex-grow min-w-0">
-              {!isViewOnly && (
-                <button
-                  onClick={handleToggleComplete}
-                  className={`opacity-0 group-hover:opacity-100 transition-opacity todo-icon ${
-                    todo.is_completed ? 'text-green-500' : 'text-gray-400 hover:text-gray-600'
-                  }`}
-                  title={todo.is_completed ? "Mark as incomplete" : "Mark as complete"}
-                >
-                  {todo.is_completed ? (
-                    <FaRegCheckSquare size={12} />
-                  ) : (
-                    <FaRegSquare size={12} />
-                  )}
-                </button>
+        {/* Checkbox column - always visible */}
+        {!isViewOnly && (
+          <div className="flex justify-center items-center h-full">
+            <button
+              onClick={handleToggleComplete}
+              className={`transition-opacity ${
+                todo.is_completed ? 'text-green-500' : 'text-gray-400 hover:text-gray-600'
+              }`}
+              title={todo.is_completed ? "Mark as incomplete" : "Mark as complete"}
+            >
+              {todo.is_completed ? (
+                <FaRegCheckSquare size={14} />
+              ) : (
+                <FaRegSquare size={14} />
               )}
+            </button>
+          </div>
+        )}
+
+        {/* Todo content column */}
+        <div className="flex items-center justify-between w-full">
+          {isEditing && !isViewOnly ? (
+            <input
+              title="Todo Title"
+              placeholder="Enter Todo Title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onBlur={handleUpdate}
+              onKeyPress={(e) => e.key === 'Enter' && handleUpdate()}
+              className="w-full outline-none border-b border-gray-100 py-0.5 text-xs"
+              autoFocus
+            />
+          ) : (
+            <>
               <div
                 onClick={() => !isViewOnly && setIsEditing(true)}
                 className={`flex items-center flex-grow min-w-0 overflow-hidden ${!isViewOnly ? 'cursor-pointer' : ''}`}
@@ -139,31 +144,31 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
                   {todo.title}
                 </span>
               </div>
-            </div>
-            {!isViewOnly && (
-              <div className="flex items-center">
-                <button
-                  onClick={handleOpenDescriptionDrawer}
-                  className={`opacity-0 group-hover:opacity-100 transition-opacity mr-2 todo-icon ${
-                    todo.description ? 'text-blue-500' : 'text-gray-400 hover:text-blue-500'
-                  }`}
-                  title="View/edit description"
-                >
-                  <FaFileAlt size={12} />
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className={`opacity-0 group-hover:opacity-100 transition-opacity todo-icon ${
-                    isDeleting ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
-                  }`}
-                  title="Delete todo"
-                >
-                  <FaTrash size={12} />
-                </button>
-              </div>
-            )}
-          </>
-        )}
+              {!isViewOnly && (
+                <div className="flex items-center">
+                  <button
+                    onClick={handleOpenDescriptionDrawer}
+                    className={`opacity-0 group-hover:opacity-100 transition-opacity mr-2 todo-icon ${
+                      todo.description ? 'text-blue-500' : 'text-gray-400 hover:text-blue-500'
+                    }`}
+                    title="View/edit description"
+                  >
+                    <FaFileAlt size={12} />
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className={`opacity-0 group-hover:opacity-100 transition-opacity todo-icon ${
+                      isDeleting ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
+                    }`}
+                    title="Delete todo"
+                  >
+                    <FaTrash size={12} />
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Description Drawer */}

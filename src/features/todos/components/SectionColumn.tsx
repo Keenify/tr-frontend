@@ -302,21 +302,26 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
           {/* Add new todo input - positioned right after the last todo */}
           {!isViewOnly && (
             <div className="h-[28px] border-b border-gray-100">
-              <div className="h-full flex items-center px-2">
-                <input
-                  type="text"
-                  value={newTodoText}
-                  onChange={(e) => setNewTodoText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      createNewTodo();
-                    }
-                  }}
-                  onBlur={handleBlur}
-                  placeholder="Add new todo..."
-                  className="w-full outline-none bg-transparent text-xs"
-                />
+              <div className="h-full grid grid-cols-[24px_1fr] gap-2 items-center">
+                <div className="flex justify-center items-center h-full">
+                  {/* Empty space to align with checkbox column */}
+                </div>
+                <div className="flex items-center pr-2">
+                  <input
+                    type="text"
+                    value={newTodoText}
+                    onChange={(e) => setNewTodoText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        createNewTodo();
+                      }
+                    }}
+                    onBlur={handleBlur}
+                    placeholder="Add new todo..."
+                    className="w-full outline-none bg-transparent text-xs"
+                  />
+                </div>
               </div>
             </div>
           )}
