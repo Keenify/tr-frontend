@@ -310,6 +310,7 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
                     <li><code>*text*</code> → <strong>bold text</strong></li>
                     <li><code>__text__</code> → <em>italic text</em></li>
                   </ul>
+                  <p className="mt-1 text-gray-500">Example: <code>__important__ *task*</code> → <em>important</em> <strong>task</strong></p>
                 </div>
               </div>
             </div>

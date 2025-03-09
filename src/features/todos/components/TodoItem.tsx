@@ -4,8 +4,6 @@ import { updateTodo, deleteTodo } from '../services/useTodos';
 import { FaTrash, FaFileAlt } from 'react-icons/fa';
 import { FaRegSquare, FaRegCheckSquare } from 'react-icons/fa';
 import TodoDescriptionDrawer from './TodoDescriptionDrawer';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 
 interface TodoItemProps {
   todo: TodoData;
@@ -35,13 +33,21 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDescriptionDrawerOpen, setIsDescriptionDrawerOpen] = useState(false);
 
-  // Custom renderer for Markdown to handle specific formatting
-  const customRenderers = {
-    // Override default styling to match our app's styling
-    strong: ({ children }: React.PropsWithChildren<unknown>) => <span className="font-bold">{children}</span>,
-    em: ({ children }: React.PropsWithChildren<unknown>) => <span className="italic">{children}</span>,
-    // Prevent paragraphs from adding margins
-    p: ({ children }: React.PropsWithChildren<unknown>) => <span>{children}</span>
+  // Direct rendering of markdown without using ReactMarkdown
+  const renderMarkdown = (text: string) => {
+    // Replace __text__ with italic spans
+    let result = text.replace(/__([^_]+)__/g, '<span class="italic">$1</span>');
+    
+    // Replace *text* with bold spans
+    result = result.replace(/\*([^*]+)\*/g, '<span class="font-bold">$1</span>');
+    
+    // Debug log to verify the processing
+    if (text.includes('__') || text.includes('*')) {
+      console.log('Original:', text);
+      console.log('Processed:', result);
+    }
+    
+    return result;
   };
 
   const handleDragStart = (e: React.DragEvent) => {
@@ -106,15 +112,6 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
     setIsDescriptionDrawerOpen(true);
   };
 
-  // Process the title to convert custom markdown syntax
-  const processTitle = (text: string) => {
-    // Convert __text__ to *text* for italics in markdown
-    let processed = text.replace(/__(.*?)__/g, '_$1_');
-    // Convert *text* to **text** for bold in markdown
-    processed = processed.replace(/\*(.*?)\*/g, '**$1**');
-    return processed;
-  };
-
   return (
     <>
       <div
@@ -161,14 +158,11 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
                 onClick={() => !isViewOnly && setIsEditing(true)}
                 className={`flex items-center flex-grow min-w-0 overflow-hidden ${!isViewOnly ? 'cursor-pointer' : ''}`}
               >
-                <span className={`truncate text-xs ${todo.is_completed ? 'line-through text-gray-400' : ''}`}>
-                  <ReactMarkdown 
-                    remarkPlugins={[remarkGfm]} 
-                    components={customRenderers}
-                  >
-                    {processTitle(todo.title)}
-                  </ReactMarkdown>
-                </span>
+                {/* Use direct HTML rendering for markdown */}
+                <span 
+                  className={`text-xs ${todo.is_completed ? 'line-through text-gray-400' : ''}`}
+                  dangerouslySetInnerHTML={{ __html: renderMarkdown(todo.title) }}
+                />
               </div>
               {!isViewOnly && (
                 <div className="flex items-center">
