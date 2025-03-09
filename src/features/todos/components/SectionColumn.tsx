@@ -55,8 +55,8 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
   const [menuPosition, setMenuPosition] = useState<{top: number, left: number} | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
-  const minLines = 10; // Reduced to 10 max empty lines
-  const emptyLines = Math.max(minLines - todos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row
+  const minLines = 10; // Minimum number of lines (including todos and empty lines)
+  const emptyLines = Math.max(minLines - todos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row when not in view-only mode
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -307,7 +307,7 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
         <div className="overflow-hidden">
           {todos.map((todo) => (
             <div key={todo.id} className="h-[28px] relative">
-              <div className="absolute bottom-0 left-[24px] right-0 border-b border-gray-100"></div>
+              <div className={`absolute bottom-0 ${isViewOnly ? 'left-0' : 'left-[24px]'} right-0 border-b border-gray-100`}></div>
               <TodoItem 
                 todo={todo} 
                 onUpdate={onTodoUpdated}
@@ -351,7 +351,7 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
               key={`empty-${index}`} 
               className="h-[28px] relative"
             >
-              <div className="absolute bottom-0 left-[24px] right-0 border-b border-gray-100"></div>
+              <div className={`absolute bottom-0 ${isViewOnly ? 'left-0' : 'left-[24px]'} right-0 border-b border-gray-100`}></div>
             </div>
           ))}
         </div>

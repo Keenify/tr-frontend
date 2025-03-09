@@ -52,7 +52,7 @@ export const DayColumn: React.FC<DayColumnProps> = ({
   
   // Calculate empty lines based on the maximum todos across all columns or the minimum lines
   const totalLines = Math.max(maxTodosAcrossColumns, minLines);
-  const emptyLines = Math.max(totalLines - todos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row
+  const emptyLines = Math.max(totalLines - todos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row when not in view-only mode
 
   const createNewTodo = async () => {
     if (newTodoText.trim()) {
@@ -146,7 +146,7 @@ export const DayColumn: React.FC<DayColumnProps> = ({
         <div className="overflow-hidden">
           {todos.map((todo) => (
             <div key={todo.id} className="h-[28px] relative">
-              <div className="absolute bottom-0 left-[24px] right-0 border-b border-gray-100"></div>
+              <div className={`absolute bottom-0 ${isViewOnly ? 'left-0' : 'left-[24px]'} right-0 border-b border-gray-100`}></div>
               <TodoItem 
                 todo={todo} 
                 onUpdate={onTodoUpdated}
@@ -185,7 +185,7 @@ export const DayColumn: React.FC<DayColumnProps> = ({
               key={`empty-${index}`} 
               className="h-[28px] relative"
             >
-              <div className="absolute bottom-0 left-[24px] right-0 border-b border-gray-100"></div>
+              <div className={`absolute bottom-0 ${isViewOnly ? 'left-0' : 'left-[24px]'} right-0 border-b border-gray-100`}></div>
             </div>
           ))}
         </div>

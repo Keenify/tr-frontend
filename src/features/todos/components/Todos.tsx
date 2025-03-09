@@ -396,7 +396,7 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
                   onTodoCreated={handleTodoCreated}
                   onTodoUpdated={handleTodoUpdated}
                   onTodoDeleted={handleTodoDeleted}
-                  isViewOnly={selectedEmployeeId !== null}
+                  isViewOnly={selectedEmployeeId !== null && selectedEmployeeId !== userInfo?.id}
                   maxTodosAcrossColumns={maxTodos}
                 />
               ));
@@ -407,16 +407,16 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
         {/* Invisible spacer between sections */}
         <div className="h-4"></div>
 
-        {/* Section Todos - Lower Half */}
-        <div className="">
-          <TodoSection 
+        {/* Section todos */}
+        <div className="flex-1 overflow-hidden">
+          <TodoSection
             todos={todos.filter(todo => todo.section_id !== null)} // Only show todos with a section
             employeeId={selectedEmployeeId || userInfo?.id || ''}
             companyId={companyInfo?.id || ''}
             onTodoCreated={handleTodoCreated}
             onTodoUpdated={handleTodoUpdated}
             onTodoDeleted={handleTodoDeleted}
-            isViewOnly={selectedEmployeeId !== null}
+            isViewOnly={selectedEmployeeId !== null && selectedEmployeeId !== userInfo?.id}
           />
         </div>
       </div>

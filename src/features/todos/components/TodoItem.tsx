@@ -408,11 +408,11 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
         draggable={!isViewOnly}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
-        className={`h-full ${!isViewOnly ? 'cursor-move' : ''} hover:bg-gray-50 group grid grid-cols-[24px_1fr] gap-2 items-center pr-1.5 ${rowHighlightClass} overflow-hidden ${
+        className={`h-full ${!isViewOnly ? 'cursor-move' : ''} hover:bg-gray-50 group ${isViewOnly ? 'grid grid-cols-[1fr]' : 'grid grid-cols-[24px_1fr]'} gap-2 items-center pr-1.5 ${rowHighlightClass} overflow-hidden ${
           isDragging ? 'opacity-50 shadow-inner bg-gray-100 border border-dashed border-gray-300' : ''
         }`}
       >
-        {/* Checkbox column - only visible on hover */}
+        {/* Checkbox column - only visible when not in view-only mode */}
         {!isViewOnly && (
           <div className="flex justify-center items-center h-full">
             <button
@@ -461,6 +461,11 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
                 onClick={() => !isViewOnly && setIsEditing(true)}
                 className={`flex items-center flex-grow min-w-0 overflow-hidden max-w-full ${!isViewOnly ? 'cursor-pointer' : ''}`}
               >
+                {isViewOnly && todo.is_completed && (
+                  <span className="mr-2 text-green-500">
+                    <FaRegCheckSquare size={12} />
+                  </span>
+                )}
                 <span 
                   className={`text-xs whitespace-nowrap overflow-hidden text-ellipsis w-full block ${todo.is_completed ? 'line-through text-gray-400' : ''}`}
                   dangerouslySetInnerHTML={{ __html: renderMarkdown(todo.title) }}
