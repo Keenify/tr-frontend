@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { TodoData } from '../types/todo';
+import { TodoData, UpdateTodoPayload } from '../types/todo';
 import { updateTodo, deleteTodo } from '../services/useTodos';
 import { FaTrash, FaFileAlt, FaBold, FaItalic, FaHighlighter } from 'react-icons/fa';
 import { FaRegSquare, FaRegCheckSquare } from 'react-icons/fa';
@@ -22,6 +22,22 @@ const HIGHLIGHT_COLORS = {
 };
 
 type HighlightColor = keyof typeof HIGHLIGHT_COLORS;
+
+// Color code to highlight color mapping
+const COLOR_CODE_TO_HIGHLIGHT: Record<string, HighlightColor> = {
+  '#1E88E5': 'blue',
+  '#E53935': 'red',
+  '#43A047': 'green',
+  '#FDD835': 'yellow',
+};
+
+// Highlight color to color code mapping
+const HIGHLIGHT_TO_COLOR_CODE: Record<HighlightColor, string> = {
+  blue: '#1E88E5',
+  red: '#E53935',
+  green: '#43A047',
+  yellow: '#FDD835',
+};
 
 /**
  * Individual todo item component that can be dragged between days
@@ -51,27 +67,27 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
   const [isItalicActive, setIsItalicActive] = useState(false);
   const [selectionRange, setSelectionRange] = useState<{start: number, end: number} | null>(null);
   const [showHighlightMenu, setShowHighlightMenu] = useState(false);
-  const [activeHighlightColor, setActiveHighlightColor] = useState<HighlightColor | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Extract highlight color from title (for row highlighting)
-  const getHighlightColor = useCallback((text: string): HighlightColor | null => {
-    const match = text.match(/\{\{(blue|red|green|yellow):[^}]+\}\}/);
-    return match ? match[1] as HighlightColor : null;
+  // Get highlight color from color_code
+  const getHighlightColorFromCode = useCallback((colorCode: string): HighlightColor | null => {
+    return COLOR_CODE_TO_HIGHLIGHT[colorCode] || null;
   }, []);
+  
+  const [activeHighlightColor, setActiveHighlightColor] = useState<HighlightColor | null>(
+    getHighlightColorFromCode(todo.color_code)
+  );
 
-  // Get the clean title without highlight markers
-  const getCleanTitle = useCallback((text: string): string => {
-    return text.replace(/\{\{(blue|red|green|yellow):([^}]+)\}\}/g, '$2');
-  }, []);
+  // Update title and activeHighlightColor when todo changes
+  useEffect(() => {
+    setTitle(todo.title);
+    setActiveHighlightColor(getHighlightColorFromCode(todo.color_code));
+  }, [todo, getHighlightColorFromCode]);
 
   // Direct rendering of markdown without using ReactMarkdown
   const renderMarkdown = (text: string) => {
-    // First get a clean version without highlight markers
-    const cleanText = getCleanTitle(text);
-    
     // Replace __text__ with italic spans
-    let result = cleanText.replace(/__([^_]+)__/g, '<span class="italic">$1</span>');
+    let result = text.replace(/__([^_]+)__/g, '<span class="italic">$1</span>');
     
     // Replace **text** with bold spans (changed from * to **)
     result = result.replace(/\*\*([^*]+)\*\*/g, '<span class="font-bold">$1</span>');
@@ -114,13 +130,13 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
         setIsItalicActive(hasItalicBefore && hasItalicAfter);
         
         // Check for highlight formatting - we only need to check if the entire todo has a highlight
-        const highlightColor = getHighlightColor(fullText);
+        const highlightColor = getHighlightColorFromCode(todo.color_code);
         setActiveHighlightColor(highlightColor);
       } else {
         setSelectionRange(null);
       }
     }
-  }, [isEditing, title, getHighlightColor]);
+  }, [isEditing, title, getHighlightColorFromCode, todo.color_code]);
 
   // Apply bold formatting
   const toggleBold = () => {
@@ -216,29 +232,39 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
   const applyHighlight = (color: HighlightColor) => {
     if (!inputRef.current) return;
     
-    // Get clean title without any highlight markers
-    const cleanTitle = getCleanTitle(title);
-    
-    let newTitle;
+    let newHighlightColor: HighlightColor | null = null;
+    let newColorCode: string = '#7924C2'; // Default purple color
     
     if (activeHighlightColor === color) {
       // Remove highlight formatting
-      newTitle = cleanTitle;
-      setActiveHighlightColor(null);
+      newHighlightColor = null;
       
       // Close the highlight menu after removing highlight
       setShowHighlightMenu(false);
     } else {
       // Apply new highlight formatting
-      newTitle = `{{${color}:${cleanTitle}}}`;
-      setActiveHighlightColor(color);
+      newColorCode = HIGHLIGHT_TO_COLOR_CODE[color];
+      newHighlightColor = color;
       
       // Keep the highlight menu open when switching colors
       // This allows users to see the color change immediately and try different colors
     }
     
-    // Update the title with the new highlight
-    setTitle(newTitle);
+    // Update state
+    setActiveHighlightColor(newHighlightColor);
+    
+    // Immediately update the todo in the API
+    (async () => {
+      try {
+        const updatedPayload: UpdateTodoPayload = { 
+          color_code: newHighlightColor ? HIGHLIGHT_TO_COLOR_CODE[newHighlightColor] : newColorCode 
+        };
+        const updatedTodo = await updateTodo(todo.id, updatedPayload);
+        onUpdate(updatedTodo);
+      } catch {
+        setActiveHighlightColor(getHighlightColorFromCode(todo.color_code));
+      }
+    })();
     
     // Force a re-render to update the highlight immediately
     setTimeout(() => {
@@ -268,14 +294,25 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
       return;
     }
 
-    if (title !== todo.title) {
-      try {
-        const updatedTodo = await updateTodo(todo.id, { title });
-        onUpdate(updatedTodo);
-      } catch {
-        setTitle(todo.title);
+    try {
+      const updatedPayload: UpdateTodoPayload = { title };
+      
+      // Add color_code to the update payload if a highlight color is active
+      if (activeHighlightColor) {
+        const newColorCode = HIGHLIGHT_TO_COLOR_CODE[activeHighlightColor];
+        updatedPayload.color_code = newColorCode;
+      } else if (activeHighlightColor === null && todo.color_code in COLOR_CODE_TO_HIGHLIGHT) {
+        // If highlight was removed, update color_code to default
+        updatedPayload.color_code = '#7924C2'; // Default purple color
       }
+      
+      const updatedTodo = await updateTodo(todo.id, updatedPayload);
+      onUpdate(updatedTodo);
+    } catch {
+      setTitle(todo.title);
+      setActiveHighlightColor(getHighlightColorFromCode(todo.color_code));
     }
+    
     setIsEditing(false);
   };
 
@@ -356,7 +393,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
   }, [showFormatMenu, showHighlightMenu, isEditing, handleSelectionChange]);
 
   // Get the highlight color for the row
-  const rowHighlightColor = isEditing ? getHighlightColor(title) : getHighlightColor(todo.title);
+  const rowHighlightColor = getHighlightColorFromCode(todo.color_code);
   const rowHighlightClass = rowHighlightColor ? HIGHLIGHT_COLORS[rowHighlightColor] : '';
 
   return (
@@ -394,14 +431,9 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
                 title="Todo Title"
                 placeholder="Enter Todo Title"
                 type="text"
-                value={getCleanTitle(title)}
+                value={title}
                 onChange={(e) => {
-                  // Preserve highlight when editing
-                  if (activeHighlightColor) {
-                    setTitle(`{{${activeHighlightColor}:${e.target.value}}}`);
-                  } else {
-                    setTitle(e.target.value);
-                  }
+                  setTitle(e.target.value);
                 }}
                 onSelect={handleSelectionChange}
                 onMouseUp={handleSelectionChange}
@@ -409,7 +441,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
                 onBlur={handleUpdate}
                 onKeyPress={(e) => e.key === 'Enter' && handleUpdate()}
                 className={`w-full outline-none border-b border-gray-100 py-0.5 text-xs whitespace-nowrap overflow-hidden text-ellipsis max-w-full ${
-                  isEditing ? (activeHighlightColor ? HIGHLIGHT_COLORS[activeHighlightColor] : '') : rowHighlightClass
+                  activeHighlightColor ? HIGHLIGHT_COLORS[activeHighlightColor] : ''
                 }`}
                 autoFocus
               />
@@ -423,7 +455,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
                 <span 
                   className={`text-xs whitespace-nowrap overflow-hidden text-ellipsis w-full block ${todo.is_completed ? 'line-through text-gray-400' : ''}`}
                   dangerouslySetInnerHTML={{ __html: renderMarkdown(todo.title) }}
-                  title={getCleanTitle(todo.title)}
+                  title={title}
                 />
               </div>
               {!isViewOnly && (
