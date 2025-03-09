@@ -4,6 +4,8 @@ import { updateTodo, deleteTodo } from '../services/useTodos';
 import { FaTrash, FaFileAlt } from 'react-icons/fa';
 import { FaRegSquare, FaRegCheckSquare } from 'react-icons/fa';
 import TodoDescriptionDrawer from './TodoDescriptionDrawer';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface TodoItemProps {
   todo: TodoData;
@@ -20,6 +22,7 @@ interface TodoItemProps {
  * - Enables drag and drop functionality for moving todos between dates
  * - Updates todo data when changes are made
  * - Provides access to the description drawer
+ * - Supports Markdown formatting in todo titles
  * 
  * @component
  * @param {TodoData} todo - The todo item data
@@ -31,6 +34,15 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
   const [title, setTitle] = useState(todo.title);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDescriptionDrawerOpen, setIsDescriptionDrawerOpen] = useState(false);
+
+  // Custom renderer for Markdown to handle specific formatting
+  const customRenderers = {
+    // Override default styling to match our app's styling
+    strong: ({ children }: React.PropsWithChildren<unknown>) => <span className="font-bold">{children}</span>,
+    em: ({ children }: React.PropsWithChildren<unknown>) => <span className="italic">{children}</span>,
+    // Prevent paragraphs from adding margins
+    p: ({ children }: React.PropsWithChildren<unknown>) => <span>{children}</span>
+  };
 
   const handleDragStart = (e: React.DragEvent) => {
     if (isViewOnly) {
@@ -94,6 +106,15 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
     setIsDescriptionDrawerOpen(true);
   };
 
+  // Process the title to convert custom markdown syntax
+  const processTitle = (text: string) => {
+    // Convert __text__ to *text* for italics in markdown
+    let processed = text.replace(/__(.*?)__/g, '_$1_');
+    // Convert *text* to **text** for bold in markdown
+    processed = processed.replace(/\*(.*?)\*/g, '**$1**');
+    return processed;
+  };
+
   return (
     <>
       <div
@@ -141,7 +162,12 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
                 className={`flex items-center flex-grow min-w-0 overflow-hidden ${!isViewOnly ? 'cursor-pointer' : ''}`}
               >
                 <span className={`truncate text-xs ${todo.is_completed ? 'line-through text-gray-400' : ''}`}>
-                  {todo.title}
+                  <ReactMarkdown 
+                    remarkPlugins={[remarkGfm]} 
+                    components={customRenderers}
+                  >
+                    {processTitle(todo.title)}
+                  </ReactMarkdown>
                 </span>
               </div>
               {!isViewOnly && (
