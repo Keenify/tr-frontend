@@ -36,6 +36,9 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
   const [isDescriptionDrawerOpen, setIsDescriptionDrawerOpen] = useState(false);
   const [showFormatMenu, setShowFormatMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const [isBoldActive, setIsBoldActive] = useState(false);
+  const [isItalicActive, setIsItalicActive] = useState(false);
+  const [selectionRange, setSelectionRange] = useState<{start: number, end: number} | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Direct rendering of markdown without using ReactMarkdown
@@ -46,13 +49,140 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
     // Replace **text** with bold spans (changed from * to **)
     result = result.replace(/\*\*([^*]+)\*\*/g, '<span class="font-bold">$1</span>');
     
-    // Debug log to verify the processing
-    if (text.includes('__') || text.includes('**')) {
-      console.log('Original:', text);
-      console.log('Processed:', result);
+    return result;
+  };
+
+  // Handle text selection in the input field
+  const handleSelectionChange = useCallback(() => {
+    if (inputRef.current && isEditing) {
+      const start = inputRef.current.selectionStart || 0;
+      const end = inputRef.current.selectionEnd || 0;
+      
+      if (start !== end) {
+        // Text is selected
+        setSelectionRange({start, end});
+        
+        // Get the absolute position of the input field
+        const inputRect = inputRef.current.getBoundingClientRect();
+        
+        // Position the menu directly below the input field, aligned with the start of the todo
+        setMenuPosition({
+          top: inputRect.bottom + window.scrollY + 2, // Just below the input
+          left: inputRect.left + window.scrollX + 2, // Aligned with the left edge of the input (plus small offset)
+        });
+        setShowFormatMenu(true);
+        
+        // Check if the selected text is surrounded by bold or italic markers
+        // This checks the characters before and after the selection
+        const fullText = title;
+        
+        // Check for bold formatting
+        const hasBoldBefore = start >= 2 && fullText.substring(start - 2, start) === '**';
+        const hasBoldAfter = end + 2 <= fullText.length && fullText.substring(end, end + 2) === '**';
+        setIsBoldActive(hasBoldBefore && hasBoldAfter);
+        
+        // Check for italic formatting
+        const hasItalicBefore = start >= 2 && fullText.substring(start - 2, start) === '__';
+        const hasItalicAfter = end + 2 <= fullText.length && fullText.substring(end, end + 2) === '__';
+        setIsItalicActive(hasItalicBefore && hasItalicAfter);
+        
+        console.log('Selection:', fullText.substring(start, end));
+        console.log('Bold markers:', hasBoldBefore, hasBoldAfter);
+        console.log('Italic markers:', hasItalicBefore, hasItalicAfter);
+      } else {
+        setSelectionRange(null);
+      }
+    }
+  }, [isEditing, title]);
+
+  // Apply bold formatting
+  const toggleBold = () => {
+    if (!inputRef.current || !selectionRange) return;
+    
+    const {start, end} = selectionRange;
+    const selectedText = title.substring(start, end);
+    
+    let newTitle;
+    let newStart = start;
+    let newEnd = end;
+    
+    if (isBoldActive) {
+      // Remove bold formatting - remove the ** markers around the selection
+      newTitle = 
+        title.substring(0, start - 2) + 
+        selectedText + 
+        title.substring(end + 2);
+      
+      newStart = start - 2;
+      newEnd = end - 2;
+      setIsBoldActive(false);
+    } else {
+      // Add bold formatting
+      newTitle = 
+        title.substring(0, start) + 
+        `**${selectedText}**` + 
+        title.substring(end);
+      
+      newStart = start + 2;
+      newEnd = end + 2;
+      setIsBoldActive(true);
     }
     
-    return result;
+    setTitle(newTitle);
+    
+    // Update selection
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.setSelectionRange(newStart, newEnd);
+        setSelectionRange({start: newStart, end: newEnd});
+      }
+    }, 10);
+  };
+
+  // Apply italic formatting
+  const toggleItalic = () => {
+    if (!inputRef.current || !selectionRange) return;
+    
+    const {start, end} = selectionRange;
+    const selectedText = title.substring(start, end);
+    
+    let newTitle;
+    let newStart = start;
+    let newEnd = end;
+    
+    if (isItalicActive) {
+      // Remove italic formatting - remove the __ markers around the selection
+      newTitle = 
+        title.substring(0, start - 2) + 
+        selectedText + 
+        title.substring(end + 2);
+      
+      newStart = start - 2;
+      newEnd = end - 2;
+      setIsItalicActive(false);
+    } else {
+      // Add italic formatting
+      newTitle = 
+        title.substring(0, start) + 
+        `__${selectedText}__` + 
+        title.substring(end);
+      
+      newStart = start + 2;
+      newEnd = end + 2;
+      setIsItalicActive(true);
+    }
+    
+    setTitle(newTitle);
+    
+    // Update selection
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.setSelectionRange(newStart, newEnd);
+        setSelectionRange({start: newStart, end: newEnd});
+      }
+    }, 10);
   };
 
   const handleDragStart = (e: React.DragEvent) => {
@@ -117,39 +247,6 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
     setIsDescriptionDrawerOpen(true);
   };
 
-  // Handle text selection in the input field
-  const handleSelectionChange = useCallback(() => {
-    if (inputRef.current && isEditing) {
-      const start = inputRef.current.selectionStart || 0;
-      const end = inputRef.current.selectionEnd || 0;
-      
-      if (start !== end) {
-        // Text is selected
-        // Get the absolute position of the input field
-        const inputRect = inputRef.current.getBoundingClientRect();
-        
-        // Position the menu directly below the input field, aligned with the start of the todo
-        setMenuPosition({
-          top: inputRect.bottom + window.scrollY + 2, // Just below the input
-          left: inputRect.left + window.scrollX + 2, // Aligned with the left edge of the input (plus small offset)
-        });
-        setShowFormatMenu(true);
-      }
-      // We don't hide the menu when no text is selected anymore
-      // This allows the menu to stay visible
-    }
-  }, [isEditing]);
-
-  // Check if text has formatting
-  const hasFormatting = (text: string, type: 'bold' | 'italic'): boolean => {
-    const selectedText = text.trim();
-    if (type === 'bold') {
-      return selectedText.startsWith('**') && selectedText.endsWith('**');
-    } else {
-      return selectedText.startsWith('__') && selectedText.endsWith('__');
-    }
-  };
-
   // Preserve selection when menu is clicked
   const preserveSelection = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -159,83 +256,6 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
       inputRef.current.focus();
     }
   }, []);
-
-  // Toggle formatting (add or remove)
-  const toggleFormatting = (type: 'bold' | 'italic') => {
-    if (!inputRef.current) return;
-    
-    // Get the current selection directly from the input element
-    const start = inputRef.current.selectionStart || 0;
-    const end = inputRef.current.selectionEnd || 0;
-    
-    if (start === end) {
-      console.log('No text selected');
-      return;
-    }
-    
-    // Get the selected text
-    const selectedText = title.substring(start, end);
-    console.log('Selected text:', selectedText);
-    
-    // Check if the text already has the formatting
-    const prefix = type === 'bold' ? '**' : '__';
-    const suffix = type === 'bold' ? '**' : '__';
-    
-    let newTitle = '';
-    let newSelectionStart = start;
-    let newSelectionEnd = end;
-    
-    if (hasFormatting(selectedText, type)) {
-      // Remove formatting
-      const trimmedText = selectedText.trim();
-      const unformattedText = trimmedText.substring(prefix.length, trimmedText.length - suffix.length);
-      
-      newTitle = 
-        title.substring(0, start) + 
-        unformattedText + 
-        title.substring(end);
-      
-      // Adjust selection to maintain the same text selected (without formatting)
-      newSelectionStart = start;
-      newSelectionEnd = start + unformattedText.length;
-    } else {
-      // Add formatting
-      newTitle = 
-        title.substring(0, start) + 
-        prefix + selectedText + suffix + 
-        title.substring(end);
-      
-      // Adjust selection to maintain the same text selected (without the formatting markers)
-      newSelectionStart = start + prefix.length;
-      newSelectionEnd = end + prefix.length;
-    }
-    
-    console.log('New title:', newTitle);
-    
-    // Update the title
-    setTitle(newTitle);
-    
-    // Set focus back to input and maintain the selection
-    setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-        inputRef.current.setSelectionRange(newSelectionStart, newSelectionEnd);
-      }
-    }, 10);
-  };
-
-  // Check if current selection has formatting
-  const isSelectionFormatted = (type: 'bold' | 'italic'): boolean => {
-    if (!inputRef.current) return false;
-    
-    const start = inputRef.current.selectionStart || 0;
-    const end = inputRef.current.selectionEnd || 0;
-    
-    if (start === end) return false;
-    
-    const selectedText = title.substring(start, end);
-    return hasFormatting(selectedText, type);
-  };
 
   // Close the format menu when clicking outside
   useEffect(() => {
@@ -369,14 +389,12 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
           
           <button 
             className={`p-1.5 hover:bg-gray-100 rounded mx-0.5 ${
-              isSelectionFormatted('bold') 
-                ? 'bg-gray-200 text-black' 
-                : 'text-gray-700 hover:text-black'
+              isBoldActive ? 'bg-gray-200 text-black' : 'text-gray-700 hover:text-black'
             }`}
             onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              toggleFormatting('bold');
+              toggleBold();
             }}
             title="Bold"
             type="button"
@@ -385,14 +403,12 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
           </button>
           <button 
             className={`p-1.5 hover:bg-gray-100 rounded mx-0.5 ${
-              isSelectionFormatted('italic') 
-                ? 'bg-gray-200 text-black' 
-                : 'text-gray-700 hover:text-black'
+              isItalicActive ? 'bg-gray-200 text-black' : 'text-gray-700 hover:text-black'
             }`}
             onMouseDown={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              toggleFormatting('italic');
+              toggleItalic();
             }}
             title="Italic"
             type="button"
