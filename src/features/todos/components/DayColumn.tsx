@@ -104,7 +104,7 @@ export const DayColumn: React.FC<DayColumnProps> = ({
 
   return (
     <div 
-      className="flex-1 border-r border-gray-100 bg-white flex flex-col"
+      className="flex-1 border-r border-gray-100 bg-white flex flex-col overflow-hidden"
       style={{ width: '14.28%', minWidth: '160px', flex: '0 0 auto' }}
       onDrop={handleDrop}
       onDragOver={(e) => e.preventDefault()}
@@ -122,9 +122,9 @@ export const DayColumn: React.FC<DayColumnProps> = ({
       </div>
       
       {/* Content area with todos that can extend */}
-      <div className="flex flex-col">
+      <div className="flex flex-col overflow-hidden">
         {/* All todo items */}
-        <div>
+        <div className="overflow-hidden">
           {todos.map((todo) => (
             <div key={todo.id} className="h-[28px] relative">
               <div className="absolute bottom-0 left-[24px] right-0 border-b border-gray-100"></div>
@@ -145,7 +145,7 @@ export const DayColumn: React.FC<DayColumnProps> = ({
                 <div className="flex justify-center items-center h-full">
                   {/* Empty space to align with checkbox column */}
                 </div>
-                <div className="flex items-center pr-2">
+                <div className="flex items-center pr-2 overflow-hidden">
                   <input
                     type="text"
                     value={newTodoText}
@@ -153,7 +153,7 @@ export const DayColumn: React.FC<DayColumnProps> = ({
                     onKeyPress={handleKeyPress}
                     onBlur={handleBlur}
                     placeholder="Add new todo..."
-                    className="w-full outline-none bg-transparent text-xs"
+                    className="w-full outline-none bg-transparent text-xs whitespace-nowrap overflow-hidden text-ellipsis"
                   />
                 </div>
               </div>

@@ -364,7 +364,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
       <div
         draggable={!isViewOnly}
         onDragStart={handleDragStart}
-        className={`h-full ${!isViewOnly ? 'cursor-move' : ''} hover:bg-gray-50 group grid grid-cols-[24px_1fr] gap-2 items-center pr-1.5 ${rowHighlightClass}`}
+        className={`h-full ${!isViewOnly ? 'cursor-move' : ''} hover:bg-gray-50 group grid grid-cols-[24px_1fr] gap-2 items-center pr-1.5 ${rowHighlightClass} overflow-hidden`}
       >
         {/* Checkbox column - only visible on hover */}
         {!isViewOnly && (
@@ -386,7 +386,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
         )}
 
         {/* Todo content column */}
-        <div className="flex items-center justify-between w-full relative">
+        <div className="flex items-center justify-between w-full relative overflow-hidden">
           {isEditing && !isViewOnly ? (
             <div className="w-full relative">
               <input
@@ -408,7 +408,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
                 onKeyUp={handleSelectionChange}
                 onBlur={handleUpdate}
                 onKeyPress={(e) => e.key === 'Enter' && handleUpdate()}
-                className={`w-full outline-none border-b border-gray-100 py-0.5 text-xs ${
+                className={`w-full outline-none border-b border-gray-100 py-0.5 text-xs whitespace-nowrap overflow-hidden text-ellipsis max-w-full ${
                   isEditing ? (activeHighlightColor ? HIGHLIGHT_COLORS[activeHighlightColor] : '') : rowHighlightClass
                 }`}
                 autoFocus
@@ -418,11 +418,12 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
             <>
               <div
                 onClick={() => !isViewOnly && setIsEditing(true)}
-                className={`flex items-center flex-grow min-w-0 overflow-hidden ${!isViewOnly ? 'cursor-pointer' : ''}`}
+                className={`flex items-center flex-grow min-w-0 overflow-hidden max-w-full ${!isViewOnly ? 'cursor-pointer' : ''}`}
               >
                 <span 
-                  className={`text-xs ${todo.is_completed ? 'line-through text-gray-400' : ''}`}
+                  className={`text-xs whitespace-nowrap overflow-hidden text-ellipsis w-full block ${todo.is_completed ? 'line-through text-gray-400' : ''}`}
                   dangerouslySetInnerHTML={{ __html: renderMarkdown(todo.title) }}
+                  title={getCleanTitle(todo.title)}
                 />
               </div>
               {!isViewOnly && (
