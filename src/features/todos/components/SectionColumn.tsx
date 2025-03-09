@@ -289,7 +289,8 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
         {/* All todo items */}
         <div>
           {todos.map((todo) => (
-            <div key={todo.id} className="h-[28px] border-b border-gray-100">
+            <div key={todo.id} className="h-[28px] relative">
+              <div className="absolute bottom-0 left-[24px] right-0 border-b border-gray-100"></div>
               <TodoItem 
                 todo={todo} 
                 onUpdate={onTodoUpdated}
@@ -301,7 +302,8 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
           
           {/* Add new todo input - positioned right after the last todo */}
           {!isViewOnly && (
-            <div className="h-[28px] border-b border-gray-100">
+            <div className="h-[28px] relative">
+              <div className="absolute bottom-0 left-[24px] right-0 border-b border-gray-100"></div>
               <div className="h-full grid grid-cols-[24px_1fr] gap-2 items-center">
                 <div className="flex justify-center items-center h-full">
                   {/* Empty space to align with checkbox column */}
@@ -330,8 +332,10 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
           {Array.from({ length: emptyLines }).map((_, index) => (
             <div 
               key={`empty-${index}`} 
-              className="h-[28px] border-b border-gray-100"
-            />
+              className="h-[28px] relative"
+            >
+              <div className="absolute bottom-0 left-[24px] right-0 border-b border-gray-100"></div>
+            </div>
           ))}
         </div>
       </div>

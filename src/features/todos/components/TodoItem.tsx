@@ -101,14 +101,14 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
         onDragStart={handleDragStart}
         className={`h-full ${!isViewOnly ? 'cursor-move' : ''} hover:bg-gray-50 group grid grid-cols-[24px_1fr] gap-2 items-center pr-1.5`}
       >
-        {/* Checkbox column - always visible */}
+        {/* Checkbox column - only visible on hover */}
         {!isViewOnly && (
           <div className="flex justify-center items-center h-full">
             <button
               onClick={handleToggleComplete}
               className={`transition-opacity ${
                 todo.is_completed ? 'text-green-500' : 'text-gray-400 hover:text-gray-600'
-              }`}
+              } opacity-0 group-hover:opacity-100`}
               title={todo.is_completed ? "Mark as incomplete" : "Mark as complete"}
             >
               {todo.is_completed ? (
