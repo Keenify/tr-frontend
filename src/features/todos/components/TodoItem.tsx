@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { TodoData } from '../types/todo';
 import { updateTodo, deleteTodo } from '../services/useTodos';
-import { FaTrash, FaFileAlt, FaBold, FaItalic } from 'react-icons/fa';
+import { FaTrash, FaFileAlt, FaBold, FaItalic, FaHighlighter } from 'react-icons/fa';
 import { FaRegSquare, FaRegCheckSquare } from 'react-icons/fa';
 import TodoDescriptionDrawer from './TodoDescriptionDrawer';
 
@@ -12,6 +12,16 @@ interface TodoItemProps {
   onDelete: (todoId: string) => void;
   isViewOnly?: boolean;
 }
+
+// Highlight colors
+const HIGHLIGHT_COLORS = {
+  blue: 'bg-blue-100',
+  red: 'bg-red-100',
+  green: 'bg-green-100',
+  yellow: 'bg-yellow-100',
+};
+
+type HighlightColor = keyof typeof HIGHLIGHT_COLORS;
 
 /**
  * Individual todo item component that can be dragged between days
@@ -23,6 +33,7 @@ interface TodoItemProps {
  * - Provides access to the description drawer
  * - Supports Markdown formatting in todo titles
  * - Provides a formatting menu bar for text selection
+ * - Supports text highlighting in four colors
  * 
  * @component
  * @param {TodoData} todo - The todo item data
@@ -39,12 +50,28 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
   const [isBoldActive, setIsBoldActive] = useState(false);
   const [isItalicActive, setIsItalicActive] = useState(false);
   const [selectionRange, setSelectionRange] = useState<{start: number, end: number} | null>(null);
+  const [showHighlightMenu, setShowHighlightMenu] = useState(false);
+  const [activeHighlightColor, setActiveHighlightColor] = useState<HighlightColor | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Extract highlight color from title (for row highlighting)
+  const getHighlightColor = useCallback((text: string): HighlightColor | null => {
+    const match = text.match(/\{\{(blue|red|green|yellow):[^}]+\}\}/);
+    return match ? match[1] as HighlightColor : null;
+  }, []);
+
+  // Get the clean title without highlight markers
+  const getCleanTitle = useCallback((text: string): string => {
+    return text.replace(/\{\{(blue|red|green|yellow):([^}]+)\}\}/g, '$2');
+  }, []);
 
   // Direct rendering of markdown without using ReactMarkdown
   const renderMarkdown = (text: string) => {
+    // First get a clean version without highlight markers
+    const cleanText = getCleanTitle(text);
+    
     // Replace __text__ with italic spans
-    let result = text.replace(/__([^_]+)__/g, '<span class="italic">$1</span>');
+    let result = cleanText.replace(/__([^_]+)__/g, '<span class="italic">$1</span>');
     
     // Replace **text** with bold spans (changed from * to **)
     result = result.replace(/\*\*([^*]+)\*\*/g, '<span class="font-bold">$1</span>');
@@ -85,11 +112,15 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
         const hasItalicBefore = start >= 2 && fullText.substring(start - 2, start) === '__';
         const hasItalicAfter = end + 2 <= fullText.length && fullText.substring(end, end + 2) === '__';
         setIsItalicActive(hasItalicBefore && hasItalicAfter);
+        
+        // Check for highlight formatting - we only need to check if the entire todo has a highlight
+        const highlightColor = getHighlightColor(fullText);
+        setActiveHighlightColor(highlightColor);
       } else {
         setSelectionRange(null);
       }
     }
-  }, [isEditing, title]);
+  }, [isEditing, title, getHighlightColor]);
 
   // Apply bold formatting
   const toggleBold = () => {
@@ -181,6 +212,42 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
     }, 10);
   };
 
+  // Apply highlight formatting to the entire todo
+  const applyHighlight = (color: HighlightColor) => {
+    if (!inputRef.current) return;
+    
+    // Get clean title without any highlight markers
+    const cleanTitle = getCleanTitle(title);
+    
+    let newTitle;
+    
+    if (activeHighlightColor === color) {
+      // Remove highlight formatting
+      newTitle = cleanTitle;
+      setActiveHighlightColor(null);
+      
+      // Close the highlight menu after removing highlight
+      setShowHighlightMenu(false);
+    } else {
+      // Apply new highlight formatting
+      newTitle = `{{${color}:${cleanTitle}}}`;
+      setActiveHighlightColor(color);
+      
+      // Keep the highlight menu open when switching colors
+      // This allows users to see the color change immediately and try different colors
+    }
+    
+    // Update the title with the new highlight
+    setTitle(newTitle);
+    
+    // Force a re-render to update the highlight immediately
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 0);
+  };
+
   const handleDragStart = (e: React.DragEvent) => {
     if (isViewOnly) {
       e.preventDefault();
@@ -250,16 +317,26 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
     }
   }, []);
 
+  // Toggle highlight menu
+  const toggleHighlightMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowHighlightMenu(!showHighlightMenu);
+  };
+
   // Close the format menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       // Only close the menu if clicking outside the input and the menu
       const menuElement = document.getElementById('formatting-menu');
+      const highlightMenuElement = document.getElementById('highlight-menu');
       const isClickInMenu = menuElement && menuElement.contains(e.target as Node);
+      const isClickInHighlightMenu = highlightMenuElement && highlightMenuElement.contains(e.target as Node);
       const isClickInInput = inputRef.current && inputRef.current.contains(e.target as Node);
       
-      if (showFormatMenu && !isClickInMenu && !isClickInInput) {
+      if (showFormatMenu && !isClickInMenu && !isClickInHighlightMenu && !isClickInInput) {
         setShowFormatMenu(false);
+        setShowHighlightMenu(false);
       }
     };
     
@@ -276,14 +353,18 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('mouseup', handleGlobalMouseUp);
     };
-  }, [showFormatMenu, isEditing, handleSelectionChange]);
+  }, [showFormatMenu, showHighlightMenu, isEditing, handleSelectionChange]);
+
+  // Get the highlight color for the row
+  const rowHighlightColor = isEditing ? getHighlightColor(title) : getHighlightColor(todo.title);
+  const rowHighlightClass = rowHighlightColor ? HIGHLIGHT_COLORS[rowHighlightColor] : '';
 
   return (
     <>
       <div
         draggable={!isViewOnly}
         onDragStart={handleDragStart}
-        className={`h-full ${!isViewOnly ? 'cursor-move' : ''} hover:bg-gray-50 group grid grid-cols-[24px_1fr] gap-2 items-center pr-1.5`}
+        className={`h-full ${!isViewOnly ? 'cursor-move' : ''} hover:bg-gray-50 group grid grid-cols-[24px_1fr] gap-2 items-center pr-1.5 ${rowHighlightClass}`}
       >
         {/* Checkbox column - only visible on hover */}
         {!isViewOnly && (
@@ -313,14 +394,23 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
                 title="Todo Title"
                 placeholder="Enter Todo Title"
                 type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                value={getCleanTitle(title)}
+                onChange={(e) => {
+                  // Preserve highlight when editing
+                  if (activeHighlightColor) {
+                    setTitle(`{{${activeHighlightColor}:${e.target.value}}}`);
+                  } else {
+                    setTitle(e.target.value);
+                  }
+                }}
                 onSelect={handleSelectionChange}
                 onMouseUp={handleSelectionChange}
                 onKeyUp={handleSelectionChange}
                 onBlur={handleUpdate}
                 onKeyPress={(e) => e.key === 'Enter' && handleUpdate()}
-                className="w-full outline-none border-b border-gray-100 py-0.5 text-xs"
+                className={`w-full outline-none border-b border-gray-100 py-0.5 text-xs ${
+                  isEditing ? (activeHighlightColor ? HIGHLIGHT_COLORS[activeHighlightColor] : '') : rowHighlightClass
+                }`}
                 autoFocus
               />
             </div>
@@ -408,6 +498,86 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
           >
             <FaItalic size={14} />
           </button>
+          <button 
+            className={`p-1.5 hover:bg-gray-100 rounded mx-0.5 ${
+              activeHighlightColor ? 'bg-gray-200 text-black' : 'text-gray-700 hover:text-black'
+            }`}
+            onMouseDown={toggleHighlightMenu}
+            title="Highlight"
+            type="button"
+          >
+            <FaHighlighter size={14} />
+          </button>
+        </div>,
+        document.body
+      )}
+
+      {/* Highlight color menu */}
+      {showHighlightMenu && isEditing && createPortal(
+        <div 
+          id="highlight-menu"
+          className="fixed bg-white shadow-lg rounded-md flex flex-col p-2 border border-gray-200 z-50"
+          style={{ 
+            top: `${menuPosition.top + 40}px`, 
+            left: `${menuPosition.left}px`,
+          }}
+          onMouseDown={preserveSelection}
+        >
+          <div className="text-xs font-medium text-gray-500 mb-2">HIGHLIGHT</div>
+          <div className="flex flex-col space-y-1">
+            <button 
+              className={`px-2 py-1 rounded text-xs flex items-center justify-between ${
+                activeHighlightColor === 'blue' ? 'bg-blue-200' : 'bg-blue-100 hover:bg-blue-200'
+              }`}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                applyHighlight('blue');
+              }}
+            >
+              <span>Blue</span>
+              {activeHighlightColor === 'blue' && <span>✓</span>}
+            </button>
+            <button 
+              className={`px-2 py-1 rounded text-xs flex items-center justify-between ${
+                activeHighlightColor === 'red' ? 'bg-red-200' : 'bg-red-100 hover:bg-red-200'
+              }`}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                applyHighlight('red');
+              }}
+            >
+              <span>Red</span>
+              {activeHighlightColor === 'red' && <span>✓</span>}
+            </button>
+            <button 
+              className={`px-2 py-1 rounded text-xs flex items-center justify-between ${
+                activeHighlightColor === 'green' ? 'bg-green-200' : 'bg-green-100 hover:bg-green-200'
+              }`}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                applyHighlight('green');
+              }}
+            >
+              <span>Green</span>
+              {activeHighlightColor === 'green' && <span>✓</span>}
+            </button>
+            <button 
+              className={`px-2 py-1 rounded text-xs flex items-center justify-between ${
+                activeHighlightColor === 'yellow' ? 'bg-yellow-200' : 'bg-yellow-100 hover:bg-yellow-200'
+              }`}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                applyHighlight('yellow');
+              }}
+            >
+              <span>Yellow</span>
+              {activeHighlightColor === 'yellow' && <span>✓</span>}
+            </button>
+          </div>
         </div>,
         document.body
       )}
