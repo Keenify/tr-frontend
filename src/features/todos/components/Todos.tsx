@@ -304,13 +304,17 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                   </svg>
                 </button>
-                <div className="absolute left-0 mt-2 w-64 bg-white rounded-md shadow-lg p-3 text-xs z-50 transform scale-0 group-hover:scale-100 transition-transform origin-top-left">
+                <div className="absolute left-0 mt-2 w-72 bg-white rounded-md shadow-lg p-3 text-xs z-50 transform scale-0 group-hover:scale-100 transition-transform origin-top-left">
                   <h4 className="font-bold mb-1">Markdown Formatting:</h4>
                   <ul className="space-y-1">
-                    <li><code>*text*</code> → <strong>bold text</strong></li>
+                    <li><code>**text**</code> → <strong>bold text</strong></li>
                     <li><code>__text__</code> → <em>italic text</em></li>
                   </ul>
-                  <p className="mt-1 text-gray-500">Example: <code>__important__ *task*</code> → <em>important</em> <strong>task</strong></p>
+                  <p className="mt-1 text-gray-500">Example: <code>__important__ **task**</code> → <em>important</em> <strong>task</strong></p>
+                  <div className="mt-2 pt-2 border-t border-gray-200">
+                    <p className="font-bold">Pro Tip:</p>
+                    <p>Highlight text while editing to use the formatting toolbar!</p>
+                  </div>
                 </div>
               </div>
             </div>
