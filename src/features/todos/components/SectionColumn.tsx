@@ -263,13 +263,13 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
       onDragLeave={handleDragLeave}
     >
       {/* Header with section name */}
-      <div className="py-1 px-2 border-b border-gray-100 bg-white group sticky top-0 z-10">
-        <div className="flex items-center">
+      <div className="py-2 px-2 border-b border-gray-100 bg-white group sticky top-0 z-10">
+        <div className="flex items-center justify-center">
           {!isViewOnly && (
             <button
               ref={menuButtonRef}
               onClick={toggleMenu}
-              className="mr-1 focus:outline-none rounded-full p-0.5 transition-colors duration-150 text-gray-600 hover:bg-gray-300 hover:text-gray-800 opacity-0 group-hover:opacity-100"
+              className="absolute left-2 focus:outline-none rounded-full p-0.5 transition-colors duration-150 text-gray-600 hover:bg-gray-300 hover:text-gray-800 opacity-0 group-hover:opacity-100"
               aria-label="Section options"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
@@ -287,12 +287,12 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
               onChange={(e) => setSectionName(e.target.value)}
               onBlur={handleUpdateSection}
               onKeyDown={handleKeyPress}
-              className="w-full px-1 py-0.5 text-xs font-medium border rounded"
+              className="w-full px-1 py-0.5 text-sm font-bold border rounded text-center"
               autoFocus
             />
           ) : (
             <div 
-              className="font-medium text-xs text-gray-700 flex-grow uppercase"
+              className="font-bold text-sm text-gray-700 flex-grow uppercase text-center"
               onDoubleClick={startEditing}
             >
               {section.name}
