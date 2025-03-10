@@ -81,7 +81,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
   /**
    * Formats a date string into a readable date and time format
    * @param dateString - ISO date string
-   * @returns Formatted date and time string (e.g., "7 Mar 10:30 PM")
+   * @returns Formatted date and time string (e.g., "10 Mar\n08:10pm")
    */
   const formatSubmissionTime = (dateString: string | undefined) => {
     if (!dateString) return 'Not submitted';
@@ -105,9 +105,15 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
         hour: '2-digit', 
         minute: '2-digit',
         hour12: true 
-      });
+      }).toLowerCase(); // Convert to lowercase for "pm" instead of "PM"
       
-      return `${formattedDate} ${formattedTime}`;
+      // Return date and time on separate lines
+      return (
+        <>
+          {formattedDate}<br />
+          {formattedTime}
+        </>
+      );
     } catch (error) {
       console.error("Error formatting date:", error);
       return 'Invalid date';
@@ -202,8 +208,16 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                   <td key={qIndex} className={columnClass}>
                     {response.questions.find((rq) => rq.question_id === q.id)?.answer_text?.split('\n').map((line, i) => {
                       const isGoalOrResult = q.question_text.includes('Today Goals') || q.question_text.includes('Targeted Results');
+                      const isOneWord = q.question_text.includes('One-word opener');
+                      
                       // Capitalize the first letter of each line
                       const capitalizedLine = capitalizeFirstLetter(line);
+                      
+                      // For one-word opener, don't add line breaks
+                      if (isOneWord) {
+                        return capitalizedLine;
+                      }
+                      
                       return (
                         <React.Fragment key={i}>
                           {isGoalOrResult ? `• ${capitalizedLine}` : capitalizedLine}

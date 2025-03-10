@@ -136,6 +136,7 @@
 .submitted-time {
   white-space: nowrap;
   font-size: 0.9em;
+  line-height: 1.2;
 }
 
 /* Column width classes for better control */
@@ -148,7 +149,10 @@
 }
 
 .col-one-word {
-  width: 7%;
+  width: 10%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .col-wins {
@@ -160,15 +164,23 @@
 }
 
 .col-goals {
-  width: 23%;
+  width: 21%;
 }
 
 .col-help {
-  width: 18%;
+  width: 16%;
 }
 
 .col-submitted {
-  width: 9%;
+  width: 10%;
+  white-space: normal;
+}
+
+td.col-submitted {
+  white-space: normal;
+  text-align: center;
+  padding: 6px 4px;
+  line-height: 1.2;
 }
 
 .loading-center {
