@@ -259,9 +259,10 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
         </div>
       )}
       
-      <div className="bg-white rounded-lg w-full max-w-6xl p-6 max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-lg w-full max-w-6xl h-[90vh] flex flex-col">
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
-          <div className="flex-grow overflow-auto">
+          {/* Scrollable content area */}
+          <div className="flex-1 overflow-y-auto p-6">
             <div className="flex flex-col md:flex-row gap-8">
               {/* Left column - Main card info */}
               <div className="flex-1">
@@ -511,7 +512,8 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 mt-6 pt-4 border-t">
+          {/* Fixed footer with buttons */}
+          <div className="flex justify-end gap-2 p-4 border-t bg-white sticky bottom-0">
             <button
               type="button"
               onClick={onClose}
