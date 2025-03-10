@@ -98,6 +98,7 @@
     "react-tooltip": "^5.28.0",
     "react-zoom-pan-pinch": "^3.7.0",
     "reactflow": "^11.11.4",
+    "recharts": "^2.15.1",
     "remark-gfm": "^4.0.1",
     "reveal.js": "^5.1.0",
     "slick-carousel": "^1.8.1",
