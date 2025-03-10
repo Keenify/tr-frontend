@@ -5,6 +5,7 @@ import { Draggable } from 'react-beautiful-dnd';
 import { CardAttachment } from './services/useCardAttachment';
 import { Card } from './types/card.types';
 import { Employee } from '@/shared/types/directory.types';
+import lookup from 'country-code-lookup';
 
 interface TrelloListProps {
   id: string;
@@ -100,7 +101,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   const [showMenu, setShowMenu] = useState(false);
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
 
-  const canManageList = userRole === 'manager';
+  const canManageList = userRole.toLowerCase().includes('manager');
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -117,7 +118,20 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   const handleCountrySubmit = async () => {
     if (onCountryChange) {
       try {
-        await onCountryChange(listCountry);
+        // Convert full country name to code if needed
+        let countryCode = listCountry.toUpperCase();
+        if (countryCode.length > 2) {
+          const country = lookup.byCountry(listCountry);
+          if (country) {
+            countryCode = country.iso2;
+          } else {
+            showToast('Invalid country name', 'error');
+            return;
+          }
+        }
+        
+        await onCountryChange(countryCode);
+        setListCountry(countryCode);
         showToast('Country updated successfully', 'success');
       } catch (error) {
         console.error('Failed to update country:', error);
@@ -299,35 +313,16 @@ export const TrelloList: React.FC<TrelloListProps> = ({
             {isEditingCountry && (
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Country
+                  Country (enter name or 2-letter code)
                 </label>
                 <div className="flex items-center gap-2">
-                  <div className="w-full">
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setListCountry("SG")}
-                        className={`flex-1 px-3 py-2 rounded-md border ${
-                          listCountry === "SG" 
-                            ? "bg-blue-50 border-blue-300 text-blue-700" 
-                            : "border-gray-300 hover:bg-gray-50"
-                        }`}
-                      >
-                        SG
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setListCountry("MY")}
-                        className={`flex-1 px-3 py-2 rounded-md border ${
-                          listCountry === "MY" 
-                            ? "bg-blue-50 border-blue-300 text-blue-700" 
-                            : "border-gray-300 hover:bg-gray-50"
-                        }`}
-                      >
-                        MY
-                      </button>
-                    </div>
-                  </div>
+                  <input
+                    type="text"
+                    value={listCountry}
+                    onChange={(e) => setListCountry(e.target.value)}
+                    placeholder="e.g. Singapore, Malaysia, or SG, MY"
+                    className="flex-1 px-3 py-2 rounded-md border border-gray-300"
+                  />
                   <button
                     onClick={handleCountrySubmit}
                     className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -343,6 +338,9 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                   >
                     ✕
                   </button>
+                </div>
+                <div className="mt-2 text-sm text-gray-500">
+                  Common codes: SG (Singapore), MY (Malaysia)
                 </div>
               </div>
             )}
@@ -366,6 +364,11 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                       <path d="M2 12h20" />
                     </svg>
                     {country}
+                    {lookup.byIso(country)?.country && (
+                      <span className="text-xs text-gray-500 ml-1">
+                        ({lookup.byIso(country)?.country})
+                      </span>
+                    )}
                   </span>
                 </div>
               </div>
