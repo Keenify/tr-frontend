@@ -108,6 +108,7 @@
   background-color: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   table-layout: fixed;
+  min-width: 1000px;
 }
 
 .response-table th,
@@ -141,7 +142,7 @@
 
 /* Column width classes for better control */
 .col-number {
-  width: 5%;
+  width: 3%;
 }
 
 .col-member {
@@ -149,10 +150,10 @@
 }
 
 .col-one-word {
-  width: 10%;
+  width: 14%;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .col-wins {
@@ -172,7 +173,7 @@
 }
 
 .col-submitted {
-  width: 10%;
+  width: 8%;
   white-space: normal;
 }
 
@@ -181,6 +182,13 @@ td.col-submitted {
   text-align: center;
   padding: 6px 4px;
   line-height: 1.2;
+}
+
+td.col-one-word {
+  overflow: visible;
+  white-space: normal;
+  word-break: keep-all;
+  text-align: center;
 }
 
 .loading-center {
@@ -197,4 +205,14 @@ td.col-submitted {
   border-radius: 4px;
   background-color: #f8d7da;
   margin-bottom: 20px;
+}
+
+/* Style for one-word text to ensure it's fully visible */
+.one-word-text {
+  display: inline-block;
+  width: 100%;
+  font-weight: 500;
+  overflow: visible;
+  white-space: normal;
+  word-break: keep-all;
 }

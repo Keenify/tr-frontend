@@ -157,7 +157,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
             <th className="col-member">Team Member</th>
             {questions.map((q, index) => {
               const replacements: { [key: string]: string } = {
-                "One-word opener": "One-Word",
+                "One-word opener": "One-Word Opener",
                 "Wins(1 work + 1 personal)": "Wins (1 Work + 1 Personal)",
                 "I need critical help on": "I Need Critical Help On",
                 "Main Priority": "Main Priority for Today"
@@ -213,9 +213,9 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                       // Capitalize the first letter of each line
                       const capitalizedLine = capitalizeFirstLetter(line);
                       
-                      // For one-word opener, don't add line breaks
+                      // For one-word opener, don't add line breaks and ensure full display
                       if (isOneWord) {
-                        return capitalizedLine;
+                        return <span className="one-word-text">{capitalizedLine}</span>;
                       }
                       
                       return (
