@@ -13,7 +13,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast"; // Import toast directly
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
-import { IconUsers, IconTargetArrow, IconDeviceComputerCamera, IconChartArrowsVertical, IconProgressCheck, IconSitemap, IconUserHeart, IconFlagStar, IconClipboardList } from '@tabler/icons-react'; // Added IconClipboardList
+import { IconUsers, IconTargetArrow, IconDeviceComputerCamera, IconChartArrowsVertical, IconProgressCheck, IconSitemap, IconUserHeart, IconFlagStar } from '@tabler/icons-react'; // Changed from Users to IconUsers and added IconChartArrowsVertical and IconProgressCheck
 
 /**
  * Props for the Layout component.
@@ -104,16 +104,9 @@ const navigationConfig = [
     isExpandable: true,
     subTabs: [
       { id: "playbook", label: "Playbook", shortForm: "Pb", icon: ThumbsUp },
+      { id: "projects", label: "Projects", shortForm: "Pj", icon: ThumbsUp },
       { id: "todo", label: "Todo", shortForm: "Td", icon: ThumbsUp },
     ],
-  },
-  {
-    id: "projects",
-    label: "Projects",
-    shortForm: "Pj",
-    icon: IconClipboardList,
-    isExpandable: false,
-    subTabs: [],
   },
   {
     id: "technology",
@@ -187,6 +180,7 @@ type SubTabType =
   | "financeTab"
   | "onlineSales"
   | "playbook"
+  | "projects"
   | "password"
   | "resources"
   | "sandbox"
@@ -361,10 +355,6 @@ export function DashboardLayout({
         return;
       case "process":
         setIsProcessSubmenuOpen(!isProcessSubmenuOpen);
-        return;
-      case "projects":
-        // Navigate to projects page
-        navigate(`/${userId}/projects`);
         return;
       case "technology":
         setIsTechnologySubmenuOpen(!isTechnologySubmenuOpen);
