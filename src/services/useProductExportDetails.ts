@@ -142,7 +142,8 @@ export const transformToSelectableFormat = (
             fob_price_per_unit: parseFloat(variant.fob_price_per_carton) / variant.pack_size_per_carton,
             recommended_retail_price_usd: variant.recommended_retail_price_usd,
             container_size: variant.container_size,
-            cartons_per_container: variant.cartons_per_container
+            cartons_per_container: variant.cartons_per_container,
+            barcode: variant.barcode
         }))
     }));
 };
