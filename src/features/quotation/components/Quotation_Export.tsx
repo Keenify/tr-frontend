@@ -147,6 +147,9 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
             sales_account_manager: salesAccountManager
         };
 
+        // Log the payload being sent to the backend
+        console.log('Quotation Export Payload:', JSON.stringify(pdfData, null, 2));
+
         try {
             const pdfBlob = await generateQuotationExportPDF(pdfData as QuotationExportPDFData);
             console.log("PDF generated successfully");
