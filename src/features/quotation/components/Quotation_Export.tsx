@@ -90,18 +90,10 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     const handleCellEdit = (productId: number, field: string, value: string) => {
         setSelections(prev => prev.map(product => {
             if (product.product_id === productId) {
-                let updatedValue = value;
-                // If editing FOB Price/Unit, calculate FOB Price/Carton
-                if (field === 'fob_price_per_unit') {
-                    const packSizePerCarton = Number(product.variants[0]?.pack_size_per_carton) || 1;
-                    const pricePerUnit = Number(value) || 0;
-                    updatedValue = (pricePerUnit * packSizePerCarton).toFixed(2);
-                    field = 'fob_price_per_carton'; // Update the carton price instead
-                }
                 return {
                     ...product,
                     variants: product.variants.map((variant, index) => 
-                        index === 0 ? { ...variant, [field]: updatedValue } : variant
+                        index === 0 ? { ...variant, [field]: value } : variant
                     )
                 };
             }
@@ -252,17 +244,13 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                     <td 
                                         key={field}
                                         className="border border-gray-300 p-2"
-                                        onDoubleClick={() => setEditingCell({ id: product.product_id, field })}
+                                        onDoubleClick={() => field !== 'fob_price_per_unit' && setEditingCell({ id: product.product_id, field })}
                                     >
                                         {editingCell?.id === product.product_id && editingCell.field === field ? (
                                             <input
-                                                title={`Edit ${field}`}
+                                                title="Edit Field"
                                                 type="text"
-                                                defaultValue={
-                                                    field === 'fob_price_per_unit'
-                                                        ? (Number(product.variants[0]?.fob_price_per_carton) / Number(product.variants[0]?.pack_size_per_carton)).toFixed(2)
-                                                        : String(product.variants[0]?.[field as keyof typeof product.variants[0]])
-                                                }
+                                                defaultValue={String(product.variants[0]?.[field as keyof typeof product.variants[0]])}
                                                 onBlur={(e) => handleCellEdit(product.product_id, field, e.target.value)}
                                                 autoFocus
                                                 className="w-full"
