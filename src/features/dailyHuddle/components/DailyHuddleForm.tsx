@@ -335,6 +335,9 @@ const GoalsInput: React.FC<{
     value ? value.split('\n') : ['']
   );
   
+  // Create refs for input fields
+  const inputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+  
   // Handle changes to a specific goal
   const handleGoalChange = (index: number, text: string) => {
     const newGoals = [...localGoals];
@@ -355,6 +358,14 @@ const GoalsInput: React.FC<{
     const newGoals = [...localGoals, ''];
     setLocalGoals(newGoals);
     onChange(newGoals);
+    
+    // Focus on the new input field after state update
+    setTimeout(() => {
+      const newIndex = newGoals.length - 1;
+      if (inputRefs.current[newIndex]) {
+        inputRefs.current[newIndex]?.focus();
+      }
+    }, 0);
   };
   
   // Remove a goal
@@ -364,6 +375,14 @@ const GoalsInput: React.FC<{
       newGoals.splice(index, 1);
       setLocalGoals(newGoals);
       onChange(newGoals);
+      
+      // Focus on the previous input or the next available one
+      setTimeout(() => {
+        const focusIndex = Math.min(index, newGoals.length - 1);
+        if (inputRefs.current[focusIndex]) {
+          inputRefs.current[focusIndex]?.focus();
+        }
+      }, 0);
     }
   };
   
@@ -376,6 +395,11 @@ const GoalsInput: React.FC<{
     }
   }, [value, localGoals.length]);
   
+  // Update refs array when goals change
+  useEffect(() => {
+    inputRefs.current = inputRefs.current.slice(0, localGoals.length);
+  }, [localGoals.length]);
+  
   return (
     <div className="goals-input-container">
       {localGoals.map((goal, index) => (
@@ -384,6 +408,7 @@ const GoalsInput: React.FC<{
           <input
             type="text"
             value={goal}
+            ref={el => inputRefs.current[index] = el}
             onChange={(e) => handleGoalChange(index, e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
