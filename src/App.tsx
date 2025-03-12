@@ -286,7 +286,7 @@ const App: React.FC = () => {
                         <DashboardLayout
                           session={session}
                           signOut={signOut}
-                          activeTab="process"
+                          activeTab="projects"
                           activeSubTab="projects"
                           onTabChange={() => {}}
                         >

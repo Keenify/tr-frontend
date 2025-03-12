@@ -13,7 +13,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast"; // Import toast directly
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
-import { IconUsers, IconTargetArrow, IconDeviceComputerCamera, IconChartArrowsVertical, IconProgressCheck, IconSitemap, IconUserHeart, IconFlagStar } from '@tabler/icons-react'; // Changed from Users to IconUsers and added IconChartArrowsVertical and IconProgressCheck
+import { IconUsers, IconTargetArrow, IconDeviceComputerCamera, IconChartArrowsVertical, IconProgressCheck, IconSitemap, IconUserHeart, IconFlagStar, IconClipboardList } from '@tabler/icons-react'; // Changed from Users to IconUsers and added IconChartArrowsVertical and IconProgressCheck
 
 /**
  * Props for the Layout component.
@@ -97,6 +97,16 @@ const navigationConfig = [
     ],
   },
   {
+    id: "projects",
+    label: "Projects",
+    shortForm: "Pj",
+    icon: IconClipboardList,
+    isExpandable: true,
+    subTabs: [
+      { id: "projects", label: "Projects", shortForm: "Pj", icon: ThumbsUp },
+    ],
+  },
+  {
     id: "process",
     label: "Process",
     shortForm: "Pr",
@@ -104,7 +114,6 @@ const navigationConfig = [
     isExpandable: true,
     subTabs: [
       { id: "playbook", label: "Playbook", shortForm: "Pb", icon: ThumbsUp },
-      { id: "projects", label: "Projects", shortForm: "Pj", icon: ThumbsUp },
       { id: "todo", label: "Todo", shortForm: "Td", icon: ThumbsUp },
     ],
   },
@@ -244,6 +253,9 @@ export function DashboardLayout({
   const [isFinanceDataSubmenuOpen, setIsFinanceDataSubmenuOpen] = useState(
     activeTab === "financeData"
   );
+  const [isProjectsSubmenuOpen, setIsProjectsSubmenuOpen] = useState(
+    activeTab === "projects"
+  );
   const [isProcessSubmenuOpen, setIsProcessSubmenuOpen] = useState(
     activeTab === "process"
   );
@@ -323,6 +335,7 @@ export function DashboardLayout({
     setIsSalesSubmenuOpen(activeTab === "sales");
     setIsMeetingSubmenuOpen(activeTab === "meeting");
     setIsFinanceDataSubmenuOpen(activeTab === "financeData");
+    setIsProjectsSubmenuOpen(activeTab === "projects");
     setIsProcessSubmenuOpen(activeTab === "process");
     setIsTechnologySubmenuOpen(activeTab === "technology");
     setIsTeamHealthSubmenuOpen(activeTab === "teamHealth");
@@ -352,6 +365,9 @@ export function DashboardLayout({
         return;
       case "financeData":
         setIsFinanceDataSubmenuOpen(!isFinanceDataSubmenuOpen);
+        return;
+      case "projects":
+        setIsProjectsSubmenuOpen(!isProjectsSubmenuOpen);
         return;
       case "process":
         setIsProcessSubmenuOpen(!isProcessSubmenuOpen);
@@ -390,6 +406,9 @@ export function DashboardLayout({
         break;
       case "financeData":
         setIsFinanceDataSubmenuOpen(true);
+        break;
+      case "projects":
+        setIsProjectsSubmenuOpen(true);
         break;
       case "process":
         setIsProcessSubmenuOpen(true);
@@ -685,6 +704,7 @@ export function DashboardLayout({
                           (item.id === "sales" && isSalesSubmenuOpen) ||
                           (item.id === "meeting" && isMeetingSubmenuOpen) ||
                           (item.id === "financeData" && isFinanceDataSubmenuOpen) ||
+                          (item.id === "projects" && isProjectsSubmenuOpen) ||
                           (item.id === "process" && isProcessSubmenuOpen) ||
                           (item.id === "technology" && isTechnologySubmenuOpen) ||
                           (item.id === "teamHealth" && isTeamHealthSubmenuOpen) ||
@@ -702,6 +722,7 @@ export function DashboardLayout({
                          (item.id === "sales" && isSalesSubmenuOpen) ||
                          (item.id === "meeting" && isMeetingSubmenuOpen) ||
                          (item.id === "financeData" && isFinanceDataSubmenuOpen) ||
+                         (item.id === "projects" && isProjectsSubmenuOpen) ||
                          (item.id === "process" && isProcessSubmenuOpen) ||
                          (item.id === "technology" && isTechnologySubmenuOpen) ||
                          (item.id === "teamHealth" && isTeamHealthSubmenuOpen) ||
