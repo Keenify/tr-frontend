@@ -132,10 +132,12 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
     return <div className="error-message">Error loading employee responses: {error?.message || dataError?.message}</div>;
   }
 
-  const allResponses = employeeResponses.map(emp => ({
-    ...emp,
-    response: emp.response || { questions: [] }
-  }));
+  const allResponses = employeeResponses
+    .filter(emp => !emp.name.toLowerCase().includes('backup'))
+    .map(emp => ({
+      ...emp,
+      response: emp.response || { questions: [] }
+    }));
 
   return (
     <div className="response-container">
