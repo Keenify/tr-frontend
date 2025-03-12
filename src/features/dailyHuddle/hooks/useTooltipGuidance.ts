@@ -20,7 +20,6 @@ interface UseTooltipGuidanceReturn<T> {
   position: 'above' | 'below';
   handleInputFocus: (element: HTMLElement, id: T) => void;
   handleInputBlur: () => void;
-  setShowGuidance: (show: boolean) => void;
 }
 
 export function useTooltipGuidance<T>({
@@ -82,10 +81,8 @@ export function useTooltipGuidance<T>({
   };
   
   const handleInputBlur = () => {
-    // Small delay to allow clicking on the guidance without it disappearing
-    guidanceTimeoutRef.current = setTimeout(() => {
-      setActiveTooltipId(null);
-    }, 200);
+    // Immediately hide the guidance window when focus leaves
+    setActiveTooltipId(null);
   };
 
   return {
@@ -95,6 +92,5 @@ export function useTooltipGuidance<T>({
     position,
     handleInputFocus,
     handleInputBlur,
-    setShowGuidance: (show: boolean) => setActiveTooltipId(show ? tooltipId : null),
   };
 } 

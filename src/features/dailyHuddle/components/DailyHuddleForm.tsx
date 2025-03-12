@@ -70,8 +70,7 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
     tooltipPosition: guidancePosition,
     position: tooltipPosition,
     handleInputFocus: handleTooltipFocus,
-    handleInputBlur,
-    setShowGuidance
+    handleInputBlur
   } = useTooltipGuidance<string>({
     tooltipRef,
     guidanceTimeoutRef,
@@ -310,13 +309,9 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
     // Call immediately to position correctly
     handleScroll();
     
-    // Set up an interval to continuously update position while visible
-    const positionInterval = setInterval(handleScroll, 100);
-    
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
-      clearInterval(positionInterval);
     };
   }, [showGuidance, activeQuestionId, questions, handleTooltipFocus]);
 
@@ -428,19 +423,6 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
                 top: `${guidancePosition.top}px`,
                 left: `${guidancePosition.left}px`,
               }}
-              onMouseEnter={() => {
-                // Clear any existing timeout when mouse enters the tooltip
-                if (guidanceTimeoutRef.current) {
-                  clearTimeout(guidanceTimeoutRef.current);
-                  guidanceTimeoutRef.current = null;
-                }
-              }}
-              onMouseLeave={() => {
-                // Set timeout to hide tooltip when mouse leaves
-                guidanceTimeoutRef.current = setTimeout(() => {
-                  setShowGuidance(false);
-                }, 200);
-              }}
             >
               <h4>
                 Guidance:
@@ -514,8 +496,7 @@ const GoalsInput: React.FC<{
     tooltipPosition: guidancePosition,
     position: tooltipPosition,
     handleInputFocus: handleTooltipFocus,
-    handleInputBlur,
-    setShowGuidance
+    handleInputBlur
   } = useTooltipGuidance<number>({
     tooltipRef,
     guidanceTimeoutRef,
@@ -661,13 +642,9 @@ const GoalsInput: React.FC<{
     // Call immediately to position correctly
     handleScroll();
     
-    // Set up an interval to continuously update position while visible
-    const positionInterval = setInterval(handleScroll, 100);
-    
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
-      clearInterval(positionInterval);
     };
   }, [showGuidance, activeInputIndex, handleTooltipFocus]);
   
@@ -731,19 +708,6 @@ const GoalsInput: React.FC<{
             position: 'fixed',
             top: `${guidancePosition.top}px`,
             left: `${guidancePosition.left}px`,
-          }}
-          onMouseEnter={() => {
-            // Clear any existing timeout when mouse enters the tooltip
-            if (guidanceTimeoutRef.current) {
-              clearTimeout(guidanceTimeoutRef.current);
-              guidanceTimeoutRef.current = null;
-            }
-          }}
-          onMouseLeave={() => {
-            // Set timeout to hide tooltip when mouse leaves
-            guidanceTimeoutRef.current = setTimeout(() => {
-              setShowGuidance(false);
-            }, 200);
           }}
         >
           <h4>
