@@ -265,6 +265,17 @@
   text-align: center;
 }
 
+.input-wrapper {
+  position: relative;
+  margin-bottom: 15px;
+}
+
+.input-wrapper .text-input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  outline: none;
+}
+
 .submit-button {
   padding: 12px 24px;
   background-color: #007BFF;
@@ -294,4 +305,122 @@
     min-width: auto;
     width: 100%;
   }
+}
+
+/* Goal Guidance Tooltip Styles */
+.goal-guidance-tooltip {
+  position: fixed;
+  z-index: 1000;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 12px 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  max-width: 320px;
+  font-size: 14px;
+  animation: fadeInUp 0.3s ease-out;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: auto;
+  will-change: opacity, transform, top, left;
+}
+
+/* Default arrow (pointing up, for tooltips below inputs) */
+.goal-guidance-tooltip::before,
+.goal-guidance-tooltip::after {
+  content: '';
+  position: absolute;
+  left: 20px;
+  border-style: solid;
+}
+
+/* Arrow border for tooltip below input */
+.goal-guidance-tooltip::before {
+  top: -8px;
+  border-width: 0 8px 8px;
+  border-color: transparent transparent #ddd;
+}
+
+/* Arrow fill for tooltip below input */
+.goal-guidance-tooltip::after {
+  top: -7px;
+  border-width: 0 8px 8px;
+  border-color: transparent transparent #f9f9f9;
+}
+
+/* Tooltip positioned above input needs arrow at bottom */
+.goal-guidance-tooltip.tooltip-above::before,
+.goal-guidance-tooltip.tooltip-above::after {
+  top: auto;
+  border-width: 8px 8px 0;
+}
+
+/* Arrow border for tooltip above input */
+.goal-guidance-tooltip.tooltip-above::before {
+  bottom: -8px;
+  border-color: #ddd transparent transparent;
+}
+
+/* Arrow fill for tooltip above input */
+.goal-guidance-tooltip.tooltip-above::after {
+  bottom: -7px;
+  border-color: #f9f9f9 transparent transparent;
+}
+
+.goal-guidance-tooltip h4 {
+  margin: 0 0 8px;
+  color: #2c3e50;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.goal-guidance-tooltip ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.goal-guidance-tooltip li {
+  margin-bottom: 5px;
+  color: #4a5568;
+  line-height: 1.4;
+}
+
+.goal-guidance-tooltip .example {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #e2e8f0;
+  font-size: 13px;
+  font-style: italic;
+  color: #718096;
+}
+
+/* Ensure the tooltip stays visible when hovered */
+.goal-guidance-tooltip:hover {
+  opacity: 1;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Apply different animation based on tooltip position */
+.goal-guidance-tooltip.tooltip-above {
+  animation: fadeInDown 0.3s ease-out;
 }

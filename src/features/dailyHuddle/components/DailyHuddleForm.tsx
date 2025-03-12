@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { fetchQuestions, submitResponse, fetchResponse, updateResponse } from "../services/huddleService";
 import { getUserData } from "../../../services/useUser";
 import { Question, ResponseData } from "../types/huddle.types";
@@ -7,6 +7,8 @@ import { FORM_ID, CUTOFF_HOUR, MAX_GOALS } from "../constants";
 import { ClipLoader } from "react-spinners";
 import wheelImage from '../assets/wheel.png';
 import '../styles/DailyHuddleForm.css';
+import { useTooltipGuidance } from '../hooks/useTooltipGuidance';
+import { TooltipProvider } from '../contexts/TooltipProvider';
 
 interface DailyHuddleFormProps {
   session: Session;
@@ -45,7 +47,7 @@ const getEffectiveDate = (): string => {
  * @param {Session} props.session - User session object containing authentication details
  * @returns {JSX.Element} Rendered form component
  */
-const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
+const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [hasSubmitted, setHasSubmitted] = useState<boolean>(false);
@@ -57,6 +59,66 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [startAngle, setStartAngle] = useState(0);
   const [effectiveDate, setEffectiveDate] = useState<string>(getEffectiveDate());
+  
+  // Refs for tooltip guidance
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
+  const guidanceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const {
+    showGuidance,
+    activeId: activeQuestionId,
+    tooltipPosition: guidancePosition,
+    position: tooltipPosition,
+    handleInputFocus: handleTooltipFocus,
+    handleInputBlur,
+    setShowGuidance
+  } = useTooltipGuidance<string>({
+    tooltipRef,
+    guidanceTimeoutRef,
+    tooltipId: 'main-form-guidance'
+  });
+
+  // Update the handleInputFocus to use the new hook
+  const handleInputFocus = useCallback((e: React.FocusEvent<HTMLInputElement>, questionId: string) => {
+    handleTooltipFocus(e.currentTarget, questionId);
+  }, [handleTooltipFocus]);
+
+  // Guidance tips for different question types
+  const guidanceTips: { [key: string]: string[] } = {
+    "One-word opener": [
+      "Choose a word that captures your current energy or mindset",
+      "Consider words like: Focused, Determined, Excited, Challenged",
+      "Be authentic about how you're feeling today",
+      "This sets the tone for your day and helps your team understand your state of mind"
+    ],
+    "Wins(1 work + 1 personal)": [
+      "Share one professional accomplishment from yesterday or recently",
+      "Include one personal achievement or positive moment",
+      "Be specific about what you accomplished",
+      "Celebrate progress, no matter how small"
+    ],
+    "I need critical help on": [
+      "Identify your biggest blocker or challenge",
+      "Be specific about what assistance you need",
+      "Consider who might be able to help you",
+      "Don't hesitate to ask for support - that's what teams are for"
+    ],
+    "Main Priority": [
+      "Focus on your single most important task for today",
+      "This should align with your team or company objectives",
+      "Be specific about what success looks like",
+      "Consider what will move the needle most for your work"
+    ],
+    "Today Goals and Targeted Results": [] // This will use the existing GoalsInput component
+  };
+
+  // Example answers for different question types
+  const exampleAnswers: { [key: string]: string } = {
+    "One-word opener": "Energized",
+    "Wins(1 work + 1 personal)": "Completed the quarterly report ahead of schedule; Started my morning workout routine",
+    "I need critical help on": "Troubleshooting the payment gateway integration before tomorrow's demo",
+    "Main Priority": "Finalizing the product roadmap for Q3",
+  };
 
   /**
    * Initializes the form by fetching necessary data
@@ -230,6 +292,63 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
     return replacements[text] || text;
   };
 
+  // Update the useEffect for scroll handling
+  useEffect(() => {
+    const handleScroll = () => {
+      if (showGuidance && activeQuestionId !== null && tooltipRef.current) {
+        const questionElement = document.querySelector(`input[title="${questions.find(q => q.id === activeQuestionId)?.question_text}"]`);
+        
+        if (questionElement) {
+          handleTooltipFocus(questionElement as HTMLElement, activeQuestionId);
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleScroll);
+    
+    // Call immediately to position correctly
+    handleScroll();
+    
+    // Set up an interval to continuously update position while visible
+    const positionInterval = setInterval(handleScroll, 100);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+      clearInterval(positionInterval);
+    };
+  }, [showGuidance, activeQuestionId, questions, handleTooltipFocus]);
+
+  // Get guidance tips for a specific question
+  const getGuidanceForQuestion = (questionText: string): string[] => {
+    // Find the matching guidance tips
+    for (const key in guidanceTips) {
+      if (questionText.includes(key)) {
+        return guidanceTips[key];
+      }
+    }
+    // Default guidance if no specific tips found
+    return [
+      "Be specific and clear in your response",
+      "Consider how this information helps your team",
+      "Reflect on how this connects to your goals",
+      "Be honest and authentic in your answer"
+    ];
+  };
+
+  // Get example answer for a specific question
+  const getExampleForQuestion = (questionText: string): string => {
+    // Find the matching example
+    for (const key in exampleAnswers) {
+      if (questionText.includes(key)) {
+        return exampleAnswers[key];
+      }
+    }
+    // Default example if no specific one found
+    return "Your thoughtful response here";
+  };
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -284,16 +403,63 @@ const DailyHuddleForm: React.FC<DailyHuddleFormProps> = ({ session }) => {
                   onChange={(goals) => handleInputChange(question.id, goals.join('\n'))}
                 />
               ) : (
-                <input
-                  title={question.question_text}
-                  type="text"
-                  value={answers[question.id] || ""}
-                  onChange={(e) => handleInputChange(question.id, e.target.value)}
-                  className="text-input"
-                />
+                <div className="input-wrapper">
+                  <input
+                    title={question.question_text}
+                    type="text"
+                    value={answers[question.id] || ""}
+                    onChange={(e) => handleInputChange(question.id, e.target.value)}
+                    onFocus={(e) => handleInputFocus(e, question.id)}
+                    onBlur={handleInputBlur}
+                    className="text-input"
+                  />
+                </div>
               )}
             </div>
           ))}
+
+          {/* Floating Guidance Window for regular inputs */}
+          {showGuidance && activeQuestionId !== null && (
+            <div 
+              ref={tooltipRef}
+              className={`goal-guidance-tooltip ${tooltipPosition === 'above' ? 'tooltip-above' : ''}`}
+              style={{
+                position: 'fixed',
+                top: `${guidancePosition.top}px`,
+                left: `${guidancePosition.left}px`,
+              }}
+              onMouseEnter={() => {
+                // Clear any existing timeout when mouse enters the tooltip
+                if (guidanceTimeoutRef.current) {
+                  clearTimeout(guidanceTimeoutRef.current);
+                  guidanceTimeoutRef.current = null;
+                }
+              }}
+              onMouseLeave={() => {
+                // Set timeout to hide tooltip when mouse leaves
+                guidanceTimeoutRef.current = setTimeout(() => {
+                  setShowGuidance(false);
+                }, 200);
+              }}
+            >
+              <h4>
+                Guidance:
+              </h4>
+              <ul>
+                {getGuidanceForQuestion(
+                  questions.find(q => q.id === activeQuestionId)?.question_text || ""
+                ).map((tip, i) => (
+                  <li key={i}>{tip}</li>
+                ))}
+              </ul>
+              <div className="example">
+                Example: "{getExampleForQuestion(
+                  questions.find(q => q.id === activeQuestionId)?.question_text || ""
+                )}"
+              </div>
+            </div>
+          )}
+          
           <button
             type="submit"
             className="submit-button"
@@ -337,6 +503,89 @@ const GoalsInput: React.FC<{
   
   // Create refs for input fields
   const inputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+  
+  // Refs for tooltip guidance
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
+  const guidanceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const {
+    showGuidance,
+    activeId: activeInputIndex,
+    tooltipPosition: guidancePosition,
+    position: tooltipPosition,
+    handleInputFocus: handleTooltipFocus,
+    handleInputBlur,
+    setShowGuidance
+  } = useTooltipGuidance<number>({
+    tooltipRef,
+    guidanceTimeoutRef,
+    tooltipId: 'goals-guidance'
+  });
+
+  // Guidance tips for goals - organized by goal number (0-indexed)
+  const guidanceTips = [
+    [ // First goal (index 0)
+      "Make your first goal your highest priority task",
+      "Be specific about what you want to accomplish",
+      "Include a clear deadline or timeframe",
+      "Focus on what will make the biggest impact today"
+    ],
+    [ // Second goal (index 1)
+      "This should be your second most important task",
+      "Consider what dependencies this goal has",
+      "Make it measurable so you know when it's done",
+      "Align this with your team or company objectives"
+    ],
+    [ // Third goal (index 2)
+      "This goal should support your main priorities",
+      "Consider what you can realistically finish today",
+      "Be specific about the outcome you want",
+      "Think about who this goal will benefit"
+    ],
+    [ // Fourth goal (index 3)
+      "Use this for important but not urgent tasks",
+      "Consider what will move your projects forward",
+      "Be clear about what 'done' looks like",
+      "Think about how this connects to longer-term goals"
+    ],
+    [ // Fifth goal (index 4)
+      "Use this for stretch goals if time permits",
+      "Consider what would be a bonus to accomplish",
+      "Keep it realistic but ambitious",
+      "Think about what would make today exceptional"
+    ]
+  ];
+  
+  // Example goals for each position
+  const exampleGoals = [
+    "Complete client proposal draft by 2pm",
+    "Review team's progress reports and provide feedback",
+    "Prepare slides for tomorrow's presentation",
+    "Follow up with marketing team on campaign metrics",
+    "Brainstorm solutions for the inventory tracking issue"
+  ];
+  
+  // Get the appropriate tips based on goal index
+  const getGuidanceForGoal = (index: number) => {
+    // If we have specific tips for this index, use them
+    if (index < guidanceTips.length) {
+      return guidanceTips[index];
+    }
+    // Otherwise use default tips
+    return [
+      "Make your goal specific and measurable",
+      "Include a deadline or timeframe",
+      "Focus on what you can accomplish today",
+      "Use action verbs to start your goal"
+    ];
+  };
+  
+  // Get example for the current goal
+  const getExampleForGoal = (index: number) => {
+    return index < exampleGoals.length 
+      ? exampleGoals[index] 
+      : "Complete [specific task] by [specific time]";
+  };
   
   // Handle changes to a specific goal
   const handleGoalChange = (index: number, text: string) => {
@@ -385,6 +634,42 @@ const GoalsInput: React.FC<{
       }, 0);
     }
   };
+
+  // Update the handleInputFocus to use the new hook
+  const handleInputFocus = (index: number) => {
+    const inputElement = inputRefs.current[index];
+    if (inputElement) {
+      handleTooltipFocus(inputElement, index);
+    }
+  };
+
+  // Update the useEffect for scroll handling
+  useEffect(() => {
+    const handleScroll = () => {
+      if (showGuidance && activeInputIndex !== null && tooltipRef.current) {
+        const inputElement = inputRefs.current[activeInputIndex];
+        
+        if (inputElement) {
+          handleTooltipFocus(inputElement, activeInputIndex);
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleScroll);
+    
+    // Call immediately to position correctly
+    handleScroll();
+    
+    // Set up an interval to continuously update position while visible
+    const positionInterval = setInterval(handleScroll, 100);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+      clearInterval(positionInterval);
+    };
+  }, [showGuidance, activeInputIndex, handleTooltipFocus]);
   
   // Only update local state when value prop changes significantly
   useEffect(() => {
@@ -410,6 +695,8 @@ const GoalsInput: React.FC<{
             value={goal}
             ref={el => inputRefs.current[index] = el}
             onChange={(e) => handleGoalChange(index, e.target.value)}
+            onFocus={() => handleInputFocus(index)}
+            onBlur={handleInputBlur}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
@@ -435,6 +722,44 @@ const GoalsInput: React.FC<{
         </div>
       ))}
       
+      {/* Floating Guidance Window */}
+      {showGuidance && activeInputIndex !== null && (
+        <div 
+          ref={tooltipRef}
+          className={`goal-guidance-tooltip ${tooltipPosition === 'above' ? 'tooltip-above' : ''}`}
+          style={{
+            position: 'fixed',
+            top: `${guidancePosition.top}px`,
+            left: `${guidancePosition.left}px`,
+          }}
+          onMouseEnter={() => {
+            // Clear any existing timeout when mouse enters the tooltip
+            if (guidanceTimeoutRef.current) {
+              clearTimeout(guidanceTimeoutRef.current);
+              guidanceTimeoutRef.current = null;
+            }
+          }}
+          onMouseLeave={() => {
+            // Set timeout to hide tooltip when mouse leaves
+            guidanceTimeoutRef.current = setTimeout(() => {
+              setShowGuidance(false);
+            }, 200);
+          }}
+        >
+          <h4>
+            Goal {activeInputIndex + 1} Guidance:
+          </h4>
+          <ul>
+            {getGuidanceForGoal(activeInputIndex).map((tip, i) => (
+              <li key={i}>{tip}</li>
+            ))}
+          </ul>
+          <div className="example">
+            Example: "{getExampleForGoal(activeInputIndex)}"
+          </div>
+        </div>
+      )}
+      
       {localGoals.length < MAX_GOALS && (
         <button 
           type="button" 
@@ -452,6 +777,14 @@ const GoalsInput: React.FC<{
         </div>
       )}
     </div>
+  );
+};
+
+const DailyHuddleForm: React.FC<DailyHuddleFormProps> = (props) => {
+  return (
+    <TooltipProvider>
+      <DailyHuddleFormContent {...props} />
+    </TooltipProvider>
   );
 };
 
