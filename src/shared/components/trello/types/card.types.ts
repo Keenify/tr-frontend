@@ -3,8 +3,16 @@ export interface Card {
   title: string;
   description?: string;
   colorCode?: string;
+  color_code?: string;  // API field
   thumbnailUrl?: string;
   assignees?: string[];
+  start_date?: string;
+  end_date?: string;
+  position?: number;
+  due_date?: string;
+  is_locked?: boolean;
+  list_id?: string;
+  created_at?: string;
 }
 
 /**
@@ -14,6 +22,12 @@ export interface CardUpdate {
   title?: string;
   description?: string;
   colorCode?: string;
+  color_code?: string;  // API field
   thumbnailUrl?: string;
   assignees?: string[];
+  start_date?: string;
+  end_date?: string;
+  position?: number;
+  due_date?: string;
+  list_id?: string;
 } 

@@ -11,6 +11,9 @@ export interface CardData {
     id: string;
     list_id: string;
     created_at: string;
+    start_date: string;
+    end_date: string;
+    is_locked: boolean;
 }
 
 export interface UpdateCardPayload {
@@ -20,6 +23,8 @@ export interface UpdateCardPayload {
     due_date?: string;
     color_code?: string;
     list_id?: string;
+    start_date?: string;
+    end_date?: string;
 }
 
 /**

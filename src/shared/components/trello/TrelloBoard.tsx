@@ -202,6 +202,9 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
 
   // Handle card click to open modal
   const handleCardClick = (listId: string, card: Card) => {
+    console.log('Card clicked in TrelloBoard:', card);
+    console.log('Card start_date:', card.start_date);
+    console.log('Card end_date:', card.end_date);
     setSelectedCard({
       listId,
       card
@@ -402,6 +405,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
           isOpen={true}
           onClose={() => setSelectedCard(null)}
           onSave={(updatedCard) => {
+            console.log('Saving updated card with dates:', updatedCard);
             handleCardUpdate(selectedCard.listId, selectedCard.card.id, updatedCard);
             setSelectedCard(null);
           }}

@@ -15,6 +15,8 @@ interface TrelloCardProps {
   thumbnailUrl?: string;
   assignees?: string[];
   attachments?: CardAttachment[];
+  start_date?: string;
+  end_date?: string;
   onClick?: () => void;
   onDelete?: () => void;
   onUpdate?: (updatedCard: CardUpdate & { id: string }) => void;
@@ -48,6 +50,8 @@ interface TrelloCardProps {
  * @param {string} thumbnailUrl - Optional thumbnail image URL
  * @param {string[]} assignees - Array of assignee IDs
  * @param {CardAttachment[]} attachments - Array of card attachments
+ * @param {string} start_date - Optional start date
+ * @param {string} end_date - Optional end date
  * @param {Function} onClick - Handler for card click
  * @param {Function} onDelete - Handler for card deletion
  * @param {Function} onUpdate - Handler for card update
@@ -64,6 +68,8 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   thumbnailUrl,
   assignees = [],
   attachments = [],
+  start_date,
+  end_date,
   onDelete,
   onUpdate,
   userRole,
@@ -156,8 +162,11 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
           description,
           colorCode,
           thumbnailUrl,
-          assignees
+          assignees,
+          start_date,
+          end_date
         };
+        console.log('Card being passed to onCardClick in TrelloCard:', card);
         onCardClick(card);
       } else {
         setIsModalOpen(true);
@@ -331,13 +340,16 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
           onClose={() => setIsModalOpen(false)}
           onSave={(updatedCard) => {
             console.log('Card updated with assignees:', updatedCard.assignees);
+            console.log('Card updated with dates:', updatedCard.start_date, updatedCard.end_date);
             if (onUpdate) {
               onUpdate({
                 id,
                 title: updatedCard.title || title,
                 description: updatedCard.description,
                 colorCode: updatedCard.colorCode,
-                assignees: updatedCard.assignees
+                assignees: updatedCard.assignees,
+                start_date: updatedCard.start_date,
+                end_date: updatedCard.end_date
               });
             }
             setIsModalOpen(false);
@@ -348,7 +360,9 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
             description,
             colorCode,
             assignees,
-            attachments: cardAttachments
+            attachments: cardAttachments,
+            start_date,
+            end_date
           }}
           isLoadingAttachments={isLoadingAttachments}
           userRole={userRole}

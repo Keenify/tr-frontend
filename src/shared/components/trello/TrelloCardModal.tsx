@@ -59,11 +59,30 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   readOnly = false,
   employees
 }) => {
+  // Debug logs for card data
+  console.log('Card received in TrelloCardModal:', card);
+  console.log('Card start_date:', card.start_date);
+  console.log('Card end_date:', card.end_date);
+
+  // Format date to YYYY-MM-DD for input
+  const formatDateForInput = (dateString?: string) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0];
+    } catch (error) {
+      console.error('Invalid date:', dateString);
+      return '';
+    }
+  };
+
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description || '');
-  const [colorCode, setColorCode] = useState(card.colorCode || '#ffffff');
+  const [colorCode, setColorCode] = useState(card.colorCode || card.color_code || '#ffffff');
   const [attachments, setAttachments] = useState<CardAttachment[]>([]);
   const [assignees, setAssignees] = useState<string[]>(card.assignees || []);
+  const [startDate, setStartDate] = useState(formatDateForInput(card.start_date));
+  const [endDate, setEndDate] = useState(formatDateForInput(card.end_date));
   const [isUploading, setIsUploading] = useState(false);
   const [isUpdatingAssignees, setIsUpdatingAssignees] = useState(false);
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
@@ -123,6 +142,12 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
     };
     fetchAttachments();
   }, [card.id]);
+
+  // Update dates when card changes
+  useEffect(() => {
+    setStartDate(formatDateForInput(card.start_date));
+    setEndDate(formatDateForInput(card.end_date));
+  }, [card]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setIsUploading(true);
@@ -222,9 +247,12 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       title,
       description,
       colorCode,
-      assignees
+      color_code: colorCode,
+      assignees,
+      start_date: startDate || undefined,
+      end_date: endDate || undefined
     };
-    console.log('Saving card with assignees:', assignees);
+    console.log('Saving card with dates:', { startDate, endDate });
     onSave(updatedCard);
     onClose();
   };
@@ -292,6 +320,45 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                     className="w-full px-3 py-2 border rounded-md min-h-[200px]"
                     disabled={readOnly}
                   />
+                </div>
+
+                {/* Add date fields */}
+                <div className="mb-6 grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-gray-700 text-sm font-bold mb-2">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-md"
+                      disabled={readOnly}
+                    />
+                    {startDate && (
+                      <div className="text-sm text-gray-500 mt-1">
+                        {new Date(startDate).toLocaleDateString()}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-gray-700 text-sm font-bold mb-2">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-md"
+                      disabled={readOnly}
+                      min={startDate} // Prevent end date being before start date
+                    />
+                    {endDate && (
+                      <div className="text-sm text-gray-500 mt-1">
+                        {new Date(endDate).toLocaleDateString()}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mb-6">
