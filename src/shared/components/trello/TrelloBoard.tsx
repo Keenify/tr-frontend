@@ -144,21 +144,15 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   useEffect(() => {
     const fetchEmployees = async () => {
       if (!companyInfo?.id) {
-        console.log('Company info not available yet');
         return;
       }
-      
-      console.log('Fetching employees for company:', companyInfo.id);
       
       try {
         // Use directoryService similar to OrgChart component
         const employeesData = await directoryService.fetchEmployees(companyInfo.id);
         
         if (employeesData && employeesData.length > 0) {
-          console.log('Employees fetched successfully:', employeesData);
           setEmployees(employeesData);
-        } else {
-          console.log('No employees found for company:', companyInfo.id);
         }
       } catch (error) {
         console.error('Exception when fetching employees:', error);
@@ -170,24 +164,9 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
     }
   }, [companyInfo]);
 
-  // Debug logging for session and company info
-  useEffect(() => {
-    if (session) {
-      console.log('Session available:', session.user.id);
-    } else {
-      console.log('No session available');
-    }
-    
-    if (companyInfo) {
-      console.log('Company info:', companyInfo);
-    }
-  }, [session, companyInfo]);
-
   // Use the employees data
   useEffect(() => {
-    if (employees.length > 0) {
-      console.log(`Found ${employees.length} employees for the board`);
-    }
+    // This effect is intentionally left empty
   }, [employees]);
 
   const handleAddListSubmit = (e: React.FormEvent) => {
@@ -202,18 +181,11 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
 
   // Handle card click to open modal
   const handleCardClick = (listId: string, card: Card) => {
-    console.log('Card clicked in TrelloBoard:', card);
-    console.log('Card start_date:', card.start_date);
-    console.log('Card end_date:', card.end_date);
     setSelectedCard({
       listId,
       card
     });
   };
-
-  // In the TrelloBoard component, add this after the initialLists log
-  console.log('TrelloBoard initialLists:', initialLists);
-  console.log('TrelloBoard lists with attachments:', lists);
 
   return (
     <div className="flex flex-col gap-4 h-full">
@@ -405,7 +377,6 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
           isOpen={true}
           onClose={() => setSelectedCard(null)}
           onSave={(updatedCard) => {
-            console.log('Saving updated card with dates:', updatedCard);
             handleCardUpdate(selectedCard.listId, selectedCard.card.id, updatedCard);
             setSelectedCard(null);
           }}

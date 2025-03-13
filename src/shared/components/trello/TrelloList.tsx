@@ -395,31 +395,23 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                     ${filteredCards.length === 0 ? 'border-2 border-dashed border-gray-300' : ''}
                   `}
                 >
-                  {filteredCards.map((card, cardIndex) => {
-                    console.log('Card in TrelloList:', card);
-                    return (
-                      <TrelloCard
-                        key={card.id}
-                        {...card}
-                        index={cardIndex}
-                        onDelete={() => onCardDelete?.(card.id)}
-                        onUpdate={(updatedCard) => onCardUpdate?.(card.id, {
-                          ...updatedCard,
-                          title: updatedCard.title || card.title
-                        })}
-                        userRole={userRole}
-                        onClick={() => {
-                          console.log('Card clicked in TrelloList:', card);
-                          console.log('Card start_date in TrelloList:', card.start_date);
-                          console.log('Card end_date in TrelloList:', card.end_date);
-                          onCardClick?.(card);
-                        }}
-                        employees={employees}
-                        assignees={card.assignees || []}
-                        attachments={card.attachments || []}
-                      />
-                    );
-                  })}
+                  {filteredCards.map((card, cardIndex) => (
+                    <TrelloCard
+                      key={card.id}
+                      {...card}
+                      index={cardIndex}
+                      onDelete={() => onCardDelete?.(card.id)}
+                      onUpdate={(updatedCard) => onCardUpdate?.(card.id, {
+                        ...updatedCard,
+                        title: updatedCard.title || card.title
+                      })}
+                      userRole={userRole}
+                      onClick={() => onCardClick?.(card)}
+                      employees={employees}
+                      assignees={card.assignees || []}
+                      attachments={card.attachments || []}
+                    />
+                  ))}
                   {dropProvided.placeholder}
                   {filteredCards.length === 0 && !snapshot.isDraggingOver && (
                     <div className="flex items-center justify-center h-full text-gray-400 text-sm">

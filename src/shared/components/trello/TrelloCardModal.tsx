@@ -59,11 +59,6 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   readOnly = false,
   employees
 }) => {
-  // Debug logs for card data
-  console.log('Card received in TrelloCardModal:', card);
-  console.log('Card start_date:', card.start_date);
-  console.log('Card end_date:', card.end_date);
-
   // Format date to YYYY-MM-DD for input
   const formatDateForInput = (dateString?: string) => {
     if (!dateString) return '';
@@ -119,7 +114,6 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
         // Extract just the employee IDs from the assignees
         const employeeIds = fetchedAssignees.map(assignee => assignee.employee_id);
         setAssignees(employeeIds);
-        console.log('Fetched assignees:', employeeIds);
       } catch (error) {
         console.error('Failed to fetch assignees:', error);
       }
@@ -151,8 +145,6 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     setIsUploading(true);
-    console.log('Card ID:', card.id);
-    console.log('Files to upload:', acceptedFiles);
     
     try {
       const uploadPromises = acceptedFiles.map(file => {
@@ -188,27 +180,21 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       
       if (assignees.includes(employeeId)) {
         // Unassign employee
-        console.log(`Unassigning employee ${employeeId} from card ${card.id}`);
         const success = await unassignEmployeeFromCard(card.id, employeeId);
         if (success) {
           setAssignees(prev => prev.filter(id => id !== employeeId));
           showToast(`${employeeName} unassigned from card`, 'success');
-          console.log('Unassign successful');
         } else {
           showToast(`Failed to unassign ${employeeName}`, 'error');
-          console.error('Unassign returned false');
         }
       } else {
         // Assign employee
-        console.log(`Assigning employee ${employeeId} to card ${card.id}`);
         const result = await assignEmployeeToCard(card.id, employeeId);
         if (result) {
           setAssignees(prev => [...prev, employeeId]);
           showToast(`${employeeName} assigned to card`, 'success');
-          console.log('Assign successful');
         } else {
           showToast(`Failed to assign ${employeeName}`, 'error');
-          console.error('Assign failed');
         }
       }
     } catch (error) {
@@ -252,7 +238,6 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       start_date: startDate || undefined,
       end_date: endDate || undefined
     };
-    console.log('Saving card with dates:', { startDate, endDate });
     onSave(updatedCard);
     onClose();
   };
