@@ -162,7 +162,8 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                 "One-word opener": "One-Word Opener",
                 "Wins(1 work + 1 personal)": "Wins (1 Work + 1 Personal)",
                 "I need critical help on": "I Need Critical Help On",
-                "Main Priority": "Main Priority for Today"
+                "Main Priority": "OKR",
+                "Today Goals and Targeted Results": "Top 3 Important Task Today"
               };
               
               const displayText = replacements[q.question_text] || q.question_text;

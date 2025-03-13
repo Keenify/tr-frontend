@@ -284,8 +284,8 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
       "One-word opener": "One-Word Opener",
       "Wins(1 work + 1 personal)": "Wins (1 Work + 1 Personal)",
       "I need critical help on": "I Need Critical Help On",
-      "Main Priority": "Main Priority for Today",
-      "Today Goals and Targeted Results": "Today Goals and Targeted Results?"
+      "Main Priority": "OKR",
+      "Today Goals and Targeted Results": "Top 3 Important Task Today"
     };
 
     return replacements[text] || text;
