@@ -1,4 +1,4 @@
-import { useState, RefObject, MutableRefObject } from 'react';
+import { useState, RefObject, MutableRefObject, useEffect } from 'react';
 import { useTooltipContext } from './useTooltip';
 
 interface TooltipPosition {
@@ -32,6 +32,7 @@ export function useTooltipGuidance<T>({
   const [activeId, setActiveId] = useState<T | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<TooltipPosition>({ top: 0, left: 0 });
   const [position, setPosition] = useState<'above' | 'below'>('below');
+  const [activeElement, setActiveElement] = useState<HTMLElement | null>(null);
 
   const calculateTooltipPosition = (inputRect: DOMRect): { top: number; left: number; position: 'above' | 'below' } => {
     const windowHeight = window.innerHeight;
@@ -64,29 +65,52 @@ export function useTooltipGuidance<T>({
       guidanceTimeoutRef.current = null;
     }
     
-    const rect = element.getBoundingClientRect();
-    const position = calculateTooltipPosition(rect);
-    
-    setTooltipPosition({
-      top: position.top,
-      left: position.left
-    });
-    setPosition(position.position);
-    setActiveId(id);
-    setActiveTooltipId(tooltipId);
+    // Small delay to ensure DOM is updated before calculating position
+    setTimeout(() => {
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        const position = calculateTooltipPosition(rect);
+        
+        setTooltipPosition({
+          top: position.top,
+          left: position.left
+        });
+        setPosition(position.position);
+        setActiveId(id);
+        setActiveElement(element);
+        setActiveTooltipId(tooltipId);
 
-    if (onShowGuidance) {
-      onShowGuidance(id);
-    }
+        if (onShowGuidance) {
+          onShowGuidance(id);
+        }
+      }
+    }, 10);
   };
   
   const handleInputBlur = () => {
     // Immediately hide the guidance window when focus leaves
     setActiveTooltipId(null);
+    setActiveElement(null);
   };
 
+  // Add a global focus/blur event listener to ensure tooltips are hidden when focus moves elsewhere
+  useEffect(() => {
+    const handleDocumentFocusChange = () => {
+      // If the active element is not the one we're tracking, hide the tooltip
+      if (activeElement && document.activeElement !== activeElement) {
+        setActiveTooltipId(null);
+      }
+    };
+
+    document.addEventListener('focusin', handleDocumentFocusChange);
+    
+    return () => {
+      document.removeEventListener('focusin', handleDocumentFocusChange);
+    };
+  }, [activeElement, setActiveTooltipId]);
+
   return {
-    showGuidance: activeTooltipId === tooltipId,
+    showGuidance: activeTooltipId === tooltipId && !!activeElement && document.activeElement === activeElement,
     activeId,
     tooltipPosition,
     position,

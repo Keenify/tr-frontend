@@ -293,25 +293,28 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
 
   // Update the useEffect for scroll handling
   useEffect(() => {
-    const handleScroll = () => {
-      if (showGuidance && activeQuestionId !== null && tooltipRef.current) {
+    const handleScrollOrResize = () => {
+      if (showGuidance && activeQuestionId !== null && tooltipRef.current && document.activeElement) {
         const questionElement = document.querySelector(`input[title="${questions.find(q => q.id === activeQuestionId)?.question_text}"]`);
         
-        if (questionElement) {
-          handleTooltipFocus(questionElement as HTMLElement, activeQuestionId);
+        if (questionElement && document.activeElement === questionElement) {
+          // Use a small timeout to ensure DOM is updated
+          setTimeout(() => {
+            handleTooltipFocus(questionElement as HTMLElement, activeQuestionId);
+          }, 10);
         }
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    window.addEventListener('resize', handleScroll);
+    window.addEventListener('scroll', handleScrollOrResize);
+    window.addEventListener('resize', handleScrollOrResize);
     
     // Call immediately to position correctly
-    handleScroll();
+    handleScrollOrResize();
     
     return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleScroll);
+      window.removeEventListener('scroll', handleScrollOrResize);
+      window.removeEventListener('resize', handleScrollOrResize);
     };
   }, [showGuidance, activeQuestionId, questions, handleTooltipFocus]);
 
@@ -414,7 +417,7 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
           ))}
 
           {/* Floating Guidance Window for regular inputs */}
-          {showGuidance && activeQuestionId !== null && (
+          {showGuidance && activeQuestionId !== null && document.activeElement && (
             <div 
               ref={tooltipRef}
               className={`goal-guidance-tooltip ${tooltipPosition === 'above' ? 'tooltip-above' : ''}`}
@@ -589,11 +592,13 @@ const GoalsInput: React.FC<{
     setLocalGoals(newGoals);
     onChange(newGoals);
     
-    // Focus on the new input field after state update
+    // Focus on the new input field after state update and trigger guidance
     setTimeout(() => {
       const newIndex = newGoals.length - 1;
       if (inputRefs.current[newIndex]) {
         inputRefs.current[newIndex]?.focus();
+        // Explicitly trigger the guidance tooltip for the new input
+        handleInputFocus(newIndex);
       }
     }, 0);
   };
@@ -606,11 +611,13 @@ const GoalsInput: React.FC<{
       setLocalGoals(newGoals);
       onChange(newGoals);
       
-      // Focus on the previous input or the next available one
+      // Focus on the previous input or the next available one and trigger guidance
       setTimeout(() => {
         const focusIndex = Math.min(index, newGoals.length - 1);
         if (inputRefs.current[focusIndex]) {
           inputRefs.current[focusIndex]?.focus();
+          // Explicitly trigger the guidance tooltip for the focused input
+          handleInputFocus(focusIndex);
         }
       }, 0);
     }
@@ -626,25 +633,28 @@ const GoalsInput: React.FC<{
 
   // Update the useEffect for scroll handling
   useEffect(() => {
-    const handleScroll = () => {
-      if (showGuidance && activeInputIndex !== null && tooltipRef.current) {
+    const handleScrollOrResize = () => {
+      if (showGuidance && activeInputIndex !== null && tooltipRef.current && document.activeElement) {
         const inputElement = inputRefs.current[activeInputIndex];
         
-        if (inputElement) {
-          handleTooltipFocus(inputElement, activeInputIndex);
+        if (inputElement && document.activeElement === inputElement) {
+          // Use a small timeout to ensure DOM is updated
+          setTimeout(() => {
+            handleTooltipFocus(inputElement, activeInputIndex);
+          }, 10);
         }
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    window.addEventListener('resize', handleScroll);
+    window.addEventListener('scroll', handleScrollOrResize);
+    window.addEventListener('resize', handleScrollOrResize);
     
     // Call immediately to position correctly
-    handleScroll();
+    handleScrollOrResize();
     
     return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleScroll);
+      window.removeEventListener('scroll', handleScrollOrResize);
+      window.removeEventListener('resize', handleScrollOrResize);
     };
   }, [showGuidance, activeInputIndex, handleTooltipFocus]);
   
@@ -681,6 +691,15 @@ const GoalsInput: React.FC<{
               } else if (e.key === 'Backspace' && goal === '' && localGoals.length > 1) {
                 e.preventDefault();
                 removeGoal(index);
+              } else if (e.key === 'Tab') {
+                // When tabbing between inputs, ensure guidance appears for the next input
+                // The browser will handle the actual focus change
+                setTimeout(() => {
+                  const activeIndex = inputRefs.current.findIndex(ref => ref === document.activeElement);
+                  if (activeIndex >= 0) {
+                    handleInputFocus(activeIndex);
+                  }
+                }, 0);
               }
             }}
             placeholder={`Goal ${index + 1}`}
@@ -700,7 +719,7 @@ const GoalsInput: React.FC<{
       ))}
       
       {/* Floating Guidance Window */}
-      {showGuidance && activeInputIndex !== null && (
+      {showGuidance && activeInputIndex !== null && document.activeElement && (
         <div 
           ref={tooltipRef}
           className={`goal-guidance-tooltip ${tooltipPosition === 'above' ? 'tooltip-above' : ''}`}
