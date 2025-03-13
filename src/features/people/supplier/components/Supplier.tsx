@@ -345,11 +345,11 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
                 <table className="w-full bg-white shadow-md rounded-lg overflow-hidden table-fixed">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="w-1/4 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Category
                       </th>
                       <th 
-                        className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        className="w-1/4 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                         onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                       >
                         Company Name
@@ -357,13 +357,13 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
                           {sortOrder === 'asc' ? '↑' : '↓'}
                         </span>
                       </th>
-                      <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="w-1/4 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Contact Person
                       </th>
-                      <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="w-1/4 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Contact Phone
                       </th>
-                      <th className="w-1/4 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="w-1/4 px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Contact Email
                       </th>
                     </tr>
@@ -376,31 +376,33 @@ const Supplier: React.FC<SupplierProps> = ({ session }) => {
                         onClick={() => handleOpenSupplierModal(supplier)}
                       >
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900 break-words">{supplier.category}</div>
+                          <div className="text-sm text-gray-900 break-words text-center">{supplier.category}</div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900 break-words">
+                          <div className="text-sm font-medium text-gray-900 break-words text-center">
                             {supplier.supplier_company_name}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900 break-words">{supplier.contact_person_name}</div>
-                        </td>
-                        <td className="px-6 py-4 flex items-center justify-between">
-                          <div className="text-sm text-gray-900 break-words">{supplier.contact_person_phone}</div>
-                          {supplier.contact_person_phone && supplier.contact_person_phone !== 'NA' && (
-                            <FaWhatsapp 
-                              className="text-green-500 cursor-pointer hover:text-green-600" 
-                              size={18}
-                              onClick={(e) => {
-                                e.stopPropagation(); // Prevent row click
-                                handleWhatsAppClick(supplier.contact_person_phone);
-                              }}
-                            />
-                          )}
+                          <div className="text-sm text-gray-900 break-words text-center">{supplier.contact_person_name}</div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900 break-words">{supplier.contact_person_email}</div>
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm text-gray-900 break-words text-center flex-grow">{supplier.contact_person_phone}</div>
+                            {supplier.contact_person_phone && supplier.contact_person_phone !== 'NA' && (
+                              <FaWhatsapp 
+                                className="text-green-500 cursor-pointer hover:text-green-600 ml-2" 
+                                size={18}
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent row click
+                                  handleWhatsAppClick(supplier.contact_person_phone);
+                                }}
+                              />
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900 break-words text-center">{supplier.contact_person_email}</div>
                         </td>
                       </tr>
                     ))}
