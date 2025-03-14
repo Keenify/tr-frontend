@@ -92,6 +92,9 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
     const fetchCalendarEvents = async () => {
       if (!companyInfo?.id) return;
       
+      // Set loading to true when date changes to show loading state
+      setLoading(true);
+      
       try {
         // Create date range for the selected date (full day)
         const selectedDateObj = new Date(selectedDate);
@@ -107,9 +110,15 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
           endDate.toISOString()
         );
         
+        // Clear previous events and set new ones
         setCalendarEvents(events as CalendarEvent[]);
       } catch (error) {
         console.error("Failed to fetch calendar events:", error);
+      } finally {
+        // Set loading to false after fetching calendar events
+        if (companyInfo && employeeResponses) {
+          setLoading(false);
+        }
       }
     };
     
@@ -117,12 +126,38 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
   }, [companyInfo?.id, selectedDate]);
 
   /**
+   * Reset component state when date changes
+   */
+  React.useEffect(() => {
+    // Reset state when date changes
+    setLoading(true);
+    
+    // Reset calendar events
+    setCalendarEvents([]);
+    
+    // The employeeResponses will be automatically refreshed by the useEmployeeResponses hook
+    // since it depends on the selectedDate
+  }, [selectedDate]);
+
+  /**
+   * Handle date change in the date picker
+   * @param e - Change event from the date input
+   */
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDate = e.target.value;
+    setSelectedDate(newDate);
+  };
+
+  /**
    * Checks if an employee is on leave for the selected date
    * @param employeeName - The name of the employee to check
    * @returns boolean indicating if the employee is on leave
    */
   const isEmployeeOnLeave = (employeeName: string): boolean => {
-    if (!calendarEvents.length) return false;
+    if (!calendarEvents || !calendarEvents.length) return false;
+    
+    // Get the selected date in YYYY-MM-DD format for comparison
+    const selectedDateStr = selectedDate;
     
     // Find leave events for this employee
     return calendarEvents.some(event => {
@@ -139,7 +174,20 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
       const description = event.description?.toLowerCase() || '';
       const isApproved = !description.includes('pending') && !description.includes('rejected');
       
-      return matchesEmployee && isApproved;
+      // Check if the event is for the selected date
+      const eventStartDate = new Date(event.start_time);
+      const eventEndDate = new Date(event.end_time);
+      const selectedDateObj = new Date(selectedDateStr);
+      
+      // Set hours to noon to avoid timezone issues
+      selectedDateObj.setHours(12, 0, 0, 0);
+      
+      // Check if the selected date falls within the event date range
+      const isWithinDateRange = 
+        selectedDateObj >= new Date(eventStartDate.setHours(0, 0, 0, 0)) && 
+        selectedDateObj <= new Date(eventEndDate.setHours(23, 59, 59, 999));
+      
+      return matchesEmployee && isApproved && isWithinDateRange;
     });
   };
 
@@ -252,14 +300,41 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
 
   if (loading) {
     return (
-      <div className="loading-center">
-        <ClipLoader size={50} color={"#007BFF"} loading={loading} />
+      <div className="response-container">
+        <div className="date-picker-container">
+          <label htmlFor="datePicker" className="date-picker-label">Select Date: </label>
+          <input
+            type="date"
+            id="datePicker"
+            value={selectedDate}
+            onChange={handleDateChange}
+            className="date-picker"
+          />
+        </div>
+        <div className="loading-center">
+          <ClipLoader size={50} color={"#007BFF"} loading={loading} />
+          <p className="loading-text">Loading data for {selectedDate}...</p>
+        </div>
       </div>
     );
   }
 
   if (error || dataError) {
-    return <div className="error-message">Error loading employee responses: {error?.message || dataError?.message}</div>;
+    return (
+      <div className="response-container">
+        <div className="date-picker-container">
+          <label htmlFor="datePicker" className="date-picker-label">Select Date: </label>
+          <input
+            type="date"
+            id="datePicker"
+            value={selectedDate}
+            onChange={handleDateChange}
+            className="date-picker"
+          />
+        </div>
+        <div className="error-message">Error loading employee responses: {error?.message || dataError?.message}</div>
+      </div>
+    );
   }
 
   // Filter out backup employees and add empty response object if needed
@@ -324,7 +399,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
           type="date"
           id="datePicker"
           value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
+          onChange={handleDateChange}
           className="date-picker"
         />
       </div>

@@ -218,9 +218,18 @@ td.col-one-word {
 
 .loading-center {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  height: 300px;
+  width: 100%;
+}
+
+.loading-text {
+  margin-top: 15px;
+  color: #6c757d;
+  font-size: 1rem;
+  text-align: center;
 }
 
 .error-message {
