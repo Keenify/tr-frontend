@@ -274,6 +274,8 @@ td.col-one-word {
   gap: 8px;
   padding: 4px 0;
   width: 100%;
+  position: relative;
+  z-index: 5;
 }
 
 .response-table td .profile-pic {
@@ -305,4 +307,464 @@ td.col-one-word {
   white-space: normal;
   word-break: break-word;
   text-align: left;
+  margin-bottom: 2px;
+}
+
+/* Top submitter badges */
+.member-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.top-submitter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-top: 4px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+  max-width: none; /* Remove width restriction */
+}
+
+.top-submitter-first {
+  background: linear-gradient(135deg, #ffd700, #ffec8b, #ffd700);
+  color: #8b6914;
+  border: 1px solid #daa520;
+  animation: shine-gold 2s infinite, pulse-gold 1.5s infinite;
+}
+
+.top-submitter-first::before {
+  content: "🏆";
+  margin-right: 3px;
+  font-size: 0.8rem;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.top-submitter-second {
+  background: linear-gradient(135deg, #c0c0c0, #e6e6e6, #c0c0c0);
+  color: #4f4f4f;
+  border: 1px solid #a9a9a9;
+  animation: shine-silver 2s infinite, pulse-silver 1.5s infinite;
+}
+
+.top-submitter-second::before {
+  content: "🥈";
+  margin-right: 3px;
+  font-size: 0.8rem;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.top-submitter-third {
+  background: linear-gradient(135deg, #cd7f32, #daa06d, #cd7f32);
+  color: #6b4226;
+  border: 1px solid #8b5a2b;
+  animation: shine-bronze 2s infinite, pulse-bronze 1.5s infinite;
+}
+
+.top-submitter-third::before {
+  content: "🥉";
+  margin-right: 3px;
+  font-size: 0.8rem;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Row highlighting for top performers */
+tr.top-performer-1 {
+  background: linear-gradient(to right, rgba(255, 215, 0, 0.05), rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05)) !important;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+tr.top-performer-2 {
+  background: linear-gradient(to right, rgba(192, 192, 192, 0.05), rgba(192, 192, 192, 0.1), rgba(192, 192, 192, 0.05)) !important;
+  box-shadow: 0 0 8px rgba(192, 192, 192, 0.2);
+}
+
+tr.top-performer-3 {
+  background: linear-gradient(to right, rgba(205, 127, 50, 0.05), rgba(205, 127, 50, 0.1), rgba(205, 127, 50, 0.05)) !important;
+  box-shadow: 0 0 6px rgba(205, 127, 50, 0.2);
+}
+
+/* Pulse animations for badges */
+@keyframes pulse-gold {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse-silver {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse-bronze {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Enhanced shine animations */
+@keyframes shine-gold {
+  0% {
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+    background-position: 0% 50%;
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.7);
+    background-position: 100% 50%;
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes shine-silver {
+  0% {
+    box-shadow: 0 0 5px rgba(192, 192, 192, 0.3);
+    background-position: 0% 50%;
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(192, 192, 192, 0.7);
+    background-position: 100% 50%;
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(192, 192, 192, 0.3);
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes shine-bronze {
+  0% {
+    box-shadow: 0 0 5px rgba(205, 127, 50, 0.3);
+    background-position: 0% 50%;
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(205, 127, 50, 0.7);
+    background-position: 100% 50%;
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(205, 127, 50, 0.3);
+    background-position: 0% 50%;
+  }
+}
+
+/* Submission time styling */
+.submission-time {
+  display: inline-block;
+  padding: 5px;
+  border-radius: 6px;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+.submission-time-rank-1 {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.25));
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  font-weight: bold;
+  color: #8b6914;
+  box-shadow: 0 2px 4px rgba(255, 215, 0, 0.2);
+  position: relative;
+  animation: glow-gold 2s infinite;
+}
+
+.submission-time-rank-1::before {
+  content: "⚡";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  font-size: 0.9rem;
+}
+
+.submission-time-rank-2 {
+  background: linear-gradient(135deg, rgba(192, 192, 192, 0.15), rgba(192, 192, 192, 0.25));
+  border: 1px solid rgba(192, 192, 192, 0.4);
+  font-weight: bold;
+  color: #4f4f4f;
+  box-shadow: 0 2px 4px rgba(192, 192, 192, 0.2);
+  animation: glow-silver 2s infinite;
+}
+
+.submission-time-rank-3 {
+  background: linear-gradient(135deg, rgba(205, 127, 50, 0.15), rgba(205, 127, 50, 0.25));
+  border: 1px solid rgba(205, 127, 50, 0.4);
+  font-weight: bold;
+  color: #6b4226;
+  box-shadow: 0 2px 4px rgba(205, 127, 50, 0.2);
+  animation: glow-bronze 2s infinite;
+}
+
+@keyframes glow-gold {
+  0% {
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+  }
+}
+
+@keyframes glow-silver {
+  0% {
+    box-shadow: 0 0 4px rgba(192, 192, 192, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 8px rgba(192, 192, 192, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 4px rgba(192, 192, 192, 0.3);
+  }
+}
+
+@keyframes glow-bronze {
+  0% {
+    box-shadow: 0 0 3px rgba(205, 127, 50, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 6px rgba(205, 127, 50, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 3px rgba(205, 127, 50, 0.3);
+  }
+}
+
+/* Number column styling for top performers */
+.number-rank-1, .number-rank-2, .number-rank-3 {
+  font-weight: bold;
+}
+
+.number-rank-1 {
+  color: #8b6914;
+}
+
+.number-rank-2 {
+  color: #4f4f4f;
+}
+
+.number-rank-3 {
+  color: #6b4226;
+}
+
+/* Top performers section */
+.top-performers-section {
+  margin-bottom: 30px;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #dee2e6;
+}
+
+.top-performers-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #343a40;
+  text-align: center;
+  position: relative;
+}
+
+.top-performers-title::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, #ffd700, #c0c0c0, #cd7f32);
+  margin: 8px auto 0;
+  border-radius: 2px;
+}
+
+.top-performers-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+}
+
+.top-performer-card {
+  width: 280px;
+  padding: 15px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.top-performer-card:hover {
+  transform: translateY(-5px);
+}
+
+.top-performer-card.rank-1 {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.2));
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+}
+
+.top-performer-card.rank-2 {
+  background: linear-gradient(135deg, rgba(192, 192, 192, 0.1), rgba(192, 192, 192, 0.2));
+  border: 1px solid rgba(192, 192, 192, 0.3);
+  box-shadow: 0 4px 12px rgba(192, 192, 192, 0.2);
+}
+
+.top-performer-card.rank-3 {
+  background: linear-gradient(135deg, rgba(205, 127, 50, 0.1), rgba(205, 127, 50, 0.2));
+  border: 1px solid rgba(205, 127, 50, 0.3);
+  box-shadow: 0 4px 10px rgba(205, 127, 50, 0.2);
+}
+
+.performer-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.performer-pic {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.performer-pic img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.performer-pic-placeholder {
+  width: 100%;
+  height: 100%;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  font-size: 1.2rem;
+  color: #555;
+}
+
+.performer-details {
+  flex: 1;
+}
+
+.performer-name {
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 4px;
+  color: #343a40;
+}
+
+.performer-time {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.motivational-message {
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-top: 10px;
+  position: relative;
+}
+
+.motivational-message::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+}
+
+.motivational-message.rank-1 {
+  background-color: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: #8b6914;
+}
+
+.motivational-message.rank-1::before {
+  border-bottom: 8px solid rgba(255, 215, 0, 0.3);
+}
+
+.motivational-message.rank-2 {
+  background-color: rgba(192, 192, 192, 0.1);
+  border: 1px solid rgba(192, 192, 192, 0.3);
+  color: #4f4f4f;
+}
+
+.motivational-message.rank-2::before {
+  border-bottom: 8px solid rgba(192, 192, 192, 0.3);
+}
+
+.motivational-message.rank-3 {
+  background-color: rgba(205, 127, 50, 0.1);
+  border: 1px solid rgba(205, 127, 50, 0.3);
+  color: #6b4226;
+}
+
+.motivational-message.rank-3::before {
+  border-bottom: 8px solid rgba(205, 127, 50, 0.3);
+}
+
+/* Fix for the first row to ensure proper layout */
+.response-table tr:first-child td {
+  position: relative;
+  z-index: 3;
+}
+
+/* Ensure table cells have proper z-index */
+.response-table td {
+  position: relative;
+  z-index: 2;
+}
+
+/* Ensure profile pics and content are above confetti */
+.response-table .profile-pic,
+.response-table .member-name,
+.response-table .submission-time {
+  position: relative;
+  z-index: 4;
+}
+
+/* Fix for any remaining layout issues */
+.response-table tr td {
+  vertical-align: middle;
 }

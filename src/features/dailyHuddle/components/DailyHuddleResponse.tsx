@@ -36,6 +36,16 @@ const getEffectiveDate = (): string => {
   return now.toISOString().split('T')[0];
 };
 
+// Interface for employee response with rank
+interface RankedEmployeeResponse {
+  id: string;
+  name: string;
+  response: any;
+  submittedTime?: string;
+  profile_pic_url?: string | null;
+  rank?: number; // Rank based on submission time (1, 2, or 3 for top 3)
+}
+
 /**
  * DailyHuddleResponse Component
  * 
@@ -143,9 +153,10 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
    * Formats a date string into a readable date and time format
    * @param dateString - ISO date string
    * @param employeeName - The name of the employee
+   * @param rank - The rank of the employee (1, 2, or 3 for top 3)
    * @returns Formatted date and time string or "Team member is on leave" if applicable
    */
-  const formatSubmissionTime = (dateString: string | undefined, employeeName: string) => {
+  const formatSubmissionTime = (dateString: string | undefined, employeeName: string, rank?: number) => {
     // Check if employee is on leave for the selected date
     if (isEmployeeOnLeave(employeeName)) {
       return <span className="employee-on-leave">Team member is on leave</span>;
@@ -174,17 +185,69 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
         hour12: true 
       }).toLowerCase(); // Convert to lowercase for "pm" instead of "PM"
       
-      // Return date and time on separate lines
+      // Add visual indicator for top 3 earliest submissions
+      const timeClass = rank && rank <= 3 ? `submission-time-rank-${rank}` : '';
+      
+      // Return date and time on separate lines with appropriate styling
       return (
-        <>
+        <div className={`submission-time ${timeClass}`}>
           {formattedDate}<br />
           {formattedTime}
-        </>
+        </div>
       );
     } catch (error) {
       console.error("Error formatting date:", error);
       return 'Invalid date';
     }
+  };
+
+  /**
+   * Renders a badge for top submitters
+   * @param rank - The rank of the employee (1, 2, or 3)
+   * @returns JSX element with the appropriate badge
+   */
+  const renderTopSubmitterBadge = (rank: number) => {
+    if (!rank || rank > 3) return null;
+    
+    const badgeClasses = {
+      1: 'top-submitter-badge top-submitter-first',
+      2: 'top-submitter-badge top-submitter-second',
+      3: 'top-submitter-badge top-submitter-third'
+    };
+    
+    // Simplified badge labels
+    const badgeLabels = {
+      1: '1st',
+      2: '2nd',
+      3: '3rd'
+    };
+    
+    return (
+      <span className={badgeClasses[rank as keyof typeof badgeClasses]}>
+        {badgeLabels[rank as keyof typeof badgeLabels]}
+      </span>
+    );
+  };
+
+  /**
+   * Renders a motivational message for top performers
+   * @param rank - The rank of the employee (1, 2, or 3)
+   * @returns JSX element with a motivational message
+   */
+  const renderMotivationalMessage = (rank: number) => {
+    if (!rank || rank > 3) return null;
+    
+    const messages = {
+      1: "Incredible! You're leading the team with your promptness! 🌟",
+      2: "Amazing work! You're setting a great example for the team! ✨",
+      3: "Excellent! Your commitment to timely updates is noticed! 👏"
+    };
+    
+    return (
+      <div className={`motivational-message rank-${rank}`}>
+        {messages[rank as keyof typeof messages]}
+      </div>
+    );
   };
 
   if (loading) {
@@ -199,12 +262,59 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
     return <div className="error-message">Error loading employee responses: {error?.message || dataError?.message}</div>;
   }
 
-  const allResponses = employeeResponses
+  // Filter out backup employees and add empty response object if needed
+  const filteredResponses = employeeResponses
     .filter(emp => !emp.name.toLowerCase().includes('backup'))
     .map(emp => ({
       ...emp,
       response: emp.response || { questions: [] }
     }));
+
+  // Sort employees by submission time and assign ranks to top 3
+  const rankedResponses: RankedEmployeeResponse[] = [...filteredResponses]
+    .filter(emp => emp.submittedTime && !isEmployeeOnLeave(emp.name)) // Only consider employees who submitted and are not on leave
+    .sort((a, b) => {
+      // Sort by submission time (earliest first)
+      if (!a.submittedTime) return 1;
+      if (!b.submittedTime) return -1;
+      return new Date(a.submittedTime).getTime() - new Date(b.submittedTime).getTime();
+    })
+    .map((emp, index) => {
+      // Assign rank to top 3
+      return {
+        ...emp,
+        rank: index < 3 ? index + 1 : undefined
+      };
+    });
+
+  // Create a map of employee IDs to their ranks for easy lookup
+  const rankMap = new Map<string, number>();
+  rankedResponses.forEach(emp => {
+    if (emp.rank) {
+      rankMap.set(emp.id, emp.rank);
+    }
+  });
+
+  // Final list of all responses with rank information
+  // Sort all responses by submission time (earliest first), then put non-submitted at the end
+  const allResponses = filteredResponses
+    .map(emp => ({
+      ...emp,
+      rank: rankMap.get(emp.id)
+    }))
+    .sort((a, b) => {
+      // If both have submitted, sort by submission time
+      if (a.submittedTime && b.submittedTime) {
+        return new Date(a.submittedTime).getTime() - new Date(b.submittedTime).getTime();
+      }
+      
+      // If only one has submitted, put the one who submitted first
+      if (a.submittedTime && !b.submittedTime) return -1;
+      if (!a.submittedTime && b.submittedTime) return 1;
+      
+      // If neither has submitted, maintain original order
+      return 0;
+    });
 
   return (
     <div className="response-container">
@@ -218,6 +328,43 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
           className="date-picker"
         />
       </div>
+      
+      {/* Motivational section for top performers */}
+      {allResponses.some(emp => emp.rank && emp.rank <= 3) && (
+        <div className="top-performers-section">
+          <h4 className="top-performers-title">Today's Early Birds 🕊️</h4>
+          <div className="top-performers-list">
+            {allResponses
+              .filter(emp => emp.rank && emp.rank <= 3)
+              .sort((a, b) => (a.rank || 0) - (b.rank || 0))
+              .map(emp => (
+                <div key={emp.id} className={`top-performer-card rank-${emp.rank}`}>
+                  <div className="performer-info">
+                    <div className="performer-pic">
+                      {emp.profile_pic_url ? (
+                        <img src={emp.profile_pic_url} alt={emp.name} />
+                      ) : (
+                        <div className="performer-pic-placeholder">{emp.name.charAt(0)}</div>
+                      )}
+                    </div>
+                    <div className="performer-details">
+                      <div className="performer-name">{emp.name}</div>
+                      <div className="performer-time">
+                        {emp.submittedTime && new Date(emp.submittedTime).toLocaleTimeString([], { 
+                          hour: '2-digit', 
+                          minute: '2-digit',
+                          hour12: true 
+                        }).toLowerCase()}
+                      </div>
+                    </div>
+                  </div>
+                  {renderMotivationalMessage(emp.rank as number)}
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+      
       <h3 className="response-title">Submitted Responses</h3>
       <table className="response-table">
         <thead>
@@ -255,13 +402,18 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
           </tr>
         </thead>
         <tbody>
-          {allResponses.map(({ id, name, response, submittedTime, profile_pic_url }, index) => {
+          {allResponses.map(({ id, name, response, submittedTime, profile_pic_url, rank }, index) => {
             // Check if employee is on leave
             const onLeave = isEmployeeOnLeave(name);
             
+            // Determine row class based on rank
+            const rowClass = rank && rank <= 3 ? `top-performer-${rank}` : '';
+            
             return (
-              <tr key={id}>
-                <td>{index + 1}</td>
+              <tr key={id} className={rowClass}>
+                <td className={rank && rank <= 3 ? `number-rank-${rank}` : ''}>
+                  {index + 1}
+                </td>
                 <td>
                   <div className="team-member-cell">
                     {/* Profile Picture */}
@@ -277,8 +429,11 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                         </div>
                       )}
                     </div>
-                    {/* Name */}
-                    <span className="member-name">{name}</span>
+                    {/* Name and Badge */}
+                    <div className="member-info">
+                      <span className="member-name">{name}</span>
+                      {renderTopSubmitterBadge(rank as number)}
+                    </div>
                   </div>
                 </td>
                 
@@ -330,7 +485,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                       );
                     })}
                     <td className="submitted-time col-submitted">
-                      {formatSubmissionTime(submittedTime, name)}
+                      {formatSubmissionTime(submittedTime, name, rank as number)}
                     </td>
                   </>
                 )}
