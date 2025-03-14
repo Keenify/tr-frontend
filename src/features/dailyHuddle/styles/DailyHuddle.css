@@ -239,3 +239,27 @@ td.col-one-word {
   white-space: normal;
   word-break: keep-all;
 }
+
+/* Style for employee on leave indicator */
+.employee-on-leave {
+  display: inline-block;
+  color: #e67e22;
+  font-weight: 500;
+  background-color: #fff3e0;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid #ffcc80;
+  font-size: 0.9em;
+  line-height: 1.2;
+  white-space: normal;
+  width: auto;
+}
+
+/* Style for the merged cell when employee is on leave */
+.employee-on-leave-cell {
+  text-align: center !important;
+  vertical-align: middle !important;
+  background-color: #fffaf3 !important;
+  height: 100% !important;
+  padding: 12px !important;
+}

@@ -7,6 +7,8 @@ import { ClipLoader } from 'react-spinners';
 import { Question } from '../types/huddle.types';
 import { CUTOFF_HOUR } from '../constants';
 import '../styles/DailyHuddle.css';
+import { getCompanyCalendarEvents } from '../../people/calendar/services/useCalendar';
+import { CalendarEvent } from '../../people/calendar/types/calendar';
 
 interface DailyHuddleResponseProps {
   session: Session;
@@ -51,6 +53,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
   const [selectedDate, setSelectedDate] = React.useState(getEffectiveDate());
   const { companyInfo, error: dataError } = useUserAndCompanyData(session.user.id);
   const { employeeResponses, error } = useEmployeeResponses(companyInfo?.id, selectedDate);
+  const [calendarEvents, setCalendarEvents] = React.useState<CalendarEvent[]>([]);
 
   /**
    * Initializes the component by fetching questions and employee responses.
@@ -72,6 +75,64 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
     initialize();
   }, [companyInfo, employeeResponses]);
 
+  /**
+   * Fetch calendar events when the selected date changes
+   */
+  React.useEffect(() => {
+    const fetchCalendarEvents = async () => {
+      if (!companyInfo?.id) return;
+      
+      try {
+        // Create date range for the selected date (full day)
+        const selectedDateObj = new Date(selectedDate);
+        const startDate = new Date(selectedDateObj);
+        startDate.setHours(0, 0, 0, 0);
+        
+        const endDate = new Date(selectedDateObj);
+        endDate.setHours(23, 59, 59, 999);
+        
+        const events = await getCompanyCalendarEvents(
+          companyInfo.id,
+          startDate.toISOString(),
+          endDate.toISOString()
+        );
+        
+        setCalendarEvents(events as CalendarEvent[]);
+      } catch (error) {
+        console.error("Failed to fetch calendar events:", error);
+      }
+    };
+    
+    fetchCalendarEvents();
+  }, [companyInfo?.id, selectedDate]);
+
+  /**
+   * Checks if an employee is on leave for the selected date
+   * @param employeeName - The name of the employee to check
+   * @returns boolean indicating if the employee is on leave
+   */
+  const isEmployeeOnLeave = (employeeName: string): boolean => {
+    if (!calendarEvents.length) return false;
+    
+    // Find leave events for this employee
+    return calendarEvents.some(event => {
+      // Check if it's a leave event
+      const isLeaveEvent = ['sick_leave', 'timeoff', 'annual_leave'].includes(event.event_type.toLowerCase());
+      
+      if (!isLeaveEvent) return false;
+      
+      // Check if the event is for this employee (title format: "Leave Request - Employee Name")
+      const eventEmployeeName = event.title.split(' - ')[1] || '';
+      const matchesEmployee = eventEmployeeName.toLowerCase() === employeeName.toLowerCase();
+      
+      // Check if the event is approved (not pending or rejected)
+      const description = event.description?.toLowerCase() || '';
+      const isApproved = !description.includes('pending') && !description.includes('rejected');
+      
+      return matchesEmployee && isApproved;
+    });
+  };
+
   // Helper function to capitalize the first letter of a string
   const capitalizeFirstLetter = (string: string) => {
     if (!string) return '';
@@ -81,9 +142,15 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
   /**
    * Formats a date string into a readable date and time format
    * @param dateString - ISO date string
-   * @returns Formatted date and time string (e.g., "10 Mar\n08:10pm")
+   * @param employeeName - The name of the employee
+   * @returns Formatted date and time string or "Team member is on leave" if applicable
    */
-  const formatSubmissionTime = (dateString: string | undefined) => {
+  const formatSubmissionTime = (dateString: string | undefined, employeeName: string) => {
+    // Check if employee is on leave for the selected date
+    if (isEmployeeOnLeave(employeeName)) {
+      return <span className="employee-on-leave">Team member is on leave</span>;
+    }
+    
     if (!dateString) return 'Not submitted';
     
     try {
@@ -188,54 +255,70 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
           </tr>
         </thead>
         <tbody>
-          {allResponses.map(({ id, name, response, submittedTime }, index) => (
-            <tr key={id}>
-              <td>{index + 1}</td>
-              <td>{name}</td>
-              {questions.map((q, qIndex) => {
-                // Determine column class based on question type
-                let columnClass = '';
-                if (q.question_text.includes('need critical help')) {
-                  columnClass = 'col-help';
-                } else if (q.question_text.includes('One-word opener')) {
-                  columnClass = 'col-one-word';
-                } else if (q.question_text.includes('Today Goals and Targeted Results')) {
-                  columnClass = 'col-goals';
-                } else if (q.question_text.includes('Main Priority')) {
-                  columnClass = 'col-priority';
-                } else {
-                  columnClass = 'col-wins';
-                }
+          {allResponses.map(({ id, name, response, submittedTime }, index) => {
+            // Check if employee is on leave
+            const onLeave = isEmployeeOnLeave(name);
+            
+            return (
+              <tr key={id}>
+                <td>{index + 1}</td>
+                <td>{name}</td>
                 
-                return (
-                  <td key={qIndex} className={columnClass}>
-                    {response.questions.find((rq) => rq.question_id === q.id)?.answer_text?.split('\n').map((line, i) => {
-                      const isGoalOrResult = q.question_text.includes('Today Goals') || q.question_text.includes('Targeted Results');
-                      const isOneWord = q.question_text.includes('One-word opener');
-                      
-                      // Capitalize the first letter of each line
-                      const capitalizedLine = capitalizeFirstLetter(line);
-                      
-                      // For one-word opener, don't add line breaks and ensure full display
-                      if (isOneWord) {
-                        return <span className="one-word-text">{capitalizedLine}</span>;
+                {onLeave ? (
+                  // If employee is on leave, merge all remaining cells
+                  <td colSpan={questions.length + 1} className="employee-on-leave-cell">
+                    <span className="employee-on-leave">Team member is on leave</span>
+                  </td>
+                ) : (
+                  // If not on leave, render normal cells
+                  <>
+                    {questions.map((q, qIndex) => {
+                      // Determine column class based on question type
+                      let columnClass = '';
+                      if (q.question_text.includes('need critical help')) {
+                        columnClass = 'col-help';
+                      } else if (q.question_text.includes('One-word opener')) {
+                        columnClass = 'col-one-word';
+                      } else if (q.question_text.includes('Today Goals and Targeted Results')) {
+                        columnClass = 'col-goals';
+                      } else if (q.question_text.includes('Main Priority')) {
+                        columnClass = 'col-priority';
+                      } else {
+                        columnClass = 'col-wins';
                       }
                       
                       return (
-                        <React.Fragment key={i}>
-                          {isGoalOrResult ? `• ${capitalizedLine}` : capitalizedLine}
-                          <br />
-                        </React.Fragment>
+                        <td key={qIndex} className={columnClass}>
+                          {response.questions.find((rq) => rq.question_id === q.id)?.answer_text?.split('\n').map((line, i) => {
+                            const isGoalOrResult = q.question_text.includes('Today Goals') || q.question_text.includes('Targeted Results');
+                            const isOneWord = q.question_text.includes('One-word opener');
+                            
+                            // Capitalize the first letter of each line
+                            const capitalizedLine = capitalizeFirstLetter(line);
+                            
+                            // For one-word opener, don't add line breaks and ensure full display
+                            if (isOneWord) {
+                              return <span className="one-word-text">{capitalizedLine}</span>;
+                            }
+                            
+                            return (
+                              <React.Fragment key={i}>
+                                {isGoalOrResult ? `• ${capitalizedLine}` : capitalizedLine}
+                                <br />
+                              </React.Fragment>
+                            );
+                          }) || ''}
+                        </td>
                       );
-                    }) || ''}
-                  </td>
-                );
-              })}
-              <td className="submitted-time col-submitted">
-                {formatSubmissionTime(submittedTime)}
-              </td>
-            </tr>
-          ))}
+                    })}
+                    <td className="submitted-time col-submitted">
+                      {formatSubmissionTime(submittedTime, name)}
+                    </td>
+                  </>
+                )}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
