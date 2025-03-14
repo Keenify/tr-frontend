@@ -17,6 +17,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     const [collapsedRows, setCollapsedRows] = useState<Set<number>>(new Set());
     const [customerCompanyName, setCustomerCompanyName] = useState<string>('');
     const [salesAccountManager, setSalesAccountManager] = useState<string>('');
+    const [showFOBPricePerUnit, setShowFOBPricePerUnit] = useState<boolean>(true);
     const currentDate = new Date().toLocaleDateString("en-GB", {
         day: "2-digit",
         month: "long",
@@ -144,7 +145,10 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
             },
             customerCompanyName,
             currentDate,
-            sales_account_manager: salesAccountManager
+            sales_account_manager: salesAccountManager,
+            tableSettings: {
+                showFOBPricePerUnit: showFOBPricePerUnit
+            }
         };
 
         // Log the payload being sent to the backend
@@ -180,6 +184,32 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
         });
     };
 
+    // Function to toggle FOB Price/Unit visibility
+    const toggleFOBPricePerUnit = () => {
+        setShowFOBPricePerUnit(prev => !prev);
+    };
+
+    // Get the columns to display based on the toggle state
+    const getTableColumns = () => {
+        const baseColumns = [
+            'container_size',
+            'cartons_per_container',
+            'pack_size_per_carton',
+            'fob_price_per_carton',
+            'recommended_retail_price_usd'
+        ];
+        
+        if (showFOBPricePerUnit) {
+            // Insert 'fob_price_per_unit' after 'fob_price_per_carton'
+            const index = baseColumns.indexOf('fob_price_per_carton');
+            if (index !== -1) {
+                baseColumns.splice(index + 1, 0, 'fob_price_per_unit');
+            }
+        }
+        
+        return baseColumns;
+    };
+
     return (
         <div className="quotation-export-container p-4">
             <div className="mb-4">
@@ -199,6 +229,20 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                 />
                 <div className="mt-2">Updated At: {currentDate}</div>
             </div>
+            
+            <div className="flex items-center mb-4">
+                <label className="inline-flex items-center cursor-pointer">
+                    <input 
+                        type="checkbox" 
+                        checked={showFOBPricePerUnit}
+                        onChange={toggleFOBPricePerUnit}
+                        className="sr-only peer"
+                    />
+                    <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <span className="ms-3 text-sm font-medium text-gray-900">Show FOB Price/Unit</span>
+                </label>
+            </div>
+            
             <table className="min-w-full border-collapse border border-gray-300">
                 <thead>
                     <tr className="bg-orange-100">
@@ -208,7 +252,9 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                         <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>Cartons/Container</th>
                         <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>Pack Size/Carton</th>
                         <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>FOB Price/Carton</th>
-                        <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>FOB Price/Unit</th>
+                        {showFOBPricePerUnit && (
+                            <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>FOB Price/Unit</th>
+                        )}
                         <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>RRP (USD)</th>
                     </tr>
                 </thead>
@@ -236,14 +282,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                 <td className="border border-gray-300 p-2 font-medium">
                                     {product.product_name}
                                 </td>
-                                {[
-                                    'container_size',
-                                    'cartons_per_container',
-                                    'pack_size_per_carton',
-                                    'fob_price_per_carton',
-                                    'fob_price_per_unit',
-                                    'recommended_retail_price_usd'
-                                ].map((field) => (
+                                {getTableColumns().map((field) => (
                                     <td 
                                         key={field}
                                         className="border border-gray-300 p-2"
@@ -270,7 +309,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                             </tr>
                             {!collapsedRows.has(product.product_id) && (
                                 <tr>
-                                    <td colSpan={8} className="border border-gray-300 p-2 bg-gray-50">
+                                    <td colSpan={showFOBPricePerUnit ? 8 : 7} className="border border-gray-300 p-2 bg-gray-50">
                                         <div className="ml-8">
                                             <table className="w-full border-collapse">
                                                 <thead>

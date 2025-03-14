@@ -34,4 +34,7 @@ export interface QuotationExportPDFData {
     customerCompanyName: string;
     currentDate: string;
     sales_account_manager: string;
+    tableSettings?: {
+        showFOBPricePerUnit: boolean;
+    };
 }
