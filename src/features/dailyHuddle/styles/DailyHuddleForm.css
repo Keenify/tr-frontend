@@ -70,6 +70,8 @@
   background-color: #f9f9f9;
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1;
 }
 
 .rotate-cursor .highlight {
@@ -322,6 +324,47 @@
   transition: opacity 0.3s ease, transform 0.3s ease;
   pointer-events: auto;
   will-change: opacity, transform, top, left;
+  cursor: move; /* Indicate draggable */
+}
+
+/* Tooltip header with title and close button */
+.tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  cursor: move;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* Close button for tooltip */
+.tooltip-close-btn {
+  background: none;
+  border: none;
+  color: #718096;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  background-color: #f1f1f1;
+  z-index: 1001; /* Ensure it's above other tooltip content */
+}
+
+.tooltip-close-btn:hover {
+  background-color: #e2e8f0;
+  color: #e53e3e;
+}
+
+.tooltip-close-btn:active {
+  background-color: #cbd5e0;
+  color: #c53030;
 }
 
 /* Default arrow (pointing up, for tooltips below inputs) */
@@ -331,6 +374,7 @@
   position: absolute;
   left: 20px;
   border-style: solid;
+  display: none; /* Hide arrows when draggable */
 }
 
 /* Arrow border for tooltip below input */
@@ -367,7 +411,7 @@
 }
 
 .goal-guidance-tooltip h4 {
-  margin: 0 0 8px;
+  margin: 0;
   color: #2c3e50;
   font-size: 15px;
   font-weight: 600;
@@ -396,6 +440,13 @@
 /* Ensure the tooltip stays visible when hovered */
 .goal-guidance-tooltip:hover {
   opacity: 1;
+}
+
+/* Dragging state */
+.goal-guidance-tooltip.dragging {
+  transition: none;
+  opacity: 0.9;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
 }
 
 @keyframes fadeInUp {

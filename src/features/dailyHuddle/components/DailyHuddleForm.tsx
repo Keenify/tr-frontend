@@ -64,22 +64,35 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const guidanceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Determine initial position based on question type
+  const getInitialPosition = (questionText: string): 'left' | 'right' => {
+    return questionText.includes("One-word opener") ? 'left' : 'right';
+  };
+
   const {
     showGuidance,
     activeId: activeQuestionId,
     tooltipPosition: guidancePosition,
     position: tooltipPosition,
     handleInputFocus: handleTooltipFocus,
-    handleInputBlur
+    handleInputBlur,
+    closeGuidance,
+    isDragging: tooltipIsDragging,
+    handleDragStart
   } = useTooltipGuidance<string>({
     tooltipRef,
     guidanceTimeoutRef,
-    tooltipId: 'main-form-guidance'
+    tooltipId: 'main-form-guidance',
+    initialPosition: 'right' // Default to right, will be updated on focus
   });
 
   // Update the handleInputFocus to use the new hook
   const handleInputFocus = useCallback((e: React.FocusEvent<HTMLInputElement>, questionId: string) => {
-    handleTooltipFocus(e.currentTarget, questionId);
+    // Determine the initial position based on the question type
+    const questionText = e.currentTarget.title || "";
+    const initialPosition = getInitialPosition(questionText);
+    
+    handleTooltipFocus(e.currentTarget, questionId, initialPosition);
   }, [handleTooltipFocus]);
 
   // Guidance tips for different question types
@@ -417,19 +430,40 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
           ))}
 
           {/* Floating Guidance Window for regular inputs */}
-          {showGuidance && activeQuestionId !== null && document.activeElement && (
+          {showGuidance && activeQuestionId !== null && (
             <div 
               ref={tooltipRef}
-              className={`goal-guidance-tooltip ${tooltipPosition === 'above' ? 'tooltip-above' : ''}`}
+              className={`goal-guidance-tooltip ${tooltipPosition === 'above' ? 'tooltip-above' : ''} ${tooltipIsDragging ? 'dragging' : ''}`}
               style={{
                 position: 'fixed',
                 top: `${guidancePosition.top}px`,
                 left: `${guidancePosition.left}px`,
               }}
+              onMouseDown={(e) => {
+                // Only start dragging if clicking on the tooltip itself or the header, not on buttons or links
+                if (e.target === tooltipRef.current || 
+                    (e.target as HTMLElement).classList.contains('tooltip-header') ||
+                    (e.target as HTMLElement).tagName === 'H4') {
+                  handleDragStart(e);
+                }
+              }}
             >
-              <h4>
-                Guidance:
-              </h4>
+              <div className="tooltip-header">
+                <h4>
+                  Guidance:
+                </h4>
+                <button 
+                  className="tooltip-close-btn"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeGuidance();
+                  }}
+                  title="Close guidance"
+                >
+                  ×
+                </button>
+              </div>
               <ul>
                 {getGuidanceForQuestion(
                   questions.find(q => q.id === activeQuestionId)?.question_text || ""
@@ -499,11 +533,15 @@ const GoalsInput: React.FC<{
     tooltipPosition: guidancePosition,
     position: tooltipPosition,
     handleInputFocus: handleTooltipFocus,
-    handleInputBlur
+    handleInputBlur,
+    closeGuidance,
+    isDragging: tooltipIsDragging,
+    handleDragStart
   } = useTooltipGuidance<number>({
     tooltipRef,
     guidanceTimeoutRef,
-    tooltipId: 'goals-guidance'
+    tooltipId: 'goals-guidance',
+    initialPosition: 'right'
   });
 
   // Guidance tips for goals - organized by goal number (0-indexed)
@@ -627,7 +665,7 @@ const GoalsInput: React.FC<{
   const handleInputFocus = (index: number) => {
     const inputElement = inputRefs.current[index];
     if (inputElement) {
-      handleTooltipFocus(inputElement, index);
+      handleTooltipFocus(inputElement, index, 'right'); // Always position goals tooltips on the right
     }
   };
 
@@ -719,19 +757,40 @@ const GoalsInput: React.FC<{
       ))}
       
       {/* Floating Guidance Window */}
-      {showGuidance && activeInputIndex !== null && document.activeElement && (
+      {showGuidance && activeInputIndex !== null && (
         <div 
           ref={tooltipRef}
-          className={`goal-guidance-tooltip ${tooltipPosition === 'above' ? 'tooltip-above' : ''}`}
+          className={`goal-guidance-tooltip ${tooltipPosition === 'above' ? 'tooltip-above' : ''} ${tooltipIsDragging ? 'dragging' : ''}`}
           style={{
             position: 'fixed',
             top: `${guidancePosition.top}px`,
             left: `${guidancePosition.left}px`,
           }}
+          onMouseDown={(e) => {
+            // Only start dragging if clicking on the tooltip itself or the header, not on buttons or links
+            if (e.target === tooltipRef.current || 
+                (e.target as HTMLElement).classList.contains('tooltip-header') ||
+                (e.target as HTMLElement).tagName === 'H4') {
+              handleDragStart(e);
+            }
+          }}
         >
-          <h4>
-            Goal {activeInputIndex + 1} Guidance:
-          </h4>
+          <div className="tooltip-header">
+            <h4>
+              Goal {activeInputIndex + 1} Guidance:
+            </h4>
+            <button 
+              className="tooltip-close-btn"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                closeGuidance();
+              }}
+              title="Close guidance"
+            >
+              ×
+            </button>
+          </div>
           <ul>
             {getGuidanceForGoal(activeInputIndex).map((tip, i) => (
               <li key={i}>{tip}</li>
