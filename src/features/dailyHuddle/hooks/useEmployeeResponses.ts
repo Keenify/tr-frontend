@@ -6,6 +6,7 @@ import { ResponseData } from '../types/huddle.types';
 interface EmployeeResponse {
   id: string;
   name: string;
+  profile_pic_url: string | null;
   response: ResponseData | null;
   submittedTime?: string;
 }
@@ -26,6 +27,7 @@ export function useEmployeeResponses(companyId: string | undefined, selectedDate
           return {
             id: employee.id,
             name: `${employee.first_name} ${employee.last_name}`,
+            profile_pic_url: employee.profile_pic_url || null,
             response,
             submittedTime: response?.submitted_at || response?.submitted_date || '',
           };

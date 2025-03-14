@@ -255,14 +255,32 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
           </tr>
         </thead>
         <tbody>
-          {allResponses.map(({ id, name, response, submittedTime }, index) => {
+          {allResponses.map(({ id, name, response, submittedTime, profile_pic_url }, index) => {
             // Check if employee is on leave
             const onLeave = isEmployeeOnLeave(name);
             
             return (
               <tr key={id}>
                 <td>{index + 1}</td>
-                <td>{name}</td>
+                <td>
+                  <div className="team-member-cell">
+                    {/* Profile Picture */}
+                    <div className="profile-pic">
+                      {profile_pic_url ? (
+                        <img
+                          src={profile_pic_url}
+                          alt={name}
+                        />
+                      ) : (
+                        <div className="profile-pic-placeholder">
+                          {name.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    {/* Name */}
+                    <span className="member-name">{name}</span>
+                  </div>
+                </td>
                 
                 {onLeave ? (
                   // If employee is on leave, merge all remaining cells

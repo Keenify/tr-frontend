@@ -119,6 +119,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   word-wrap: break-word;
+  vertical-align: middle;
 }
 
 .response-table th {
@@ -160,6 +161,7 @@
 
 .col-member {
   width: 10%;
+  text-align: left;
 }
 
 .col-one-word {
@@ -262,4 +264,45 @@ td.col-one-word {
   background-color: #fffaf3 !important;
   height: 100% !important;
   padding: 12px !important;
+}
+
+/* Team member cell with profile picture */
+.response-table td .team-member-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+  width: 100%;
+}
+
+.response-table td .profile-pic {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.response-table td .profile-pic img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.response-table td .profile-pic-placeholder {
+  width: 100%;
+  height: 100%;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  color: #555;
+}
+
+.response-table td .member-name {
+  white-space: normal;
+  word-break: break-word;
+  text-align: left;
 }
