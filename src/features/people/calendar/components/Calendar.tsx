@@ -72,13 +72,29 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
       setLoading(true);
       setError(null);
       
-      const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      // Create a fresh date object to avoid any mutation issues
+      const requestDate = new Date(date.getTime());
+      const monthName = requestDate.toLocaleString('default', { month: 'long' });
+      const year = requestDate.getFullYear();
+      
+      console.log(`🔄 Fetching events for ${monthName} ${year}:`, {
+        year: year,
+        month: requestDate.getMonth() + 1, // +1 for human-readable month (1-12)
+        dateObject: requestDate
+      });
+      
+      // Calculate first and last day of the month properly
+      const firstDay = new Date(year, requestDate.getMonth(), 1);
+      const lastDay = new Date(year, requestDate.getMonth() + 1, 0);
+      
+      // Set the time to ensure full day coverage
+      firstDay.setHours(0, 0, 0, 0);
+      lastDay.setHours(23, 59, 59, 999);
 
-      console.log('Fetching events for date range:', {
-        firstDay: firstDay.toISOString(),
-        lastDay: lastDay.toISOString(),
-        companyId
+      console.log(`📆 Date range for ${monthName} ${year}:`, {
+        firstDay: `${firstDay.toISOString()} (${firstDay.toDateString()})`,
+        lastDay: `${lastDay.toISOString()} (${lastDay.toDateString()})`,
+        daysInMonth: lastDay.getDate()
       });
 
       const calendarEvents = await getCompanyCalendarEvents(
@@ -87,10 +103,14 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
         lastDay.toISOString()
       );
 
-      console.log('Retrieved calendar events:', calendarEvents);
+      console.log(`✅ Retrieved ${calendarEvents.length} calendar events for ${monthName} ${year}`);
+      if (calendarEvents.length > 0) {
+        console.log('Sample event:', calendarEvents[0]);
+      }
+      
       setEvents(calendarEvents as CalendarEvent[]);
     } catch (err) {
-      console.error('Error fetching events:', err);
+      console.error('❌ Error fetching events:', err);
       setError(err instanceof Error ? err.message : 'Failed to load calendar events');
     } finally {
       setLoading(false);
@@ -300,11 +320,11 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
 
   useEffect(() => {
     if (!companyLoading && companyId) {
-      fetchEvents(new Date());
+      fetchEvents(activeDate);
       fetchEmployees();
       checkGoogleCalendarStatus();
     }
-  }, [fetchEvents, fetchEmployees, companyLoading, companyId, checkGoogleCalendarStatus]);
+  }, [fetchEvents, fetchEmployees, companyLoading, companyId, checkGoogleCalendarStatus, activeDate]);
 
   const handleSyncAllEvents = async () => {
     if (!userId || !companyId) return;
@@ -536,13 +556,40 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
           }}
           onActiveStartDateChange={({ activeStartDate }) => {
             if (activeStartDate) {
+              const monthName = activeStartDate.toLocaleString('default', { month: 'long' });
+              const year = activeStartDate.getFullYear();
+              console.log(`📅 Navigating to ${monthName} ${year}`);
+              
+              // Always update the active date and fetch events for the new month
               setActiveDate(activeStartDate);
-              fetchEvents(activeStartDate);
+              
+              // Use setTimeout to ensure state updates before fetching
+              setTimeout(() => {
+                console.log(`🔄 Fetching events for ${monthName} ${year} after navigation`);
+                fetchEvents(activeStartDate);
+              }, 50);
             }
           }}
           tileContent={getTileContent}
           className="rounded-lg border shadow"
+          next2Label={null} // Hide the double-arrow "next year" navigation
+          prev2Label={null} // Hide the double-arrow "previous year" navigation
         />
+        
+        {/* Debug information */}
+        <div className="mt-4 p-3 bg-gray-50 rounded border text-sm">
+          <p className="font-medium mb-1">Current View</p>
+          <ul className="text-gray-600 list-disc pl-5 space-y-1">
+            <li>Month: {activeDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</li>
+            <li>Events loaded: {events.length}</li>
+            <li>
+              Date range: {new Date(activeDate.getFullYear(), activeDate.getMonth(), 1).toDateString()} - {new Date(activeDate.getFullYear(), activeDate.getMonth() + 1, 0).toDateString()}
+            </li>
+          </ul>
+          {events.length === 0 && (
+            <p className="mt-2 text-amber-600">No events found for this month. Try creating an event.</p>
+          )}
+        </div>
       </div>
 
       {/* Modal Components */}
