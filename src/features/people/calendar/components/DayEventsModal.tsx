@@ -64,6 +64,7 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
   onDeleteEvent,
 }) => {
   const [eventCreators, setEventCreators] = useState<Record<string, UserData>>({});
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEventCreators = async () => {
@@ -93,6 +94,11 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
     const lines = description.split('\n');
     // Filter out the line that contains "Type: "
     return lines.filter(line => !line.toLowerCase().startsWith('type:')).join('\n');
+  };
+
+  const handleDeleteEvent = (eventId: string) => {
+    setConfirmingDelete(null); // Reset confirmation state
+    onDeleteEvent(eventId);
   };
 
   if (!isOpen) return null;
@@ -150,8 +156,8 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
                     </div>
                   </div>
                   
-                  {!isLeaveEvent(event.event_type) && (
-                    <div className="flex space-x-1">
+                  <div className="flex space-x-1">
+                    {!isLeaveEvent(event.event_type) && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -165,18 +171,18 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
                       >
                         <Edit2 size={16} />
                       </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDeleteEvent(event.id);
-                        }}
-                        className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  )}
+                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setConfirmingDelete(event.id);
+                      }}
+                      className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
                 
                 {/* Event Details */}
@@ -270,6 +276,27 @@ const DayEventsModal: React.FC<DayEventsModalProps> = ({
                     </p>
                   </div>
                 </div>
+                
+                {/* Delete Confirmation */}
+                {confirmingDelete === event.id && (
+                  <div className="px-5 py-3 bg-red-50 border-t border-red-100 flex justify-between items-center">
+                    <p className="text-sm text-red-700">Are you sure you want to delete this event?</p>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => setConfirmingDelete(null)}
+                        className="px-3 py-1 text-xs text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleDeleteEvent(event.id)}
+                        className="px-3 py-1 text-xs text-white bg-red-600 rounded hover:bg-red-700"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))
           )}

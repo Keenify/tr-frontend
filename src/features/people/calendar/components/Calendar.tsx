@@ -122,17 +122,26 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
 
     try {
       // First check if Google Calendar is integrated
-      console.log('🔄 Checking Google Calendar integration status...');
-      const validationResponse = await validateGoogleToken({
-        employee_id: userId,
-        company_id: companyId,
-        refresh: false
-      });
+      let isGoogleIntegrated = false;
       
-      console.log('📥 Google Calendar validation response:', validationResponse);
+      try {
+        console.log('🔄 Checking Google Calendar integration status...');
+        const validationResponse = await validateGoogleToken({
+          employee_id: userId,
+          company_id: companyId,
+          refresh: false
+        });
+        
+        console.log('📥 Google Calendar validation response:', validationResponse);
+        isGoogleIntegrated = validationResponse.is_valid;
+      } catch (googleError) {
+        console.log('ℹ️ Google Calendar integration check failed:', googleError);
+        // Continue with deletion even if Google check fails
+        isGoogleIntegrated = false;
+      }
       
-      // If Google Calendar is integrated, delete the sync first
-      if (validationResponse.is_valid) {
+      // If Google Calendar is integrated and check was successful, delete the sync first
+      if (isGoogleIntegrated) {
         console.log('🔄 Deleting Google Calendar sync first...');
         try {
           const deleteGoogleResult = await deleteSyncedCalendarEvent(eventId, userId, companyId);
@@ -142,7 +151,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
           // Continue even if the Google sync deletion fails
         }
       } else {
-        console.log('ℹ️ Google Calendar not integrated, skipping sync deletion');
+        console.log('ℹ️ Google Calendar not integrated or check failed, skipping sync deletion');
       }
       
       // Then delete the event from our calendar
@@ -153,8 +162,16 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
       // Update UI to remove the deleted event
       setEvents(events.filter(event => event.id !== eventId));
       
-      // Update the Google Calendar integration status
-      await checkGoogleCalendarStatus();
+      // Add success toast notification
+      toast.success('Event deleted successfully');
+      
+      // Update the Google Calendar integration status if check was successful
+      try {
+        await checkGoogleCalendarStatus();
+      } catch (statusError) {
+        console.log('ℹ️ Failed to update Google Calendar status after deletion:', statusError);
+        // This is not critical, so we can continue
+      }
       
     } catch (err) {
       console.error('❌ Error deleting event:', err);
@@ -176,6 +193,9 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
       console.log('Created event response:', newEvent);
       setEvents(prev => [...prev, newEvent as CalendarEvent]);
       
+      // Add success toast notification
+      toast.success('Event created successfully');
+      
       // Sync the newly created event with Google Calendar if integration is active
       try {
         const validationResponse = await validateGoogleToken({
@@ -194,6 +214,8 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
     } catch (err) {
       console.error('Error creating event:', err);
       setError(err instanceof Error ? err.message : 'Failed to create event');
+      // Add error toast notification
+      toast.error('Failed to create event. Please try again.');
     }
   };
 
@@ -205,6 +227,9 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
       setEvents(prev => prev.map(event => 
         event.id === updatedEvent.id ? (updatedEvent as CalendarEvent) : event
       ));
+      
+      // Add success toast notification
+      toast.success('Event updated successfully');
       
       // Update the synced event in Google Calendar if integration is active
       try {
@@ -234,6 +259,8 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
     } catch (err) {
       console.error('Error updating event:', err);
       setError(err instanceof Error ? err.message : 'Failed to update event');
+      // Add error toast notification
+      toast.error('Failed to update event. Please try again.');
     }
   };
 
