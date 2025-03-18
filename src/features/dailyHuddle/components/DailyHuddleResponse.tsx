@@ -277,27 +277,6 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
     );
   };
 
-  /**
-   * Renders a motivational message for top performers
-   * @param rank - The rank of the employee (1, 2, or 3)
-   * @returns JSX element with a motivational message
-   */
-  const renderMotivationalMessage = (rank: number) => {
-    if (!rank || rank > 3) return null;
-    
-    const messages = {
-      1: "Incredible! You're leading the team with your promptness! 🌟",
-      2: "Amazing work! You're setting a great example for the team! ✨",
-      3: "Excellent! Your commitment to timely updates is noticed! 👏"
-    };
-    
-    return (
-      <div className={`motivational-message rank-${rank}`}>
-        {messages[rank as keyof typeof messages]}
-      </div>
-    );
-  };
-
   if (loading) {
     return (
       <div className="response-container">
