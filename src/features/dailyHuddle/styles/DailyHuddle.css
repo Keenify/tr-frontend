@@ -161,7 +161,38 @@
 
 .col-member {
   width: 10%;
-  text-align: left;
+  text-align: center;
+}
+
+.team-member-column {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.team-member-cell {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100%;
+}
+
+/* Row with profile pic and name */
+.profile-name-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 5px;
+  justify-content: center;
+}
+
+/* Badge row */
+.badge-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 20px; /* Ensure consistent spacing even if no badge */
 }
 
 .col-one-word {
@@ -184,7 +215,7 @@
 }
 
 .col-help {
-  width: 16%;
+  width: 11.2%; /* Reduced by 30% from original 16% */
 }
 
 .col-submitted {
@@ -278,9 +309,10 @@ td.col-one-word {
 /* Team member cell with profile picture */
 .response-table td .team-member-cell {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
+  justify-content: center;
+  gap: 4px;
   padding: 4px 0;
   width: 100%;
   position: relative;
@@ -293,6 +325,7 @@ td.col-one-word {
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
+  margin-right: 8px;
 }
 
 .response-table td .profile-pic img {
@@ -316,15 +349,16 @@ td.col-one-word {
   white-space: normal;
   word-break: break-word;
   text-align: left;
-  margin-bottom: 2px;
+  margin-bottom: 0;
 }
 
 /* Top submitter badges */
 .member-info {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
+  width: 100%;
 }
 
 .top-submitter-badge {
@@ -335,7 +369,7 @@ td.col-one-word {
   font-weight: bold;
   padding: 2px 6px;
   border-radius: 10px;
-  margin-top: 4px;
+  margin-top: 0;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
   white-space: nowrap;

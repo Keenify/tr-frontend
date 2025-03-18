@@ -489,24 +489,29 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                 <td className={rank && rank <= 3 ? `number-rank-${rank}` : ''}>
                   {index + 1}
                 </td>
-                <td>
+                <td className="team-member-column">
                   <div className="team-member-cell">
-                    {/* Profile Picture */}
-                    <div className="profile-pic">
-                      {profile_pic_url ? (
-                        <img
-                          src={profile_pic_url}
-                          alt={name}
-                        />
-                      ) : (
-                        <div className="profile-pic-placeholder">
-                          {name.charAt(0)}
-                        </div>
-                      )}
-                    </div>
-                    {/* Name and Badge */}
-                    <div className="member-info">
+                    {/* First row: Profile picture and name */}
+                    <div className="profile-name-row">
+                      {/* Profile Picture */}
+                      <div className="profile-pic">
+                        {profile_pic_url ? (
+                          <img
+                            src={profile_pic_url}
+                            alt={name}
+                          />
+                        ) : (
+                          <div className="profile-pic-placeholder">
+                            {name.charAt(0)}
+                          </div>
+                        )}
+                      </div>
+                      {/* Name */}
                       <span className="member-name">{name}</span>
+                    </div>
+                    
+                    {/* Second row: Badge */}
+                    <div className="badge-row">
                       {renderTopSubmitterBadge(rank as number)}
                     </div>
                   </div>
