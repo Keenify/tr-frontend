@@ -404,42 +404,6 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
         />
       </div>
       
-      {/* Motivational section for top performers */}
-      {allResponses.some(emp => emp.rank && emp.rank <= 3) && (
-        <div className="top-performers-section">
-          <h4 className="top-performers-title">Today's Early Birds 🕊️</h4>
-          <div className="top-performers-list">
-            {allResponses
-              .filter(emp => emp.rank && emp.rank <= 3)
-              .sort((a, b) => (a.rank || 0) - (b.rank || 0))
-              .map(emp => (
-                <div key={emp.id} className={`top-performer-card rank-${emp.rank}`}>
-                  <div className="performer-info">
-                    <div className="performer-pic">
-                      {emp.profile_pic_url ? (
-                        <img src={emp.profile_pic_url} alt={emp.name} />
-                      ) : (
-                        <div className="performer-pic-placeholder">{emp.name.charAt(0)}</div>
-                      )}
-                    </div>
-                    <div className="performer-details">
-                      <div className="performer-name">{emp.name}</div>
-                      <div className="performer-time">
-                        {emp.submittedTime && new Date(emp.submittedTime).toLocaleTimeString([], { 
-                          hour: '2-digit', 
-                          minute: '2-digit',
-                          hour12: true 
-                        }).toLowerCase()}
-                      </div>
-                    </div>
-                  </div>
-                  {renderMotivationalMessage(emp.rank as number)}
-                </div>
-              ))}
-          </div>
-        </div>
-      )}
-      
       <h3 className="response-title">Submitted Responses</h3>
       <table className="response-table">
         <thead>

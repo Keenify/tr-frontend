@@ -620,16 +620,18 @@ tr.top-performer-3 {
 
 /* Top performers section */
 .top-performers-section {
-  margin-bottom: 30px;
-  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  margin-bottom: 50px;
+  background: linear-gradient(135deg, #fffdf0, #fff6e5);
   border-radius: 10px;
-  padding: 20px;
+  padding: 20px 20px 120px 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid #dee2e6;
+  border: 1px solid #f0e5d0;
+  position: relative;
+  overflow: hidden;
 }
 
 .top-performers-title {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 600;
   margin-bottom: 15px;
   color: #343a40;
@@ -647,93 +649,184 @@ tr.top-performer-3 {
   border-radius: 2px;
 }
 
+/* Podium layout */
 .top-performers-list {
   display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
   justify-content: center;
+  align-items: flex-end;
+  min-height: 300px;
+  position: relative;
+  margin: 30px 0 80px;
+  padding-bottom: 20px;
 }
 
-.top-performer-card {
-  width: 280px;
-  padding: 15px;
-  border-radius: 8px;
+/* Podium positions */
+.podium-position {
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  align-items: center;
+  position: relative;
+  transition: transform 0.3s ease;
+  margin: 0 5px;
 }
 
-.top-performer-card:hover {
+.podium-position:hover {
   transform: translateY(-5px);
 }
 
-.top-performer-card.rank-1 {
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.2));
-  border: 1px solid rgba(255, 215, 0, 0.3);
-  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+/* Second place (left) */
+.podium-position.rank-2 {
+  margin-right: 5px;
+  align-self: flex-end;
+  margin-bottom: 70px;
 }
 
-.top-performer-card.rank-2 {
-  background: linear-gradient(135deg, rgba(192, 192, 192, 0.1), rgba(192, 192, 192, 0.2));
-  border: 1px solid rgba(192, 192, 192, 0.3);
-  box-shadow: 0 4px 12px rgba(192, 192, 192, 0.2);
+/* First place (center, taller) */
+.podium-position.rank-1 {
+  z-index: 3;
+  align-self: flex-end;
+  margin-bottom: 0;
 }
 
-.top-performer-card.rank-3 {
-  background: linear-gradient(135deg, rgba(205, 127, 50, 0.1), rgba(205, 127, 50, 0.2));
-  border: 1px solid rgba(205, 127, 50, 0.3);
-  box-shadow: 0 4px 10px rgba(205, 127, 50, 0.2);
+/* Third place (right) */
+.podium-position.rank-3 {
+  margin-left: 5px;
+  align-self: flex-end;
+  margin-bottom: 120px;
 }
 
-.performer-info {
+/* Podium blocks */
+.podium-block {
+  width: 120px;
+  height: 80px;
+  position: absolute;
+  bottom: -80px;
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 12px;
+  font-weight: 700;
+  font-size: 2.5rem;
+  color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  border-radius: 4px 4px 0 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: none;
+}
+
+.podium-block.rank-1 {
+  height: 160px;
+  background-color: #e74c3c;
+  bottom: -160px;
+}
+
+.podium-block.rank-2 {
+  height: 100px;
+  background-color: #e74c3c;
+  bottom: -100px;
+}
+
+.podium-block.rank-3 {
+  height: 60px;
+  background-color: #e74c3c;
+  bottom: -60px;
+}
+
+.podium-number {
+  color: #fff8ec;
+  font-size: 2.5rem;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  position: relative;
+  top: -30%;
+}
+
+/* Card styling */
+.performer-card {
+  width: 160px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  padding: 15px 10px;
+  text-align: center;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 2;
+  border: 1px solid #e0e0e0;
+}
+
+.performer-card.rank-1 {
+  border: 2px solid #ffd700;
+  box-shadow: 0 8px 25px rgba(255, 215, 0, 0.25);
+}
+
+.performer-card.rank-2 {
+  border: 2px solid #c0c0c0;
+  box-shadow: 0 8px 25px rgba(192, 192, 192, 0.25);
+}
+
+.performer-card.rank-3 {
+  border: 2px solid #cd7f32;
+  box-shadow: 0 8px 25px rgba(205, 127, 50, 0.25);
+}
+
+/* Trophy icons */
+.trophy-icon {
+  font-size: 32px;
   margin-bottom: 10px;
 }
 
-.performer-pic {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+.rank-1 .trophy-icon {
+  color: #ffd700;
 }
 
-.performer-pic img {
+.rank-2 .trophy-icon {
+  color: #c0c0c0;
+}
+
+.rank-3 .trophy-icon {
+  color: #cd7f32;
+}
+
+/* Profile picture */
+.performer-pic-podium {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin: 0 auto 8px;
+  overflow: hidden;
+  border: 2px solid white;
+}
+
+.performer-pic-podium img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.performer-pic-placeholder {
+.pic-placeholder-podium {
   width: 100%;
   height: 100%;
-  background-color: #f0f0f0;
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: #f0f0f0;
+  font-size: 1.5rem;
   font-weight: 500;
-  font-size: 1.2rem;
   color: #555;
 }
 
-.performer-details {
-  flex: 1;
-}
-
-.performer-name {
+.performer-name-podium {
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.9rem;
   margin-bottom: 4px;
-  color: #343a40;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.performer-time {
-  font-size: 0.85rem;
+.performer-time-podium {
+  font-size: 0.8rem;
   color: #6c757d;
 }
 
@@ -810,4 +903,21 @@ tr.top-performer-3 {
 /* Fix for any remaining layout issues */
 .response-table tr td {
   vertical-align: middle;
+}
+
+/* Remove all podium-related CSS starts here */
+.top-performers-section,
+.top-performers-title,
+.top-performers-list,
+.podium-position,
+.podium-block,
+.podium-number,
+.performer-card,
+.trophy-icon,
+.performer-pic-podium,
+.pic-placeholder-podium,
+.performer-name-podium,
+.performer-time-podium,
+.motivational-message {
+  display: none !important;
 }
