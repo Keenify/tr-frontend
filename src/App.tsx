@@ -78,16 +78,16 @@ const App: React.FC = () => {
               path="/"
               element={
                 <Navigate
-                  to={session ? `/${session.user.id}/peak` : "/login"}
+                  to={session ? `/${session.user.id}/vivid_vision` : "/login"}
                   replace
                 />
               }
             />
 
-            {/* Redirect user ID route to peak */}
+            {/* Redirect user ID route to vivid_vision */}
             <Route
               path="/:userId"
-              element={<Navigate to={`/${session?.user.id}/peak`} replace />}
+              element={<Navigate to={`/${session?.user.id}/vivid_vision`} replace />}
             />
 
             {/* Public Routes */}
