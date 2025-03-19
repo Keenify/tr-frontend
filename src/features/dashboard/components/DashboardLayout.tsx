@@ -162,7 +162,10 @@ const navigationConfig = [
     shortForm: "TP",
     icon: IconFlagStar,
     isExpandable: true,
-    subTabs: [{ id: "peak", label: "Peak", shortForm: "Pe", icon: ThumbsUp }],
+    subTabs: [
+      { id: "peak", label: "Peak", shortForm: "Pe", icon: ThumbsUp },
+      { id: "vivid_vision", label: "Vivid Vision", shortForm: "Vv", icon: ThumbsUp }
+    ],
   },
 ]
 
@@ -201,7 +204,8 @@ type SubTabType =
   | "leaderboard"
   | "milestone"
   | "peak"
-  | "integration";
+  | "integration"
+  | "vivid_vision";
 
 interface LayoutProps {
   children: React.ReactNode;

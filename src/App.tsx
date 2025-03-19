@@ -22,6 +22,7 @@ import OrgChartPage from "./features/directory/components/OrgChart/OrgChartPage"
 // Import all components
 import AuthForm from "./features/auth/components/Auth";
 import Home from "./features/home/components/Home";
+import Vision from "./features/home/components/Vision";
 import Editor from "./features/content/components/Editor";
 import DirectoryPage from "./features/directory/routes/DirectoryPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -633,6 +634,25 @@ const App: React.FC = () => {
                           onTabChange={() => {}}
                         >
                           <Home session={session} />
+                        </DashboardLayout>
+                      }
+                    />
+                  }
+                />
+                <Route
+                  path="/:userId/vivid_vision"
+                  element={
+                    <ProtectedRoute
+                      session={session}
+                      element={
+                        <DashboardLayout
+                          session={session}
+                          signOut={signOut}
+                          activeTab="thePlan"
+                          activeSubTab="vivid_vision"
+                          onTabChange={() => {}}
+                        >
+                          <Vision session={session} />
                         </DashboardLayout>
                       }
                     />
