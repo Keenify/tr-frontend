@@ -6,6 +6,7 @@ import {
   ChevronDown,
   Lock,
   Search,
+  Upload,
 } from "react-feather"; // Import Power, ThumbsUp, and Clock icons from react-feather
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "../../../lib/supabase"; // Import supabase client
@@ -14,6 +15,7 @@ import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast"; // Import toast directly
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 import { IconUsers, IconTargetArrow, IconDeviceComputerCamera, IconChartArrowsVertical, IconProgressCheck, IconSitemap, IconUserHeart, IconFlagStar, IconClipboardList } from '@tabler/icons-react'; // Changed from Users to IconUsers and added IconChartArrowsVertical and IconProgressCheck
+import { uploadUserAvatar } from "../services/avatarService"; // Import avatar service functions
 
 /**
  * Props for the Layout component.
@@ -274,6 +276,13 @@ export function DashboardLayout({
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  // User avatar states
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
   // Company data
   const { companyInfo, userInfo, error: companyError } = useUserAndCompanyData(
     session.user.id
@@ -345,6 +354,15 @@ export function DashboardLayout({
   useEffect(() => {
     setLocalActiveSubTab(activeSubTab);
   }, [activeSubTab]);
+
+  // Load user avatar
+  useEffect(() => {
+    // Placeholder for loading user avatar
+    // This will be replaced with actual API call later
+    if (userInfo?.profile_pic_url) {
+      setUserAvatar(userInfo.profile_pic_url);
+    }
+  }, [userInfo]);
 
   /**
    * Handles tab changes in the navigation.
@@ -466,6 +484,51 @@ export function DashboardLayout({
     }
   };
 
+  // Handle avatar file selection
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle avatar upload
+  const handleAvatarUpload = async () => {
+    if (!avatarFile) {
+      toast.error("Please select an image");
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      const loadingToast = toast.loading("Uploading profile picture...");
+      
+      // Use the avatar service to upload the file to S3
+      const uploadedAvatarUrl = await uploadUserAvatar(session.user.id, avatarFile);
+      
+      toast.dismiss(loadingToast);
+      toast.success("Profile picture uploaded successfully");
+      
+      // Update local state to show the new avatar immediately
+      setUserAvatar(uploadedAvatarUrl);
+      setIsAvatarModalOpen(false);
+      setAvatarFile(null);
+      setAvatarPreview(null);
+    } catch (error) {
+      toast.dismiss();
+      toast.error("Failed to upload profile picture. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   /**
    * Main layout structure:
    * 1. Top Bar - Contains company logo and user profile
@@ -560,10 +623,25 @@ export function DashboardLayout({
           </button>
           
           <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center">
-              <span className="text-white font-semibold text-lg">
-                {email.charAt(0).toUpperCase()}
-              </span>
+            <div 
+              className="h-10 w-10 rounded-full flex items-center justify-center overflow-hidden cursor-pointer border-2 border-white/30 hover:border-white/70 transition-all duration-200"
+              onClick={() => setIsAvatarModalOpen(true)}
+            >
+              {userAvatar ? (
+                <img 
+                  src={userAvatar} 
+                  alt="User avatar" 
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                    e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                  }}
+                />
+              ) : (
+                <span className="text-white font-semibold text-lg bg-white/10 flex items-center justify-center w-full h-full">
+                  {email.charAt(0).toUpperCase()}
+                </span>
+              )}
             </div>
             <div className="flex flex-col">
               <p className="text-sm font-medium text-white">{email}</p>
@@ -623,6 +701,90 @@ export function DashboardLayout({
                 className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
               >
                 Update Password
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Avatar Upload Modal */}
+      {isAvatarModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Update Profile Picture</h2>
+              <button 
+                onClick={() => {
+                  setIsAvatarModalOpen(false);
+                  setAvatarFile(null);
+                  setAvatarPreview(null);
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="mb-4 flex justify-center">
+              <div className="w-40 h-40 bg-gray-100 rounded-full overflow-hidden border-2 border-gray-300 flex items-center justify-center">
+                {avatarPreview ? (
+                  <img 
+                    src={avatarPreview} 
+                    alt="Avatar preview" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : userAvatar ? (
+                  <img 
+                    src={userAvatar} 
+                    alt="Current avatar" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-gray-400 text-6xl">{email.charAt(0).toUpperCase()}</span>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex flex-col mb-4">
+              <label className="flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg cursor-pointer hover:bg-indigo-700">
+                <Upload className="w-4 h-4 mr-2" />
+                <span>Choose Image</span>
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                />
+              </label>
+              <p className="text-sm text-gray-500 mt-2 text-center">
+                JPG, PNG or GIF. Max 5MB.
+              </p>
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => {
+                  setIsAvatarModalOpen(false);
+                  setAvatarFile(null);
+                  setAvatarPreview(null);
+                }}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                disabled={isUploading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAvatarUpload}
+                disabled={!avatarFile || isUploading}
+                className={`px-4 py-2 rounded ${
+                  !avatarFile || isUploading
+                    ? "bg-gray-400 text-white cursor-not-allowed"
+                    : "bg-indigo-600 text-white hover:bg-indigo-700"
+                }`}
+              >
+                {isUploading ? "Uploading..." : "Upload"}
               </button>
             </div>
           </div>

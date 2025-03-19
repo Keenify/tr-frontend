@@ -18,6 +18,21 @@ export interface UserData {
     created_at: string;
 }
 
+// Define an interface for updateable user data
+export interface UpdateUserData {
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string | null;
+    role: string;
+    user_id: string;
+    completed_sign_up_sequence: boolean;
+    profile_pic_url: string;
+    company_id: string;
+    reports_to: string | null;
+    highest_rank: boolean;
+}
+
 /**
  * Fetches user data by user ID.
  * @param {string} userId - The ID of the user.
@@ -46,6 +61,43 @@ export async function getUserData(userId: string): Promise<UserData> {
 
     return data as UserData; // Cast the response to UserData
 } 
+
+/**
+ * Updates user data for a specific user.
+ * 
+ * @param {string} userId - The ID of the user to update.
+ * @param {UpdateUserData} userData - The user data to update.
+ * @returns {Promise<UserData>} - A promise that resolves to the updated user data.
+ */
+export async function updateUserData(userId: string, userData: UpdateUserData): Promise<UserData> {
+    const endpoint = `${API_DOMAIN}/employees/${encodeURIComponent(userId)}`;
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'PUT',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData),
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            console.error('❌ API request failed:', {
+                status: response.status,
+                statusText: response.statusText,
+                data
+            });
+            throw new Error(`Failed to update user data: ${response.statusText}`);
+        }
+
+        return data as UserData; // Cast the response to UserData
+    } catch (error) {
+        throw error;
+    }
+}
 
 /**
  * Retrieves the onboarding status of a user.
