@@ -46,7 +46,10 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<{ value: string, label: string } | null>(null);
+  
+  // Replace single category selection with multiple categories
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set(['Time', 'Team', 'Money']));
+  
   const [selectedQuarter, setSelectedQuarter] = useState<{ value: string, label: string } | null>({ value: 'Q1', label: 'Q1' });
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [trackingNotes, setTrackingNotes] = useState<string>('');
@@ -105,16 +108,17 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
     }
   }, [companyInfo, fetchKPIs]);
 
-  // Filter KPIs based on selected filters
+  // Update the filter effect to use the set of selected categories
   useEffect(() => {
     let filtered = [...kpis];
     
-    if (selectedCategory) {
-      filtered = filtered.filter(kpi => kpi.category === selectedCategory.value);
+    // Only filter if not all categories are selected
+    if (selectedCategories.size !== 0 && selectedCategories.size !== categoryOptions.length) {
+      filtered = filtered.filter(kpi => selectedCategories.has(kpi.category));
     }
     
     setFilteredKpis(filtered);
-  }, [kpis, selectedCategory]);
+  }, [kpis, selectedCategories]);
 
   // Fetch employees when company info is loaded
   useEffect(() => {
@@ -354,6 +358,17 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
     label: `${employee.first_name} ${employee.last_name}`
   }));
 
+  // Helper function to toggle a category selection
+  const toggleCategory = (category: string) => {
+    const newCategories = new Set(selectedCategories);
+    if (newCategories.has(category)) {
+      newCategories.delete(category);
+    } else {
+      newCategories.add(category);
+    }
+    setSelectedCategories(newCategories);
+  };
+
   if (isLoadingCompany) {
     return <div className="p-8 text-center">Loading company information...</div>;
   }
@@ -368,18 +383,24 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
         </div>
       )}
 
-      {/* Filter and Add KPI Row */}
+      {/* Filter and Add KPI Row - Replace dropdown with checkboxes */}
       <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
         <div className="flex flex-wrap items-center gap-4">
-          <div className="w-40">
-            <Select
-              value={selectedCategory}
-              onChange={setSelectedCategory}
-              options={categoryOptions}
-              placeholder="Filter by Category"
-              classNamePrefix="react-select"
-              isClearable
-            />
+          <div className="flex space-x-4 items-center">
+            <span className="text-sm font-medium text-gray-700">Filter by:</span>
+            <div className="flex space-x-3">
+              {categoryOptions.map(option => (
+                <label key={option.value} className="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    className="form-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                    checked={selectedCategories.has(option.value)}
+                    onChange={() => toggleCategory(option.value)}
+                  />
+                  <span className="ml-2 text-sm text-gray-700">{option.label}</span>
+                </label>
+              ))}
+            </div>
           </div>
         </div>
         
@@ -693,23 +714,6 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
                     </div>
                   )}
                   
-                  {/* Tracking Records Debug Info */}
-                  {process.env.NODE_ENV === 'development' && (
-                    <div className="mb-4 p-3 bg-gray-100 text-xs">
-                      <details>
-                        <summary className="cursor-pointer font-medium">Debug Info</summary>
-                        <pre className="mt-2 overflow-auto max-h-40 bg-gray-800 text-white p-2 rounded">
-                          {JSON.stringify({
-                            kpi_id: kpi.id,
-                            has_tracking_records: Boolean(kpi.tracking_records),
-                            tracking_records_count: kpi.tracking_records ? kpi.tracking_records.length : 0,
-                            tracking_records: kpi.tracking_records
-                          }, null, 2)}
-                        </pre>
-                      </details>
-                    </div>
-                  )}
-                  
                   {!kpi.tracking_records ? (
                     <p className="text-sm text-gray-500 italic">Loading tracking records...</p>
                   ) : kpi.tracking_records.length > 0 ? (
@@ -735,9 +739,28 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
                               <td className="px-3 py-2 text-sm text-gray-500">{record.notes || '-'}</td>
                               <td className="px-3 py-2 text-sm text-gray-500">
                                 {record.employee_id ? 
-                                  employees.find(emp => emp.id === record.employee_id)
-                                    ? `${employees.find(emp => emp.id === record.employee_id)?.first_name} ${employees.find(emp => emp.id === record.employee_id)?.last_name}`
-                                    : 'Unknown'
+                                  (() => {
+                                    const employee = employees.find(emp => emp.id === record.employee_id);
+                                    if (employee) {
+                                      return (
+                                        <div className="flex items-center">
+                                          {employee.profile_pic_url ? (
+                                            <img 
+                                              src={employee.profile_pic_url} 
+                                              alt={`${employee.first_name} ${employee.last_name}`}
+                                              className="h-6 w-6 rounded-full mr-2 object-cover"
+                                            />
+                                          ) : (
+                                            <div className="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center mr-2 text-xs font-medium text-gray-600">
+                                              {employee.first_name[0]}{employee.last_name[0]}
+                                            </div>
+                                          )}
+                                          <span>{employee.first_name} {employee.last_name}</span>
+                                        </div>
+                                      );
+                                    }
+                                    return 'Unknown';
+                                  })()
                                   : '-'}
                               </td>
                               <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
