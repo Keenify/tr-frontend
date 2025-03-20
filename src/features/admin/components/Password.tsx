@@ -36,7 +36,7 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [countries, setCountries] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<string>('All');
-  const isManager = userInfo?.role === 'manager';
+  const isManager = userInfo?.role?.includes('manager');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const AVAILABLE_COUNTRIES = ['SG', 'MY'];
   const [searchQuery, setSearchQuery] = useState('');
