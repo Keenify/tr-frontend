@@ -50,6 +50,9 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
   // Replace single category selection with multiple categories
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set(['Time', 'Team', 'Money']));
   
+  // Add search state
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  
   const [selectedQuarter, setSelectedQuarter] = useState<{ value: string, label: string } | null>({ value: 'Q1', label: 'Q1' });
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [trackingNotes, setTrackingNotes] = useState<string>('');
@@ -108,17 +111,32 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
     }
   }, [companyInfo, fetchKPIs]);
 
-  // Update the filter effect to use the set of selected categories
+  // Update the filter effect to use the set of selected categories and search query
   useEffect(() => {
     let filtered = [...kpis];
     
+    // When no categories are selected, show no KPIs
+    if (selectedCategories.size === 0) {
+      setFilteredKpis([]);
+      return;
+    }
+    
     // Only filter if not all categories are selected
-    if (selectedCategories.size !== 0 && selectedCategories.size !== categoryOptions.length) {
+    if (selectedCategories.size !== categoryOptions.length) {
       filtered = filtered.filter(kpi => selectedCategories.has(kpi.category));
     }
     
+    // Apply search filter if there's a search query
+    if (searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(kpi => 
+        kpi.kpi_name.toLowerCase().includes(query) || 
+        kpi.ideal_state.toLowerCase().includes(query)
+      );
+    }
+    
     setFilteredKpis(filtered);
-  }, [kpis, selectedCategories]);
+  }, [kpis, selectedCategories, searchQuery]);
 
   // Fetch employees when company info is loaded
   useEffect(() => {
@@ -207,13 +225,7 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
           company_id: companyInfo.id
         });
         
-        // Ensure new KPI has tracking_records initialized as an empty array
-        const newKPIWithEmptyTracking = {
-          ...newKPI,
-          tracking_records: []
-        };
-        
-        setKpis([...kpis, newKPIWithEmptyTracking]);
+        setKpis([...kpis, newKPI]);
         toast.success('KPI created successfully');
       }
       
@@ -378,11 +390,12 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
   if (isLoadingCompany) {
     return <div className="p-8 text-center">Loading company information...</div>;
   }
-
+  
   return (
     <div className="quarterly-kpi-container p-4 md:p-6 max-w-full mx-auto">
       <h1 className="text-3xl font-bold mb-6 text-center md:text-left text-gray-800">Quarterly KPIs</h1>
-      
+
+
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-md">
           {error}
@@ -390,8 +403,39 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
       )}
 
       {/* Filter and Add KPI Row - More compact design */}
-      <div className="flex flex-wrap justify-between items-center mb-6 gap-3 bg-white p-3 rounded-lg shadow-sm">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col sm:flex-row flex-wrap justify-between gap-4 mb-6 bg-white p-5 rounded-lg shadow-sm">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-4 w-full lg:w-auto">
+          {/* Search bar */}
+          <div className="w-full sm:w-72 relative">
+            <label htmlFor="search-kpi" className="sr-only">Search KPIs</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <input
+                id="search-kpi"
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search KPIs..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+              {searchQuery && (
+                <button
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                  onClick={() => setSearchQuery('')}
+                  title="Clear search"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+          
           <div className="flex flex-row items-center gap-2">
             <span className="text-sm font-medium text-gray-700">Filter by:</span>
             <div className="flex flex-wrap gap-2">
@@ -412,7 +456,7 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
         
         <button
           onClick={handleAddKPI}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center shadow-sm"
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center shadow-sm ml-auto"
           disabled={isSubmitting}
         >
           <svg 
@@ -510,7 +554,7 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
         </div>
       )}
 
-      {/* KPI List - Update grid with more columns on larger screens and better utilize space */}
+      {/* KPI List - Update grid with fewer columns for wider cards */}
       {isLoading ? (
         <div className="p-8 text-center">
           <svg className="animate-spin mx-auto h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -562,16 +606,16 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
           </div>
         </div>
       ) : (
-        // Update to a more space-efficient responsive grid
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+        // Update to a grid with fewer columns for wider cards
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
           {filteredKpis.map((kpi) => (
             <div 
               key={kpi.id} 
-              className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full"
+              className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col"
             >
-              {/* KPI Header - More compact */}
-              <div className="p-4 flex flex-col flex-grow">
-                <div className="flex justify-between items-start mb-2">
+              {/* KPI Header */}
+              <div className="p-5 flex flex-col">
+                <div className="flex justify-between items-start mb-3">
                   <h3 className="text-lg font-semibold text-gray-900 leading-tight">{kpi.kpi_name}</h3>
                   <div className="flex space-x-1 ml-2">
                     <button
@@ -595,8 +639,8 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
                   </div>
                 </div>
                 
-                <div className="mb-2">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
+                <div className="mb-3">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
                     ${kpi.category === 'Time' ? 'bg-purple-100 text-purple-800' : 
                      kpi.category === 'Team' ? 'bg-green-100 text-green-800' : 
                      'bg-blue-100 text-blue-800'}`}>
@@ -604,127 +648,140 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
                   </span>
                 </div>
                 
-                <div className="text-sm text-gray-600 mb-3 flex-grow">
-                  <p className="line-clamp-3" title={kpi.ideal_state}>{kpi.ideal_state}</p>
+                <div className="text-sm text-gray-600 mb-4">
+                  {/* Show full ideal state text without truncation */}
+                  <p className="whitespace-pre-line">{kpi.ideal_state}</p>
                 </div>
+              </div>
 
-                {/* KPI Tracking Records - More compact */}
-                <div className="pt-3 border-t border-gray-100 mt-auto">
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="text-sm font-medium text-gray-700">Tracking Records</h4>
-                    <button
-                      onClick={() => handleOpenTrackingForm(kpi.id)}
-                      className="text-green-600 hover:text-green-700 p-1 hover:bg-green-50 rounded flex items-center text-xs"
+              {/* Fixed-height separator for consistent alignment */}
+              <div className="border-t border-gray-100"></div>
+
+              {/* KPI Tracking Records - Fixed height section */}
+              <div className="p-5">
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="text-sm font-medium text-gray-700">Tracking Records</h4>
+                  <button
+                    onClick={() => handleOpenTrackingForm(kpi.id)}
+                    className="text-green-600 hover:text-green-700 p-1 hover:bg-green-50 rounded flex items-center text-xs"
+                  >
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      className="h-3.5 w-3.5 mr-1" 
+                      viewBox="0 0 20 20" 
+                      fill="currentColor"
                     >
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        className="h-3.5 w-3.5 mr-1" 
-                        viewBox="0 0 20 20" 
-                        fill="currentColor"
-                      >
-                        <path 
-                          fillRule="evenodd" 
-                          d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" 
-                          clipRule="evenodd" 
-                        />
-                      </svg>
-                      Add Record
-                    </button>
-                  </div>
-                  
-                  {/* Tracking Form - Keep existing implementation */}
-                  {isTrackingFormOpen === kpi.id && (
-                    <div className="mb-4 p-4 bg-gray-50 rounded-md border border-gray-200">
-                      <h5 className="font-medium text-gray-700 mb-3">Add New Tracking Record</h5>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Quarter <span className="text-red-500">*</span>
-                            {editingTrackingId && <span className="text-xs text-gray-500 ml-1">(not editable)</span>}
-                          </label>
-                          <Select
-                            value={selectedQuarter}
-                            onChange={setSelectedQuarter}
-                            options={quarterOptions}
-                            placeholder="Select Quarter"
-                            classNamePrefix="react-select"
-                            isDisabled={!!editingTrackingId}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Year <span className="text-red-500">*</span>
-                            {editingTrackingId && <span className="text-xs text-gray-500 ml-1">(not editable)</span>}
-                          </label>
-                          <Select
-                            value={{ value: selectedYear, label: selectedYear.toString() }}
-                            onChange={(option) => setSelectedYear(option ? (option.value as number) : currentYear)}
-                            options={yearOptions}
-                            placeholder="Select Year"
-                            classNamePrefix="react-select"
-                            isDisabled={!!editingTrackingId}
-                          />
-                        </div>
-                      </div>
-                      <div className="mb-4">
+                      <path 
+                        fillRule="evenodd" 
+                        d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" 
+                        clipRule="evenodd" 
+                      />
+                    </svg>
+                    Add Record
+                  </button>
+                </div>
+                
+                {/* Tracking Form - Keep existing implementation */}
+                {isTrackingFormOpen === kpi.id && (
+                  <div 
+                    className="mb-4 p-4 bg-gray-50 rounded-md border border-gray-200"
+                  >
+                    <h5 className="font-medium text-gray-700 mb-3">Add New Tracking Record</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Notes <span className="text-red-500">*</span>
-                          {editingTrackingId && <span className="text-xs text-blue-500 ml-1">(editable)</span>}
-                        </label>
-                        <textarea
-                          value={trackingNotes}
-                          onChange={(e) => setTrackingNotes(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Enter tracking notes"
-                          rows={3}
-                          required
-                        />
-                      </div>
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Person in Charge (Optional)
-                          {editingTrackingId && <span className="text-xs text-blue-500 ml-1">(editable)</span>}
+                          Quarter <span className="text-red-500">*</span>
+                          {editingTrackingId && <span className="text-xs text-gray-500 ml-1">(not editable)</span>}
                         </label>
                         <Select
-                          value={selectedEmployee}
-                          onChange={setSelectedEmployee}
-                          options={employeeOptions}
-                          placeholder={loadingEmployees ? "Loading people..." : "Select Person in Charge"}
+                          value={selectedQuarter}
+                          onChange={setSelectedQuarter}
+                          options={quarterOptions}
+                          placeholder="Select Quarter"
                           classNamePrefix="react-select"
-                          isClearable
-                          isLoading={loadingEmployees}
+                          isDisabled={!!editingTrackingId}
                         />
                       </div>
-                      <div className="flex justify-end space-x-3">
-                        <button
-                          type="button"
-                          onClick={handleCloseTrackingForm}
-                          className="px-3 py-1 border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleSaveTracking(kpi.id)}
-                          disabled={
-                            (!selectedQuarter && !editingTrackingId) || 
-                            !trackingNotes.trim()
-                          }
-                          className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed"
-                        >
-                          {editingTrackingId ? 'Update' : 'Save'} Tracking
-                        </button>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Year <span className="text-red-500">*</span>
+                          {editingTrackingId && <span className="text-xs text-gray-500 ml-1">(not editable)</span>}
+                        </label>
+                        <Select
+                          value={{ value: selectedYear, label: selectedYear.toString() }}
+                          onChange={(option) => setSelectedYear(option ? (option.value as number) : currentYear)}
+                          options={yearOptions}
+                          placeholder="Select Year"
+                          classNamePrefix="react-select"
+                          isDisabled={!!editingTrackingId}
+                        />
                       </div>
                     </div>
-                  )}
-                  
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Notes <span className="text-red-500">*</span>
+                        {editingTrackingId && <span className="text-xs text-blue-500 ml-1">(editable)</span>}
+                      </label>
+                      <textarea
+                        value={trackingNotes}
+                        onChange={(e) => setTrackingNotes(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter tracking notes"
+                        rows={3}
+                        required
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Person in Charge (Optional)
+                        {editingTrackingId && <span className="text-xs text-blue-500 ml-1">(editable)</span>}
+                      </label>
+                      <Select
+                        value={selectedEmployee}
+                        onChange={setSelectedEmployee}
+                        options={employeeOptions}
+                        placeholder={loadingEmployees ? "Loading people..." : "Select Person in Charge"}
+                        classNamePrefix="react-select"
+                        isClearable
+                        isLoading={loadingEmployees}
+                      />
+                    </div>
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        type="button"
+                        onClick={handleCloseTrackingForm}
+                        className="px-3 py-1 border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSaveTracking(kpi.id)}
+                        disabled={
+                          (!selectedQuarter && !editingTrackingId) || 
+                          !trackingNotes.trim()
+                        }
+                        className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed"
+                      >
+                        {editingTrackingId ? 'Update' : 'Save'} Tracking
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Records container with min-height for consistent alignment */}
+                <div className="min-h-[50px]">
                   {!kpi.tracking_records ? (
-                    <div className="min-h-[40px] flex items-center">
-                      <p className="text-sm text-gray-500 italic">Loading...</p>
+                    <div className="flex items-center justify-center h-12">
+                      <svg className="animate-spin h-5 w-5 text-blue-600 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <p className="text-sm text-gray-500">Loading...</p>
                     </div>
                   ) : kpi.tracking_records.length > 0 ? (
                     // Use a more compact list view instead of a table for better space utilization
-                    <div className="space-y-2 mt-2">
+                    <div className="space-y-2">
                       {kpi.tracking_records.map((record: KPITrackingRecord) => (
                         <div 
                           key={record.id} 
@@ -739,20 +796,20 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
                                   if (employee) {
                                     return (
                                       <div className="flex items-center">
-                                        <span>•</span>
-                                        <div className="flex items-center ml-1">
+                                        <span className="mx-1 text-gray-400">•</span>
+                                        <div className="flex items-center">
                                           {employee.profile_pic_url ? (
                                             <img 
                                               src={employee.profile_pic_url} 
                                               alt={`${employee.first_name} ${employee.last_name}`}
-                                              className="h-5 w-5 rounded-full object-cover"
+                                              className="h-5 w-5 rounded-full mr-1.5 object-cover"
                                             />
                                           ) : (
-                                            <div className="h-5 w-5 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600">
+                                            <div className="h-5 w-5 rounded-full bg-gray-200 flex items-center justify-center mr-1.5 text-xs font-medium text-gray-600">
                                               {employee.first_name[0]}{employee.last_name[0]}
                                             </div>
                                           )}
-                                          <span className="ml-1 truncate max-w-[80px]" title={`${employee.first_name} ${employee.last_name}`}>
+                                          <span className="truncate max-w-[100px] text-xs text-gray-700">
                                             {employee.first_name} {employee.last_name}
                                           </span>
                                         </div>
@@ -785,7 +842,7 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
                             </div>
                           </div>
                           <div className="p-2">
-                            <p className="line-clamp-2" title={record.notes || 'No notes'}>
+                            <p className="whitespace-pre-line" title={record.notes || 'No notes'}>
                               {record.notes || 'No notes'}
                             </p>
                           </div>
@@ -793,9 +850,8 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
                       ))}
                     </div>
                   ) : (
-                    // Empty state with consistent height
-                    <div className="min-h-[40px] flex items-center">
-                      <p className="text-xs text-gray-500 italic">No tracking records yet.</p>
+                    <div className="flex items-center justify-center h-12">
+                      <p className="text-sm text-gray-500 italic">No tracking records yet.</p>
                     </div>
                   )}
                 </div>
