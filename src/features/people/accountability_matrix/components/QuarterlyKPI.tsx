@@ -241,7 +241,23 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
           employee_id: selectedKPIEmployee?.value // Include person in charge
         });
         
-        setKpis(kpis.map(kpi => kpi.id === editingId ? updatedKPI : kpi));
+        // Find existing KPI to preserve its tracking records
+        const existingKPI = kpis.find(kpi => kpi.id === editingId);
+        
+        // Log for debugging
+        console.log('Updating KPI - preserving tracking records:', existingKPI?.tracking_records);
+        
+        // Update KPI but maintain existing tracking records
+        setKpis(kpis.map(kpi => {
+          if (kpi.id === editingId) {
+            return {
+              ...updatedKPI,
+              tracking_records: existingKPI?.tracking_records || []
+            };
+          }
+          return kpi;
+        }));
+        
         toast.success('KPI updated successfully');
       } else {
         // Add new KPI
