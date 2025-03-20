@@ -374,8 +374,8 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
   }
 
   return (
-    <div className="quarterly-kpi-container p-6">
-      <h1 className="text-2xl font-bold mb-6">Quarterly KPIs</h1>
+    <div className="quarterly-kpi-container p-4 md:p-6 max-w-full mx-auto">
+      <h1 className="text-3xl font-bold mb-6 text-center md:text-left text-gray-800">Quarterly KPIs</h1>
       
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-md">
@@ -383,17 +383,17 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
         </div>
       )}
 
-      {/* Filter and Add KPI Row - Replace dropdown with checkboxes */}
-      <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex space-x-4 items-center">
+      {/* Filter and Add KPI Row - More compact design */}
+      <div className="flex flex-wrap justify-between items-center mb-6 gap-3 bg-white p-3 rounded-lg shadow-sm">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-row items-center gap-2">
             <span className="text-sm font-medium text-gray-700">Filter by:</span>
-            <div className="flex space-x-3">
+            <div className="flex flex-wrap gap-2">
               {categoryOptions.map(option => (
-                <label key={option.value} className="inline-flex items-center">
+                <label key={option.value} className="inline-flex items-center px-2 py-1 bg-gray-50 rounded-md border border-gray-200 hover:bg-gray-100 cursor-pointer">
                   <input
                     type="checkbox"
-                    className="form-checkbox h-5 w-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                    className="form-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                     checked={selectedCategories.has(option.value)}
                     onChange={() => toggleCategory(option.value)}
                   />
@@ -406,12 +406,12 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
         
         <button
           onClick={handleAddKPI}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center"
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center shadow-sm"
           disabled={isSubmitting}
         >
           <svg 
             xmlns="http://www.w3.org/2000/svg" 
-            className="h-5 w-5 mr-2" 
+            className="h-5 w-5 mr-1.5" 
             viewBox="0 0 20 20" 
             fill="currentColor"
           >
@@ -425,10 +425,10 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
         </button>
       </div>
 
-      {/* KPI Form */}
+      {/* KPI Form - Keep the existing styling */}
       {isFormOpen && (
-        <div className="mb-8 p-6 bg-white rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">{editingId ? 'Edit KPI' : 'Add New KPI'}</h2>
+        <div className="mb-8 p-6 bg-white rounded-lg shadow-md border border-gray-100">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-800">{editingId ? 'Edit KPI' : 'Add New KPI'}</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
@@ -504,7 +504,7 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
         </div>
       )}
 
-      {/* KPI List */}
+      {/* KPI List - Update grid with more columns on larger screens and better utilize space */}
       {isLoading ? (
         <div className="p-8 text-center">
           <svg className="animate-spin mx-auto h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -514,9 +514,9 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
           <p className="mt-2 text-gray-600">Loading KPIs...</p>
         </div>
       ) : filteredKpis.length === 0 ? (
-        <div className="p-8 text-center bg-gray-50 rounded-lg">
+        <div className="p-8 text-center bg-gray-50 rounded-lg shadow-sm">
           <svg 
-            className="mx-auto h-12 w-12 text-gray-400" 
+            className="mx-auto h-16 w-16 text-gray-400" 
             fill="none" 
             viewBox="0 0 24 24" 
             stroke="currentColor"
@@ -528,15 +528,15 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
               d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" 
             />
           </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No KPIs found</h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <h3 className="mt-4 text-lg font-medium text-gray-900">No KPIs found</h3>
+          <p className="mt-2 text-base text-gray-500">
             Get started by creating a new KPI.
           </p>
           <div className="mt-6">
             <button
               type="button"
               onClick={handleAddKPI}
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
+              className="inline-flex items-center px-5 py-2.5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
             >
               <svg 
                 className="-ml-1 mr-2 h-5 w-5" 
@@ -556,79 +556,77 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
           </div>
         </div>
       ) : (
-        <div className="space-y-6">
+        // Update to a more space-efficient responsive grid
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
           {filteredKpis.map((kpi) => (
             <div 
               key={kpi.id} 
-              className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+              className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full"
             >
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-lg font-semibold text-gray-900">{kpi.kpi_name}</h3>
-                  <div className="flex space-x-2">
+              {/* KPI Header - More compact */}
+              <div className="p-4 flex flex-col flex-grow">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900 leading-tight">{kpi.kpi_name}</h3>
+                  <div className="flex space-x-1 ml-2">
                     <button
                       onClick={() => handleEditKPI(kpi)}
-                      className="text-gray-500 hover:text-blue-600"
+                      className="text-gray-500 hover:text-blue-600 p-1 rounded-full hover:bg-gray-100"
                       title="Edit KPI"
                     >
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        className="h-5 w-5" 
-                        viewBox="0 0 20 20" 
-                        fill="currentColor"
-                      >
-                        <path 
-                          d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" 
-                        />
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                       </svg>
                     </button>
                     <button
                       onClick={() => handleDeleteKPI(kpi.id)}
-                      className="text-gray-500 hover:text-red-600"
+                      className="text-gray-500 hover:text-red-600 p-1 rounded-full hover:bg-gray-100"
                       title="Delete KPI"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="mb-2">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
+                    ${kpi.category === 'Time' ? 'bg-purple-100 text-purple-800' : 
+                     kpi.category === 'Team' ? 'bg-green-100 text-green-800' : 
+                     'bg-blue-100 text-blue-800'}`}>
+                    {kpi.category}
+                  </span>
+                </div>
+                
+                <div className="text-sm text-gray-600 mb-3 flex-grow">
+                  <p className="line-clamp-3" title={kpi.ideal_state}>{kpi.ideal_state}</p>
+                </div>
+
+                {/* KPI Tracking Records - More compact */}
+                <div className="pt-3 border-t border-gray-100 mt-auto">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="text-sm font-medium text-gray-700">Tracking Records</h4>
+                    <button
+                      onClick={() => handleOpenTrackingForm(kpi.id)}
+                      className="text-green-600 hover:text-green-700 p-1 hover:bg-green-50 rounded flex items-center text-xs"
                     >
                       <svg 
                         xmlns="http://www.w3.org/2000/svg" 
-                        className="h-5 w-5" 
+                        className="h-3.5 w-3.5 mr-1" 
                         viewBox="0 0 20 20" 
                         fill="currentColor"
                       >
                         <path 
                           fillRule="evenodd" 
-                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" 
+                          d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" 
                           clipRule="evenodd" 
                         />
                       </svg>
+                      Add Record
                     </button>
                   </div>
-                </div>
-                
-                <div className="mb-4">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {kpi.category}
-                  </span>
-                </div>
-                
-                <div className="text-sm text-gray-600 mb-6">
-                  <h4 className="font-medium text-gray-700 mb-1">Ideal State:</h4>
-                  <p>{kpi.ideal_state}</p>
-                </div>
-
-                {/* KPI Tracking Records */}
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <div className="flex justify-between items-center mb-3">
-                    <h4 className="font-medium text-gray-700">Tracking Records</h4>
-                    <div className="flex items-center space-x-4">
-                      <button
-                        onClick={() => handleOpenTrackingForm(kpi.id)}
-                        className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-                      >
-                        Add Tracking
-                      </button>
-                    </div>
-                  </div>
                   
-                  {/* Tracking Form */}
+                  {/* Tracking Form - Keep existing implementation */}
                   {isTrackingFormOpen === kpi.id && (
                     <div className="mb-4 p-4 bg-gray-50 rounded-md border border-gray-200">
                       <h5 className="font-medium text-gray-700 mb-3">Add New Tracking Record</h5>
@@ -715,102 +713,84 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
                   )}
                   
                   {!kpi.tracking_records ? (
-                    <p className="text-sm text-gray-500 italic">Loading tracking records...</p>
+                    <div className="min-h-[40px] flex items-center">
+                      <p className="text-sm text-gray-500 italic">Loading...</p>
+                    </div>
                   ) : kpi.tracking_records.length > 0 ? (
-                    <div className="mt-2 overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quarter</th>
-                            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
-                            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
-                            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Person in Charge</th>
-                            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Updated</th>
-                            <th scope="col" className="relative px-3 py-2">
-                              <span className="sr-only">Actions</span>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {kpi.tracking_records.map((record: KPITrackingRecord) => (
-                            <tr key={record.id}>
-                              <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{record.quarter}</td>
-                              <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{record.year}</td>
-                              <td className="px-3 py-2 text-sm text-gray-500">{record.notes || '-'}</td>
-                              <td className="px-3 py-2 text-sm text-gray-500">
-                                {record.employee_id ? 
-                                  (() => {
-                                    const employee = employees.find(emp => emp.id === record.employee_id);
-                                    if (employee) {
-                                      return (
-                                        <div className="flex items-center">
+                    // Use a more compact list view instead of a table for better space utilization
+                    <div className="space-y-2 mt-2">
+                      {kpi.tracking_records.map((record: KPITrackingRecord) => (
+                        <div 
+                          key={record.id} 
+                          className="text-xs bg-gray-50 rounded border border-gray-200 overflow-hidden"
+                        >
+                          <div className="flex justify-between items-center p-2 border-b border-gray-200 bg-gray-100">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium">{record.quarter} {record.year}</span>
+                              {record.employee_id && 
+                                (() => {
+                                  const employee = employees.find(emp => emp.id === record.employee_id);
+                                  if (employee) {
+                                    return (
+                                      <div className="flex items-center">
+                                        <span>•</span>
+                                        <div className="flex items-center ml-1">
                                           {employee.profile_pic_url ? (
                                             <img 
                                               src={employee.profile_pic_url} 
                                               alt={`${employee.first_name} ${employee.last_name}`}
-                                              className="h-6 w-6 rounded-full mr-2 object-cover"
+                                              className="h-5 w-5 rounded-full object-cover"
                                             />
                                           ) : (
-                                            <div className="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center mr-2 text-xs font-medium text-gray-600">
+                                            <div className="h-5 w-5 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600">
                                               {employee.first_name[0]}{employee.last_name[0]}
                                             </div>
                                           )}
-                                          <span>{employee.first_name} {employee.last_name}</span>
+                                          <span className="ml-1 truncate max-w-[80px]" title={`${employee.first_name} ${employee.last_name}`}>
+                                            {employee.first_name} {employee.last_name}
+                                          </span>
                                         </div>
-                                      );
-                                    }
-                                    return 'Unknown';
-                                  })()
-                                  : '-'}
-                              </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
-                                {record.updated_at ? new Date(record.updated_at).toLocaleDateString() : '-'}
-                              </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
-                                <div className="flex space-x-2 justify-end">
-                                  <button
-                                    onClick={() => handleOpenTrackingForm(kpi.id, record)}
-                                    className="text-blue-600 hover:text-blue-900"
-                                    title="Edit Tracking Record"
-                                  >
-                                    <svg 
-                                      xmlns="http://www.w3.org/2000/svg" 
-                                      className="h-5 w-5" 
-                                      viewBox="0 0 20 20" 
-                                      fill="currentColor"
-                                    >
-                                      <path 
-                                        d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" 
-                                      />
-                                    </svg>
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteTracking(record.id)}
-                                    className="text-red-600 hover:text-red-900"
-                                    title="Delete Tracking Record"
-                                  >
-                                    <svg 
-                                      xmlns="http://www.w3.org/2000/svg" 
-                                      className="h-5 w-5" 
-                                      viewBox="0 0 20 20" 
-                                      fill="currentColor"
-                                    >
-                                      <path 
-                                        fillRule="evenodd" 
-                                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" 
-                                        clipRule="evenodd" 
-                                      />
-                                    </svg>
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })()
+                              }
+                            </div>
+                            <div className="flex space-x-1">
+                              <button
+                                onClick={() => handleOpenTrackingForm(kpi.id, record)}
+                                className="text-blue-600 hover:text-blue-900 p-0.5 rounded hover:bg-blue-50"
+                                title="Edit Tracking Record"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTracking(record.id)}
+                                className="text-red-600 hover:text-red-900 p-0.5 rounded hover:bg-red-50"
+                                title="Delete Tracking Record"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                          <div className="p-2">
+                            <p className="line-clamp-2" title={record.notes || 'No notes'}>
+                              {record.notes || 'No notes'}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500 italic">No tracking records yet.</p>
+                    // Empty state with consistent height
+                    <div className="min-h-[40px] flex items-center">
+                      <p className="text-xs text-gray-500 italic">No tracking records yet.</p>
+                    </div>
                   )}
                 </div>
               </div>
