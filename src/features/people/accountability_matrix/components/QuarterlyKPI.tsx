@@ -433,7 +433,7 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
     
     return (
       <td 
-        className={`px-3 py-3 cursor-pointer hover:bg-gray-50 transition-colors relative ${isCurrentQuarter ? 'bg-blue-50' : ''}`}
+        className={`px-3 py-3 cursor-pointer hover:bg-gray-50 transition-colors relative text-center ${isCurrentQuarter ? 'bg-blue-50' : ''}`}
         onClick={() => handleOpenNoteModal(kpiId, quarter)}
       >
         {isCurrentQuarter && (
@@ -445,7 +445,7 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
         )}
         <div className="text-sm relative">
           {hasNote ? (
-            <div className="whitespace-pre-line" title={tracking.notes}>
+            <div className="whitespace-pre-line text-center" title={tracking.notes}>
               {tracking.notes}
             </div>
           ) : (
@@ -733,9 +733,9 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
         // Table layout for KPIs
         <div className="overflow-x-auto bg-white rounded-lg shadow">
           <table className="min-w-full divide-y divide-gray-200 table-fixed">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
-                <th scope="col" className="w-[10%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="w-[10%] px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   KPI Name
                 </th>
                 <th scope="col" className={`w-[17%] px-3 py-3 text-center text-xs font-medium uppercase tracking-wider relative ${currentQuarter === 'Q1' ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}>
@@ -778,10 +778,10 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
                     ></div>
                   )}
                 </th>
-                <th scope="col" className="w-[16%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="w-[16%] px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ideal State
                 </th>
-                <th scope="col" className="w-[12%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="w-[12%] px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Person in Charge
                 </th>
                 <th scope="col" className="w-[3%] px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -792,14 +792,15 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredKpis.map((kpi) => (
                 <tr key={kpi.id} className="hover:bg-gray-50">
-                  <td className="px-3 py-3">
+                  <td className="px-3 py-3 text-center">
                     <div>
                       {renderCategoryBadge(kpi.category)}
-                      <div className="text-sm font-medium text-gray-900 break-words mt-1" title={kpi.kpi_name}>
+                      <div className="text-sm font-medium text-gray-900 break-words mt-1 text-center" title={kpi.kpi_name}>
                         {kpi.kpi_name}
                       </div>
                     </div>
                   </td>
+                  
                   {/* Q1 note cell */}
                   {renderNoteCell(kpi.id, 'Q1')}
                   
@@ -812,17 +813,17 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
                   {/* Q4 note cell */}
                   {renderNoteCell(kpi.id, 'Q4')}
                   
-                  <td className="px-3 py-3">
-                    <div className="text-sm text-gray-500 whitespace-pre-line">
+                  <td className="px-3 py-3 text-center">
+                    <div className="text-sm text-gray-500 whitespace-pre-line text-center">
                       {kpi.ideal_state}
                     </div>
                   </td>
-                  <td className="px-3 py-3">
+                  <td className="px-3 py-3 text-center">
                     {kpi.employee_id && (() => {
                       const employee = employees.find(emp => emp.id === kpi.employee_id);
                       if (employee) {
                         return (
-                          <div className="flex items-center flex-nowrap">
+                          <div className="flex items-center justify-center flex-nowrap">
                             {employee.profile_pic_url ? (
                               <img 
                                 src={employee.profile_pic_url} 
