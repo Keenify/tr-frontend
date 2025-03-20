@@ -362,6 +362,17 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
         console.log('Tracking record updated:', updatedTracking);
         toast.success('Tracking record updated successfully');
       } else {
+        // Find the current KPI to check existing tracking records
+        const currentKPI = kpis.find(kpi => kpi.id === kpiId);
+        
+        // Check if a tracking record for the same quarter and year already exists
+        if (currentKPI?.tracking_records && currentKPI.tracking_records.some((record: KPITrackingRecord) => 
+          record.quarter === selectedQuarter?.value && record.year === selectedYear
+        )) {
+          toast.error(`A tracking record for ${selectedQuarter?.value} ${selectedYear} already exists for this KPI`);
+          return;
+        }
+        
         // Create new tracking record - quarter, year, notes, employee_id all required
         if (!selectedQuarter) {
           toast.error('Please select a quarter');
@@ -405,13 +416,34 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
   const handleDeleteTracking = async (trackingId: string) => {
     if (confirm('Are you sure you want to delete this tracking record?')) {
       try {
+        // First, directly update the local state to remove just this tracking record
+        // Create a deep copy of the kpis array to avoid mutation
+        const updatedKpis = kpis.map(kpi => {
+          // Only modify the KPI that contains this record
+          if (kpi.tracking_records && kpi.tracking_records.some(record => record.id === trackingId)) {
+            // Return a new KPI object with the filtered tracking records
+            return {
+              ...kpi,
+              tracking_records: kpi.tracking_records.filter(record => record.id !== trackingId)
+            };
+          }
+          // Return all other KPIs unchanged
+          return kpi;
+        });
+        
+        // Update the state immediately with the locally updated data
+        setKpis(updatedKpis);
+        
+        // Then perform the actual deletion on the server
         await deleteKPITracking(trackingId);
         toast.success('Tracking record deleted successfully');
-        // Refresh KPI data to get the updated tracking records
-        await fetchKPIs();
+        
       } catch (err) {
         console.error("Error deleting tracking record:", err);
         toast.error('Failed to delete tracking record');
+        
+        // If the deletion fails, refresh the data from the server to restore the correct state
+        fetchKPIs();
       }
     }
   };
