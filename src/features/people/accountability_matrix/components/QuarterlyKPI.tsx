@@ -62,6 +62,9 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
   const [loadingEmployees, setLoadingEmployees] = useState(false);
   const [editingTrackingId, setEditingTrackingId] = useState<string | null>(null);
   
+  // Add person in charge state for KPI
+  const [selectedKPIEmployee, setSelectedKPIEmployee] = useState<{ value: string, label: string } | null>(null);
+  
   const [formData, setFormData] = useState({
     category: '',
     kpi_name: '',
@@ -135,6 +138,13 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
       );
     }
     
+    // Sort KPIs by category in the order of Time, Team, Money
+    filtered.sort((a, b) => {
+      const categoryOrder = { Time: 1, Team: 2, Money: 3 };
+      return (categoryOrder[a.category as keyof typeof categoryOrder] || 99) - 
+             (categoryOrder[b.category as keyof typeof categoryOrder] || 99);
+    });
+    
     setFilteredKpis(filtered);
   }, [kpis, selectedCategories, searchQuery]);
 
@@ -165,6 +175,7 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
       kpi_name: '',
       ideal_state: '',
     });
+    setSelectedKPIEmployee(null); // Reset selected employee
   };
 
   const handleEditKPI = (kpi: KPIData) => {
@@ -175,6 +186,21 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
       kpi_name: kpi.kpi_name,
       ideal_state: kpi.ideal_state,
     });
+    
+    // Set selected employee if KPI has one
+    if (kpi.employee_id) {
+      const employee = employees.find(emp => emp.id === kpi.employee_id);
+      if (employee) {
+        setSelectedKPIEmployee({
+          value: employee.id,
+          label: `${employee.first_name} ${employee.last_name}`
+        });
+      } else {
+        setSelectedKPIEmployee(null);
+      }
+    } else {
+      setSelectedKPIEmployee(null);
+    }
   };
 
   const handleDeleteKPI = async (id: string) => {
@@ -211,7 +237,8 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
         const updatedKPI = await updateKPI(editingId, {
           category: formData.category,
           kpi_name: formData.kpi_name,
-          ideal_state: formData.ideal_state
+          ideal_state: formData.ideal_state,
+          employee_id: selectedKPIEmployee?.value // Include person in charge
         });
         
         setKpis(kpis.map(kpi => kpi.id === editingId ? updatedKPI : kpi));
@@ -222,15 +249,23 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
           category: formData.category,
           kpi_name: formData.kpi_name,
           ideal_state: formData.ideal_state,
-          company_id: companyInfo.id
+          company_id: companyInfo.id,
+          employee_id: selectedKPIEmployee?.value // Include person in charge
         });
         
-        setKpis([...kpis, newKPI]);
+        // Ensure new KPI has empty tracking_records to avoid loading indicator
+        const newKPIWithEmptyTracking = {
+          ...newKPI,
+          tracking_records: []
+        };
+        
+        setKpis([...kpis, newKPIWithEmptyTracking]);
         toast.success('KPI created successfully');
       }
       
       setIsFormOpen(false);
       setEditingId(null);
+      setSelectedKPIEmployee(null); // Reset selected employee
     } catch (err) {
       console.error("Error saving KPI:", err);
       setError("Failed to save KPI. Please try again.");
@@ -395,7 +430,6 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
     <div className="quarterly-kpi-container p-4 md:p-6 max-w-full mx-auto">
       <h1 className="text-3xl font-bold mb-6 text-center md:text-left text-gray-800">Quarterly KPIs</h1>
 
-
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-md">
           {error}
@@ -475,7 +509,7 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
         </button>
       </div>
 
-      {/* KPI Form - Keep the existing styling */}
+      {/* KPI Form - Add person in charge */}
       {isFormOpen && (
         <div className="mb-8 p-6 bg-white rounded-lg shadow-md border border-gray-100">
           <h2 className="text-2xl font-semibold mb-4 text-gray-800">{editingId ? 'Edit KPI' : 'Add New KPI'}</h2>
@@ -523,6 +557,22 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
             />
           </div>
           
+          {/* Add Person in Charge dropdown */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Person in Charge (Optional)
+            </label>
+            <Select
+              value={selectedKPIEmployee}
+              onChange={setSelectedKPIEmployee}
+              options={employeeOptions}
+              placeholder={loadingEmployees ? "Loading people..." : "Select Person in Charge"}
+              classNamePrefix="react-select"
+              isClearable
+              isLoading={loadingEmployees}
+            />
+          </div>
+          
           <div className="flex justify-end space-x-3">
             <button
               type="button"
@@ -554,7 +604,7 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
         </div>
       )}
 
-      {/* KPI List - Update grid with fewer columns for wider cards */}
+      {/* KPI List - Display person in charge in the KPI header */}
       {isLoading ? (
         <div className="p-8 text-center">
           <svg className="animate-spin mx-auto h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -606,15 +656,15 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
           </div>
         </div>
       ) : (
-        // Update to a grid with fewer columns for wider cards
+        // Grid layout for KPI cards
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
           {filteredKpis.map((kpi) => (
             <div 
               key={kpi.id} 
               className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col"
             >
-              {/* KPI Header */}
-              <div className="p-5 flex flex-col">
+              {/* KPI Header with fixed height for consistent layout */}
+              <div className="p-5 flex flex-col h-[200px]">
                 <div className="flex justify-between items-start mb-3">
                   <h3 className="text-lg font-semibold text-gray-900 leading-tight">{kpi.kpi_name}</h3>
                   <div className="flex space-x-1 ml-2">
@@ -639,17 +689,44 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
                   </div>
                 </div>
                 
-                <div className="mb-3">
+                {/* Category and Person in Charge row */}
+                <div className="flex flex-wrap items-center mb-3 gap-2">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
                     ${kpi.category === 'Time' ? 'bg-purple-100 text-purple-800' : 
                      kpi.category === 'Team' ? 'bg-green-100 text-green-800' : 
                      'bg-blue-100 text-blue-800'}`}>
                     {kpi.category}
                   </span>
+                  
+                  {/* Display person in charge if available - at the same level as category */}
+                  {kpi.employee_id && (() => {
+                    const employee = employees.find(emp => emp.id === kpi.employee_id);
+                    if (employee) {
+                      return (
+                        <div className="flex items-center">
+                          {employee.profile_pic_url ? (
+                            <img 
+                              src={employee.profile_pic_url} 
+                              alt={`${employee.first_name} ${employee.last_name}`}
+                              className="h-6 w-6 rounded-full mr-1.5 object-cover border border-gray-200"
+                            />
+                          ) : (
+                            <div className="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center mr-1.5 text-xs font-medium text-gray-600 border border-gray-300">
+                              {employee.first_name[0]}{employee.last_name[0]}
+                            </div>
+                          )}
+                          <span className="text-xs font-medium text-gray-700">
+                            {employee.first_name} {employee.last_name}
+                          </span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
                 
-                <div className="text-sm text-gray-600 mb-4">
-                  {/* Show full ideal state text without truncation */}
+                {/* Ideal state description with scrolling for overflow */}
+                <div className="text-sm text-gray-600 flex-grow overflow-y-auto">
                   <p className="whitespace-pre-line">{kpi.ideal_state}</p>
                 </div>
               </div>
