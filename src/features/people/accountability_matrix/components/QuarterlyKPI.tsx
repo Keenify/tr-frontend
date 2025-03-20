@@ -6,13 +6,9 @@ import {
   createKPI, 
   updateKPI, 
   deleteKPI, 
-  getCompanyKPIs,
-  createKPITracking,
-  deleteKPITracking,
-  getTrackingsByKPI,
-  updateKPITracking
+  getCompanyKPIs
 } from "../services/useQuarterlyKPI";
-import { KPIData, KPITrackingRecord } from "../types/quarterlyKPI.types";
+import { KPIData } from "../types/quarterlyKPI.types";
 import { directoryService } from "../../../../shared/services/directoryService";
 import { Employee } from "../../../../shared/types/directory.types";
 import toast from "react-hot-toast";
@@ -26,14 +22,6 @@ const categoryOptions = [
   { value: 'Time', label: 'Time' },
   { value: 'Team', label: 'Team' },
   { value: 'Money', label: 'Money' }
-];
-
-// Quarter options
-const quarterOptions = [
-  { value: 'Q1', label: 'Q1' },
-  { value: 'Q2', label: 'Q2' },
-  { value: 'Q3', label: 'Q3' },
-  { value: 'Q4', label: 'Q4' }
 ];
 
 const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
@@ -53,14 +41,8 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
   // Add search state
   const [searchQuery, setSearchQuery] = useState<string>('');
   
-  const [selectedQuarter, setSelectedQuarter] = useState<{ value: string, label: string } | null>({ value: 'Q1', label: 'Q1' });
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
-  const [trackingNotes, setTrackingNotes] = useState<string>('');
-  const [selectedEmployee, setSelectedEmployee] = useState<{ value: string, label: string } | null>(null);
-  const [isTrackingFormOpen, setIsTrackingFormOpen] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loadingEmployees, setLoadingEmployees] = useState(false);
-  const [editingTrackingId, setEditingTrackingId] = useState<string | null>(null);
   
   // Add person in charge state for KPI
   const [selectedKPIEmployee, setSelectedKPIEmployee] = useState<{ value: string, label: string } | null>(null);
@@ -80,25 +62,7 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
     
     try {
       const kpisData = await getCompanyKPIs(companyInfo.id);
-      
-      // Fetch tracking records for each KPI
-      const kpisWithTrackings = await Promise.all(
-        kpisData.map(async (kpi) => {
-          try {
-            const trackingRecords = await getTrackingsByKPI(kpi.id);
-            return {
-              ...kpi,
-              tracking_records: trackingRecords
-            };
-          } catch (err) {
-            console.error(`Error fetching tracking records for KPI ${kpi.id}:`, err);
-            return kpi; // Return KPI without tracking records in case of error
-          }
-        })
-      );
-      
-      console.log('KPIs with tracking records:', kpisWithTrackings);
-      setKpis(kpisWithTrackings);
+      setKpis(kpisData);
     } catch (err) {
       console.error("Error fetching KPIs:", err);
       setError("Failed to load KPIs. Please try again.");
@@ -241,19 +205,9 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
           employee_id: selectedKPIEmployee?.value // Include person in charge
         });
         
-        // Find existing KPI to preserve its tracking records
-        const existingKPI = kpis.find(kpi => kpi.id === editingId);
-        
-        // Log for debugging
-        console.log('Updating KPI - preserving tracking records:', existingKPI?.tracking_records);
-        
-        // Update KPI but maintain existing tracking records
         setKpis(kpis.map(kpi => {
           if (kpi.id === editingId) {
-            return {
-              ...updatedKPI,
-              tracking_records: existingKPI?.tracking_records || []
-            };
+            return updatedKPI;
           }
           return kpi;
         }));
@@ -269,13 +223,7 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
           employee_id: selectedKPIEmployee?.value // Include person in charge
         });
         
-        // Ensure new KPI has empty tracking_records to avoid loading indicator
-        const newKPIWithEmptyTracking = {
-          ...newKPI,
-          tracking_records: []
-        };
-        
-        setKpis([...kpis, newKPIWithEmptyTracking]);
+        setKpis([...kpis, newKPI]);
         toast.success('KPI created successfully');
       }
       
@@ -291,174 +239,6 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
     }
   };
 
-  // Function to open tracking form for a specific KPI
-  const handleOpenTrackingForm = (kpiId: string, trackingRecord?: KPITrackingRecord) => {
-    setIsTrackingFormOpen(kpiId);
-    
-    if (trackingRecord) {
-      // Edit existing tracking record
-      setTrackingNotes(trackingRecord.notes || '');
-      setEditingTrackingId(trackingRecord.id);
-      
-      // Set quarter and year from the existing record
-      const quarterOption = quarterOptions.find(q => q.value === trackingRecord.quarter);
-      if (quarterOption) {
-        setSelectedQuarter(quarterOption);
-      }
-      
-      setSelectedYear(trackingRecord.year);
-      
-      if (trackingRecord.employee_id) {
-        const employee = employees.find(emp => emp.id === trackingRecord.employee_id);
-        if (employee) {
-          setSelectedEmployee({
-            value: employee.id,
-            label: `${employee.first_name} ${employee.last_name}`
-          });
-        }
-      } else {
-        setSelectedEmployee(null);
-      }
-    } else {
-      // New tracking record
-      setTrackingNotes('');
-      setSelectedEmployee(null);
-      setEditingTrackingId(null);
-    }
-  };
-
-  // Function to close tracking form
-  const handleCloseTrackingForm = () => {
-    setIsTrackingFormOpen(null);
-    setTrackingNotes('');
-    setSelectedEmployee(null);
-    setEditingTrackingId(null);
-  };
-
-  // Function to create or update a KPI tracking record
-  const handleSaveTracking = async (kpiId: string) => {
-    if (!selectedQuarter && !editingTrackingId) {
-      toast.error('Please select a quarter');
-      return;
-    }
-
-    if (!trackingNotes.trim()) {
-      toast.error('Please enter notes');
-      return;
-    }
-
-    try {
-      if (editingTrackingId) {
-        // Update existing tracking record - only notes and employee_id can be changed
-        const payload = {
-          notes: trackingNotes,
-          ...(selectedEmployee && { employee_id: selectedEmployee.value })
-        };
-
-        console.log('Updating KPI tracking with payload:', payload);
-        
-        const updatedTracking = await updateKPITracking(editingTrackingId, payload);
-        
-        console.log('Tracking record updated:', updatedTracking);
-        toast.success('Tracking record updated successfully');
-      } else {
-        // Find the current KPI to check existing tracking records
-        const currentKPI = kpis.find(kpi => kpi.id === kpiId);
-        
-        // Check if a tracking record for the same quarter and year already exists
-        if (currentKPI?.tracking_records && currentKPI.tracking_records.some((record: KPITrackingRecord) => 
-          record.quarter === selectedQuarter?.value && record.year === selectedYear
-        )) {
-          toast.error(`A tracking record for ${selectedQuarter?.value} ${selectedYear} already exists for this KPI`);
-          return;
-        }
-        
-        // Create new tracking record - quarter, year, notes, employee_id all required
-        if (!selectedQuarter) {
-          toast.error('Please select a quarter');
-          return;
-        }
-        
-        const payload = {
-          kpi_id: kpiId,
-          quarter: selectedQuarter.value,
-          year: selectedYear,
-          notes: trackingNotes,
-          status: 'In Progress',
-          ...(selectedEmployee && { employee_id: selectedEmployee.value })
-        };
-
-        console.log('Creating KPI tracking with payload:', payload);
-        
-        const newTracking = await createKPITracking(payload);
-        
-        console.log('New tracking record created:', newTracking);
-        toast.success('Tracking record created successfully');
-      }
-      
-      // Reset form
-      setTrackingNotes('');
-      setSelectedEmployee(null);
-      setIsTrackingFormOpen(null);
-      setEditingTrackingId(null);
-      
-      // Refresh KPI data to get the updated tracking records
-      await fetchKPIs();
-      
-    } catch (err) {
-      console.error("Error saving KPI tracking:", err);
-      setError("Failed to save tracking record. Please try again.");
-      toast.error('Failed to save tracking record');
-    }
-  };
-
-  // Function to delete a KPI tracking record
-  const handleDeleteTracking = async (trackingId: string) => {
-    if (confirm('Are you sure you want to delete this tracking record?')) {
-      try {
-        // First, directly update the local state to remove just this tracking record
-        // Create a deep copy of the kpis array to avoid mutation
-        const updatedKpis = kpis.map(kpi => {
-          // Only modify the KPI that contains this record
-          if (kpi.tracking_records && kpi.tracking_records.some(record => record.id === trackingId)) {
-            // Return a new KPI object with the filtered tracking records
-            return {
-              ...kpi,
-              tracking_records: kpi.tracking_records.filter(record => record.id !== trackingId)
-            };
-          }
-          // Return all other KPIs unchanged
-          return kpi;
-        });
-        
-        // Update the state immediately with the locally updated data
-        setKpis(updatedKpis);
-        
-        // Then perform the actual deletion on the server
-        await deleteKPITracking(trackingId);
-        toast.success('Tracking record deleted successfully');
-        
-      } catch (err) {
-        console.error("Error deleting tracking record:", err);
-        toast.error('Failed to delete tracking record');
-        
-        // If the deletion fails, refresh the data from the server to restore the correct state
-        fetchKPIs();
-      }
-    }
-  };
-
-  // Get current year and year options
-  const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i)
-    .map(year => ({ value: year, label: year.toString() }));
-
-  // Convert employees to options for the dropdown
-  const employeeOptions = employees.map(employee => ({
-    value: employee.id,
-    label: `${employee.first_name} ${employee.last_name}`
-  }));
-
   // Helper function to toggle a category selection
   const toggleCategory = (category: string) => {
     const newCategories = new Set(selectedCategories);
@@ -468,6 +248,20 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
       newCategories.add(category);
     }
     setSelectedCategories(newCategories);
+  };
+
+  // Helper function to render a category badge
+  const renderCategoryBadge = (category: string) => {
+    const colorClass = 
+      category === 'Time' ? 'bg-purple-100 text-purple-800' : 
+      category === 'Team' ? 'bg-green-100 text-green-800' : 
+      'bg-blue-100 text-blue-800';
+    
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClass}`}>
+        {category}
+      </span>
+    );
   };
 
   if (isLoadingCompany) {
@@ -613,7 +407,10 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
             <Select
               value={selectedKPIEmployee}
               onChange={setSelectedKPIEmployee}
-              options={employeeOptions}
+              options={employees.map(employee => ({
+                value: employee.id,
+                label: `${employee.first_name} ${employee.last_name}`
+              }))}
               placeholder={loadingEmployees ? "Loading people..." : "Select Person in Charge"}
               classNamePrefix="react-select"
               isClearable
@@ -652,7 +449,7 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
         </div>
       )}
 
-      {/* KPI List - Display person in charge in the KPI header */}
+      {/* KPI Table - Replace cards with a table layout */}
       {isLoading ? (
         <div className="p-8 text-center">
           <svg className="animate-spin mx-auto h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -704,285 +501,84 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
           </div>
         </div>
       ) : (
-        // Grid layout for KPI cards
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
-          {filteredKpis.map((kpi) => (
-            <div 
-              key={kpi.id} 
-              className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col"
-            >
-              {/* KPI Header with fixed height for consistent layout */}
-              <div className="p-5 flex flex-col h-[200px]">
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-lg font-semibold text-gray-900 leading-tight">{kpi.kpi_name}</h3>
-                  <div className="flex space-x-1 ml-2">
+        // Table layout for KPIs
+        <div className="overflow-x-auto bg-white rounded-lg shadow">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Category
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  KPI Name
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Ideal State
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Person in Charge
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredKpis.map((kpi) => (
+                <tr key={kpi.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {renderCategoryBadge(kpi.category)}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm font-medium text-gray-900">{kpi.kpi_name}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-500 max-w-md whitespace-pre-line">{kpi.ideal_state}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {kpi.employee_id && (() => {
+                      const employee = employees.find(emp => emp.id === kpi.employee_id);
+                      if (employee) {
+                        return (
+                          <div className="flex items-center">
+                            {employee.profile_pic_url ? (
+                              <img 
+                                src={employee.profile_pic_url} 
+                                alt={`${employee.first_name} ${employee.last_name}`}
+                                className="h-8 w-8 rounded-full mr-2 object-cover border border-gray-200"
+                              />
+                            ) : (
+                              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center mr-2 text-xs font-medium text-gray-600 border border-gray-300">
+                                {employee.first_name[0]}{employee.last_name[0]}
+                              </div>
+                            )}
+                            <span className="text-sm text-gray-900">
+                              {employee.first_name} {employee.last_name}
+                            </span>
+                          </div>
+                        );
+                      }
+                      return <span className="text-gray-400">—</span>;
+                    })() || <span className="text-gray-400">—</span>}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => handleEditKPI(kpi)}
-                      className="text-gray-500 hover:text-blue-600 p-1 rounded-full hover:bg-gray-100"
-                      title="Edit KPI"
+                      className="text-blue-600 hover:text-blue-900 mr-4"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                      </svg>
+                      Edit
                     </button>
                     <button
                       onClick={() => handleDeleteKPI(kpi.id)}
-                      className="text-gray-500 hover:text-red-600 p-1 rounded-full hover:bg-gray-100"
-                      title="Delete KPI"
+                      className="text-red-600 hover:text-red-900"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
+                      Delete
                     </button>
-                  </div>
-                </div>
-                
-                {/* Category and Person in Charge row */}
-                <div className="flex flex-wrap items-center mb-3 gap-2">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                    ${kpi.category === 'Time' ? 'bg-purple-100 text-purple-800' : 
-                     kpi.category === 'Team' ? 'bg-green-100 text-green-800' : 
-                     'bg-blue-100 text-blue-800'}`}>
-                    {kpi.category}
-                  </span>
-                  
-                  {/* Display person in charge if available - at the same level as category */}
-                  {kpi.employee_id && (() => {
-                    const employee = employees.find(emp => emp.id === kpi.employee_id);
-                    if (employee) {
-                      return (
-                        <div className="flex items-center">
-                          {employee.profile_pic_url ? (
-                            <img 
-                              src={employee.profile_pic_url} 
-                              alt={`${employee.first_name} ${employee.last_name}`}
-                              className="h-6 w-6 rounded-full mr-1.5 object-cover border border-gray-200"
-                            />
-                          ) : (
-                            <div className="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center mr-1.5 text-xs font-medium text-gray-600 border border-gray-300">
-                              {employee.first_name[0]}{employee.last_name[0]}
-                            </div>
-                          )}
-                          <span className="text-xs font-medium text-gray-700">
-                            {employee.first_name} {employee.last_name}
-                          </span>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
-                </div>
-                
-                {/* Ideal state description with scrolling for overflow */}
-                <div className="text-sm text-gray-600 flex-grow overflow-y-auto">
-                  <p className="whitespace-pre-line">{kpi.ideal_state}</p>
-                </div>
-              </div>
-
-              {/* Fixed-height separator for consistent alignment */}
-              <div className="border-t border-gray-100"></div>
-
-              {/* KPI Tracking Records - Fixed height section */}
-              <div className="p-5">
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="text-sm font-medium text-gray-700">Tracking Records</h4>
-                  <button
-                    onClick={() => handleOpenTrackingForm(kpi.id)}
-                    className="text-green-600 hover:text-green-700 p-1 hover:bg-green-50 rounded flex items-center text-xs"
-                  >
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      className="h-3.5 w-3.5 mr-1" 
-                      viewBox="0 0 20 20" 
-                      fill="currentColor"
-                    >
-                      <path 
-                        fillRule="evenodd" 
-                        d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" 
-                        clipRule="evenodd" 
-                      />
-                    </svg>
-                    Add Record
-                  </button>
-                </div>
-                
-                {/* Tracking Form - Keep existing implementation */}
-                {isTrackingFormOpen === kpi.id && (
-                  <div 
-                    className="mb-4 p-4 bg-gray-50 rounded-md border border-gray-200"
-                  >
-                    <h5 className="font-medium text-gray-700 mb-3">Add New Tracking Record</h5>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Quarter <span className="text-red-500">*</span>
-                          {editingTrackingId && <span className="text-xs text-gray-500 ml-1">(not editable)</span>}
-                        </label>
-                        <Select
-                          value={selectedQuarter}
-                          onChange={setSelectedQuarter}
-                          options={quarterOptions}
-                          placeholder="Select Quarter"
-                          classNamePrefix="react-select"
-                          isDisabled={!!editingTrackingId}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Year <span className="text-red-500">*</span>
-                          {editingTrackingId && <span className="text-xs text-gray-500 ml-1">(not editable)</span>}
-                        </label>
-                        <Select
-                          value={{ value: selectedYear, label: selectedYear.toString() }}
-                          onChange={(option) => setSelectedYear(option ? (option.value as number) : currentYear)}
-                          options={yearOptions}
-                          placeholder="Select Year"
-                          classNamePrefix="react-select"
-                          isDisabled={!!editingTrackingId}
-                        />
-                      </div>
-                    </div>
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Notes <span className="text-red-500">*</span>
-                        {editingTrackingId && <span className="text-xs text-blue-500 ml-1">(editable)</span>}
-                      </label>
-                      <textarea
-                        value={trackingNotes}
-                        onChange={(e) => setTrackingNotes(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Enter tracking notes"
-                        rows={3}
-                        required
-                      />
-                    </div>
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Person in Charge (Optional)
-                        {editingTrackingId && <span className="text-xs text-blue-500 ml-1">(editable)</span>}
-                      </label>
-                      <Select
-                        value={selectedEmployee}
-                        onChange={setSelectedEmployee}
-                        options={employeeOptions}
-                        placeholder={loadingEmployees ? "Loading people..." : "Select Person in Charge"}
-                        classNamePrefix="react-select"
-                        isClearable
-                        isLoading={loadingEmployees}
-                      />
-                    </div>
-                    <div className="flex justify-end space-x-3">
-                      <button
-                        type="button"
-                        onClick={handleCloseTrackingForm}
-                        className="px-3 py-1 border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleSaveTracking(kpi.id)}
-                        disabled={
-                          (!selectedQuarter && !editingTrackingId) || 
-                          !trackingNotes.trim()
-                        }
-                        className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed"
-                      >
-                        {editingTrackingId ? 'Update' : 'Save'} Tracking
-                      </button>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Records container with min-height for consistent alignment */}
-                <div className="min-h-[50px]">
-                  {!kpi.tracking_records ? (
-                    <div className="flex items-center justify-center h-12">
-                      <svg className="animate-spin h-5 w-5 text-blue-600 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <p className="text-sm text-gray-500">Loading...</p>
-                    </div>
-                  ) : kpi.tracking_records.length > 0 ? (
-                    // Use a more compact list view instead of a table for better space utilization
-                    <div className="space-y-2">
-                      {kpi.tracking_records.map((record: KPITrackingRecord) => (
-                        <div 
-                          key={record.id} 
-                          className="text-xs bg-gray-50 rounded border border-gray-200 overflow-hidden"
-                        >
-                          <div className="flex justify-between items-center p-2 border-b border-gray-200 bg-gray-100">
-                            <div className="flex items-center space-x-2">
-                              <span className="font-medium">{record.quarter} {record.year}</span>
-                              {record.employee_id && 
-                                (() => {
-                                  const employee = employees.find(emp => emp.id === record.employee_id);
-                                  if (employee) {
-                                    return (
-                                      <div className="flex items-center">
-                                        <span className="mx-1 text-gray-400">•</span>
-                                        <div className="flex items-center">
-                                          {employee.profile_pic_url ? (
-                                            <img 
-                                              src={employee.profile_pic_url} 
-                                              alt={`${employee.first_name} ${employee.last_name}`}
-                                              className="h-5 w-5 rounded-full mr-1.5 object-cover"
-                                            />
-                                          ) : (
-                                            <div className="h-5 w-5 rounded-full bg-gray-200 flex items-center justify-center mr-1.5 text-xs font-medium text-gray-600">
-                                              {employee.first_name[0]}{employee.last_name[0]}
-                                            </div>
-                                          )}
-                                          <span className="truncate max-w-[100px] text-xs text-gray-700">
-                                            {employee.first_name} {employee.last_name}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    );
-                                  }
-                                  return null;
-                                })()
-                              }
-                            </div>
-                            <div className="flex space-x-1">
-                              <button
-                                onClick={() => handleOpenTrackingForm(kpi.id, record)}
-                                className="text-blue-600 hover:text-blue-900 p-0.5 rounded hover:bg-blue-50"
-                                title="Edit Tracking Record"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                                </svg>
-                              </button>
-                              <button
-                                onClick={() => handleDeleteTracking(record.id)}
-                                className="text-red-600 hover:text-red-900 p-0.5 rounded hover:bg-red-50"
-                                title="Delete Tracking Record"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
-                          <div className="p-2">
-                            <p className="whitespace-pre-line" title={record.notes || 'No notes'}>
-                              {record.notes || 'No notes'}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center h-12">
-                      <p className="text-sm text-gray-500 italic">No tracking records yet.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
