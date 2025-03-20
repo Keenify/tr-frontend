@@ -10,6 +10,7 @@ export interface CreateKPIPayload {
     kpi_name: string;
     ideal_state: string;
     company_id: string;
+    employee_id?: string; // Optional person in charge
 }
 
 /**
@@ -37,6 +38,7 @@ export interface KPIData {
     ideal_state: string;
     company_id: string;
     created_at: string;
+    employee_id?: string; // Optional person in charge
     tracking_records?: KPITrackingRecord[]; // Optional tracking records that may be included in responses
 }
 
@@ -48,6 +50,7 @@ export interface UpdateKPIPayload {
     category?: string;
     kpi_name?: string;
     ideal_state?: string;
+    employee_id?: string; // Optional person in charge
 }
 
 /**
