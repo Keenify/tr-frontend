@@ -1,14 +1,17 @@
 import { Session } from "@supabase/supabase-js";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useUserAndCompanyData } from "../../../../shared/hooks/useUserAndCompanyData";
 import Select from 'react-select';
 import { 
   createKPI, 
   updateKPI, 
   deleteKPI, 
-  getCompanyKPIs
+  getCompanyKPIs,
+  createKPITracking,
+  getTrackingsByKPI,
+  updateKPITracking
 } from "../services/useQuarterlyKPI";
-import { KPIData } from "../types/quarterlyKPI.types";
+import { KPIData, KPITrackingRecord } from "../types/quarterlyKPI.types";
 import { directoryService } from "../../../../shared/services/directoryService";
 import { Employee } from "../../../../shared/types/directory.types";
 import toast from "react-hot-toast";
@@ -52,6 +55,47 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
     kpi_name: '',
     ideal_state: '',
   });
+
+  // Add current year state to use for tracking
+  const [currentYear] = useState<number>(new Date().getFullYear());
+  
+  // Determine the current quarter as a constant
+  const currentQuarter = (() => {
+    const month = new Date().getMonth();
+    if (month < 3) return 'Q1';
+    if (month < 6) return 'Q2';
+    if (month < 9) return 'Q3';
+    return 'Q4';
+  })();
+  
+  // Calculate progress through current quarter
+  const quarterProgress = (() => {
+    const now = new Date();
+    const month = now.getMonth();
+    const day = now.getDate();
+    
+    // Determine which quarter month we're in (0-2)
+    const quarterMonth = month % 3;
+    
+    // Approximate days in the quarter (90-92 days)
+    const daysInQuarter = 90;
+    
+    // Approximate day of quarter
+    const dayOfQuarter = (quarterMonth * 30) + day;
+    
+    // Calculate percentage (0-100)
+    return Math.min(Math.round((dayOfQuarter / daysInQuarter) * 100), 100);
+  })();
+  
+  // Add state to store KPI tracking records
+  const [trackingRecords, setTrackingRecords] = useState<Record<string, KPITrackingRecord[]>>({});
+
+  // Add state for the note modal
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  const [activeKpiId, setActiveKpiId] = useState<string | null>(null);
+  const [activeQuarter, setActiveQuarter] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState('');
+  const noteInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Memoize fetchKPIs to prevent unnecessary recreation
   const fetchKPIs = useCallback(async () => {
@@ -130,6 +174,35 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
     
     fetchEmployees();
   }, [companyInfo?.id]);
+
+  // Fetch KPI tracking records for each KPI
+  useEffect(() => {
+    const fetchTrackingRecords = async () => {
+      if (kpis.length === 0) return;
+      
+      const records: Record<string, KPITrackingRecord[]> = {};
+      
+      for (const kpi of kpis) {
+        try {
+          const trackings = await getTrackingsByKPI(kpi.id);
+          
+          // Normalize quarters to ensure they all have "Q" prefix for consistency
+          const normalizedTrackings = trackings.map(tracking => ({
+            ...tracking,
+            quarter: tracking.quarter.startsWith('Q') ? tracking.quarter : `Q${tracking.quarter}`
+          }));
+          
+          records[kpi.id] = normalizedTrackings;
+        } catch (err) {
+          console.error(`Error fetching tracking records for KPI ${kpi.id}:`, err);
+        }
+      }
+      
+      setTrackingRecords(records);
+    };
+    
+    fetchTrackingRecords();
+  }, [kpis]);
 
   const handleAddKPI = () => {
     setIsFormOpen(true);
@@ -261,6 +334,125 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClass}`}>
         {category}
       </span>
+    );
+  };
+
+  // Helper function to get tracking record for a specific quarter
+  const getTrackingForQuarter = (kpiId: string, quarter: string) => {
+    if (!trackingRecords[kpiId]) return null;
+    
+    // Quarter should already be normalized during fetch
+    return trackingRecords[kpiId].find(record => record.quarter === quarter && record.year === currentYear);
+  };
+  
+  // Helper function to update tracking note
+  const updateTrackingNote = async (kpiId: string, quarter: string, notes: string) => {
+    try {
+      const existingRecord = getTrackingForQuarter(kpiId, quarter);
+      
+      if (existingRecord) {
+        // Update existing tracking record - don't include status in payload
+        const updated = await updateKPITracking(existingRecord.id, { 
+          quarter, 
+          year: currentYear,
+          notes
+        });
+        
+        // Update local state
+        setTrackingRecords(prev => ({
+          ...prev,
+          [kpiId]: prev[kpiId].map(record => 
+            record.id === existingRecord.id ? updated : record
+          )
+        }));
+      } else {
+        // Create new tracking record - status is required for creation
+        const newRecord = await createKPITracking({
+          kpi_id: kpiId,
+          quarter,
+          year: currentYear,
+          notes,
+          status: 'not_started', // Default status since it's required but not used
+          employee_id: undefined
+        });
+        
+        // Update local state
+        setTrackingRecords(prev => ({
+          ...prev,
+          [kpiId]: [...(prev[kpiId] || []), newRecord]
+        }));
+      }
+      
+      toast.success(`${quarter} note updated`);
+    } catch (err) {
+      console.error("Error updating tracking note:", err);
+      toast.error("Failed to update note");
+    }
+  };
+  
+  // Function to handle opening the note modal
+  const handleOpenNoteModal = (kpiId: string, quarter: string) => {
+    const tracking = getTrackingForQuarter(kpiId, quarter);
+    setActiveKpiId(kpiId);
+    setActiveQuarter(quarter);
+    setNoteText(tracking?.notes || '');
+    setIsNoteModalOpen(true);
+    
+    // Focus on textarea after modal is opened
+    setTimeout(() => {
+      if (noteInputRef.current) {
+        noteInputRef.current.focus();
+      }
+    }, 50);
+  };
+  
+  // Function to handle saving the note
+  const handleSaveNote = () => {
+    if (activeKpiId && activeQuarter) {
+      updateTrackingNote(activeKpiId, activeQuarter, noteText);
+      setIsNoteModalOpen(false);
+      setActiveKpiId(null);
+      setActiveQuarter(null);
+      setNoteText('');
+    }
+  };
+  
+  // Function to handle canceling the note edit
+  const handleCancelNote = () => {
+    setIsNoteModalOpen(false);
+    setActiveKpiId(null);
+    setActiveQuarter(null);
+    setNoteText('');
+  };
+  
+  // Helper function to render note cell
+  const renderNoteCell = (kpiId: string, quarter: string) => {
+    const tracking = getTrackingForQuarter(kpiId, quarter);
+    const hasNote = tracking?.notes && tracking.notes.trim() !== '';
+    const isCurrentQuarter = quarter === currentQuarter;
+    
+    return (
+      <td 
+        className={`px-3 py-3 cursor-pointer hover:bg-gray-50 transition-colors relative ${isCurrentQuarter ? 'bg-blue-50' : ''}`}
+        onClick={() => handleOpenNoteModal(kpiId, quarter)}
+      >
+        {isCurrentQuarter && (
+          <div 
+            className="absolute top-0 bottom-0 border-r border-blue-400 opacity-50" 
+            style={{ left: `${quarterProgress}%` }}
+            title={`${quarterProgress}% through ${quarter}`}
+          ></div>
+        )}
+        <div className="text-sm relative">
+          {hasNote ? (
+            <div className="whitespace-pre-line" title={tracking.notes}>
+              {tracking.notes}
+            </div>
+          ) : (
+            <span className="text-gray-400">—</span>
+          )}
+        </div>
+      </td>
     );
   };
 
@@ -449,6 +641,43 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
         </div>
       )}
 
+      {/* Note Modal */}
+      {isNoteModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">
+              {activeQuarter} Note
+            </h3>
+            
+            <textarea
+              ref={noteInputRef}
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter your note here..."
+              rows={5}
+            />
+            
+            <div className="flex justify-end space-x-3 mt-4">
+              <button
+                type="button"
+                onClick={handleCancelNote}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveNote}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Save Note
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* KPI Table - Replace cards with a table layout */}
       {isLoading ? (
         <div className="p-8 text-center">
@@ -503,22 +732,59 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
       ) : (
         // Table layout for KPIs
         <div className="overflow-x-auto bg-white rounded-lg shadow">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="min-w-full divide-y divide-gray-200 table-fixed">
             <thead className="bg-gray-50">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Category
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="w-[10%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   KPI Name
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className={`w-[17%] px-3 py-3 text-center text-xs font-medium uppercase tracking-wider relative ${currentQuarter === 'Q1' ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}>
+                  Q1
+                  {currentQuarter === 'Q1' && (
+                    <div 
+                      className="absolute top-0 bottom-0 border-r border-blue-500 opacity-70" 
+                      style={{ left: `${quarterProgress}%` }}
+                      title={`${quarterProgress}% through Q1`}
+                    ></div>
+                  )}
+                </th>
+                <th scope="col" className={`w-[17%] px-3 py-3 text-center text-xs font-medium uppercase tracking-wider relative ${currentQuarter === 'Q2' ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}>
+                  Q2
+                  {currentQuarter === 'Q2' && (
+                    <div 
+                      className="absolute top-0 bottom-0 border-r border-blue-500 opacity-70" 
+                      style={{ left: `${quarterProgress}%` }}
+                      title={`${quarterProgress}% through Q2`}
+                    ></div>
+                  )}
+                </th>
+                <th scope="col" className={`w-[17%] px-3 py-3 text-center text-xs font-medium uppercase tracking-wider relative ${currentQuarter === 'Q3' ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}>
+                  Q3
+                  {currentQuarter === 'Q3' && (
+                    <div 
+                      className="absolute top-0 bottom-0 border-r border-blue-500 opacity-70" 
+                      style={{ left: `${quarterProgress}%` }}
+                      title={`${quarterProgress}% through Q3`}
+                    ></div>
+                  )}
+                </th>
+                <th scope="col" className={`w-[17%] px-3 py-3 text-center text-xs font-medium uppercase tracking-wider relative ${currentQuarter === 'Q4' ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}>
+                  Q4
+                  {currentQuarter === 'Q4' && (
+                    <div 
+                      className="absolute top-0 bottom-0 border-r border-blue-500 opacity-70" 
+                      style={{ left: `${quarterProgress}%` }}
+                      title={`${quarterProgress}% through Q4`}
+                    ></div>
+                  )}
+                </th>
+                <th scope="col" className="w-[16%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ideal State
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="w-[12%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Person in Charge
                 </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="w-[3%] px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -526,33 +792,49 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredKpis.map((kpi) => (
                 <tr key={kpi.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {renderCategoryBadge(kpi.category)}
+                  <td className="px-3 py-3">
+                    <div>
+                      {renderCategoryBadge(kpi.category)}
+                      <div className="text-sm font-medium text-gray-900 break-words mt-1" title={kpi.kpi_name}>
+                        {kpi.kpi_name}
+                      </div>
+                    </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">{kpi.kpi_name}</div>
+                  {/* Q1 note cell */}
+                  {renderNoteCell(kpi.id, 'Q1')}
+                  
+                  {/* Q2 note cell */}
+                  {renderNoteCell(kpi.id, 'Q2')}
+                  
+                  {/* Q3 note cell */}
+                  {renderNoteCell(kpi.id, 'Q3')}
+                  
+                  {/* Q4 note cell */}
+                  {renderNoteCell(kpi.id, 'Q4')}
+                  
+                  <td className="px-3 py-3">
+                    <div className="text-sm text-gray-500 whitespace-pre-line">
+                      {kpi.ideal_state}
+                    </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-500 max-w-md whitespace-pre-line">{kpi.ideal_state}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 py-3">
                     {kpi.employee_id && (() => {
                       const employee = employees.find(emp => emp.id === kpi.employee_id);
                       if (employee) {
                         return (
-                          <div className="flex items-center">
+                          <div className="flex items-center flex-nowrap">
                             {employee.profile_pic_url ? (
                               <img 
                                 src={employee.profile_pic_url} 
                                 alt={`${employee.first_name} ${employee.last_name}`}
-                                className="h-8 w-8 rounded-full mr-2 object-cover border border-gray-200"
+                                className="h-6 w-6 flex-shrink-0 rounded-full mr-1 object-cover border border-gray-200"
                               />
                             ) : (
-                              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center mr-2 text-xs font-medium text-gray-600 border border-gray-300">
+                              <div className="h-6 w-6 flex-shrink-0 rounded-full bg-gray-200 flex items-center justify-center mr-1 text-xs font-medium text-gray-600 border border-gray-300">
                                 {employee.first_name[0]}{employee.last_name[0]}
                               </div>
                             )}
-                            <span className="text-sm text-gray-900">
+                            <span className="text-xs text-gray-900 whitespace-normal">
                               {employee.first_name} {employee.last_name}
                             </span>
                           </div>
@@ -561,19 +843,27 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
                       return <span className="text-gray-400">—</span>;
                     })() || <span className="text-gray-400">—</span>}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleEditKPI(kpi)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteKPI(kpi.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Delete
-                    </button>
+                  <td className="px-3 py-3 text-center">
+                    <div className="flex items-center justify-center space-x-2">
+                      <button
+                        onClick={() => handleEditKPI(kpi)}
+                        className="text-blue-600 hover:text-blue-900"
+                        title="Edit"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteKPI(kpi.id)}
+                        className="text-red-600 hover:text-red-900"
+                        title="Delete"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
