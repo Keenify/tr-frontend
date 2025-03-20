@@ -225,9 +225,9 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
     <tbody className="divide-y divide-gray-200">
       {filteredPasswords.map((password) => (
         <tr key={password.id} className="hover:bg-gray-50">
-          <td className="px-6 py-4 break-words">{password.name}</td>
-          <td className="px-6 py-4 break-words">{password.username}</td>
-          <td className="px-6 py-4 break-words">
+          <td className="px-6 py-4 break-words text-center">{password.name}</td>
+          <td className="px-6 py-4 break-words text-center">{password.username}</td>
+          <td className="px-6 py-4 break-words text-center">
             {password.url && (
               <a 
                 href={password.url.startsWith('https://') ? password.url : `https://${password.url}`}
@@ -239,12 +239,12 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
               </a>
             )}
           </td>
-          <td className="px-6 py-4">
-            <div className="flex items-center justify-between">
+          <td className="px-6 py-4 text-center">
+            <div className="flex items-center justify-center">
               <div className="font-mono break-words">
                 {decryptedPasswords[password.id] || '•••••••'}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 ml-2">
                 {decryptedPasswords[password.id] && (
                   <button
                     onClick={() => handleCopyPassword(password.id, decryptedPasswords[password.id])}
@@ -272,11 +272,11 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
               </div>
             </div>
           </td>
-          <td className="px-6 py-4 break-words">{password.notes}</td>
-          <td className="px-6 py-4 break-words">{password.country}</td>
-          <td className="px-6 py-4">
+          <td className="px-6 py-4 break-words text-center">{password.notes}</td>
+          <td className="px-6 py-4 break-words text-center">{password.country}</td>
+          <td className="px-6 py-4 text-center">
             {isManager && (
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 justify-center">
                 <button 
                   onClick={() => handleEdit(password)}
                   className="text-blue-600 hover:text-blue-800"
@@ -406,13 +406,13 @@ const Password: React.FC<PasswordProps> = ({ session }) => {
                 <table className="w-full bg-white table-fixed">
                   <thead className="sticky top-0 z-10">
                     <tr>
-                      <th className="w-[15%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Name</th>
-                      <th className="w-[15%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Username</th>
-                      <th className="w-[20%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">URL</th>
-                      <th className="w-[20%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Password</th>
-                      <th className="w-[15%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Notes</th>
-                      <th className="w-[7%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Country</th>
-                      <th className="w-[8%] px-6 py-4 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Actions</th>
+                      <th className="w-[15%] px-6 py-4 bg-gray-50 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Name</th>
+                      <th className="w-[15%] px-6 py-4 bg-gray-50 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Username</th>
+                      <th className="w-[20%] px-6 py-4 bg-gray-50 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b">URL</th>
+                      <th className="w-[20%] px-6 py-4 bg-gray-50 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Password</th>
+                      <th className="w-[15%] px-6 py-4 bg-gray-50 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Notes</th>
+                      <th className="w-[7%] px-6 py-4 bg-gray-50 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Country</th>
+                      <th className="w-[8%] px-6 py-4 bg-gray-50 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b">Actions</th>
                     </tr>
                   </thead>
                   {renderTableBody()}
