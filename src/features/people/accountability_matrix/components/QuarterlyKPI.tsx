@@ -207,7 +207,13 @@ const QuarterlyKPI: React.FC<QuarterlyKPIProps> = ({ session }) => {
           company_id: companyInfo.id
         });
         
-        setKpis([...kpis, newKPI]);
+        // Ensure new KPI has tracking_records initialized as an empty array
+        const newKPIWithEmptyTracking = {
+          ...newKPI,
+          tracking_records: []
+        };
+        
+        setKpis([...kpis, newKPIWithEmptyTracking]);
         toast.success('KPI created successfully');
       }
       
