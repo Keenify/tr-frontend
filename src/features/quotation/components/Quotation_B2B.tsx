@@ -126,6 +126,9 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
     setFooterText(getFooterText(isGiftBox));
   }, [isGiftBox]);
 
+  // Add a ref to track initial render for price tier headers
+  const initialRenderRef = React.useRef(true);
+
   React.useEffect(() => {
     if (userCompanyInfo?.id) {
       setLoadingProducts(true);
@@ -226,10 +229,49 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
     [getPriceTierHeaders]
   );
 
-  // Update the useEffect to initialize visible columns based on the toggle
+  // Update the useEffect to initialize visible columns only on first render
   React.useEffect(() => {
-    setVisibleCartonColumns(new Set(priceTierHeaders));
-  }, [priceTierHeaders, displayPackCount]);
+    // Only initialize on first render
+    if (initialRenderRef.current) {
+      setVisibleCartonColumns(new Set(priceTierHeaders));
+      initialRenderRef.current = false;
+    }
+  }, [priceTierHeaders]); // Add priceTierHeaders as dependency
+
+  // Separate effect to handle display toggle changes
+  React.useEffect(() => {
+    // Only run this effect after initial render
+    if (!initialRenderRef.current) {
+      const updatedHeaders = getPriceTierHeaders();
+      // When toggling between display modes, we want to keep the user's selections
+      // as much as possible while adapting to the new price tier structure
+      setVisibleCartonColumns(prev => {
+        // Create a new set to store the updated columns
+        const newSet = new Set<number>();
+        
+        // If user had checked all columns, keep all checked
+        if (prev.size === priceTierHeaders.length) {
+          return new Set(updatedHeaders);
+        }
+        
+        // If user had unchecked all columns, keep all unchecked
+        if (prev.size === 0) {
+          return new Set<number>();
+        }
+        
+        // For other cases, try to preserve the user's selection pattern
+        // by matching relative positions rather than exact values
+        updatedHeaders.forEach(header => {
+          // If this price tier existed in the previous view and was checked, check it in the new view
+          if (priceTierHeaders.includes(header) && prev.has(header)) {
+            newSet.add(header);
+          }
+        });
+        
+        return newSet;
+      });
+    }
+  }, [displayPackCount, getPriceTierHeaders, priceTierHeaders]); // Add the missing dependencies
 
   // Update the useEffect to check for gift box products
   React.useEffect(() => {
@@ -313,16 +355,32 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
       prevProducts.map((product) => {
         if (product.id === productId) {
           if (field.startsWith("price_")) {
-            const carton = parseInt(field.split("_")[1], 10);
-            const updatedPriceTiers = productPriceTiers[productId].map((tier) =>
-              tier.min_cartons === carton
-                ? { ...tier, price_per_unit: editValue }
-                : tier
-            );
-            setProductPriceTiers((prev) => ({
-              ...prev,
-              [productId]: updatedPriceTiers,
-            }));
+            // Handle "price_NUMBER" format (carton prices)
+            if (!field.includes("pack")) {
+              const carton = parseInt(field.split("_")[1], 10);
+              const updatedPriceTiers = productPriceTiers[productId].map((tier) =>
+                tier.min_cartons === carton && tier.currency === selectedCurrency
+                  ? { ...tier, price_per_unit: editValue }
+                  : tier
+              );
+              setProductPriceTiers((prev) => ({
+                ...prev,
+                [productId]: updatedPriceTiers,
+              }));
+            } 
+            // Handle "price_pack_NUMBER" format (pack prices)
+            else if (field.startsWith("price_pack_")) {
+              const pack = parseInt(field.split("_")[2], 10);
+              const updatedPriceTiers = productPriceTiers[productId].map((tier) =>
+                tier.min_packs === pack && tier.currency === selectedCurrency
+                  ? { ...tier, price_per_unit: editValue }
+                  : tier
+              );
+              setProductPriceTiers((prev) => ({
+                ...prev,
+                [productId]: updatedPriceTiers,
+              }));
+            }
           } else {
             return { ...product, [field]: editValue };
           }
@@ -331,6 +389,10 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
       })
     );
     setEditingCell(null);
+    
+    // We don't need to update visible carton columns after price changes
+    // This was causing all checkboxes to be checked again
+    // Let the user maintain their checkbox selections
   };
 
   // Function to handle input key down (save changes on Enter key)
