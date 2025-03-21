@@ -528,6 +528,7 @@ export function DashboardLayout({
     } catch (error) {
       toast.dismiss();
       toast.error("Failed to upload profile picture. Please try again.");
+      console.error("Avatar upload error:", error);
     } finally {
       setIsUploading(false);
     }

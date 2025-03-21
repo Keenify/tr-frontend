@@ -66,7 +66,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       const date = new Date(dateString);
       return date.toISOString().split('T')[0];
     } catch (error) {
-      console.error('Invalid date:', dateString);
+      console.error('Invalid date:', dateString, error);
       return '';
     }
   };
@@ -316,6 +316,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                       Start Date
                     </label>
                     <input
+                      title="Enter start date"
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
@@ -333,6 +334,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                       End Date
                     </label>
                     <input
+                      title="Enter end date"
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
