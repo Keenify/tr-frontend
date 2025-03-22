@@ -3,9 +3,9 @@ import React, { useEffect, useState } from "react";
 import { createCard, updateCard } from "../../../shared/components/trello/services/useCard";
 import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
-import { CardUpdate } from "../../../shared/components/trello/types/card.types";
+import { CardUpdate, Card as TrelloCard } from "../../../shared/components/trello/types/card.types";
 import { getBoardDetails, HARDCODED_BOARD_ID } from "../services/useBoard";
-import { List } from "../types/board";
+import { List, Card as ProjectCard } from "../types/board";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 import { getUserData } from '../../../services/useUser';
 
@@ -14,11 +14,29 @@ interface ProjectProps {
   boardId?: string;
 }
 
+// Type for the board's expected list structure
+interface TrelloBoardList {
+  id: string;
+  title: string;
+  country?: string;
+  cards: TrelloCard[];
+}
+
+// Modified List type that matches what we're actually storing
+interface ModifiedList extends Omit<List, 'cards'> {
+  title: string;
+  cards: (ProjectCard & {
+    thumbnailUrl?: string;
+    colorCode?: string;
+    due_date?: string;
+  })[];
+}
+
 const Project: React.FC<ProjectProps> = ({ 
   session, 
   boardId = HARDCODED_BOARD_ID 
 }) => {
-  const [lists, setLists] = useState<List[]>([]);
+  const [lists, setLists] = useState<ModifiedList[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { companyInfo, isLoading: isLoadingCompany } = useUserAndCompanyData(session.user.id);
@@ -36,9 +54,10 @@ const Project: React.FC<ProjectProps> = ({
             ...card,
             thumbnailUrl: card.thumbnail_url,
             colorCode: card.color_code,
+            due_date: card.due_date || undefined, // Convert null to undefined
           })),
         }));
-        setLists(transformedLists);
+        setLists(transformedLists as ModifiedList[]);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load board details');
       } finally {
@@ -181,7 +200,7 @@ const Project: React.FC<ProjectProps> = ({
         )}
       </div>
       <TrelloBoard 
-        initialLists={lists}
+        initialLists={lists as unknown as TrelloBoardList[]}
         onListMove={handleListMove}
         onCardMove={handleCardMove}
         onCardUpdate={handleCardUpdate}
