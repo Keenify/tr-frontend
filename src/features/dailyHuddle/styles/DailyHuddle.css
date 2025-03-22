@@ -921,3 +921,46 @@ tr.top-performer-3 {
 .motivational-message {
   display: none !important;
 }
+
+/* Refresh button styling */
+.refresh-button {
+  margin-left: 10px;
+  padding: 6px 12px;
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.refresh-button:hover {
+  background-color: #e9ecef;
+}
+
+.refresh-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.refresh-icon {
+  transition: transform 0.5s ease;
+}
+
+.refresh-icon.refreshing {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Adjust date picker container to accommodate the refresh button */
+.date-picker-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}

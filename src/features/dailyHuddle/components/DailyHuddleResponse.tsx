@@ -4,7 +4,7 @@ import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyDa
 import { useEmployeeResponses } from '../hooks/useEmployeeResponses';
 import { fetchQuestions } from '../services/huddleService';
 import { ClipLoader } from 'react-spinners';
-import { Question } from '../types/huddle.types';
+import { Question, ResponseData } from '../types/huddle.types';
 import { CUTOFF_HOUR } from '../constants';
 import '../styles/DailyHuddle.css';
 import { getCompanyCalendarEvents } from '../../people/calendar/services/useCalendar';
@@ -40,7 +40,7 @@ const getEffectiveDate = (): string => {
 interface RankedEmployeeResponse {
   id: string;
   name: string;
-  response: any;
+  response: ResponseData | { questions: Array<{ question_id: string; answer_text?: string }> };
   submittedTime?: string;
   profile_pic_url?: string | null;
   rank?: number; // Rank based on submission time (1, 2, or 3 for top 3)
@@ -62,8 +62,9 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
   const [questions, setQuestions] = React.useState<Question[]>([]);
   const [selectedDate, setSelectedDate] = React.useState(getEffectiveDate());
   const { companyInfo, error: dataError } = useUserAndCompanyData(session.user.id);
-  const { employeeResponses, error } = useEmployeeResponses(companyInfo?.id, selectedDate);
+  const { employeeResponses, error, refreshEmployeeResponses } = useEmployeeResponses(companyInfo?.id, selectedDate);
   const [calendarEvents, setCalendarEvents] = React.useState<CalendarEvent[]>([]);
+  const [refreshing, setRefreshing] = React.useState(false);
 
   /**
    * Initializes the component by fetching questions and employee responses.
@@ -123,7 +124,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
     };
     
     fetchCalendarEvents();
-  }, [companyInfo?.id, selectedDate]);
+  }, [companyInfo, employeeResponses, companyInfo?.id, selectedDate]);
 
   /**
    * Reset component state when date changes
@@ -277,6 +278,50 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
     );
   };
 
+  /**
+   * Refreshes all data including questions, employee responses, and calendar events
+   */
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    setLoading(true);
+    
+    try {
+      // Refresh questions
+      const fetchedQuestions = await fetchQuestions();
+      setQuestions(fetchedQuestions);
+      
+      // Refresh employee responses
+      if (refreshEmployeeResponses) {
+        await refreshEmployeeResponses();
+      }
+      
+      // Refresh calendar events
+      if (companyInfo?.id) {
+        const selectedDateObj = new Date(selectedDate);
+        const startDate = new Date(selectedDateObj);
+        startDate.setHours(0, 0, 0, 0);
+        
+        const endDate = new Date(selectedDateObj);
+        endDate.setHours(23, 59, 59, 999);
+        
+        const events = await getCompanyCalendarEvents(
+          companyInfo.id,
+          startDate.toISOString(),
+          endDate.toISOString()
+        );
+        
+        setCalendarEvents(events as CalendarEvent[]);
+      }
+    } catch (error) {
+      console.error("Failed to refresh data:", error);
+    } finally {
+      setRefreshing(false);
+      if (companyInfo && employeeResponses) {
+        setLoading(false);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="response-container">
@@ -289,6 +334,25 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
             onChange={handleDateChange}
             className="date-picker"
           />
+          <button 
+            onClick={handleRefresh} 
+            className="refresh-button"
+            disabled={true}
+            title="Refresh data"
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              width="16" 
+              height="16" 
+              fill="currentColor" 
+              className="refresh-icon refreshing" 
+              viewBox="0 0 16 16"
+            >
+              <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+              <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+            </svg>
+            Loading...
+          </button>
         </div>
         <div className="loading-center">
           <ClipLoader size={50} color={"#007BFF"} loading={loading} />
@@ -310,6 +374,25 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
             onChange={handleDateChange}
             className="date-picker"
           />
+          <button 
+            onClick={handleRefresh} 
+            className="refresh-button"
+            disabled={refreshing}
+            title="Refresh data"
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              width="16" 
+              height="16" 
+              fill="currentColor" 
+              className={`refresh-icon ${refreshing ? 'refreshing' : ''}`} 
+              viewBox="0 0 16 16"
+            >
+              <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+              <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+            </svg>
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
         </div>
         <div className="error-message">Error loading employee responses: {error?.message || dataError?.message}</div>
       </div>
@@ -381,6 +464,25 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
           onChange={handleDateChange}
           className="date-picker"
         />
+        <button 
+          onClick={handleRefresh} 
+          className="refresh-button"
+          disabled={refreshing}
+          title="Refresh data"
+        >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            width="16" 
+            height="16" 
+            fill="currentColor" 
+            className={`refresh-icon ${refreshing ? 'refreshing' : ''}`}
+            viewBox="0 0 16 16"
+          >
+            <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+          </svg>
+          {refreshing ? 'Refreshing...' : 'Refresh'}
+        </button>
       </div>
       
       <h3 className="response-title">Submitted Responses</h3>

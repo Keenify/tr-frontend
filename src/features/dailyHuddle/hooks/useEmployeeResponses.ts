@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getAllEmployees } from '../../../services/useUser';
 import { fetchResponse } from '../services/huddleService';
 import { ResponseData } from '../types/huddle.types';
@@ -15,39 +15,39 @@ export function useEmployeeResponses(companyId: string | undefined, selectedDate
   const [employeeResponses, setEmployeeResponses] = useState<EmployeeResponse[]>([]);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
+  const fetchAllResponses = useCallback(async () => {
     if (!companyId) return;
+    
+    try {
+      const employeeData = await getAllEmployees(companyId);
+      
+      const responses = await Promise.all(employeeData.map(async (employee) => {
+        const response = await fetchResponse(selectedDate, employee.id);
+        return {
+          id: employee.id,
+          name: `${employee.first_name} ${employee.last_name}`,
+          profile_pic_url: employee.profile_pic_url || null,
+          response,
+          submittedTime: response?.submitted_at || response?.submitted_date || '',
+        };
+      }));
 
-    const fetchAllResponses = async () => {
-      try {
-        const employeeData = await getAllEmployees(companyId);
-        
-        const responses = await Promise.all(employeeData.map(async (employee) => {
-          const response = await fetchResponse(selectedDate, employee.id);
-          return {
-            id: employee.id,
-            name: `${employee.first_name} ${employee.last_name}`,
-            profile_pic_url: employee.profile_pic_url || null,
-            response,
-            submittedTime: response?.submitted_at || response?.submitted_date || '',
-          };
-        }));
+      const sortedResponses = responses.sort((a, b) => {
+        if (!a.submittedTime) return 1;
+        if (!b.submittedTime) return -1;
+        return new Date(b.submittedTime).getTime() - new Date(a.submittedTime).getTime();
+      });
 
-        const sortedResponses = responses.sort((a, b) => {
-          if (!a.submittedTime) return 1;
-          if (!b.submittedTime) return -1;
-          return new Date(b.submittedTime).getTime() - new Date(a.submittedTime).getTime();
-        });
-
-        setEmployeeResponses(sortedResponses);
-      } catch (err) {
-        setError(err as Error);
-        console.error('Error fetching employee responses:', err);
-      }
-    };
-
-    fetchAllResponses();
+      setEmployeeResponses(sortedResponses);
+    } catch (err) {
+      setError(err as Error);
+      console.error('Error fetching employee responses:', err);
+    }
   }, [companyId, selectedDate]);
 
-  return { employeeResponses, error };
+  useEffect(() => {
+    fetchAllResponses();
+  }, [fetchAllResponses]);
+
+  return { employeeResponses, error, refreshEmployeeResponses: fetchAllResponses };
 }
