@@ -3,7 +3,7 @@ import { Session } from '@supabase/supabase-js';
 import '../styles/Home.css';
 
 // image
-import MountEverest from '../../../../src/assets/home/mount-everest.png';
+import MountEverest from '../../../../src/assets/home/mount-everest-completed.jpg';
 
 interface HomeProps {
   session: Session;
