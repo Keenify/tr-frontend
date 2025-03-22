@@ -67,25 +67,61 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   // Handle date changes with direct Date objects
   const handleStartDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.value) {
-      const newDate = new Date(e.target.value);
-      if (!isNaN(newDate.getTime())) {
-        setStartDate(newDate);
-        // Automatically refetch data when date changes
-        setTimeout(() => refetch(), 100);
+      try {
+        // Create a date ensuring timezone doesn't affect the date
+        const [year, month, day] = e.target.value.split('-').map(Number);
+        // Month is 0-indexed in JavaScript Date
+        const newDate = new Date(year, month - 1, day);
+        
+        if (!isNaN(newDate.getTime())) {
+          console.log(`Setting start date to: ${e.target.value} (${newDate.toISOString()})`);
+          setStartDate(newDate);
+          // Automatically refetch data when date changes
+          setTimeout(() => refetch(), 100);
+        } else {
+          console.error("Invalid date format from input:", e.target.value);
+        }
+      } catch (err) {
+        console.error("Error parsing date:", err);
       }
     }
   }, [refetch]);
 
   const handleEndDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.value) {
-      const newDate = new Date(e.target.value);
-      if (!isNaN(newDate.getTime())) {
-        setEndDate(newDate);
-        // Automatically refetch data when date changes
-        setTimeout(() => refetch(), 100);
+      try {
+        // Create a date ensuring timezone doesn't affect the date
+        const [year, month, day] = e.target.value.split('-').map(Number);
+        // Month is 0-indexed in JavaScript Date
+        const newDate = new Date(year, month - 1, day);
+        
+        if (!isNaN(newDate.getTime())) {
+          console.log(`Setting end date to: ${e.target.value} (${newDate.toISOString()})`);
+          setEndDate(newDate);
+          // Automatically refetch data when date changes
+          setTimeout(() => refetch(), 100);
+        } else {
+          console.error("Invalid date format from input:", e.target.value);
+        }
+      } catch (err) {
+        console.error("Error parsing date:", err);
       }
     }
   }, [refetch]);
+
+  // Get min and max date attributes for the date pickers
+  const minDate = "2020-01-01"; // Allow data from 2020 onwards
+  const maxDate = "2025-12-31"; // Allow selecting dates up to 2025
+
+  // Date formatting function that handles any year
+  const formatDateValue = useCallback((date: Date): string => {
+    try {
+      return format(date, "yyyy-MM-dd");
+    } catch (err) {
+      console.error("Error formatting date:", date, err);
+      return new Date().toISOString().split('T')[0]; // Fallback
+    }
+  }, []);
 
   // Apply date range and fetch data - keep this for direct refresh calls elsewhere
   const handleDateRangeSubmit = useCallback(() => {
@@ -167,8 +203,10 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
               <input
                 type="date"
                 id="start-date"
-                value={format(startDate, "yyyy-MM-dd")}
+                value={formatDateValue(startDate)}
                 onChange={handleStartDateChange}
+                min={minDate}
+                max={maxDate}
                 className="p-2 border border-gray-300 rounded-md w-full"
                 data-testid="start-date-picker"
                 aria-label="Start Date"
@@ -180,8 +218,10 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
               <input
                 type="date"
                 id="end-date"
-                value={format(endDate, "yyyy-MM-dd")}
+                value={formatDateValue(endDate)}
                 onChange={handleEndDateChange}
+                min={minDate}
+                max={maxDate}
                 className="p-2 border border-gray-300 rounded-md w-full"
                 data-testid="end-date-picker"
                 aria-label="End Date"
