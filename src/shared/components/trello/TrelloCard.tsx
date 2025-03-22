@@ -198,7 +198,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       
       return diffDays;
-    } catch (error) {
+    } catch {
       return null;
     }
   };
@@ -211,7 +211,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString();
-    } catch (error) {
+    } catch {
       return '';
     }
   };
