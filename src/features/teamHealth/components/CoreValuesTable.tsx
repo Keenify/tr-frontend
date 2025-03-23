@@ -7,7 +7,7 @@ import {
   deleteCoreValue 
 } from '../services/useCoreValues';
 import { CoreValueData, CreateCoreValuePayload, UpdateCoreValuePayload } from '../types/coreValue';
-import { FiPlus, FiTrash2, FiEdit3, FiCheck, FiX, FiAlertCircle, FiAlertTriangle } from 'react-icons/fi';
+import { FiPlus, FiTrash2, FiEdit3, FiCheck, FiX, FiAlertCircle, FiAlertTriangle, FiLock } from 'react-icons/fi';
 import { Session } from '@supabase/supabase-js';
 
 interface CoreValuesTableProps {
@@ -26,8 +26,25 @@ const CoreValuesTable: React.FC<CoreValuesTableProps> = ({ session }) => {
   });
   const [editFormData, setEditFormData] = useState<UpdateCoreValuePayload>({});
   const [addingNew, setAddingNew] = useState(false);
+  const [isManager, setIsManager] = useState(false);
 
-  const { companyInfo, isLoading: userDataLoading } = useUserAndCompanyData(session.user.id);
+  const { companyInfo, userInfo, isLoading: userDataLoading } = useUserAndCompanyData(session.user.id);
+
+  // Check if user is a manager
+  useEffect(() => {
+    if (userInfo) {
+      // Check if user role contains 'manager'
+      const hasManagerRole = userInfo.role ? 
+        userInfo.role.toLowerCase().includes('manager') : false;
+      
+      console.log('User role check:', {
+        role: userInfo.role,
+        isManager: hasManagerRole
+      });
+      
+      setIsManager(hasManagerRole);
+    }
+  }, [userInfo]);
 
   // Fetch core values when component mounts or company info changes
   useEffect(() => {
@@ -54,6 +71,11 @@ const CoreValuesTable: React.FC<CoreValuesTableProps> = ({ session }) => {
 
   // Handle creating a new core value
   const handleAddCoreValue = async () => {
+    if (!isManager) {
+      setError('Only managers can add core values');
+      return;
+    }
+
     if (!companyInfo?.id) {
       setError('Company ID is required');
       return;
@@ -90,6 +112,11 @@ const CoreValuesTable: React.FC<CoreValuesTableProps> = ({ session }) => {
 
   // Handle updating a core value
   const handleUpdateCoreValue = async (id: string) => {
+    if (!isManager) {
+      setError('Only managers can update core values');
+      return;
+    }
+
     if (!editFormData.name && !editFormData.description) {
       setEditingId(null);
       return;
@@ -119,6 +146,10 @@ const CoreValuesTable: React.FC<CoreValuesTableProps> = ({ session }) => {
 
   // Initiate delete confirmation for a core value
   const initiateDelete = (id: string) => {
+    if (!isManager) {
+      setError('Only managers can delete core values');
+      return;
+    }
     setDeletingId(id);
   };
 
@@ -129,6 +160,11 @@ const CoreValuesTable: React.FC<CoreValuesTableProps> = ({ session }) => {
 
   // Confirm and handle deleting a core value
   const confirmDeleteCoreValue = async (id: string) => {
+    if (!isManager) {
+      setError('Only managers can delete core values');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -146,6 +182,10 @@ const CoreValuesTable: React.FC<CoreValuesTableProps> = ({ session }) => {
 
   // Start editing a core value
   const handleStartEdit = (coreValue: CoreValueData) => {
+    if (!isManager) {
+      setError('Only managers can edit core values');
+      return;
+    }
     setEditingId(coreValue.id);
     setEditFormData({
       name: coreValue.name,
@@ -192,13 +232,23 @@ const CoreValuesTable: React.FC<CoreValuesTableProps> = ({ session }) => {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-200 hover:shadow-md">
-      <div className="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-white to-gray-50">
-        <h3 className="text-xl font-semibold text-gray-800">
-          Company Core Values
-        </h3>
-        <p className="mt-1 text-sm text-gray-500">
-          Define and manage the core values that represent your company culture
-        </p>
+      <div className="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-white to-gray-50 flex justify-between items-center">
+        <div>
+          <h3 className="text-xl font-semibold text-gray-800">
+            Core Values
+          </h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Define and manage the core values that represent your company culture
+          </p>
+        </div>
+        <div>
+          {!isManager && (
+            <div className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500">
+              <FiLock className="mr-2 h-4 w-4" />
+              View-only mode
+            </div>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -305,22 +355,28 @@ const CoreValuesTable: React.FC<CoreValuesTableProps> = ({ session }) => {
                     </div>
                   ) : (
                     <div className="flex justify-end space-x-3">
-                      <button
-                        onClick={() => handleStartEdit(coreValue)}
-                        disabled={deletingId !== null}
-                        className={`text-indigo-600 hover:text-indigo-800 transition-colors ${deletingId !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        title="Edit"
-                      >
-                        <FiEdit3 className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => initiateDelete(coreValue.id)}
-                        disabled={deletingId !== null}
-                        className={`text-red-500 hover:text-red-700 transition-colors ${deletingId !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        title="Delete"
-                      >
-                        <FiTrash2 className="h-5 w-5" />
-                      </button>
+                      {isManager ? (
+                        <>
+                          <button
+                            onClick={() => handleStartEdit(coreValue)}
+                            disabled={deletingId !== null}
+                            className={`text-indigo-600 hover:text-indigo-800 transition-colors ${deletingId !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            title="Edit"
+                          >
+                            <FiEdit3 className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => initiateDelete(coreValue.id)}
+                            disabled={deletingId !== null}
+                            className={`text-red-500 hover:text-red-700 transition-colors ${deletingId !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            title="Delete"
+                          >
+                            <FiTrash2 className="h-5 w-5" />
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-gray-400 text-sm italic">No actions available</span>
+                      )}
                     </div>
                   )}
                 </td>
@@ -380,15 +436,19 @@ const CoreValuesTable: React.FC<CoreValuesTableProps> = ({ session }) => {
       {/* Add button */}
       {!addingNew && (
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
-          <button
-            type="button"
-            onClick={() => setAddingNew(true)}
-            disabled={deletingId !== null}
-            className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 ${deletingId !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            <FiPlus className="-ml-1 mr-2 h-4 w-4" />
-            Add Core Value
-          </button>
+          {isManager ? (
+            <button
+              type="button"
+              onClick={() => setAddingNew(true)}
+              disabled={deletingId !== null}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 ${deletingId !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <FiPlus className="-ml-1 mr-2 h-4 w-4" />
+              Add Core Value
+            </button>
+          ) : (
+            <p className="text-sm text-gray-500 italic">Only managers can add or modify core values</p>
+          )}
         </div>
       )}
     </div>

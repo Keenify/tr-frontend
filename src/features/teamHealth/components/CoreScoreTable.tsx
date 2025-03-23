@@ -483,7 +483,7 @@ const CoreScoreTable: React.FC<CoreScoreTableProps> = ({ session, employeeId }) 
                   <div className="max-w-[120px] mx-auto truncate" title={value.name}>
                     {value.name}
                   </div>
-                  <div className="text-xxs normal-case text-gray-400 mt-1 max-w-[120px] mx-auto truncate" title={value.description}>
+                  <div className="text-xxs normal-case text-gray-400 mt-1 max-w-[120px] mx-auto truncate hidden" title={value.description}>
                     {value.description}
                   </div>
                 </th>
