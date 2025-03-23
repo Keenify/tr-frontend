@@ -27,6 +27,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [selectedPlatform, setSelectedPlatform] = useState<Platform>("shopee");
   const [selectedShopId, setSelectedShopId] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
   
   // Extract company ID from session properly
   const companyId = useMemo(() => {
@@ -56,6 +57,13 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     format(endDate, "yyyy-MM-dd")
   );
 
+  // Reset refreshing state when data or error changes
+  useEffect(() => {
+    if (refreshing) {
+      setRefreshing(false);
+    }
+  }, [shopeeMetrics, error, refreshing]);
+  
   // Memoize available shops to prevent recreating the array on every render
   const availableShops = useMemo(() => 
     shopeeMetrics ? [...new Set(shopeeMetrics.map(item => item.shop_id))].map(shopId => ({
@@ -77,7 +85,10 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
           console.log(`Setting start date to: ${e.target.value} (${newDate.toISOString()})`);
           setStartDate(newDate);
           // Automatically refetch data when date changes
-          setTimeout(() => refetch(), 100);
+          setTimeout(() => {
+            setRefreshing(true);
+            refetch();
+          }, 100);
         } else {
           console.error("Invalid date format from input:", e.target.value);
         }
@@ -99,7 +110,10 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
           console.log(`Setting end date to: ${e.target.value} (${newDate.toISOString()})`);
           setEndDate(newDate);
           // Automatically refetch data when date changes
-          setTimeout(() => refetch(), 100);
+          setTimeout(() => {
+            setRefreshing(true);
+            refetch();
+          }, 100);
         } else {
           console.error("Invalid date format from input:", e.target.value);
         }
@@ -127,6 +141,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const handleDateRangeSubmit = useCallback(() => {
     console.log("Refreshing data for date range:", 
       format(startDate, "yyyy-MM-dd"), "to", format(endDate, "yyyy-MM-dd"));
+    setRefreshing(true);
     refetch();
   }, [startDate, endDate, refetch]);
 
@@ -184,12 +199,20 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         </div>
         <button
           onClick={handleDateRangeSubmit}
-          className="text-blue-500 hover:text-blue-700"
+          className="text-blue-500 hover:text-blue-700 flex items-center gap-1"
           title="Refresh data"
+          disabled={refreshing}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
+          {refreshing && <span className="text-sm">Refreshing...</span>}
         </button>
       </div>
 
@@ -291,9 +314,17 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
       </div>
 
       {/* Loading and error states */}
-      {isLoading && (
+      {isLoading && !refreshing && (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+        </div>
+      )}
+
+      {/* Refreshing overlay - only shown when refreshing */}
+      {refreshing && (
+        <div className="flex justify-center items-center my-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mr-2"></div>
+          <span className="text-blue-500">Refreshing data...</span>
         </div>
       )}
 
@@ -465,6 +496,21 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
                 </table>
               </div>
             </div>
+
+            <button 
+              onClick={handleDateRangeSubmit} 
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center justify-center gap-2"
+              disabled={refreshing}
+            >
+              {refreshing ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                  <span>Refreshing...</span>
+                </>
+              ) : (
+                "Refresh Data"
+              )}
+            </button>
           </>
         ) : (
           <div className="bg-gray-50 border border-gray-300 text-gray-700 p-8 rounded-md text-center">
@@ -477,9 +523,17 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
             </p>
             <button 
               onClick={handleDateRangeSubmit} 
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center justify-center gap-2"
+              disabled={refreshing}
             >
-              Refresh Data
+              {refreshing ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                  <span>Refreshing...</span>
+                </>
+              ) : (
+                "Refresh Data"
+              )}
             </button>
           </div>
         )
