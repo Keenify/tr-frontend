@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Session } from "@supabase/supabase-js";
 import { format, subDays } from "date-fns";
 import { useShopeeMetrics } from "../services/useShopeeMetrics";
+import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 import {
   LineChart,
   Line,
@@ -29,44 +30,38 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const [selectedShopId, setSelectedShopId] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   
-  // Extract company ID from session properly
-  const companyId = useMemo(() => {
-    return session?.user?.user_metadata?.company_id || 
-           session?.user?.app_metadata?.company_id || 
-           // Use type assertion with a more specific type
-           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-           ((session?.user as any)?.company_id) || 
-           "88c966e3-ec86-4431-80fb-5b3a0e7af1e5"; // Fallback to example ID
-  }, [session]);
-
-  // Log company ID to help debug
-  useEffect(() => {
-    console.log("Company ID from session:", companyId);
-    console.log("Full session:", session);
-  }, [companyId, session]);
-  
+  // Get user and company data from hook
+  const { userInfo, companyInfo, error: userDataError, isLoading: userDataLoading } = 
+    useUserAndCompanyData(session.user.id);
+    
   // Fetch Shopee metrics using the hook
   const {
     data: shopeeMetrics,
-    isLoading,
-    error,
+    isLoading: shopeeMetricsLoading,
+    error: shopeeMetricsError,
     refetch,
   } = useShopeeMetrics(
-    companyId,
+    companyInfo?.id,
     format(startDate, "yyyy-MM-dd"),
     format(endDate, "yyyy-MM-dd")
   );
+
+  // Log company ID to help debug
+  useEffect(() => {
+    console.log("Company ID from useUserAndCompanyData:", companyInfo?.id);
+    console.log("User info:", userInfo);
+  }, [companyInfo, userInfo]);
 
   // Reset refreshing state when data or error changes
   useEffect(() => {
     if (refreshing) {
       setRefreshing(false);
     }
-  }, [shopeeMetrics, error, refreshing]);
+  }, [shopeeMetrics, shopeeMetricsError, refreshing]);
   
   // Memoize available shops to prevent recreating the array on every render
   const availableShops = useMemo(() => 
-    shopeeMetrics ? [...new Set(shopeeMetrics.map(item => item.shop_id))].map(shopId => ({
+    shopeeMetrics ? [...new Set(shopeeMetrics.map(item => item.shop_id))].map((shopId) => ({
       id: shopId,
       name: `Shop ${shopId}` // In a real implementation, you'd have actual shop names
     })) : []
@@ -181,6 +176,25 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const totalOrders = filteredMetrics?.reduce((sum, metric) => sum + (Number(metric.total_orders) || 0), 0) || 0;
   const totalAdsExpense = filteredMetrics?.reduce((sum, metric) => sum + (Number(metric.ads_expense) || 0), 0) || 0;
 
+  // Handle loading states from both data sources
+  if (userDataLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <p className="ml-2">Loading user data...</p>
+      </div>
+    );
+  }
+
+  if (userDataError) {
+    return (
+      <div className="bg-red-50 border border-red-300 text-red-700 p-4 rounded-md">
+        <p>Error: Failed to load user and company data</p>
+      </div>
+    );
+  }
+
+  // Now render the component
   return (
     <div className="flex flex-col w-full p-4">
       <h1 className="text-2xl font-bold text-gray-800 mb-4">
@@ -314,7 +328,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
       </div>
 
       {/* Loading and error states */}
-      {isLoading && !refreshing && (
+      {shopeeMetricsLoading && !refreshing && (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
         </div>
@@ -328,20 +342,20 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         </div>
       )}
 
-      {error && (
+      {shopeeMetricsError && (
         <div className="bg-red-50 border border-red-300 text-red-700 p-4 rounded-md">
-          <p>Error: {error instanceof Error ? error.message : "Failed to load metrics"}</p>
+          <p>Error: {shopeeMetricsError instanceof Error ? shopeeMetricsError.message : "Failed to load metrics"}</p>
         </div>
       )}
 
       {/* Dashboard content - only shown for Shopee for now */}
-      {selectedPlatform === "shopee" && !isLoading && !error ? (
+      {selectedPlatform === "shopee" && !shopeeMetricsLoading && !shopeeMetricsError ? (
         filteredMetrics && filteredMetrics.length > 0 ? (
           <>
             {/* Display shop info at the top */}
             <div className="mb-4 bg-white p-3 rounded-lg shadow">
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Company ID:</span> {companyId}
+                <span className="font-medium">Company ID:</span> {companyInfo?.id}
                 {selectedShopId && <> | <span className="font-medium">Shop ID:</span> {selectedShopId}</>}
               </p>
             </div>
@@ -517,7 +531,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
             <p className="text-lg">No metrics data available for the selected period.</p>
             <p className="mt-2">Try selecting a different date range.</p>
             <p className="mt-4 text-sm text-gray-500">Current query: 
-              <br />Company ID: {companyId || 'Not set'}
+              <br />Company ID: {companyInfo?.id || 'Not set'}
               <br />Date range: {format(startDate, "yyyy-MM-dd")} to {format(endDate, "yyyy-MM-dd")}
               {selectedShopId && <><br />Shop ID: {selectedShopId}</>}
             </p>
