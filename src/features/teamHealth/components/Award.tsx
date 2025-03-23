@@ -67,17 +67,6 @@ const Award: React.FC<AwardProps> = ({ session }) => {
           employeeId={employeeId} 
         />
         
-        {/* Award Recognition System - Coming Soon */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Team Recognition</h2>
-          <div className="bg-gray-50 border border-gray-200 rounded-md p-8 text-center">
-            <h3 className="text-lg font-medium text-gray-800 mb-2">Coming Soon!</h3>
-            <p className="text-gray-600">
-              The team recognition feature is currently under development.
-              Soon you'll be able to recognize team members who exemplify your core values.
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );
