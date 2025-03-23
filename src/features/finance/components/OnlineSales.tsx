@@ -161,11 +161,11 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const chartData = useMemo(() => {
     const data = filteredMetrics?.map(metric => ({
       date: metric.date,
-      revenue: metric.revenue,
-      adsExpense: metric.ads_expense,
-      totalOrders: metric.total_orders,
-      newBuyers: metric.new_buyer_count,
-      existingBuyers: metric.existing_buyer_count,
+      revenue: Number(metric.revenue) || 0,
+      adsExpense: Number(metric.ads_expense) || 0,
+      totalOrders: Number(metric.total_orders) || 0,
+      newBuyers: Number(metric.new_buyer_count) || 0,
+      existingBuyers: Number(metric.existing_buyer_count) || 0,
     })) || [];
     
     // Sort the data by date in ascending order (oldest to newest)
@@ -177,9 +177,9 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   }, [filteredMetrics]);
 
   // Calculate summary metrics
-  const totalRevenue = filteredMetrics?.reduce((sum, metric) => sum + metric.revenue, 0) || 0;
-  const totalOrders = filteredMetrics?.reduce((sum, metric) => sum + metric.total_orders, 0) || 0;
-  const totalAdsExpense = filteredMetrics?.reduce((sum, metric) => sum + metric.ads_expense, 0) || 0;
+  const totalRevenue = filteredMetrics?.reduce((sum, metric) => sum + (Number(metric.revenue) || 0), 0) || 0;
+  const totalOrders = filteredMetrics?.reduce((sum, metric) => sum + (Number(metric.total_orders) || 0), 0) || 0;
+  const totalAdsExpense = filteredMetrics?.reduce((sum, metric) => sum + (Number(metric.ads_expense) || 0), 0) || 0;
 
   return (
     <div className="flex flex-col w-full p-4">
@@ -350,7 +350,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="bg-white p-4 rounded-lg shadow">
                 <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
-                <p className="text-2xl font-semibold text-gray-800">${totalRevenue.toFixed(2)}</p>
+                <p className="text-2xl font-semibold text-gray-800">${typeof totalRevenue === 'number' ? totalRevenue.toFixed(2) : '0.00'}</p>
               </div>
               <div className="bg-white p-4 rounded-lg shadow">
                 <h3 className="text-sm font-medium text-gray-500">Total Orders</h3>
@@ -358,7 +358,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
               </div>
               <div className="bg-white p-4 rounded-lg shadow">
                 <h3 className="text-sm font-medium text-gray-500">Total Ads Expense</h3>
-                <p className="text-2xl font-semibold text-gray-800">${totalAdsExpense.toFixed(2)}</p>
+                <p className="text-2xl font-semibold text-gray-800">${typeof totalAdsExpense === 'number' ? totalAdsExpense.toFixed(2) : '0.00'}</p>
               </div>
             </div>
 
@@ -476,10 +476,10 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
                           {metric.date}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${metric.revenue.toFixed(2)}
+                          ${typeof metric.revenue === 'number' ? metric.revenue.toFixed(2) : Number(metric.revenue || 0).toFixed(2)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${metric.ads_expense.toFixed(2)}
+                          ${typeof metric.ads_expense === 'number' ? metric.ads_expense.toFixed(2) : Number(metric.ads_expense || 0).toFixed(2)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {metric.total_orders}
