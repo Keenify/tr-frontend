@@ -18,8 +18,6 @@ npm run dev
 npm run build
 ```
 
-# Trainual Clone Frontend
-
 ## Online Sales Dashboard
 
 The Online Sales Dashboard has been refactored into modular components for better maintainability and reusability. The main components include:
@@ -45,6 +43,7 @@ The Online Sales Dashboard has been refactored into modular components for bette
 1. **useMetricsData** - Custom hook for fetching and managing metrics data
 
 This modular approach allows for:
+
 - Easier code maintenance
 - Better separation of concerns
 - Improved testability
