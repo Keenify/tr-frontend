@@ -41,7 +41,6 @@ import AnonymousFeedbackPage from "./features/people/feedback/components/Anonymo
 import Finance from "./features/finance/components/Finance";
 import Playbook from "./features/playbook/components/Playbook";
 import Calendar from "./features/people/calendar/components/Calendar";
-import AccountabilityMatrix from "./features/people/accountability_matrix/components/AccountabilityMatrix";
 import Accountability from "./features/people/accountability_matrix/components/Accountability";
 import Leaves from "./features/people/leaves/components/Leaves";
 import OnlineSales from "./features/finance/components/OnlineSales";
