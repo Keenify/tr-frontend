@@ -32,7 +32,7 @@ const EmptyStateMessage: React.FC<EmptyStateMessageProps> = ({
       case 'lazada':
         return "Ensure your Lazada API credentials are set up correctly and the account has sales data for the selected date range.";
       case 'shopify':
-        return "Shopify integration is still in development. Check back soon for updates!";
+        return "Ensure your Shopify store credentials are set up correctly and the store has sales data for the selected date range.";
       default:
         return "Try selecting a different date range or platform.";
     }
@@ -63,6 +63,7 @@ const EmptyStateMessage: React.FC<EmptyStateMessageProps> = ({
         <br />Date range: {format(startDate, "yyyy-MM-dd")} to {format(endDate, "yyyy-MM-dd")}
         {platform === "shopee" && selectedEntityId && <><br />Shop ID: {selectedEntityId}</>}
         {platform === "lazada" && selectedEntityId && <><br />Account ID: {selectedEntityId}</>}
+        {platform === "shopify" && selectedEntityId && <><br />Store ID: {selectedEntityId}</>}
       </p>
       <button
         onClick={onRefresh}

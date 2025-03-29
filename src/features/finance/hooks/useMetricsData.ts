@@ -1,10 +1,14 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useShopeeMetrics } from '../services/useShopeeMetrics';
-import { useLazadaMetrics } from '../services/useLazadaMetrics';
+import { useShopeeMetrics, ShopeeMetric } from '../services/useShopeeMetrics';
+import { useLazadaMetrics, LazadaMetric } from '../services/useLazadaMetrics';
+import { useShopifyMetrics, ShopifyMetric } from '../services/useShopifyMetrics';
 import { format } from 'date-fns';
 import { Platform } from '../components/PlatformSelector';
 import { Entity } from '../components/PlatformEntitySelector';
 import { ChartDataPoint } from '../components/charts/RevenueChart';
+
+// Union type for all metric types
+type MetricType = ShopeeMetric | LazadaMetric | ShopifyMetric;
 
 interface UseMetricsDataProps {
   platform: Platform;
@@ -17,8 +21,8 @@ interface UseMetricsDataProps {
 interface UseMetricsDataResult {
   isLoading: boolean;
   error: Error | null;
-  metrics: any[];
-  filteredMetrics: any[];
+  metrics: MetricType[];
+  filteredMetrics: MetricType[];
   chartData: ChartDataPoint[];
   entities: Entity[];
   totalRevenue: number;
@@ -68,30 +72,45 @@ export function useMetricsData({
     formattedEndDate
   );
 
+  // Fetch Shopify metrics
+  const {
+    data: shopifyMetrics,
+    isLoading: shopifyLoading,
+    error: shopifyError,
+    refetch: refetchShopify
+  } = useShopifyMetrics(
+    platform === 'shopify' ? companyId : undefined,
+    formattedStartDate,
+    formattedEndDate
+  );
+
   // Get appropriate data, loading state, and error based on selected platform
-  const metrics = useMemo(() => {
+  const metrics = useMemo((): MetricType[] => {
     switch (platform) {
       case 'shopee': return shopeeMetrics || [];
       case 'lazada': return lazadaMetrics || [];
+      case 'shopify': return shopifyMetrics || [];
       default: return [];
     }
-  }, [platform, shopeeMetrics, lazadaMetrics]);
+  }, [platform, shopeeMetrics, lazadaMetrics, shopifyMetrics]);
 
   const isLoading = useMemo(() => {
     switch (platform) {
       case 'shopee': return shopeeLoading;
       case 'lazada': return lazadaLoading;
+      case 'shopify': return shopifyLoading;
       default: return false;
     }
-  }, [platform, shopeeLoading, lazadaLoading]);
+  }, [platform, shopeeLoading, lazadaLoading, shopifyLoading]);
 
   const error = useMemo(() => {
     switch (platform) {
       case 'shopee': return shopeeError;
       case 'lazada': return lazadaError;
+      case 'shopify': return shopifyError;
       default: return null;
     }
-  }, [platform, shopeeError, lazadaError]);
+  }, [platform, shopeeError, lazadaError, shopifyError]);
 
   // Extract entities (shops/accounts) from metrics data
   const entities = useMemo(() => {
@@ -107,55 +126,154 @@ export function useMetricsData({
           id: accountId,
           name: accountId
         }));
+    } else if (platform === 'shopify' && shopifyMetrics) {
+      return [...new Set(shopifyMetrics.map(item => item.store_id))]
+        .map(storeId => ({
+          id: storeId,
+          name: storeId
+        }));
     }
     return [];
-  }, [platform, shopeeMetrics, lazadaMetrics]);
+  }, [platform, shopeeMetrics, lazadaMetrics, shopifyMetrics]);
 
   // Filter metrics by selected entity
-  const filteredMetrics = useMemo(() => {
-    if (platform === 'shopee') {
-      return metrics.filter(metric => 
-        selectedEntityId ? metric.shop_id === selectedEntityId : true
-      );
-    } else if (platform === 'lazada') {
-      return metrics.filter(metric => 
-        selectedEntityId ? metric.account_id === selectedEntityId : true
-      );
+  const filteredMetrics = useMemo((): MetricType[] => {
+    if (platform === 'shopee' && Array.isArray(metrics)) {
+      return metrics.filter(metric => {
+        const shopeeMetric = metric as ShopeeMetric;
+        return selectedEntityId ? shopeeMetric.shop_id === selectedEntityId : true;
+      });
+    } else if (platform === 'lazada' && Array.isArray(metrics)) {
+      return metrics.filter(metric => {
+        const lazadaMetric = metric as LazadaMetric;
+        return selectedEntityId ? lazadaMetric.account_id === selectedEntityId : true;
+      });
+    } else if (platform === 'shopify' && Array.isArray(metrics)) {
+      return metrics.filter(metric => {
+        const shopifyMetric = metric as ShopifyMetric;
+        return selectedEntityId ? shopifyMetric.store_id === selectedEntityId : true;
+      });
     }
     return metrics;
   }, [platform, metrics, selectedEntityId]);
 
   // Format data for charts
   const chartData: ChartDataPoint[] = useMemo(() => {
-    const data = filteredMetrics.map(metric => ({
-      date: metric.date,
-      revenue: Number(metric.revenue) || 0,
-      adsExpense: Number(metric.ads_expense) || 0,
-      totalOrders: Number(metric.total_orders) || 0,
-      newBuyers: Number(metric.new_buyer_count) || 0,
-      existingBuyers: Number(metric.existing_buyer_count) || 0,
-    }));
-    
-    // Sort the data by date in ascending order (oldest to newest)
-    return data.sort((a, b) => {
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
-      return dateA - dateB;
-    });
-  }, [filteredMetrics]);
+    if (platform === 'shopify') {
+      const data = filteredMetrics.map(metric => {
+        const shopifyMetric = metric as ShopifyMetric;
+        return {
+          date: shopifyMetric.date,
+          revenue: Number(shopifyMetric.new_customer_sales) + Number(shopifyMetric.existing_customer_sales) || 0,
+          adsExpense: 0, // Shopify doesn't provide ads_expense in the API
+          totalOrders: Number(shopifyMetric.session_completed_checkout_count) || 0,
+          newBuyers: Number(shopifyMetric.new_customer_count) || 0,
+          existingBuyers: Number(shopifyMetric.existing_customer_count) || 0,
+        };
+      });
+      
+      // Sort the data by date in ascending order (oldest to newest)
+      return data.sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return dateA - dateB;
+      });
+    } else if (platform === 'shopee') {
+      const data = filteredMetrics.map(metric => {
+        const shopeeMetric = metric as ShopeeMetric;
+        return {
+          date: shopeeMetric.date,
+          revenue: Number(shopeeMetric.revenue) || 0,
+          adsExpense: Number(shopeeMetric.ads_expense) || 0,
+          totalOrders: Number(shopeeMetric.total_orders) || 0,
+          newBuyers: Number(shopeeMetric.new_buyer_count) || 0,
+          existingBuyers: Number(shopeeMetric.existing_buyer_count) || 0,
+        };
+      });
+      
+      // Sort the data by date in ascending order (oldest to newest)
+      return data.sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return dateA - dateB;
+      });
+    } else {
+      // Lazada and any other platforms
+      const data = filteredMetrics.map(metric => {
+        const lazadaMetric = metric as LazadaMetric;
+        return {
+          date: lazadaMetric.date,
+          revenue: Number(lazadaMetric.revenue) || 0,
+          adsExpense: Number(lazadaMetric.ads_expense) || 0,
+          totalOrders: Number(lazadaMetric.total_orders) || 0,
+          newBuyers: Number(lazadaMetric.new_buyer_count) || 0,
+          existingBuyers: Number(lazadaMetric.existing_buyer_count) || 0,
+        };
+      });
+      
+      // Sort the data by date in ascending order (oldest to newest)
+      return data.sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return dateA - dateB;
+      });
+    }
+  }, [filteredMetrics, platform]);
 
   // Calculate summary metrics
-  const totalRevenue = useMemo(() => 
-    filteredMetrics.reduce((sum, metric) => sum + (Number(metric.revenue) || 0), 0)
-  , [filteredMetrics]);
+  const totalRevenue = useMemo(() => {
+    if (platform === 'shopify') {
+      return filteredMetrics.reduce((sum, metric) => {
+        const shopifyMetric = metric as ShopifyMetric;
+        return sum + (Number(shopifyMetric.new_customer_sales) + Number(shopifyMetric.existing_customer_sales) || 0);
+      }, 0);
+    } else if (platform === 'shopee') {
+      return filteredMetrics.reduce((sum, metric) => {
+        const shopeeMetric = metric as ShopeeMetric;
+        return sum + (Number(shopeeMetric.revenue) || 0);
+      }, 0);
+    } else {
+      return filteredMetrics.reduce((sum, metric) => {
+        const lazadaMetric = metric as LazadaMetric;
+        return sum + (Number(lazadaMetric.revenue) || 0);
+      }, 0);
+    }
+  }, [filteredMetrics, platform]);
   
-  const totalOrders = useMemo(() => 
-    filteredMetrics.reduce((sum, metric) => sum + (Number(metric.total_orders) || 0), 0)
-  , [filteredMetrics]);
+  const totalOrders = useMemo(() => {
+    if (platform === 'shopify') {
+      return filteredMetrics.reduce((sum, metric) => {
+        const shopifyMetric = metric as ShopifyMetric;
+        return sum + (Number(shopifyMetric.session_completed_checkout_count) || 0);
+      }, 0);
+    } else if (platform === 'shopee') {
+      return filteredMetrics.reduce((sum, metric) => {
+        const shopeeMetric = metric as ShopeeMetric;
+        return sum + (Number(shopeeMetric.total_orders) || 0);
+      }, 0);
+    } else {
+      return filteredMetrics.reduce((sum, metric) => {
+        const lazadaMetric = metric as LazadaMetric;
+        return sum + (Number(lazadaMetric.total_orders) || 0);
+      }, 0);
+    }
+  }, [filteredMetrics, platform]);
   
-  const totalAdsExpense = useMemo(() => 
-    filteredMetrics.reduce((sum, metric) => sum + (Number(metric.ads_expense) || 0), 0)
-  , [filteredMetrics]);
+  const totalAdsExpense = useMemo(() => {
+    if (platform === 'shopify') {
+      return 0; // Shopify doesn't provide ads expense in the API
+    } else if (platform === 'shopee') {
+      return filteredMetrics.reduce((sum, metric) => {
+        const shopeeMetric = metric as ShopeeMetric;
+        return sum + (Number(shopeeMetric.ads_expense) || 0);
+      }, 0);
+    } else {
+      return filteredMetrics.reduce((sum, metric) => {
+        const lazadaMetric = metric as LazadaMetric;
+        return sum + (Number(lazadaMetric.ads_expense) || 0);
+      }, 0);
+    }
+  }, [filteredMetrics, platform]);
 
   // Function to refresh data
   const refreshData = useCallback(async () => {
@@ -165,11 +283,13 @@ export function useMetricsData({
         await refetchShopee();
       } else if (platform === 'lazada') {
         await refetchLazada();
+      } else if (platform === 'shopify') {
+        await refetchShopify();
       }
     } finally {
       setIsRefreshing(false);
     }
-  }, [platform, refetchShopee, refetchLazada]);
+  }, [platform, refetchShopee, refetchLazada, refetchShopify]);
 
   // Reset refreshing state when data or error changes
   useEffect(() => {

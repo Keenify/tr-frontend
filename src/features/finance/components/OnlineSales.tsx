@@ -97,8 +97,8 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     );
   }
 
-  // Determine if Shopify platform is enabled (future implementation)
-  const enabledPlatforms: Platform[] = ["shopee", "lazada"];
+  // Determine enabled platforms
+  const enabledPlatforms: Platform[] = ["shopee", "lazada", "shopify"];
 
   return (
     <div className="flex flex-col w-full p-4">
@@ -150,7 +150,8 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         <div className="flex justify-center items-center h-64">
           <div className={`animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 ${
             selectedPlatform === "shopee" ? "border-orange-500" : 
-            selectedPlatform === "lazada" ? "border-blue-500" : "border-gray-500"
+            selectedPlatform === "lazada" ? "border-blue-500" : 
+            "border-green-500"
           }`}></div>
         </div>
       )}
@@ -228,14 +229,6 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
           />
         )
       ) : null}
-
-      {/* Coming soon message for Shopify */}
-      {selectedPlatform === "shopify" && (
-        <div className="bg-gray-50 border border-gray-300 text-gray-700 p-8 rounded-md text-center">
-          <p className="text-lg">Support for Shopify is coming soon!</p>
-          <p className="mt-2">We're currently working on integrating this platform.</p>
-        </div>
-      )}
     </div>
   );
 };

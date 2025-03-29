@@ -2,9 +2,10 @@ import React from 'react';
 import { Platform } from './PlatformSelector';
 import { ShopeeMetric } from '../services/useShopeeMetrics';
 import { LazadaMetric } from '../services/useLazadaMetrics';
+import { ShopifyMetric } from '../services/useShopifyMetrics';
 
 interface MetricsDataTableProps {
-  data: (ShopeeMetric | LazadaMetric)[];
+  data: (ShopeeMetric | LazadaMetric | ShopifyMetric)[];
   platform: Platform;
 }
 
@@ -40,11 +41,13 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform }) =
   };
 
   // Get the ID value from the data item
-  const getIdFieldValue = (item: ShopeeMetric | LazadaMetric) => {
+  const getIdFieldValue = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
     if (platform === 'shopee') {
       return (item as ShopeeMetric).shop_id;
     } else if (platform === 'lazada') {
       return (item as LazadaMetric).account_id;
+    } else if (platform === 'shopify') {
+      return (item as ShopifyMetric).store_id;
     }
     return '-';
   };
@@ -55,6 +58,47 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform }) =
       return value.length > 10 ? value.substring(0, 10) + '...' : value;
     }
     return value;
+  };
+
+  // Get revenue value based on platform
+  const getRevenue = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
+    if (platform === 'shopify') {
+      const shopifyItem = item as ShopifyMetric;
+      return Number(shopifyItem.new_customer_sales) + Number(shopifyItem.existing_customer_sales);
+    }
+    return item.revenue;
+  };
+
+  // Get ad expense value based on platform
+  const getAdsExpense = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
+    if (platform === 'shopify') {
+      return '0.00'; // Shopify doesn't have ads_expense in API
+    }
+    return item.ads_expense;
+  };
+
+  // Get orders count based on platform
+  const getOrdersCount = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
+    if (platform === 'shopify') {
+      return (item as ShopifyMetric).session_completed_checkout_count;
+    }
+    return item.total_orders;
+  };
+
+  // Get new buyer count based on platform
+  const getNewBuyerCount = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
+    if (platform === 'shopify') {
+      return (item as ShopifyMetric).new_customer_count;
+    }
+    return item.new_buyer_count;
+  };
+
+  // Get existing buyer count based on platform
+  const getExistingBuyerCount = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
+    if (platform === 'shopify') {
+      return (item as ShopifyMetric).existing_customer_count;
+    }
+    return item.existing_buyer_count;
   };
 
   return (
@@ -87,6 +131,16 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform }) =
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Existing Buyers
               </th>
+              {platform === 'shopify' && (
+                <>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Sessions
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Bounce Rate
+                  </th>
+                </>
+              )}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -99,20 +153,30 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform }) =
                   {formatIdFieldValue(getIdFieldValue(item))}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {formatCurrency(item.revenue)}
+                  {formatCurrency(getRevenue(item))}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {formatCurrency(item.ads_expense)}
+                  {formatCurrency(getAdsExpense(item))}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {item.total_orders}
+                  {getOrdersCount(item)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {item.new_buyer_count}
+                  {getNewBuyerCount(item)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {item.existing_buyer_count}
+                  {getExistingBuyerCount(item)}
                 </td>
+                {platform === 'shopify' && (
+                  <>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {(item as ShopifyMetric).session}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {(item as ShopifyMetric).bounce_rate}%
+                    </td>
+                  </>
+                )}
               </tr>
             ))}
           </tbody>
