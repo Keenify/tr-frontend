@@ -18,6 +18,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     const [customerCompanyName, setCustomerCompanyName] = useState<string>('');
     const [salesAccountManager, setSalesAccountManager] = useState<string>('');
     const [showFOBPricePerUnit, setShowFOBPricePerUnit] = useState<boolean>(true);
+    const [showCartonBarcode, setShowCartonBarcode] = useState<boolean>(false);
     const currentDate = new Date().toLocaleDateString("en-GB", {
         day: "2-digit",
         month: "long",
@@ -147,7 +148,8 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
             currentDate,
             sales_account_manager: salesAccountManager,
             tableSettings: {
-                showFOBPricePerUnit: showFOBPricePerUnit
+                showFOBPricePerUnit: showFOBPricePerUnit,
+                showCartonBarcode: showCartonBarcode
             }
         };
 
@@ -187,6 +189,11 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     // Function to toggle FOB Price/Unit visibility
     const toggleFOBPricePerUnit = () => {
         setShowFOBPricePerUnit(prev => !prev);
+    };
+
+    // Function to toggle Carton Barcode visibility
+    const toggleCartonBarcode = () => {
+        setShowCartonBarcode(prev => !prev);
     };
 
     // Get the columns to display based on the toggle state
@@ -230,7 +237,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                 <div className="mt-2">Updated At: {currentDate}</div>
             </div>
             
-            <div className="flex items-center mb-4">
+            <div className="flex items-center mb-4 space-x-4">
                 <label className="inline-flex items-center cursor-pointer">
                     <input 
                         type="checkbox" 
@@ -240,6 +247,17 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                     />
                     <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     <span className="ms-3 text-sm font-medium text-gray-900">Show FOB Price/Unit</span>
+                </label>
+                
+                <label className="inline-flex items-center cursor-pointer">
+                    <input 
+                        type="checkbox" 
+                        checked={showCartonBarcode}
+                        onChange={toggleCartonBarcode}
+                        className="sr-only peer"
+                    />
+                    <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <span className="ms-3 text-sm font-medium text-gray-900">Show Carton Barcode</span>
                 </label>
             </div>
             

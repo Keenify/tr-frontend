@@ -36,5 +36,6 @@ export interface QuotationExportPDFData {
     sales_account_manager: string;
     tableSettings?: {
         showFOBPricePerUnit: boolean;
+        showCartonBarcode?: boolean;
     };
 }
