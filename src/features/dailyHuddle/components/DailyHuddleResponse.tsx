@@ -207,11 +207,11 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
    */
   const formatSubmissionTime = (dateString: string | undefined, employeeName: string, rank?: number) => {
     // Check if employee is on leave for the selected date
-    if (isEmployeeOnLeave(employeeName)) {
-      return <span className="employee-on-leave">Team member is on leave</span>;
-    }
+    const onLeave = isEmployeeOnLeave(employeeName);
     
-    if (!dateString) return 'Not submitted';
+    if (!dateString) return onLeave ? 
+      <span className="employee-on-leave">Team member is on leave</span> : 
+      'Not submitted';
     
     try {
       const date = new Date(dateString);
@@ -236,6 +236,19 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
       
       // Add visual indicator for top 3 earliest submissions
       const timeClass = rank && rank <= 3 ? `submission-time-rank-${rank}` : '';
+      
+      // If employee is on leave but has submitted, show both statuses
+      if (onLeave) {
+        return (
+          <div className="submission-info">
+            <span className="employee-on-leave">Team member is on leave</span>
+            <div className={`submission-time ${timeClass}`}>
+              {formattedDate}<br />
+              {formattedTime}
+            </div>
+          </div>
+        );
+      }
       
       // Return date and time on separate lines with appropriate styling
       return (
@@ -563,10 +576,54 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                 </td>
                 
                 {onLeave ? (
-                  // If employee is on leave, merge all remaining cells
-                  <td colSpan={questions.length + 1} className="employee-on-leave-cell">
-                    <span className="employee-on-leave">Team member is on leave</span>
-                  </td>
+                  // If employee is on leave but has submitted responses, show both the leave status and their answers
+                  <>
+                    {questions.map((q, qIndex) => {
+                      // Determine column class based on question type
+                      let columnClass = '';
+                      if (q.question_text.includes('need critical help')) {
+                        columnClass = 'col-help';
+                      } else if (q.question_text.includes('One-word opener')) {
+                        columnClass = 'col-one-word';
+                      } else if (q.question_text.includes('Today Goals and Targeted Results')) {
+                        columnClass = 'col-goals';
+                      } else if (q.question_text.includes('Main Priority')) {
+                        columnClass = 'col-priority';
+                      } else {
+                        columnClass = 'col-wins';
+                      }
+                      
+                      // Add the "on-leave" class to the column class
+                      columnClass = `${columnClass} on-leave-cell`;
+                      
+                      return (
+                        <td key={qIndex} className={columnClass}>
+                          {response.questions.find((rq) => rq.question_id === q.id)?.answer_text?.split('\n').map((line, i) => {
+                            const isGoalOrResult = q.question_text.includes('Today Goals') || q.question_text.includes('Targeted Results');
+                            const isOneWord = q.question_text.includes('One-word opener');
+                            
+                            // Capitalize the first letter of each line
+                            const capitalizedLine = capitalizeFirstLetter(line);
+                            
+                            // For one-word opener, don't add line breaks and ensure full display
+                            if (isOneWord) {
+                              return <span className="one-word-text">{capitalizedLine}</span>;
+                            }
+                            
+                            return (
+                              <React.Fragment key={i}>
+                                {isGoalOrResult ? `• ${capitalizedLine}` : capitalizedLine}
+                                <br />
+                              </React.Fragment>
+                            );
+                          }) || ''}
+                        </td>
+                      );
+                    })}
+                    <td className="submitted-time col-submitted on-leave-cell">
+                      {formatSubmissionTime(submittedTime, name, rank as number)}
+                    </td>
+                  </>
                 ) : (
                   // If not on leave, render normal cells
                   <>

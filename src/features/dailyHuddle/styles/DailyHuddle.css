@@ -306,6 +306,20 @@ td.col-one-word {
   padding: 12px !important;
 }
 
+/* Style for cells of team members who are on leave */
+.on-leave-cell {
+  background-color: #fffaf3 !important;
+}
+
+/* Container for submission time and on-leave status */
+.submission-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Team member cell with profile picture */
 .response-table td .team-member-cell {
   display: flex;
