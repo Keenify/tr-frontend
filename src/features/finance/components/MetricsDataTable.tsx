@@ -66,7 +66,9 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform }) =
       const shopifyItem = item as ShopifyMetric;
       return Number(shopifyItem.new_customer_sales) + Number(shopifyItem.existing_customer_sales);
     }
-    return item.revenue;
+    return platform === 'shopee' 
+      ? (item as ShopeeMetric).revenue 
+      : (item as LazadaMetric).revenue;
   };
 
   // Get ad expense value based on platform
@@ -74,7 +76,9 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform }) =
     if (platform === 'shopify') {
       return '0.00'; // Shopify doesn't have ads_expense in API
     }
-    return item.ads_expense;
+    return platform === 'shopee'
+      ? (item as ShopeeMetric).ads_expense
+      : (item as LazadaMetric).ads_expense;
   };
 
   // Get orders count based on platform
@@ -82,7 +86,9 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform }) =
     if (platform === 'shopify') {
       return (item as ShopifyMetric).session_completed_checkout_count;
     }
-    return item.total_orders;
+    return platform === 'shopee'
+      ? (item as ShopeeMetric).total_orders
+      : (item as LazadaMetric).total_orders;
   };
 
   // Get new buyer count based on platform
@@ -90,7 +96,9 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform }) =
     if (platform === 'shopify') {
       return (item as ShopifyMetric).new_customer_count;
     }
-    return item.new_buyer_count;
+    return platform === 'shopee'
+      ? (item as ShopeeMetric).new_buyer_count
+      : (item as LazadaMetric).new_buyer_count;
   };
 
   // Get existing buyer count based on platform
@@ -98,7 +106,9 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform }) =
     if (platform === 'shopify') {
       return (item as ShopifyMetric).existing_customer_count;
     }
-    return item.existing_buyer_count;
+    return platform === 'shopee'
+      ? (item as ShopeeMetric).existing_buyer_count
+      : (item as LazadaMetric).existing_buyer_count;
   };
 
   return (
