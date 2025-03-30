@@ -139,6 +139,18 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform }) =
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Bounce Rate
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Add to Cart
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Completed Checkout
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    New Customer Sales
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Existing Customer Sales
+                  </th>
                 </>
               )}
             </tr>
@@ -174,6 +186,18 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform }) =
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {(item as ShopifyMetric).bounce_rate}%
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {(item as ShopifyMetric).add_to_cart_count}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {(item as ShopifyMetric).session_completed_checkout_count}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {formatCurrency((item as ShopifyMetric).new_customer_sales)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {formatCurrency((item as ShopifyMetric).existing_customer_sales)}
                     </td>
                   </>
                 )}
