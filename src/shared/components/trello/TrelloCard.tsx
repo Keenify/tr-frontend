@@ -41,7 +41,6 @@ interface TrelloCardProps {
   colorCode?: string;
   thumbnailUrl?: string;
   assignees?: string[];
-  attachments?: CardAttachment[];
   attachmentCount?: number;
   start_date?: string;
   end_date?: string;
@@ -80,7 +79,6 @@ interface TrelloCardProps {
  * @param {string} colorCode - Optional background color
  * @param {string} thumbnailUrl - Optional thumbnail image URL
  * @param {string[]} assignees - Array of assignee IDs
- * @param {CardAttachment[]} attachments - Array of card attachments
  * @param {number} attachmentCount - Count of card attachments
  * @param {string} start_date - Optional start date
  * @param {string} end_date - Optional end date
@@ -102,7 +100,6 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   colorCode,
   thumbnailUrl,
   assignees = [],
-  attachments = [],
   attachmentCount = 0,
   start_date,
   end_date,

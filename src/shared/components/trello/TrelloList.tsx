@@ -424,7 +424,6 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                       onClick={() => onCardClick?.(card)}
                       employees={employees}
                       assignees={card.assignees || []}
-                      attachments={card.attachments || []}
                       attachmentCount={card.attachmentCount || 0}
                       userId={userId}
                     />
