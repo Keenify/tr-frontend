@@ -4,12 +4,11 @@ import { createCard, updateCard } from "../../../shared/components/trello/servic
 import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { CardUpdate } from "../../../shared/components/trello/types/card.types";
-import { getBoardDetails, HARDCODED_BOARD_ID } from "../services/useBoard";
+import { getBoardDetails, HARDCODED_BOARD_ID, DIGITAL_ASSETS_BOARD_ID } from "../services/useBoard";
 import { List } from "../types/board";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 import { getUserData } from '../../../services/useUser';
 import { Tab } from '@headlessui/react';
-import Learning from './Learning';
 
 interface ResourcesProps {
   session: Session;
@@ -37,8 +36,11 @@ const Resources: React.FC<ResourcesProps> = ({
   boardId = HARDCODED_BOARD_ID
 }) => {
   const [lists, setLists] = useState<List[]>([]);
+  const [digitalAssetsList, setDigitalAssetsList] = useState<List[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingDigitalAssets, setIsLoadingDigitalAssets] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [digitalAssetsError, setDigitalAssetsError] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string>('');
   
   // Add the useUserAndCompanyData hook
@@ -77,10 +79,44 @@ const Resources: React.FC<ResourcesProps> = ({
     }
   }, [boardId]);
 
+  // Fetch digital assets board details
+  const fetchDigitalAssets = useCallback(async () => {
+    try {
+      setIsLoadingDigitalAssets(true);
+      const boardDetails = await getBoardDetails(DIGITAL_ASSETS_BOARD_ID);
+      
+      // Use attachment_count directly from the API response
+      const formattedLists = boardDetails.map((list) => {
+        return {
+          ...list,
+          title: list.name,
+          cards: list.cards.map(card => ({
+            ...card,
+            thumbnailUrl: card.thumbnail_url,
+            colorCode: card.color_code,
+            // Use empty array for attachments but include the count from API
+            attachments: [],
+            // Use the attachment_count from the API
+            attachmentCount: card.attachment_count || 0
+          }))
+        };
+      });
+      
+      setDigitalAssetsList(formattedLists);
+      return formattedLists;
+    } catch (err) {
+      setDigitalAssetsError(err instanceof Error ? err.message : 'Failed to load digital assets');
+      throw err;
+    } finally {
+      setIsLoadingDigitalAssets(false);
+    }
+  }, []);
+
   // Use the fetchBoardDetails function in useEffect
   useEffect(() => {
     fetchBoardDetails();
-  }, [fetchBoardDetails]);
+    fetchDigitalAssets();
+  }, [fetchBoardDetails, fetchDigitalAssets]);
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -102,6 +138,15 @@ const Resources: React.FC<ResourcesProps> = ({
       console.error('Failed to refresh board data:', error);
     }
   }, [fetchBoardDetails]);
+
+  // Create a refresh handler for the Digital Assets board
+  const handleDigitalAssetsRefresh = useCallback(async () => {
+    try {
+      await fetchDigitalAssets();
+    } catch (error) {
+      console.error('Failed to refresh digital assets data:', error);
+    }
+  }, [fetchDigitalAssets]);
 
   if (isLoading || isLoadingCompany) {
     return <div>Loading...</div>;
@@ -222,6 +267,61 @@ const Resources: React.FC<ResourcesProps> = ({
   };
 
   /**
+   * Updates digital asset card details in the backend
+   * @param listId - ID of the list containing the card
+   * @param cardId - ID of the card to update
+   * @param updates - Object containing the updated card properties
+   */
+  const handleDigitalAssetCardUpdate = async (listId: string, cardId: string, updates: CardUpdate) => {
+    try {
+      // Transform colorCode to color_code for API compatibility
+      const apiUpdates = {
+        ...updates,
+        list_id: listId,
+        color_code: updates.colorCode,
+      };
+      // Remove the camelCase version to avoid duplicate fields
+      delete apiUpdates.colorCode;
+      
+      await updateCard(cardId, apiUpdates);
+      
+      // Update the local state to reflect the changes immediately
+      setDigitalAssetsList(currentLists => 
+        currentLists.map(list => {
+          if (list.id === listId) {
+            return {
+              ...list,
+              cards: list.cards.map(card => {
+                if (card.id === cardId) {
+                  return {
+                    ...card,
+                    title: updates.title ?? card.title,
+                    description: updates.description ?? card.description,
+                    color_code: updates.color_code ?? card.color_code,
+                    thumbnail_url: updates.thumbnailUrl ?? card.thumbnail_url,
+                    // Handle additional properties not in the Card interface
+                    // Store these as custom properties that will be used by components
+                    ...(updates.assignees ? { assignees: updates.assignees } : {}),
+                    ...(updates.start_date ? { start_date: updates.start_date } : {}),
+                    ...(updates.end_date ? { end_date: updates.end_date } : {}),
+                    ...(updates.attachments ? { attachments: updates.attachments } : {}),
+                    ...(updates.attachmentCount !== undefined ? { attachmentCount: updates.attachmentCount } : {})
+                  };
+                }
+                return card;
+              }),
+            };
+          }
+          return list;
+        })
+      );
+    } catch (error) {
+      console.error('Failed to update card:', error);
+      // You might want to add error handling here (e.g., showing a toast notification)
+    }
+  };
+
+  /**
    * Updates list title in the backend
    * @param listId - ID of the list to update
    * @param newTitle - New title for the list
@@ -267,6 +367,37 @@ const Resources: React.FC<ResourcesProps> = ({
   };
 
   /**
+   * Creates a new digital asset card in the specified list
+   * @param listId - ID of the list to add the card to
+   * @param title - Title of the new card from UI input
+   */
+  const handleDigitalAssetCardAdd = async (listId: string, title: string) => {
+    try {
+      if (!title) {
+        throw new Error('Card title is required');
+      }
+
+      // Find the list and get the position for the new card
+      const list = digitalAssetsList.find(l => l.id === listId);
+      const position = list?.cards.length ?? 0;
+
+      // Create the card in the backend first
+      const newCard = await createCard({
+        list_id: listId,
+        title,
+        position,
+      });
+
+      // Return the real UUID from the backend
+      return newCard.id;
+
+    } catch (error) {
+      console.error('Failed to create card:', error);
+      throw error; // Propagate error to handle in UI
+    }
+  };
+
+  /**
    * Creates a new list
    * @param title - Title of the new list
    */
@@ -279,6 +410,28 @@ const Resources: React.FC<ResourcesProps> = ({
         name: title,
         position: maxPosition + 1,
         board_id: HARDCODED_BOARD_ID,
+        country: ""
+      });
+      return newList.id;  // Return the new list ID
+    } catch (error) {
+      console.error('Failed to create list:', error);
+      throw error;
+    }
+  };
+
+  /**
+   * Creates a new digital assets list
+   * @param title - Title of the new list
+   */
+  const handleDigitalAssetListAdd = async (title: string) => {
+    try {
+      if (!title) throw new Error('List title is required');
+      const maxPosition = digitalAssetsList.reduce((max, list) => 
+        Math.max(max, list.position || 0), -1);
+      const newList = await createList({
+        name: title,
+        position: maxPosition + 1,
+        board_id: DIGITAL_ASSETS_BOARD_ID,
         country: ""
       });
       return newList.id;  // Return the new list ID
@@ -328,7 +481,7 @@ const Resources: React.FC<ResourcesProps> = ({
               }`
             }
           >
-            Learning
+            Digital Assets
           </Tab>
         </Tab.List>
 
@@ -365,7 +518,35 @@ const Resources: React.FC<ResourcesProps> = ({
             )}
           </Tab.Panel>
           <Tab.Panel>
-            <Learning session={session} />
+            {isLoadingDigitalAssets || isLoadingCompany ? (
+              <div>Loading Digital Assets...</div>
+            ) : digitalAssetsError ? (
+              <div>Error: {digitalAssetsError}</div>
+            ) : (
+              <TrelloBoard 
+                initialLists={digitalAssetsList.map(list => ({
+                  ...list,
+                  cards: list.cards.map(card => ({
+                    ...card,
+                    // Convert null values to undefined for compatibility
+                    due_date: card.due_date || undefined,
+                    start_date: card.start_date || undefined,
+                    end_date: card.end_date || undefined,
+                    locked_by: card.locked_by || undefined
+                  }))
+                }))}
+                onListMove={handleListMove}
+                onCardMove={handleCardMove}
+                onCardUpdate={handleDigitalAssetCardUpdate}
+                onListTitleChange={handleListTitleChange}
+                onCardAdd={handleDigitalAssetCardAdd}
+                onListAdd={handleDigitalAssetListAdd}
+                onListDelete={handleListDelete}
+                userRole={userRole}
+                session={session}
+                onRefresh={handleDigitalAssetsRefresh}
+              />
+            )}
           </Tab.Panel>
         </Tab.Panels>
       </Tab.Group>
