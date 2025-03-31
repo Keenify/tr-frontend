@@ -381,13 +381,36 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
           isOpen={true}
           onClose={() => setSelectedCard(null)}
           onSave={(updatedCard) => {
-            handleCardUpdate(selectedCard.listId, selectedCard.card.id, updatedCard);
-            setSelectedCard(null);
+            // Check if this is a lock operation (only contains is_locked and locked_by properties)
+            const isLockOperation = 
+              Object.keys(updatedCard).length === 2 && 
+              'is_locked' in updatedCard && 
+              'locked_by' in updatedCard;
+            
+            // If it's a lock operation, we need to update our state but keep the modal open
+            if (isLockOperation) {
+              // Update the card
+              handleCardUpdate(selectedCard.listId, selectedCard.card.id, updatedCard);
+              
+              // Update the selected card state to reflect the lock changes
+              setSelectedCard(prev => prev ? {
+                ...prev,
+                card: {
+                  ...prev.card,
+                  is_locked: updatedCard.is_locked,
+                  locked_by: updatedCard.locked_by
+                }
+              } : null);
+            } else {
+              // For regular updates, handle normally and close the modal
+              handleCardUpdate(selectedCard.listId, selectedCard.card.id, updatedCard);
+              setSelectedCard(null);
+            }
           }}
           card={selectedCard.card}
           isLoadingAttachments={false}
           userRole={userRole}
-          readOnly={false}
+          readOnly={selectedCard.card.is_locked && selectedCard.card.locked_by !== userId}
           employees={employees}
           userId={userId}
         />

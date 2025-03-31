@@ -280,49 +280,32 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
     const newLockedState = !isLocked;
     
     try {
-      // Log current state
-      console.log('Current card state:', {
-        isLocked,
-        lockedBy,
-        userInfo,
-        card
-      });
-
-      // Prepare the update payload
-      const updatePayload = {
+      // Create a minimal payload for lock operations
+      const lockPayload = {
+        id: card.id,
         is_locked: newLockedState,
-        locked_by: newLockedState ? userInfo?.id : "", // Use empty string instead of null
-        list_id: card.list_id,
-        title: card.title,
-        description: card.description,
-        color_code: card.colorCode || card.color_code,
-        position: card.position,
-        start_date: card.start_date,
-        end_date: card.end_date,
-        assignees: card.assignees
+        locked_by: newLockedState ? userInfo?.id : "" // Use empty string instead of null
       };
 
-      // Log the payload being sent
-      console.log('Update payload:', updatePayload);
-
-      try {
-        // Call the API to update the card
-        const response = await updateCard(card.id, updatePayload);
-        console.log('Update response:', response);
-
-        // Update local state if the API call was successful
-        setIsLocked(newLockedState);
-        setLockedBy(newLockedState ? userInfo?.id || '' : '');
-        
-        showToast(
-          newLockedState ? 'Card locked successfully' : 'Card unlocked successfully',
-          'success'
-        );
-      } catch (error) {
-        // Log the error details
-        console.error('API Error:', error);
-        throw error;
-      }
+      // Call the API to update the card
+      await updateCard(card.id, lockPayload);
+      
+      // Update local state
+      setIsLocked(newLockedState);
+      setLockedBy(newLockedState ? userInfo?.id || '' : '');
+      
+      // Call onSave with minimal payload to update parent components without closing modal
+      const payload = {
+        is_locked: newLockedState,
+        locked_by: newLockedState ? userInfo?.id : ""
+      };
+      onSave(payload);
+      
+      // Show appropriate toast message
+      showToast(
+        newLockedState ? 'Card locked successfully' : 'Card unlocked successfully',
+        'success'
+      );
     } catch (error) {
       console.error('Failed to update card lock status:', error);
       showToast(
