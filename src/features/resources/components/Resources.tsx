@@ -358,6 +358,7 @@ const Resources: React.FC<ResourcesProps> = ({
                 onListAdd={handleListAdd}
                 onListDelete={handleListDelete}
                 userRole={userRole}
+                session={session}
               />
             )}
           </Tab.Panel>
