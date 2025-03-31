@@ -7,6 +7,99 @@
   outline: none;
 }
 
+/* Card Preview Styles for Trello Card */
+.trello-card-preview-description {
+  overflow: hidden;
+  line-height: 1.2;
+  font-size: 0.75rem;
+  color: #4b5563;
+}
+
+.trello-card-preview-description * {
+  max-width: 100%;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trello-card-preview-description img,
+.trello-card-preview-description iframe,
+.trello-card-preview-description video,
+.trello-card-preview-description audio {
+  display: none; /* Hide media in preview */
+}
+
+.trello-card-preview-description h1,
+.trello-card-preview-description h2,
+.trello-card-preview-description h3 {
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin: 0.2em 0;
+  line-height: 1.2;
+}
+
+.trello-card-preview-description p {
+  margin: 0.2em 0;
+}
+
+.trello-card-preview-description ul,
+.trello-card-preview-description ol {
+  padding-left: 1em;
+  margin: 0.2em 0;
+}
+
+.trello-card-preview-description ul li,
+.trello-card-preview-description ol li {
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trello-card-preview-description code,
+.trello-card-preview-description pre {
+  font-family: monospace;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0 0.2em;
+  border-radius: 2px;
+}
+
+.trello-card-preview-description ul {
+  list-style-type: disc;
+}
+
+.trello-card-preview-description ol {
+  list-style-type: decimal;
+}
+
+.trello-card-preview-description strong {
+  font-weight: bold;
+}
+
+.trello-card-preview-description em {
+  font-style: italic;
+}
+
+.trello-card-preview-description u {
+  text-decoration: underline;
+}
+
+.trello-card-preview-description s {
+  text-decoration: line-through;
+}
+
+.trello-card-preview-description .task-list {
+  list-style: none;
+  padding-left: 0.5em;
+}
+
+.trello-card-preview-description .task-item {
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Text formatting */
 .trello-card-description-editor .ProseMirror strong {
   font-weight: bold;

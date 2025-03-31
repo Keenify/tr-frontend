@@ -7,7 +7,7 @@ import { Card, CardUpdate } from './types/card.types';
 import { useUserAndCompanyData } from '../../hooks/useUserAndCompanyData';
 import { updateCard } from './services/useCard';
 import { TrelloCardDescription } from './TrelloCardDescription';
-import './TrelloCardDescription.css';
+import '../../styles/TrelloCardDescription.css';
 
 interface TrelloCardModalProps {
   isOpen: boolean;

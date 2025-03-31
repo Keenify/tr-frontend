@@ -5,6 +5,33 @@ import { getCardAttachments, CardAttachment } from './services/useCardAttachment
 import { TrelloCardModal } from './TrelloCardModal';
 import { Card, CardUpdate } from './types/card.types';
 import { Employee } from '@/shared/types/directory.types';
+import '../../styles/TrelloCardDescription.css';
+
+// Safe HTML renderer component
+const HtmlContent: React.FC<{ html: string; className?: string }> = ({ html, className }) => {
+  // Basic HTML sanitization to prevent XSS
+  const sanitizeHtml = (htmlContent: string): string => {
+    // Create a new DOM parser
+    const parser = new DOMParser();
+    // Parse the HTML content
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+    
+    // Get the body content - this removes <script> tags
+    const sanitized = doc.body.innerHTML;
+    
+    // Additional cleanup for card preview
+    // Strip some excessive formatting that might break the card layout
+    return sanitized
+      .replace(/<iframe.*?<\/iframe>/gi, '[embedded content]')
+      .replace(/<table.*?<\/table>/gi, '[table]')
+      .replace(/<form.*?<\/form>/gi, '')
+      .replace(/<button.*?<\/button>/gi, '')
+      .replace(/<input.*?>/gi, '')
+      .replace(/<textarea.*?<\/textarea>/gi, '');
+  };
+  
+  return <div className={className} dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }} />;
+};
 
 interface TrelloCardProps {
   id: string;
@@ -330,7 +357,12 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
               
               {/* Description - only if present */}
               {description && (
-                <p className="text-xs text-gray-600 select-none line-clamp-1 mb-1">{description}</p>
+                <div className="text-xs overflow-hidden max-h-[2.4em] mb-1 trello-card-preview-description">
+                  <HtmlContent 
+                    html={description}
+                    className="max-w-none" 
+                  />
+                </div>
               )}
               
               {/* Middle row with assignees */}
