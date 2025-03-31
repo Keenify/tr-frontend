@@ -4,6 +4,7 @@ import { createCardAttachment, deleteAttachment, getCardAttachments, getAttachme
 import { assignEmployeeToCard, unassignEmployeeFromCard, getCardAssignees } from './services/useCardAssignee';
 import { Employee } from '../../../shared/types/directory.types';
 import { Card, CardUpdate } from './types/card.types';
+import { useUserAndCompanyData } from '../../hooks/useUserAndCompanyData';
 
 interface TrelloCardModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ interface TrelloCardModalProps {
   userRole: string;
   readOnly?: boolean;
   employees: Employee[];
+  userId?: string;
 }
 
 // Predefined color options for quick selection
@@ -57,8 +59,21 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   isLoadingAttachments,
   userRole,
   readOnly = false,
-  employees
+  employees,
+  userId = ''
 }) => {
+  // Always call the hook with a string value, even if it's empty
+  const { userInfo } = useUserAndCompanyData(userId);
+
+  // Log the employee ID when userInfo changes and userId is provided
+  useEffect(() => {
+    if (userInfo && userId) {
+      console.log('Current employee ID:', userInfo.id);
+      // You might also want to log other user information
+      console.log('User data:', userInfo);
+    }
+  }, [userInfo, userId]);
+
   // Format date to YYYY-MM-DD for input
   const formatDateForInput = (dateString?: string) => {
     if (!dateString) return '';

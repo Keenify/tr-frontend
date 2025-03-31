@@ -23,6 +23,7 @@ interface TrelloCardProps {
   userRole: string;
   onCardClick?: (card: Card) => void;
   employees: Employee[];
+  userId?: string;
 }
 
 /**
@@ -58,6 +59,7 @@ interface TrelloCardProps {
  * @param {string} userRole - User role for permissions
  * @param {Function} onCardClick - Handler for card click
  * @param {Employee[]} employees - Array of employees
+ * @param {string} userId - User ID for permissions and data fetching
  */
 export const TrelloCard: React.FC<TrelloCardProps> = ({
   id,
@@ -75,6 +77,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   userRole,
   onCardClick,
   employees = [],
+  userId = '',
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPosition, setDragStartPosition] = useState({ x: 0, y: 0 });
@@ -433,6 +436,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
           userRole={userRole}
           readOnly={!canManageCard}
           employees={employees}
+          userId={userId}
         />
       )}
     </>

@@ -80,6 +80,9 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   userRole,
   session
 }) => {
+  // Get the current user's ID from the session
+  const userId = session?.user?.id || '';
+  
   const { 
     lists, 
     handleDragEnd, 
@@ -116,7 +119,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   const [newListCountry, setNewListCountry] = useState('');
   const [selectedCountry, setSelectedCountry] = useState<string>('all');
   
-  const { companyInfo } = useUserAndCompanyData(session?.user?.id || '');
+  const { companyInfo } = useUserAndCompanyData(userId);
 
   // Make sure this is defined at the component level
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -323,6 +326,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
                   onCardClick={(card) => handleCardClick(list.id, card)}
                   userRole={userRole}
                   searchTerm={searchTerm}
+                  userId={userId}
                 />
               ))}
               {provided.placeholder}
@@ -385,6 +389,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
           userRole={userRole}
           readOnly={false}
           employees={employees}
+          userId={userId}
         />
       )}
     </div>

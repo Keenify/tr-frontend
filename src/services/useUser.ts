@@ -35,11 +35,11 @@ export interface UpdateUserData {
 
 /**
  * Fetches user data by user ID.
- * @param {string} userId - The ID of the user.
- * @returns {Promise<UserData>} - A promise that resolves to the user data.
+ * @param {string} userId - The authentication ID of the user (user_id in the response).
+ * @returns {Promise<UserData>} - A promise that resolves to the user data with id being the employee ID.
  */
 export async function getUserData(userId: string): Promise<UserData> {
-    const endpoint = `${API_DOMAIN}/employees/${encodeURIComponent(userId)}`;
+    const endpoint = `${API_DOMAIN}/employees/${userId}`;
 
     const response = await fetch(endpoint, {
         method: 'GET',
@@ -72,31 +72,27 @@ export async function getUserData(userId: string): Promise<UserData> {
 export async function updateUserData(userId: string, userData: UpdateUserData): Promise<UserData> {
     const endpoint = `${API_DOMAIN}/employees/${encodeURIComponent(userId)}`;
 
-    try {
-        const response = await fetch(endpoint, {
-            method: 'PUT',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(userData),
+    const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+        console.error('❌ API request failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            data
         });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-            console.error('❌ API request failed:', {
-                status: response.status,
-                statusText: response.statusText,
-                data
-            });
-            throw new Error(`Failed to update user data: ${response.statusText}`);
-        }
-
-        return data as UserData; // Cast the response to UserData
-    } catch (error) {
-        throw error;
+        throw new Error(`Failed to update user data: ${response.statusText}`);
     }
+
+    return data as UserData; // Cast the response to UserData
 }
 
 /**

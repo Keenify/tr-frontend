@@ -45,6 +45,7 @@ interface TrelloListProps {
   searchTerm?: string;
   onCardClick?: (card: Card) => void;
   employees: Employee[];
+  userId?: string;
 }
 
 /**
@@ -80,6 +81,7 @@ interface TrelloListProps {
  * @param {string} searchTerm - Search term for filtering cards
  * @param {Function} onCardClick - Handler for card click events
  * @param {Array} employees - Array of employee objects
+ * @param {string} userId - User ID for card permissions
  */
 
 export const TrelloList: React.FC<TrelloListProps> = ({
@@ -98,6 +100,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   searchTerm = '',
   onCardClick,
   employees = [],
+  userId = '',
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingCountry, setIsEditingCountry] = useState(false);
@@ -414,8 +417,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                       employees={employees}
                       assignees={card.assignees || []}
                       attachments={card.attachments || []}
-                      is_locked={card.is_locked}
-                      locked_by={card.locked_by}
+                      userId={userId}
                     />
                   ))}
                   {dropProvided.placeholder}
