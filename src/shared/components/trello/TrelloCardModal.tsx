@@ -5,6 +5,7 @@ import { assignEmployeeToCard, unassignEmployeeFromCard, getCardAssignees } from
 import { Employee } from '../../../shared/types/directory.types';
 import { Card, CardUpdate } from './types/card.types';
 import { useUserAndCompanyData } from '../../hooks/useUserAndCompanyData';
+import { updateCard } from './services/useCard';
 
 interface TrelloCardModalProps {
   isOpen: boolean;
@@ -98,7 +99,15 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+  const [isLocked, setIsLocked] = useState(card.is_locked || false);
+  const [lockedBy, setLockedBy] = useState(card.locked_by || '');
   
+  // Check if the current user is the one who locked the card
+  const isLockedByCurrentUser = userInfo?.id === lockedBy;
+  
+  // Determine if the card is editable
+  const isEditable = !isLocked || isLockedByCurrentUser;
+
   // Filter employees based on search term
   const filteredEmployees = useMemo(() => {
     if (!searchTerm.trim()) return employees;
@@ -117,7 +126,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   };
 
   // Check if user can delete attachments (only managers can)
-  const canDeleteAttachments = userRole.toLowerCase().includes('manager');
+  const canDeleteAttachments = userRole.toLowerCase().includes('manager') && isEditable;
 
   // Fetch current assignees when the modal opens
   useEffect(() => {
@@ -244,8 +253,56 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
     }
   };
 
+  const handleLockToggle = async () => {
+    if (isLocked && !isLockedByCurrentUser) {
+      showToast('Only the user who locked the card can unlock it', 'error');
+      return;
+    }
+
+    const newLockedState = !isLocked;
+    
+    try {
+      // Prepare the update payload
+      const updatePayload = {
+        is_locked: newLockedState,
+        locked_by: newLockedState ? userInfo?.id : "",
+        // Include other required fields from the current card state
+        list_id: card.list_id,
+        title: card.title,
+        description: card.description,
+        color_code: card.color_code,
+        position: card.position
+      };
+
+      console.log('Lock/Unlock Payload:', updatePayload);
+
+      // Call the API to update the card
+      const response = await updateCard(card.id, updatePayload);
+      console.log('Lock/Unlock Response:', response);
+
+      // Update local state if the API call was successful
+      setIsLocked(newLockedState);
+      setLockedBy(newLockedState ? userInfo?.id || '' : '');
+      
+      showToast(
+        newLockedState ? 'Card locked successfully' : 'Card unlocked successfully',
+        'success'
+      );
+    } catch (error) {
+      console.error('Failed to update card lock status:', error);
+      showToast(
+        `Failed to ${newLockedState ? 'lock' : 'unlock'} card`,
+        'error'
+      );
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isEditable) {
+      showToast('Cannot modify a locked card', 'error');
+      return;
+    }
     const updatedCard: CardUpdate = {
       title,
       description,
@@ -254,11 +311,20 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       assignees,
       start_date: startDate || undefined,
       end_date: endDate || undefined,
-      attachments: attachments
+      attachments,
+      is_locked: isLocked,
+      locked_by: isLocked ? userInfo?.id : "",
+      list_id: card.list_id,
+      position: card.position
     };
+
+    console.log('Card Update Payload:', updatedCard);
     onSave(updatedCard);
     onClose();
   };
+
+  // Find the employee who locked the card
+  const lockedByEmployee = employees.find(emp => emp.id === lockedBy);
 
   if (!isOpen) return null;
 
@@ -292,8 +358,52 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       
       <div className="bg-white rounded-lg w-full max-w-6xl h-[90vh] flex flex-col">
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
+          {/* Lock status banner */}
+          {isLocked && (
+            <div className={`px-6 py-3 ${isLockedByCurrentUser ? 'bg-blue-50 text-blue-700' : 'bg-red-50 text-red-700'} flex items-center justify-between`}>
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                <span>
+                  {isLockedByCurrentUser 
+                    ? 'You have locked this card' 
+                    : `Locked by ${lockedByEmployee ? `${lockedByEmployee.first_name} ${lockedByEmployee.last_name}` : 'another user'}`
+                  }
+                </span>
+              </div>
+              {isLockedByCurrentUser && (
+                <button
+                  type="button"
+                  onClick={handleLockToggle}
+                  className="px-3 py-1 bg-blue-100 hover:bg-blue-200 rounded-md text-sm"
+                >
+                  Unlock Card
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Scrollable content area */}
           <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Edit Card</h2>
+              {!isLocked && userInfo?.id && (
+                <button
+                  type="button"
+                  onClick={handleLockToggle}
+                  className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-sm flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  Lock Card
+                </button>
+              )}
+            </div>
+
             <div className="flex flex-col md:flex-row gap-8">
               {/* Left column - Main card info */}
               <div className="flex-1">
@@ -306,9 +416,9 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className={`w-full px-3 py-2 border rounded-md ${!isEditable ? 'bg-gray-100' : ''}`}
                     required
-                    disabled={readOnly}
+                    disabled={!isEditable || readOnly}
                   />
                 </div>
 
@@ -320,8 +430,8 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                     title="Enter card description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md min-h-[200px]"
-                    disabled={readOnly}
+                    className={`w-full px-3 py-2 border rounded-md min-h-[200px] ${!isEditable ? 'bg-gray-100' : ''}`}
+                    disabled={!isEditable || readOnly}
                   />
                 </div>
 
@@ -337,7 +447,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                       className="w-full px-3 py-2 border rounded-md"
-                      disabled={readOnly}
+                      disabled={!isEditable || readOnly}
                     />
                     {startDate && (
                       <div className="text-sm text-gray-500 mt-1">
@@ -355,7 +465,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
                       className="w-full px-3 py-2 border rounded-md"
-                      disabled={readOnly}
+                      disabled={!isEditable || readOnly}
                       min={startDate} // Prevent end date being before start date
                     />
                     {endDate && (
@@ -379,7 +489,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                           value={colorCode}
                           onChange={(e) => setColorCode(e.target.value)}
                           className="w-12 h-12 p-0.5 rounded cursor-pointer"
-                          disabled={readOnly}
+                          disabled={!isEditable || readOnly}
                         />
                         <div className="absolute inset-0 pointer-events-none rounded border border-gray-300"></div>
                       </div>
@@ -395,7 +505,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                           }}
                           placeholder="#000000"
                           className="px-3 py-2 border rounded-md w-full"
-                          disabled={readOnly}
+                          disabled={!isEditable || readOnly}
                         />
                         <div className="mt-1 text-xs text-gray-500">Enter hex color code</div>
                       </div>
@@ -410,7 +520,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                               type="button"
                               title={`${color.name} (${color.hex})`}
                               onClick={() => setColorCode(color.hex)}
-                              disabled={readOnly}
+                              disabled={!isEditable || readOnly}
                               className={`
                                 w-full h-10 rounded-md border border-gray-300 
                                 hover:shadow-md transition-all duration-200
@@ -596,7 +706,12 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
             {!readOnly && (
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                className={`px-4 py-2 rounded-md ${
+                  isEditable 
+                    ? 'bg-blue-500 text-white hover:bg-blue-600' 
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+                disabled={!isEditable}
               >
                 Save
               </button>
