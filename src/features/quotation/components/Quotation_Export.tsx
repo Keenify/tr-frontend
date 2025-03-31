@@ -264,24 +264,24 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
             <table className="min-w-full border-collapse border border-gray-300">
                 <thead>
                     <tr className="bg-orange-100">
-                        <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>Select</th>
-                        <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>Product Name</th>
-                        <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>Container Size</th>
-                        <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>Cartons/Container</th>
-                        <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>Pack Size/Carton</th>
-                        <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>FOB Price/Carton</th>
+                        <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>Select</th>
+                        <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>Product Name</th>
+                        <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>Container Size</th>
+                        <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>Cartons/Container</th>
+                        <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>Pack Size/Carton</th>
+                        <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>FOB Price/Carton</th>
                         {showFOBPricePerUnit && (
-                            <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>FOB Price/Unit</th>
+                            <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>FOB Price/Unit</th>
                         )}
-                        <th className="border border-gray-300 p-2" style={{ backgroundColor: "#FF9933" }}>RRP (USD)</th>
+                        <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>RRP (USD)</th>
                     </tr>
                 </thead>
                 <tbody>
                     {selections.map((product) => (
                         <React.Fragment key={product.product_id}>
                             <tr className="border-b border-gray-300">
-                                <td className="border border-gray-300 p-2">
-                                    <div className="flex items-center gap-2">
+                                <td className="border border-gray-300 p-2 text-center">
+                                    <div className="flex items-center justify-center gap-2">
                                         <button 
                                             onClick={() => toggleCollapse(product.product_id)}
                                             className="w-4 h-4 flex items-center justify-center"
@@ -297,13 +297,13 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                         />
                                     </div>
                                 </td>
-                                <td className="border border-gray-300 p-2 font-medium">
+                                <td className="border border-gray-300 p-2 font-medium text-center">
                                     {product.product_name}
                                 </td>
                                 {getTableColumns().map((field) => (
                                     <td 
                                         key={field}
-                                        className="border border-gray-300 p-2"
+                                        className="border border-gray-300 p-2 text-center"
                                         onDoubleClick={() => field !== 'fob_price_per_unit' && setEditingCell({ id: product.product_id, field })}
                                     >
                                         {editingCell?.id === product.product_id && editingCell.field === field ? (
@@ -313,7 +313,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                                 defaultValue={String(product.variants[0]?.[field as keyof typeof product.variants[0]])}
                                                 onBlur={(e) => handleCellEdit(product.product_id, field, e.target.value)}
                                                 autoFocus
-                                                className="w-full"
+                                                className="w-full text-center"
                                             />
                                         ) : (
                                             field === 'fob_price_per_unit' 
@@ -332,14 +332,14 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                             <table className="w-full border-collapse">
                                                 <thead>
                                                     <tr className="bg-orange-100 text-sm">
-                                                        <th className="border border-gray-200 p-1">Select</th>
-                                                        <th className="border border-gray-200 p-1">Description</th>
+                                                        <th className="border border-gray-200 p-1 text-center">Select</th>
+                                                        <th className="border border-gray-200 p-1 text-center">Description</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {product.variants.map((variant) => (
                                                         <tr key={variant.variant_id} className="text-sm">
-                                                            <td className="border border-gray-200 p-1">
+                                                            <td className="border border-gray-200 p-1 text-center">
                                                                 <input
                                                                     title="Select Variant"
                                                                     type="checkbox"
@@ -352,7 +352,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                                                     className="h-4 w-4"
                                                                 />
                                                             </td>
-                                                            <td className="border border-gray-200 p-1">{variant.description}</td>
+                                                            <td className="border border-gray-200 p-1 text-center">{variant.description}</td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
