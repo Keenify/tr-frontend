@@ -16,6 +16,7 @@ export interface Card {
   locked_by?: string;
   list_id?: string;
   created_at?: string;
+  attachmentCount?: number;
 }
 
 /**
@@ -36,4 +37,5 @@ export interface CardUpdate {
   is_locked?: boolean;
   locked_by?: string;
   attachments?: CardAttachment[];
+  attachmentCount?: number;
 } 

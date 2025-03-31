@@ -332,6 +332,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       start_date: startDate || undefined,
       end_date: endDate || undefined,
       attachments,
+      attachmentCount: attachments.length,
       is_locked: isLocked,
       locked_by: isLocked ? userInfo?.id : "",
       list_id: card.list_id || "",

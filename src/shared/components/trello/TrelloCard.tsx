@@ -42,6 +42,7 @@ interface TrelloCardProps {
   thumbnailUrl?: string;
   assignees?: string[];
   attachments?: CardAttachment[];
+  attachmentCount?: number;
   start_date?: string;
   end_date?: string;
   onClick?: () => void;
@@ -80,6 +81,7 @@ interface TrelloCardProps {
  * @param {string} thumbnailUrl - Optional thumbnail image URL
  * @param {string[]} assignees - Array of assignee IDs
  * @param {CardAttachment[]} attachments - Array of card attachments
+ * @param {number} attachmentCount - Count of card attachments
  * @param {string} start_date - Optional start date
  * @param {string} end_date - Optional end date
  * @param {Function} onClick - Handler for card click
@@ -101,6 +103,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   thumbnailUrl,
   assignees = [],
   attachments = [],
+  attachmentCount = 0,
   start_date,
   end_date,
   onDelete,
@@ -267,9 +270,6 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
       return employees.find(emp => emp.id === employeeId);
     })
     .filter(Boolean) as Employee[];
-
-  // Add this after the assigneeEmployees calculation
-  const attachmentCount = attachments?.length || 0;
 
   return (
     <>

@@ -204,7 +204,8 @@ const Resources: React.FC<ResourcesProps> = ({
                     ...(updates.assignees ? { assignees: updates.assignees } : {}),
                     ...(updates.start_date ? { start_date: updates.start_date } : {}),
                     ...(updates.end_date ? { end_date: updates.end_date } : {}),
-                    ...(updates.attachments ? { attachments: updates.attachments } : {})
+                    ...(updates.attachments ? { attachments: updates.attachments } : {}),
+                    ...(updates.attachmentCount !== undefined ? { attachmentCount: updates.attachmentCount } : {})
                   };
                 }
                 return card;
