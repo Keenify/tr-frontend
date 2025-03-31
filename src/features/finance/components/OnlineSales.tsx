@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Session } from "@supabase/supabase-js";
-import { subDays } from "date-fns";
+import { subDays, startOfMonth, startOfYear, startOfDay, endOfDay } from "date-fns";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 
 // Import custom hook
@@ -67,6 +67,29 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     refreshData();
   };
 
+  // Date range preset handlers
+  const handleMonthTillDate = () => {
+    setStartDate(startOfMonth(new Date()));
+    setEndDate(new Date());
+    // We'll trigger a refresh in the next render cycle
+    setTimeout(() => refreshData(), 0);
+  };
+
+  const handleYearTillDate = () => {
+    setStartDate(startOfYear(new Date()));
+    setEndDate(new Date());
+    // We'll trigger a refresh in the next render cycle
+    setTimeout(() => refreshData(), 0);
+  };
+
+  const handleYesterday = () => {
+    const yesterday = subDays(new Date(), 1);
+    setStartDate(startOfDay(yesterday));
+    setEndDate(endOfDay(yesterday));
+    // We'll trigger a refresh in the next render cycle
+    setTimeout(() => refreshData(), 0);
+  };
+
   // Handle platform selection
   const handlePlatformChange = (platform: Platform) => {
     setSelectedPlatform(platform);
@@ -117,32 +140,69 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         </span>
       </div>
 
-      {/* Controls section */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6 p-4 bg-white rounded-lg shadow">
-        {/* Date range selector */}
-        <DateRangeSelector
-          startDate={startDate}
-          endDate={endDate}
-          onStartDateChange={handleStartDateChange}
-          onEndDateChange={handleEndDateChange}
-          onSubmit={refreshData}
-          isRefreshing={isRefreshing}
-        />
+      {/* Controls section - reorganized into two main sections */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Left section: Date Range Controls */}
+        <div className="bg-white rounded-lg shadow p-4">
+          <h3 className="text-sm font-medium text-gray-700 mb-3">Date Range</h3>
+          <div className="flex flex-col gap-4">
+            {/* Date selector with YESTERDAY button beside tick */}
+            <DateRangeSelector
+              startDate={startDate}
+              endDate={endDate}
+              onStartDateChange={handleStartDateChange}
+              onEndDateChange={handleEndDateChange}
+              onSubmit={refreshData}
+              isRefreshing={isRefreshing}
+              extraButton={
+                <button
+                  onClick={handleYesterday}
+                  className="py-2 px-4 bg-blue-50 hover:bg-blue-100 text-blue-600 font-medium rounded-md transition shadow-sm border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  title="Set date range to yesterday"
+                >
+                  YESTERDAY
+                </button>
+              }
+            />
+            
+            {/* Date range presets */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleMonthTillDate}
+                className="flex-1 py-2 px-4 bg-blue-50 hover:bg-blue-100 text-blue-600 font-medium rounded-md transition shadow-sm border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              >
+                MONTH TILL DATE
+              </button>
+              <button
+                onClick={handleYearTillDate}
+                className="flex-1 py-2 px-4 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-medium rounded-md transition shadow-sm border border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              >
+                YEAR TILL DATE
+              </button>
+            </div>
+          </div>
+        </div>
 
-        {/* Platform selector */}
-        <PlatformSelector
-          selectedPlatform={selectedPlatform}
-          onPlatformChange={handlePlatformChange}
-          enabledPlatforms={enabledPlatforms}
-        />
+        {/* Right section: Platform Controls */}
+        <div className="bg-white rounded-lg shadow p-4">
+          <h3 className="text-sm font-medium text-gray-700 mb-3">Platform</h3>
+          <div className="flex flex-col gap-4">
+            {/* Platform selector */}
+            <PlatformSelector
+              selectedPlatform={selectedPlatform}
+              onPlatformChange={handlePlatformChange}
+              enabledPlatforms={enabledPlatforms}
+            />
 
-        {/* Entity selector (shop/account/store) */}
-        <PlatformEntitySelector
-          platform={selectedPlatform}
-          entities={entities}
-          selectedEntityId={selectedEntityId}
-          onEntityChange={handleEntityChange}
-        />
+            {/* Entity selector (shop/account/store) */}
+            <PlatformEntitySelector
+              platform={selectedPlatform}
+              entities={entities}
+              selectedEntityId={selectedEntityId}
+              onEntityChange={handleEntityChange}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Loading state */}

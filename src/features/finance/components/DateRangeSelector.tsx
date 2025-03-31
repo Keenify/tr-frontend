@@ -10,6 +10,7 @@ interface DateRangeSelectorProps {
   minDate?: string;
   maxDate?: string;
   isRefreshing?: boolean;
+  extraButton?: React.ReactNode;
 }
 
 /**
@@ -23,7 +24,8 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   onSubmit,
   minDate = "2020-01-01",
   maxDate = "2025-12-31",
-  isRefreshing = false
+  isRefreshing = false,
+  extraButton
 }) => {
   // Format date for input value
   const formatDateValue = useCallback((date: Date): string => {
@@ -106,31 +108,34 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
             aria-label="End Date"
           />
         </div>
-        <button
-          onClick={onSubmit}
-          className="ml-2 p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center justify-center"
-          disabled={isRefreshing}
-          title="Apply date range"
-        >
-          {isRefreshing ? (
-            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
-          ) : (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onSubmit}
+            className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center justify-center"
+            disabled={isRefreshing}
+            title="Apply date range"
+          >
+            {isRefreshing ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            )}
+          </button>
+          {extraButton}
+        </div>
       </div>
     </div>
   );
