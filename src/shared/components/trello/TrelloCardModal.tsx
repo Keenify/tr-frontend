@@ -487,7 +487,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                 {/* Add date fields */}
                 <div className="mb-6 grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-gray-700 text-sm font-bold mb-2 flex justify-between">
+                    <label className="text-gray-700 text-sm font-bold mb-2 flex justify-between">
                       <span>Start Date</span>
                       {startDate && isEditable && (
                         <button
@@ -515,7 +515,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                     )}
                   </div>
                   <div>
-                    <label className="block text-gray-700 text-sm font-bold mb-2 flex justify-between">
+                    <label className="text-gray-700 text-sm font-bold mb-2 flex justify-between">
                       <span>End Date</span>
                       {endDate && isEditable && (
                         <button
