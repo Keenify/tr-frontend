@@ -340,8 +340,8 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       colorCode,
       color_code: colorCode,
       assignees,
-      start_date: startDate || undefined,
-      end_date: endDate || undefined,
+      start_date: startDate || "",
+      end_date: endDate || "",
       attachments,
       attachmentCount: attachments.length,
       is_locked: isLocked,
@@ -487,8 +487,18 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                 {/* Add date fields */}
                 <div className="mb-6 grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-gray-700 text-sm font-bold mb-2">
-                      Start Date
+                    <label className="block text-gray-700 text-sm font-bold mb-2 flex justify-between">
+                      <span>Start Date</span>
+                      {startDate && isEditable && (
+                        <button
+                          type="button"
+                          onClick={() => setStartDate('')}
+                          className="text-xs text-red-500 hover:text-red-700"
+                          title="Clear start date"
+                        >
+                          Clear
+                        </button>
+                      )}
                     </label>
                     <input
                       title="Enter start date"
@@ -505,8 +515,18 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                     )}
                   </div>
                   <div>
-                    <label className="block text-gray-700 text-sm font-bold mb-2">
-                      End Date
+                    <label className="block text-gray-700 text-sm font-bold mb-2 flex justify-between">
+                      <span>End Date</span>
+                      {endDate && isEditable && (
+                        <button
+                          type="button"
+                          onClick={() => setEndDate('')}
+                          className="text-xs text-red-500 hover:text-red-700"
+                          title="Clear end date"
+                        >
+                          Clear
+                        </button>
+                      )}
                     </label>
                     <input
                       title="Enter end date"
