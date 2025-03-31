@@ -163,6 +163,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
                   YESTERDAY
                 </button>
               }
+              hideLabel={true}
             />
             
             {/* Date range presets */}
@@ -192,6 +193,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
               selectedPlatform={selectedPlatform}
               onPlatformChange={handlePlatformChange}
               enabledPlatforms={enabledPlatforms}
+              hideLabel={true}
             />
 
             {/* Entity selector (shop/account/store) */}

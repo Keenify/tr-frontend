@@ -11,6 +11,7 @@ interface DateRangeSelectorProps {
   maxDate?: string;
   isRefreshing?: boolean;
   extraButton?: React.ReactNode;
+  hideLabel?: boolean;
 }
 
 /**
@@ -25,7 +26,8 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   minDate = "2020-01-01",
   maxDate = "2025-12-31",
   isRefreshing = false,
-  extraButton
+  extraButton,
+  hideLabel = false
 }) => {
   // Format date for input value
   const formatDateValue = useCallback((date: Date): string => {
@@ -77,7 +79,9 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
 
   return (
     <div className="flex flex-col flex-grow">
-      <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+      {!hideLabel && (
+        <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+      )}
       <div className="flex flex-wrap md:flex-nowrap items-center gap-2">
         <div className="w-full md:w-auto">
           <label htmlFor="start-date" className="sr-only">Start Date</label>

@@ -6,6 +6,7 @@ interface PlatformSelectorProps {
   selectedPlatform: Platform;
   onPlatformChange: (platform: Platform) => void;
   enabledPlatforms?: Platform[];
+  hideLabel?: boolean;
 }
 
 /**
@@ -14,13 +15,16 @@ interface PlatformSelectorProps {
 const PlatformSelector: React.FC<PlatformSelectorProps> = ({ 
   selectedPlatform, 
   onPlatformChange,
-  enabledPlatforms = ["shopee", "lazada"]  // Default enabled platforms
+  enabledPlatforms = ["shopee", "lazada"],  // Default enabled platforms
+  hideLabel = false
 }) => {
   const isEnabled = (platform: Platform) => enabledPlatforms.includes(platform);
   
   return (
     <div className="flex flex-col">
-      <label className="block text-sm font-medium text-gray-700 mb-1">Platform</label>
+      {!hideLabel && (
+        <label className="block text-sm font-medium text-gray-700 mb-1">Platform</label>
+      )}
       <div className="flex gap-2">
         <button
           className={`px-4 py-2 rounded-md ${
