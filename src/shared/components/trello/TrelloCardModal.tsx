@@ -19,6 +19,7 @@ interface TrelloCardModalProps {
   readOnly?: boolean;
   employees: Employee[];
   userId?: string;
+  onAttachmentChange?: (newCount: number) => void;
 }
 
 // Predefined color options for quick selection
@@ -63,7 +64,8 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   userRole,
   readOnly = false,
   employees,
-  userId = ''
+  userId = '',
+  onAttachmentChange
 }) => {
   // Always call the hook with a string value, even if it's empty
   const { userInfo } = useUserAndCompanyData(userId);
@@ -185,7 +187,13 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
         return createCardAttachment(card.id, file, false);
       });
       const newAttachments = await Promise.all(uploadPromises);
-      setAttachments(prev => [...prev, ...newAttachments]);
+      setAttachments(prev => {
+        const updatedAttachments = [...prev, ...newAttachments];
+        if (onAttachmentChange) {
+          onAttachmentChange(updatedAttachments.length);
+        }
+        return updatedAttachments;
+      });
       showToast(`${acceptedFiles.length} file(s) uploaded successfully`, 'success');
     } catch (error) {
       console.error('Failed to upload attachments:', error);
@@ -193,7 +201,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
     } finally {
       setIsUploading(false);
     }
-  }, [card.id, isEditable]);
+  }, [card.id, isEditable, onAttachmentChange]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,
@@ -266,7 +274,13 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
     
     try {
       await deleteAttachment(attachmentId);
-      setAttachments(prev => prev.filter(a => a.id !== attachmentId));
+      setAttachments(prev => {
+        const updatedAttachments = prev.filter(a => a.id !== attachmentId);
+        if (onAttachmentChange) {
+          onAttachmentChange(updatedAttachments.length);
+        }
+        return updatedAttachments;
+      });
       showToast('Attachment removed successfully', 'success');
     } catch (error) {
       console.error('Failed to delete attachment:', error);

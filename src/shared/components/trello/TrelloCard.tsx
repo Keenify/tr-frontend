@@ -268,6 +268,12 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
     })
     .filter(Boolean) as Employee[];
 
+  const handleAttachmentCountChange = (newCount: number) => {
+    if (onUpdate) {
+      onUpdate({ id, attachmentCount: newCount });
+    }
+  };
+
   return (
     <>
       <Draggable draggableId={`card-${id}`} index={index} isDragDisabled={isLocked}>
@@ -493,6 +499,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
           readOnly={!canManageCard || (isLocked && locked_by !== userId)}
           employees={employees}
           userId={userId}
+          onAttachmentChange={handleAttachmentCountChange}
         />
       )}
     </>
