@@ -238,7 +238,8 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       color_code: colorCode,
       assignees,
       start_date: startDate || undefined,
-      end_date: endDate || undefined
+      end_date: endDate || undefined,
+      attachments: attachments
     };
     onSave(updatedCard);
     onClose();

@@ -188,6 +188,36 @@ const Resources: React.FC<ResourcesProps> = ({
       delete apiUpdates.colorCode;
       
       await updateCard(cardId, apiUpdates);
+      
+      // Update the local state to reflect the changes immediately
+      setLists(currentLists => 
+        currentLists.map(list => {
+          if (list.id === listId) {
+            return {
+              ...list,
+              cards: list.cards.map(card => {
+                if (card.id === cardId) {
+                  return {
+                    ...card,
+                    title: updates.title ?? card.title,
+                    description: updates.description ?? card.description,
+                    color_code: updates.color_code ?? card.color_code,
+                    thumbnail_url: updates.thumbnailUrl ?? card.thumbnail_url,
+                    // Handle additional properties not in the Card interface
+                    // Store these as custom properties that will be used by components
+                    ...(updates.assignees ? { assignees: updates.assignees } : {}),
+                    ...(updates.start_date ? { start_date: updates.start_date } : {}),
+                    ...(updates.end_date ? { end_date: updates.end_date } : {}),
+                    ...(updates.attachments ? { attachments: updates.attachments } : {})
+                  };
+                }
+                return card;
+              }),
+            };
+          }
+          return list;
+        })
+      );
     } catch (error) {
       console.error('Failed to update card:', error);
       // You might want to add error handling here (e.g., showing a toast notification)

@@ -172,8 +172,8 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
         setIsLoadingAttachments(true);
         try {
           if (!id.startsWith('temp-')) {
-            const attachments = await getCardAttachments(id);
-            setCardAttachments(attachments);
+            const fetchedAttachments = await getCardAttachments(id);
+            setCardAttachments(fetchedAttachments);
           }
         } catch (error) {
           console.error('Failed to fetch attachments:', error);
@@ -413,7 +413,8 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
                 colorCode: updatedCard.colorCode,
                 assignees: updatedCard.assignees,
                 start_date: updatedCard.start_date,
-                end_date: updatedCard.end_date
+                end_date: updatedCard.end_date,
+                attachments: updatedCard.attachments || cardAttachments
               });
             }
             setIsModalOpen(false);

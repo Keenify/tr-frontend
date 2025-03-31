@@ -1,3 +1,5 @@
+import { CardAttachment } from '../services/useCardAttachment';
+
 export interface Card {
   id: string;
   title: string;
@@ -30,4 +32,5 @@ export interface CardUpdate {
   position?: number;
   due_date?: string;
   list_id?: string;
+  attachments?: CardAttachment[];
 } 
