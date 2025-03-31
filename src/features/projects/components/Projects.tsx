@@ -1,5 +1,5 @@
 import { Session } from "@supabase/supabase-js";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { createCard, updateCard } from "../../../shared/components/trello/services/useCard";
 import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
@@ -42,31 +42,35 @@ const Project: React.FC<ProjectProps> = ({
   const { companyInfo, isLoading: isLoadingCompany } = useUserAndCompanyData(session.user.id);
   const [userRole, setUserRole] = useState<string>('');
 
-  useEffect(() => {
-    const fetchBoardDetails = async () => {
-      try {
-        setIsLoading(true);
-        const boardDetails = await getBoardDetails(boardId);
-        const transformedLists = boardDetails.map(list => ({
-          ...list,
-          title: list.name,
-          cards: list.cards.map(card => ({
-            ...card,
-            thumbnailUrl: card.thumbnail_url,
-            colorCode: card.color_code,
-            due_date: card.due_date || undefined, // Convert null to undefined
-          })),
-        }));
-        setLists(transformedLists as ModifiedList[]);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load board details');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchBoardDetails();
+  // Extract fetchBoardDetails into a reusable function
+  const fetchBoardDetails = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const boardDetails = await getBoardDetails(boardId);
+      const transformedLists = boardDetails.map(list => ({
+        ...list,
+        title: list.name,
+        cards: list.cards.map(card => ({
+          ...card,
+          thumbnailUrl: card.thumbnail_url,
+          colorCode: card.color_code,
+          due_date: card.due_date || undefined, // Convert null to undefined
+        })),
+      }));
+      setLists(transformedLists as ModifiedList[]);
+      return transformedLists;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load board details');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   }, [boardId]);
+
+  // Use the fetchBoardDetails function in useEffect
+  useEffect(() => {
+    fetchBoardDetails();
+  }, [fetchBoardDetails]);
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -79,6 +83,15 @@ const Project: React.FC<ProjectProps> = ({
     };
     fetchUserRole();
   }, [session.user.id]);
+
+  // Create a refresh handler for the TrelloBoard - moved up before conditional returns
+  const handleRefresh = useCallback(async () => {
+    try {
+      await fetchBoardDetails();
+    } catch (error) {
+      console.error('Failed to refresh board data:', error);
+    }
+  }, [fetchBoardDetails]);
 
   if (isLoading || isLoadingCompany) {
     return <div>Loading...</div>;
@@ -211,6 +224,7 @@ const Project: React.FC<ProjectProps> = ({
         onListDelete={handleListDelete}
         userRole={userRole}
         session={session}
+        onRefresh={handleRefresh}
       />
     </div>
   );

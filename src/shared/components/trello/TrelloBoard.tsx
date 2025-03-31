@@ -26,6 +26,7 @@ import { Tab } from '@headlessui/react';
  * @property {Function} [onListDelete] - Callback when a list is deleted
  * @property {string} userRole - Role of the current user (determines permissions)
  * @property {Session} [session] - Optional Supabase session object
+ * @property {Function} [onRefresh] - Optional callback to refresh data from parent
  */
 interface TrelloBoardProps {
   initialLists: Array<{
@@ -51,6 +52,7 @@ interface TrelloBoardProps {
   onListDelete?: (listId: string) => Promise<void>;
   userRole: string;
   session?: Session;
+  onRefresh?: () => Promise<void>;
 }
 
 /**
@@ -78,7 +80,8 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   onCardDelete,
   onListDelete,
   userRole,
-  session
+  session,
+  onRefresh
 }) => {
   // Get the current user's ID from the session
   const userId = session?.user?.id || '';
@@ -118,6 +121,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   const [newListTitle, setNewListTitle] = useState('');
   const [newListCountry, setNewListCountry] = useState('');
   const [selectedCountry, setSelectedCountry] = useState<string>('all');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const { companyInfo } = useUserAndCompanyData(userId);
 
@@ -190,6 +194,20 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
     });
   };
 
+  // Handle refresh button click
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      if (onRefresh) {
+        await onRefresh();
+      }
+    } catch (error) {
+      console.error('Error refreshing board data:', error);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500); // Keep spinner visible briefly for UX feedback
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4 h-full">
       <div className="flex items-center justify-between gap-4">
@@ -200,6 +218,30 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
           >
             <span>+</span>
             Add List
+          </button>
+          
+          {/* Refresh Button */}
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="px-4 py-2 bg-blue-50 hover:bg-blue-100 rounded-md flex items-center gap-2 text-blue-700 transition-all"
+            title="Refresh board"
+          >
+            <svg 
+              className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            >
+              <path d="M21 2v6h-6"></path>
+              <path d="M3 12a9 9 0 0 1 15-6.7l3-3"></path>
+              <path d="M3 22v-6h6"></path>
+              <path d="M21 12a9 9 0 0 1-15 6.7l-3 3"></path>
+            </svg>
+            <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
           </button>
         </div>
         
