@@ -333,7 +333,7 @@ const Resources: React.FC<ResourcesProps> = ({
               }`
             }
           >
-            Resources Board
+            Template/Useful Notes
           </Tab>
           <Tab
             className={({ selected }) =>
