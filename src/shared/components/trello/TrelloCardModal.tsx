@@ -20,6 +20,7 @@ interface TrelloCardModalProps {
   employees: Employee[];
   userId?: string;
   onAttachmentChange?: (newCount: number) => void;
+  onLockChange?: (isLocked: boolean, lockedBy: string) => void;
 }
 
 // Predefined color options for quick selection
@@ -65,7 +66,8 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   readOnly = false,
   employees,
   userId = '',
-  onAttachmentChange
+  onAttachmentChange,
+  onLockChange
 }) => {
   // Always call the hook with a string value, even if it's empty
   const { userInfo } = useUserAndCompanyData(userId);
@@ -321,12 +323,10 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       setIsLocked(newLockedState);
       setLockedBy(newLockedState ? userInfo?.id || '' : '');
       
-      // Call onSave with minimal payload to update parent components without closing modal
-      const payload = {
-        is_locked: newLockedState,
-        locked_by: newLockedState ? userInfo?.id : ""
-      };
-      onSave(payload);
+      // Call the new onLockChange callback instead
+      if (onLockChange) {
+        onLockChange(newLockedState, newLockedState ? userInfo?.id || '' : '');
+      }
       
       // Show appropriate toast message
       showToast(

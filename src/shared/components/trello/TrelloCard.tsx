@@ -274,6 +274,15 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
     }
   };
 
+  // Add this handler function
+  const handleLockStatusChange = (isLocked: boolean, lockedBy: string) => {
+    if (onUpdate) {
+      onUpdate({ id, is_locked: isLocked, locked_by: lockedBy });
+    }
+    // Note: We don't update local state here directly, 
+    // assuming the parent component will pass down the updated props.
+  };
+
   return (
     <>
       <Draggable draggableId={`card-${id}`} index={index} isDragDisabled={isLocked}>
@@ -500,6 +509,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
           employees={employees}
           userId={userId}
           onAttachmentChange={handleAttachmentCountChange}
+          onLockChange={handleLockStatusChange}
         />
       )}
     </>
