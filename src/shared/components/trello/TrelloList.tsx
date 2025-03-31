@@ -22,6 +22,8 @@ interface TrelloListProps {
     attachments?: CardAttachment[];
     start_date?: string;
     end_date?: string;
+    is_locked?: boolean;
+    locked_by?: string;
   }>;
   onTitleChange?: (newTitle: string) => void;
   onCountryChange?: (newCountry: string) => void;
@@ -36,6 +38,8 @@ interface TrelloListProps {
     attachments?: CardAttachment[];
     start_date?: string;
     end_date?: string;
+    is_locked?: boolean;
+    locked_by?: string;
   }) => void;
   userRole: string;
   searchTerm?: string;
@@ -410,6 +414,8 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                       employees={employees}
                       assignees={card.assignees || []}
                       attachments={card.attachments || []}
+                      is_locked={card.is_locked}
+                      locked_by={card.locked_by}
                     />
                   ))}
                   {dropProvided.placeholder}
