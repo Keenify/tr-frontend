@@ -198,14 +198,23 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,
     accept: {
+      // Image formats
       'image/*': [],
+      'image/vnd.adobe.photoshop': ['.psd'],
+      'application/photoshop': ['.psd'],
+      
+      // Document formats
       'application/pdf': [],
       'application/msword': [],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': [],
-      'message/rfc822': [], // .eml files (email)
-      'application/octet-stream': ['.eml'], // Alternative MIME type for .eml files
-      'image/vnd.adobe.photoshop': ['.psd'], // PSD files (Photoshop)
-      'application/photoshop': ['.psd'] // Alternative MIME type for PSD files
+      
+      // Email formats
+      'message/rfc822': ['.eml'],
+      'application/octet-stream': ['.eml'],
+      
+      // Archive formats
+      'application/zip': ['.zip'],
+      'application/x-zip-compressed': ['.zip']
     }
   });
 
@@ -722,7 +731,10 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                               }
                             </p>
                             <p className="text-sm text-gray-500 mt-1">
-                              Supports images (including PSD), PDFs, documents, and email files (.eml)
+                              Supports images (including PSD), PDFs, documents,
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              email files (.eml), and ZIP archives
                             </p>
                           </>
                         )}
