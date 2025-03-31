@@ -386,7 +386,11 @@ export const TrelloList: React.FC<TrelloListProps> = ({
             )}
 
             {/* Cards Container */}
-            <StrictModeDroppable droppableId={`list-${id}`} type="card">
+            <StrictModeDroppable 
+              droppableId={`list-${id}`} 
+              type="card"
+              isDropDisabled={cards.some(card => card.is_locked)}
+            >
               {(dropProvided, snapshot) => (
                 <div
                   ref={dropProvided.innerRef}
@@ -406,6 +410,8 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                     <TrelloCard
                       key={card.id}
                       {...card}
+                      is_locked={card.is_locked || false}
+                      locked_by={card.locked_by || ""}
                       index={cardIndex}
                       onDelete={() => onCardDelete?.(card.id)}
                       onUpdate={(updatedCard) => onCardUpdate?.(card.id, {

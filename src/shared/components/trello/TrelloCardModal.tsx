@@ -106,7 +106,10 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   const isLockedByCurrentUser = userInfo?.id === lockedBy;
   
   // Determine if the card is editable
-  const isEditable = !isLocked || isLockedByCurrentUser;
+  const isEditable = (!isLocked || isLockedByCurrentUser) && !readOnly;
+
+  // Determine if the user can manage the lock
+  const canManageLock = userInfo?.id === lockedBy || (!isLocked && userInfo?.id);
 
   // Filter employees based on search term
   const filteredEmployees = useMemo(() => {
@@ -168,6 +171,11 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   }, [card]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (!isEditable) {
+      showToast('Cannot add attachments to a locked card', 'error');
+      return;
+    }
+    
     setIsUploading(true);
     
     try {
@@ -183,7 +191,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
     } finally {
       setIsUploading(false);
     }
-  }, [card.id]);
+  }, [card.id, isEditable]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,
@@ -198,6 +206,11 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   });
 
   const handleAssigneeToggle = async (employeeId: string) => {
+    if (!isEditable) {
+      showToast('Cannot modify assignees on a locked card', 'error');
+      return;
+    }
+    
     setIsUpdatingAssignees(true);
     
     try {
@@ -233,6 +246,11 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   };
 
   const handleRemoveAttachment = async (attachmentId: string) => {
+    if (!isEditable) {
+      showToast('Cannot remove attachments from a locked card', 'error');
+      return;
+    }
+    
     try {
       await deleteAttachment(attachmentId);
       setAttachments(prev => prev.filter(a => a.id !== attachmentId));
@@ -262,32 +280,49 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
     const newLockedState = !isLocked;
     
     try {
+      // Log current state
+      console.log('Current card state:', {
+        isLocked,
+        lockedBy,
+        userInfo,
+        card
+      });
+
       // Prepare the update payload
       const updatePayload = {
         is_locked: newLockedState,
-        locked_by: newLockedState ? userInfo?.id : "",
-        // Include other required fields from the current card state
+        locked_by: newLockedState ? userInfo?.id : "", // Use empty string instead of null
         list_id: card.list_id,
         title: card.title,
         description: card.description,
-        color_code: card.color_code,
-        position: card.position
+        color_code: card.colorCode || card.color_code,
+        position: card.position,
+        start_date: card.start_date,
+        end_date: card.end_date,
+        assignees: card.assignees
       };
 
-      console.log('Lock/Unlock Payload:', updatePayload);
+      // Log the payload being sent
+      console.log('Update payload:', updatePayload);
 
-      // Call the API to update the card
-      const response = await updateCard(card.id, updatePayload);
-      console.log('Lock/Unlock Response:', response);
+      try {
+        // Call the API to update the card
+        const response = await updateCard(card.id, updatePayload);
+        console.log('Update response:', response);
 
-      // Update local state if the API call was successful
-      setIsLocked(newLockedState);
-      setLockedBy(newLockedState ? userInfo?.id || '' : '');
-      
-      showToast(
-        newLockedState ? 'Card locked successfully' : 'Card unlocked successfully',
-        'success'
-      );
+        // Update local state if the API call was successful
+        setIsLocked(newLockedState);
+        setLockedBy(newLockedState ? userInfo?.id || '' : '');
+        
+        showToast(
+          newLockedState ? 'Card locked successfully' : 'Card unlocked successfully',
+          'success'
+        );
+      } catch (error) {
+        // Log the error details
+        console.error('API Error:', error);
+        throw error;
+      }
     } catch (error) {
       console.error('Failed to update card lock status:', error);
       showToast(
@@ -314,8 +349,8 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       attachments,
       is_locked: isLocked,
       locked_by: isLocked ? userInfo?.id : "",
-      list_id: card.list_id,
-      position: card.position
+      list_id: card.list_id || "",
+      position: card.position || 0
     };
 
     console.log('Card Update Payload:', updatedCard);
@@ -356,54 +391,65 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
         </div>
       )}
       
-      <div className="bg-white rounded-lg w-full max-w-6xl h-[90vh] flex flex-col">
+      <div className={`bg-white rounded-lg w-full max-w-6xl h-[90vh] flex flex-col ${isLocked && !isLockedByCurrentUser ? 'opacity-95' : ''}`}>
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
           {/* Lock status banner */}
           {isLocked && (
-            <div className={`px-6 py-3 ${isLockedByCurrentUser ? 'bg-blue-50 text-blue-700' : 'bg-red-50 text-red-700'} flex items-center justify-between`}>
+            <div className={`px-6 py-3 ${
+              isLockedByCurrentUser 
+                ? 'bg-blue-100 text-blue-800 border-b border-blue-200' 
+                : 'bg-red-100 text-red-800 border-b border-red-200'
+            } flex items-center justify-between`}>
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
-                <span>
+                <span className="font-medium">
                   {isLockedByCurrentUser 
                     ? 'You have locked this card' 
-                    : `Locked by ${lockedByEmployee ? `${lockedByEmployee.first_name} ${lockedByEmployee.last_name}` : 'another user'}`
+                    : `This card is locked by ${lockedByEmployee ? `${lockedByEmployee.first_name} ${lockedByEmployee.last_name}` : 'another user'}`
                   }
                 </span>
               </div>
-              {isLockedByCurrentUser && (
+              {canManageLock && (
                 <button
                   type="button"
                   onClick={handleLockToggle}
-                  className="px-3 py-1 bg-blue-100 hover:bg-blue-200 rounded-md text-sm"
+                  className={`px-3 py-1 rounded-md text-sm font-medium ${
+                    isLockedByCurrentUser
+                      ? 'bg-blue-200 hover:bg-blue-300'
+                      : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
                 >
-                  Unlock Card
+                  {isLocked ? 'Unlock Card' : 'Lock Card'}
                 </button>
               )}
             </div>
           )}
 
+          {/* Header with lock button */}
+          <div className="flex justify-between items-center mb-4 p-6">
+            <h2 className="text-xl font-semibold">
+              {isEditable ? 'Edit Card' : 'View Card'}
+            </h2>
+            {!isLocked && userInfo?.id && (
+              <button
+                type="button"
+                onClick={handleLockToggle}
+                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-sm flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                Lock Card
+              </button>
+            )}
+          </div>
+
           {/* Scrollable content area */}
           <div className="flex-1 overflow-y-auto p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Edit Card</h2>
-              {!isLocked && userInfo?.id && (
-                <button
-                  type="button"
-                  onClick={handleLockToggle}
-                  className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-sm flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                  Lock Card
-                </button>
-              )}
-            </div>
-
             <div className="flex flex-col md:flex-row gap-8">
               {/* Left column - Main card info */}
               <div className="flex-1">
@@ -694,24 +740,19 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
             </div>
           </div>
 
-          {/* Fixed footer with buttons */}
+          {/* Footer buttons */}
           <div className="flex justify-end gap-2 p-4 border-t bg-white sticky bottom-0">
             <button
               type="button"
               onClick={onClose}
               className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
             >
-              {readOnly ? 'Close' : 'Cancel'}
+              Close
             </button>
-            {!readOnly && (
+            {isEditable && (
               <button
                 type="submit"
-                className={`px-4 py-2 rounded-md ${
-                  isEditable 
-                    ? 'bg-blue-500 text-white hover:bg-blue-600' 
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
-                disabled={!isEditable}
+                className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 rounded-md"
               >
                 Save
               </button>

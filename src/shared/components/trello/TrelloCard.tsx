@@ -24,6 +24,8 @@ interface TrelloCardProps {
   onCardClick?: (card: Card) => void;
   employees: Employee[];
   userId?: string;
+  is_locked: boolean;
+  locked_by: string;
 }
 
 /**
@@ -60,6 +62,8 @@ interface TrelloCardProps {
  * @param {Function} onCardClick - Handler for card click
  * @param {Employee[]} employees - Array of employees
  * @param {string} userId - User ID for permissions and data fetching
+ * @param {boolean} is_locked - Indicates if the card is locked
+ * @param {string} locked_by - ID of the user who locked the card
  */
 export const TrelloCard: React.FC<TrelloCardProps> = ({
   id,
@@ -78,6 +82,8 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   onCardClick,
   employees = [],
   userId = '',
+  is_locked,
+  locked_by,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPosition, setDragStartPosition] = useState({ x: 0, y: 0 });
@@ -88,6 +94,9 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const canManageCard = true; // Everyone can edit
+
+  // Add check for locked state
+  const isLocked = is_locked || false;
 
   // Prevent page scroll when dragging
   useEffect(() => {
@@ -158,7 +167,6 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   const handleCardClick = async () => {
     if (!isDragging) {
       if (onCardClick) {
-        // Create a Card object using the Card interface
         const card: Card = {
           id,
           title,
@@ -167,7 +175,9 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
           thumbnailUrl,
           assignees,
           start_date,
-          end_date
+          end_date,
+          is_locked,
+          locked_by
         };
         onCardClick(card);
       } else {
@@ -236,7 +246,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
 
   return (
     <>
-      <Draggable draggableId={`card-${id}`} index={index}>
+      <Draggable draggableId={`card-${id}`} index={index} isDragDisabled={isLocked}>
         {(provided, snapshot) => (
           <div
             ref={provided.innerRef}
@@ -250,6 +260,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
               ${isDragging ? 'rotate-2 shadow-lg ring-1 ring-blue-400 bg-blue-50/50' : 'shadow-sm'}
               select-none
               group
+              ${isLocked ? 'opacity-75' : ''}
             `}
             style={{
               backgroundColor: colorCode || 'white',
@@ -259,17 +270,29 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
             }}
             onClick={!isDragging ? handleCardClick : undefined}
           >
-            {/* Edit button - only visible on hover */}
-            <button
-              title="Edit card"
-              className="absolute top-1 right-1 p-0.5 rounded-full hover:bg-gray-100 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-              onClick={handleMenuClick}
-              onMouseDown={(e) => e.stopPropagation()}
-            >
-              <svg className="w-3 h-3 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-              </svg>
-            </button>
+            {/* Add lock indicator */}
+            {isLocked && (
+              <div className="absolute top-1 right-1 text-gray-500">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+            )}
+
+            {/* Only show edit button if not locked */}
+            {!isLocked && (
+              <button
+                title="Edit card"
+                className="absolute top-1 right-1 p-0.5 rounded-full hover:bg-gray-100 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                onClick={handleMenuClick}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <svg className="w-3 h-3 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                </svg>
+              </button>
+            )}
 
             {/* Dropdown menu */}
             {showMenu && (
@@ -380,7 +403,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
       </Draggable>
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
+      {!isLocked && showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
             <h3 className="text-lg font-medium mb-4">Delete Card</h3>
@@ -417,7 +440,9 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
                 assignees: updatedCard.assignees,
                 start_date: updatedCard.start_date,
                 end_date: updatedCard.end_date,
-                attachments: updatedCard.attachments || cardAttachments
+                attachments: updatedCard.attachments || cardAttachments,
+                is_locked: updatedCard.is_locked,
+                locked_by: updatedCard.locked_by
               });
             }
             setIsModalOpen(false);
@@ -430,11 +455,13 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
             assignees,
             attachments: cardAttachments,
             start_date,
-            end_date
+            end_date,
+            is_locked,
+            locked_by
           }}
           isLoadingAttachments={isLoadingAttachments}
           userRole={userRole}
-          readOnly={!canManageCard}
+          readOnly={!canManageCard || (isLocked && locked_by !== userId)}
           employees={employees}
           userId={userId}
         />
