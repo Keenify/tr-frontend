@@ -10,7 +10,6 @@ import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyDa
 import { getUserData } from '../../../services/useUser';
 import { Tab } from '@headlessui/react';
 import Learning from './Learning';
-import { getCardAttachments } from "../../../shared/components/trello/services/useCardAttachment";
 
 interface ResourcesProps {
   session: Session;
@@ -51,41 +50,25 @@ const Resources: React.FC<ResourcesProps> = ({
       setIsLoading(true);
       const boardDetails = await getBoardDetails(boardId);
       
-      // Fetch attachments for each card
-      const listsWithAttachments = await Promise.all(
-        boardDetails.map(async (list) => {
-          const cardsWithAttachments = await Promise.all(
-            list.cards.map(async (card) => {
-              try {
-                const attachments = await getCardAttachments(card.id);
-                return {
-                  ...card,
-                  thumbnailUrl: card.thumbnail_url,
-                  colorCode: card.color_code,
-                  attachments: attachments
-                };
-              } catch (error) {
-                console.error(`Failed to fetch attachments for card ${card.id}:`, error);
-                return {
-                  ...card,
-                  thumbnailUrl: card.thumbnail_url,
-                  colorCode: card.color_code,
-                  attachments: []
-                };
-              }
-            })
-          );
-          
-          return {
-            ...list,
-            title: list.name,
-            cards: cardsWithAttachments,
-          };
-        })
-      );
+      // Use attachment_count directly from the API response
+      const formattedLists = boardDetails.map((list) => {
+        return {
+          ...list,
+          title: list.name,
+          cards: list.cards.map(card => ({
+            ...card,
+            thumbnailUrl: card.thumbnail_url,
+            colorCode: card.color_code,
+            // Use empty array for attachments but include the count from API
+            attachments: [],
+            // Use the attachment_count from the API
+            attachmentCount: card.attachment_count || 0
+          }))
+        };
+      });
       
-      setLists(listsWithAttachments);
-      return listsWithAttachments;
+      setLists(formattedLists);
+      return formattedLists;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load board details');
       throw err;
@@ -360,7 +343,11 @@ const Resources: React.FC<ResourcesProps> = ({
                   ...list,
                   cards: list.cards.map(card => ({
                     ...card,
-                    due_date: card.due_date || undefined
+                    // Convert null values to undefined for compatibility
+                    due_date: card.due_date || undefined,
+                    start_date: card.start_date || undefined,
+                    end_date: card.end_date || undefined,
+                    locked_by: card.locked_by || undefined
                   }))
                 }))}
                 onListMove={handleListMove}
