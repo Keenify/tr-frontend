@@ -6,6 +6,8 @@ import { Employee } from '../../../shared/types/directory.types';
 import { Card, CardUpdate } from './types/card.types';
 import { useUserAndCompanyData } from '../../hooks/useUserAndCompanyData';
 import { updateCard } from './services/useCard';
+import { TrelloCardDescription } from './TrelloCardDescription';
+import './TrelloCardDescription.css';
 
 interface TrelloCardModalProps {
   isOpen: boolean;
@@ -455,12 +457,16 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                   <label className="block text-gray-700 text-sm font-bold mb-2">
                     Description
                   </label>
-                  <textarea
-                    title="Enter card description"
+                  {/* 
+                    TrelloCardDescription component handles rich text with markdown support
+                    It accepts HTML content as input and outputs HTML content on change
+                    This replaces the simple textarea with a full-featured editor 
+                  */}
+                  <TrelloCardDescription
                     value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className={`w-full px-3 py-2 border rounded-md min-h-[200px] ${!isEditable ? 'bg-gray-100' : ''}`}
+                    onChange={setDescription}
                     disabled={!isEditable || readOnly}
+                    placeholder="Add a detailed description..."
                   />
                 </div>
 

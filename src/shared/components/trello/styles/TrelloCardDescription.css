@@ -1,0 +1,173 @@
+/* TrelloCardDescription styles */
+.trello-card-description {
+  position: relative;
+}
+
+.trello-card-description-editor {
+  outline: none;
+}
+
+/* Text formatting */
+.trello-card-description-editor .ProseMirror strong {
+  font-weight: bold;
+}
+
+.trello-card-description-editor .ProseMirror em {
+  font-style: italic;
+}
+
+.trello-card-description-editor .ProseMirror u {
+  text-decoration: underline;
+}
+
+.trello-card-description-editor .ProseMirror s {
+  text-decoration: line-through;
+}
+
+/* Headings */
+.trello-card-description-editor .ProseMirror h1 {
+  font-size: 1.8em;
+  font-weight: bold;
+  margin: 1em 0 0.5em;
+  line-height: 1.3;
+}
+
+.trello-card-description-editor .ProseMirror h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 1em 0 0.5em;
+  line-height: 1.3;
+}
+
+.trello-card-description-editor .ProseMirror h3 {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin: 1em 0 0.5em;
+  line-height: 1.3;
+}
+
+/* Default paragraphs */
+.trello-card-description-editor .ProseMirror p {
+  margin: 0.5em 0;
+}
+
+.trello-card-description-editor .ProseMirror:focus {
+  outline: none;
+}
+
+/* Bullet and ordered lists */
+.trello-card-description-editor .ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.trello-card-description-editor .ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.trello-card-description-editor .bullet-list {
+  list-style-type: disc !important;
+}
+
+.trello-card-description-editor .ordered-list {
+  list-style-type: decimal !important;
+}
+
+/* Task lists */
+.trello-card-description-editor .task-list {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0.5em 0;
+}
+
+.trello-card-description-editor .task-item {
+  position: relative;
+  padding-left: 1.5em;
+  margin: 0.2em 0;
+  display: flex;
+  align-items: flex-start;
+}
+
+.trello-card-description-editor .task-item input[type="checkbox"] {
+  position: absolute;
+  left: 0;
+  top: 0.3em;
+  margin: 0;
+  width: 1em;
+  height: 1em;
+  cursor: pointer;
+}
+
+.trello-card-description-editor .task-item[data-checked="true"] p {
+  text-decoration: line-through;
+  color: #888;
+}
+
+/* Placeholder */
+.trello-card-description-editor .is-empty::before {
+  content: attr(data-placeholder);
+  color: #adb5bd;
+  float: left;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Text alignment */
+.trello-card-description-editor .ProseMirror [style*="text-align: center"] {
+  text-align: center;
+}
+
+.trello-card-description-editor .ProseMirror [style*="text-align: right"] {
+  text-align: right;
+}
+
+.trello-card-description-editor .ProseMirror [style*="text-align: justify"] {
+  text-align: justify;
+}
+
+/* Editor toolbar styles */
+.editor-toolbar {
+  border-radius: 4px;
+}
+
+.editor-toolbar button {
+  transition: background-color 0.2s ease;
+}
+
+.editor-toolbar button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Nested lists */
+.trello-card-description-editor .ProseMirror ul ul,
+.trello-card-description-editor .ProseMirror ol ol,
+.trello-card-description-editor .ProseMirror ul ol,
+.trello-card-description-editor .ProseMirror ol ul {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* First element margin */
+.trello-card-description-editor .ProseMirror > *:first-child {
+  margin-top: 0;
+}
+
+/* Last element margin */
+.trello-card-description-editor .ProseMirror > *:last-child {
+  margin-bottom: 0;
+}
+
+/* Focus style */
+.trello-card-description-editor .ProseMirror {
+  min-height: 200px;
+}
+
+/* When displaying in read-only mode */
+.trello-card-description-editor[contenteditable="false"] {
+  user-select: text;
+  cursor: default;
+  opacity: 0.9;
+} 
