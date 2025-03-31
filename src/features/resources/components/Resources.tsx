@@ -1,5 +1,5 @@
 import { Session } from "@supabase/supabase-js";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { createCard, updateCard } from "../../../shared/components/trello/services/useCard";
 import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
@@ -45,55 +45,59 @@ const Resources: React.FC<ResourcesProps> = ({
   // Add the useUserAndCompanyData hook
   const { companyInfo, isLoading: isLoadingCompany } = useUserAndCompanyData(session.user.id);
 
-  useEffect(() => {
-    const fetchBoardDetails = async () => {
-      try {
-        setIsLoading(true);
-        const boardDetails = await getBoardDetails(boardId);
-        
-        // Fetch attachments for each card
-        const listsWithAttachments = await Promise.all(
-          boardDetails.map(async (list) => {
-            const cardsWithAttachments = await Promise.all(
-              list.cards.map(async (card) => {
-                try {
-                  const attachments = await getCardAttachments(card.id);
-                  return {
-                    ...card,
-                    thumbnailUrl: card.thumbnail_url,
-                    colorCode: card.color_code,
-                    attachments: attachments
-                  };
-                } catch (error) {
-                  console.error(`Failed to fetch attachments for card ${card.id}:`, error);
-                  return {
-                    ...card,
-                    thumbnailUrl: card.thumbnail_url,
-                    colorCode: card.color_code,
-                    attachments: []
-                  };
-                }
-              })
-            );
-            
-            return {
-              ...list,
-              title: list.name,
-              cards: cardsWithAttachments,
-            };
-          })
-        );
-        
-        setLists(listsWithAttachments);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load board details');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchBoardDetails();
+  // Extract fetchBoardDetails into a reusable function
+  const fetchBoardDetails = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const boardDetails = await getBoardDetails(boardId);
+      
+      // Fetch attachments for each card
+      const listsWithAttachments = await Promise.all(
+        boardDetails.map(async (list) => {
+          const cardsWithAttachments = await Promise.all(
+            list.cards.map(async (card) => {
+              try {
+                const attachments = await getCardAttachments(card.id);
+                return {
+                  ...card,
+                  thumbnailUrl: card.thumbnail_url,
+                  colorCode: card.color_code,
+                  attachments: attachments
+                };
+              } catch (error) {
+                console.error(`Failed to fetch attachments for card ${card.id}:`, error);
+                return {
+                  ...card,
+                  thumbnailUrl: card.thumbnail_url,
+                  colorCode: card.color_code,
+                  attachments: []
+                };
+              }
+            })
+          );
+          
+          return {
+            ...list,
+            title: list.name,
+            cards: cardsWithAttachments,
+          };
+        })
+      );
+      
+      setLists(listsWithAttachments);
+      return listsWithAttachments;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load board details');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   }, [boardId]);
+
+  // Use the fetchBoardDetails function in useEffect
+  useEffect(() => {
+    fetchBoardDetails();
+  }, [fetchBoardDetails]);
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -106,6 +110,15 @@ const Resources: React.FC<ResourcesProps> = ({
     };
     fetchUserRole();
   }, [session.user.id]);
+
+  // Create a refresh handler for the TrelloBoard - add before conditional returns
+  const handleRefresh = useCallback(async () => {
+    try {
+      await fetchBoardDetails();
+    } catch (error) {
+      console.error('Failed to refresh board data:', error);
+    }
+  }, [fetchBoardDetails]);
 
   if (isLoading || isLoadingCompany) {
     return <div>Loading...</div>;
@@ -359,6 +372,7 @@ const Resources: React.FC<ResourcesProps> = ({
                 onListDelete={handleListDelete}
                 userRole={userRole}
                 session={session}
+                onRefresh={handleRefresh}
               />
             )}
           </Tab.Panel>
