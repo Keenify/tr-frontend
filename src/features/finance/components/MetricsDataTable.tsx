@@ -20,6 +20,12 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform }) =
     return `$${numValue.toFixed(2)}`;
   };
 
+  // Helper to safely convert string/number to number
+  const parseNumber = (value: string | number | undefined): number => {
+    if (value === undefined) return 0;
+    return typeof value === 'string' ? parseFloat(value) : value;
+  };
+
   // Get the platform-specific styling for the table header
   const getHeaderStyle = () => {
     switch (platform) {
@@ -110,6 +116,45 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform }) =
       ? (item as ShopeeMetric).existing_buyer_count
       : (item as LazadaMetric).existing_buyer_count;
   };
+
+  // Calculate summary totals
+  const calculateSummary = () => {
+    const totals = {
+      revenue: 0,
+      adsExpense: 0,
+      totalOrders: 0,
+      newBuyers: 0,
+      existingBuyers: 0,
+      sessions: 0,
+      addToCart: 0,
+      completedCheckout: 0,
+      newCustomerSales: 0,
+      existingCustomerSales: 0
+    };
+
+    data.forEach(item => {
+      // Common metrics across platforms
+      totals.revenue += parseNumber(getRevenue(item));
+      totals.adsExpense += parseNumber(getAdsExpense(item));
+      totals.totalOrders += parseNumber(getOrdersCount(item));
+      totals.newBuyers += parseNumber(getNewBuyerCount(item));
+      totals.existingBuyers += parseNumber(getExistingBuyerCount(item));
+
+      // Shopify specific metrics
+      if (platform === 'shopify') {
+        const shopifyItem = item as ShopifyMetric;
+        totals.sessions += parseNumber(shopifyItem.session);
+        totals.addToCart += parseNumber(shopifyItem.add_to_cart_count);
+        totals.completedCheckout += parseNumber(shopifyItem.session_completed_checkout_count);
+        totals.newCustomerSales += parseNumber(shopifyItem.new_customer_sales);
+        totals.existingCustomerSales += parseNumber(shopifyItem.existing_customer_sales);
+      }
+    });
+
+    return totals;
+  };
+
+  const summaryTotals = calculateSummary();
 
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -213,6 +258,53 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform }) =
                 )}
               </tr>
             ))}
+            
+            {/* Summary row */}
+            <tr className="bg-gray-50 font-medium">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <strong>Total</strong>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                —
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <strong>{formatCurrency(summaryTotals.revenue)}</strong>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <strong>{formatCurrency(summaryTotals.adsExpense)}</strong>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <strong>{summaryTotals.totalOrders}</strong>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <strong>{summaryTotals.newBuyers}</strong>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <strong>{summaryTotals.existingBuyers}</strong>
+              </td>
+              {platform === 'shopify' && (
+                <>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <strong>{summaryTotals.sessions}</strong>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    —
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <strong>{summaryTotals.addToCart}</strong>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <strong>{summaryTotals.completedCheckout}</strong>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <strong>{formatCurrency(summaryTotals.newCustomerSales)}</strong>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <strong>{formatCurrency(summaryTotals.existingCustomerSales)}</strong>
+                  </td>
+                </>
+              )}
+            </tr>
           </tbody>
         </table>
       </div>
