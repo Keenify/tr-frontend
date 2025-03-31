@@ -251,7 +251,8 @@ const Resources: React.FC<ResourcesProps> = ({
       const newList = await createList({
         name: title,
         position: maxPosition + 1,
-        board_id: HARDCODED_BOARD_ID
+        board_id: HARDCODED_BOARD_ID,
+        country: ""
       });
       return newList.id;  // Return the new list ID
     } catch (error) {
@@ -312,7 +313,13 @@ const Resources: React.FC<ResourcesProps> = ({
               <div>Error: {error}</div>
             ) : (
               <TrelloBoard 
-                initialLists={lists}
+                initialLists={lists.map(list => ({
+                  ...list,
+                  cards: list.cards.map(card => ({
+                    ...card,
+                    due_date: card.due_date || undefined
+                  }))
+                }))}
                 onListMove={handleListMove}
                 onCardMove={handleCardMove}
                 onCardUpdate={handleCardUpdate}
