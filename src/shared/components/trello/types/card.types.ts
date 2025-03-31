@@ -13,6 +13,7 @@ export interface Card {
   position?: number;
   due_date?: string;
   is_locked?: boolean;
+  locked_by?: string;
   list_id?: string;
   created_at?: string;
 }
@@ -32,5 +33,7 @@ export interface CardUpdate {
   position?: number;
   due_date?: string;
   list_id?: string;
+  is_locked?: boolean;
+  locked_by?: string;
   attachments?: CardAttachment[];
 } 
