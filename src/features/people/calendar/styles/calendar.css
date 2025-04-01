@@ -91,4 +91,68 @@
   z-index: 1;
 }
 
-/* ... rest of your calendar styles ... */ 
+/* ... rest of your calendar styles ... */
+
+/* FullCalendar Custom Event Styling */
+.fc-event-custom {
+  /* Base styles for event container */
+  padding: 2px 0px; /* Adjust container padding if needed, title padding below */
+  border: 1px solid rgba(0, 0, 0, 0.15); /* Slightly lighter border */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+  font-weight: 500; /* Keep text slightly bolder */
+  cursor: pointer;
+}
+
+/* Target the inner title element specifically for text styling */
+.fc-event-custom .fc-event-title {
+  color: #111827 !important; /* Force very dark text color */
+  padding: 3px 5px; /* Apply padding here */
+  white-space: normal !important; /* Allow text wrapping if needed */
+  line-height: 1.3;
+  text-shadow: none; 
+}
+
+/* Optional: Slightly darker border for specific backgrounds if needed */
+.fc-event-custom.bg-blue-100 { border-color: #bfdbfe; }
+.fc-event-custom.bg-yellow-100 { border-color: #fde68a; }
+.fc-event-custom.bg-green-100 { border-color: #a7f3d0; }
+
+/* You can also target specific event types directly using the classes we added */
+/* Ensure text color contrasts well with background from getEventTypeColor */
+/* Example: If getEventTypeColor returns bg-blue-100, this ensures dark text */
+.fc-event-custom.bg-blue-100 {
+  color: #1e40af; /* Dark blue text for light blue background */
+  border-color: #93c5fd; /* Slightly darker border */
+}
+
+/* Example: If getEventTypeColor returns bg-yellow-100 */
+.fc-event-custom.bg-yellow-100 {
+  color: #a16207; /* Dark yellow/brown text for light yellow background */
+  border-color: #fcd34d; /* Slightly darker border */
+}
+
+/* Example: If getEventTypeColor returns bg-green-100 */
+.fc-event-custom.bg-green-100 {
+  color: #15803d; /* Dark green text */
+  border-color: #86efac; /* Slightly darker border */
+}
+
+/* You can also target specific event types directly using the classes we added */
+.fc-event-annual_leave {
+  /* Specific styles for annual leave */
+  /* Example: Use a more saturated background */
+  /* background-color: #fef08a !important; /* Overrides Tailwind if needed */
+  /* color: #a16207 !important; */ 
+}
+
+.fc-event-booth {
+  /* Specific styles for booth events */
+  /* Example: Use a more saturated background */
+  /* background-color: #bfdbfe !important; /* Overrides Tailwind if needed */
+  /* color: #1e40af !important; */ 
+}
+
+/* Ensure the default dot is visible */
+.fc-daygrid-event-dot {
+    border-color: inherit !important; /* Use the event's border color */
+} 
