@@ -13,6 +13,7 @@ interface TrelloCardModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (updatedCard: CardUpdate) => void;
+  onThumbnailChange?: (updatedCard: CardUpdate) => void;
   card: Card & { attachments?: CardAttachment[] };
   isLoadingAttachments: boolean;
   userRole: string;
@@ -60,6 +61,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   isOpen,
   onClose,
   onSave,
+  onThumbnailChange,
   card,
   isLoadingAttachments,
   userRole,
@@ -313,20 +315,42 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       await updateAttachmentThumbnailStatus(attachmentId, card.id, newIsThumbnail);
       
       // Update local state
-      setAttachments(prevAttachments => 
-        prevAttachments.map(att => {
-          if (att.id === attachmentId) {
-            return { ...att, is_thumbnail: newIsThumbnail };
-          }
-          // If we just set a new thumbnail, unset any other potential thumbnail
-          if (newIsThumbnail && att.is_thumbnail) {
-            return { ...att, is_thumbnail: false };
-          }
-          return att;
-        })
-      );
+      const updatedAttachments = attachments.map(att => {
+        if (att.id === attachmentId) {
+          return { ...att, is_thumbnail: newIsThumbnail };
+        }
+        // If we just set a new thumbnail, unset any other potential thumbnail
+        if (newIsThumbnail && att.is_thumbnail) {
+          return { ...att, is_thumbnail: false };
+        }
+        return att;
+      });
 
-      showToast(`Thumbnail status updated successfully`, 'success');
+      setAttachments(updatedAttachments);
+
+      // Create a minimal card update payload for thumbnail change
+      const thumbnailUpdatePayload: CardUpdate = {
+        title: title,
+        description: description,
+        colorCode: colorCode,
+        color_code: colorCode,
+        assignees: assignees,
+        start_date: startDate || "",
+        end_date: endDate || "",
+        attachments: updatedAttachments,
+        attachmentCount: updatedAttachments.length,
+        is_locked: isLocked,
+        locked_by: isLocked ? userInfo?.id : "",
+        list_id: card.list_id || "",
+        position: card.position || 0
+      };
+
+      // Call the onThumbnailChange prop to update the board
+      if (onThumbnailChange) {
+        onThumbnailChange(thumbnailUpdatePayload);
+      }
+
+      showToast(`Thumbnail ${newIsThumbnail ? 'set' : 'unset'} successfully`, 'success');
 
     } catch (error) {
       console.error('Failed to update thumbnail status:', error);
