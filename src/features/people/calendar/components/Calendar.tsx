@@ -371,17 +371,15 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
   function getCountryCode(location: string | null | undefined): string {
     if (!location) return '';
     const lowerLocation = location.toLowerCase();
-    // Add more mappings as needed
-    if (lowerLocation.includes('malaysia')) return 'MY';
-    if (lowerLocation.includes('singapore')) return 'SG';
-    // Add a fallback for other countries or return empty
-    // return countryName.substring(0, 2).toUpperCase(); // Example fallback
-    return '' // Default to no code if not specifically mapped
+    // Return flag emojis instead of country codes
+    if (lowerLocation.includes('malaysia')) return '🇲🇾';
+    if (lowerLocation.includes('singapore')) return '🇸🇬';
+    return ''; // Default to no flag if not specifically mapped
   }
 
   function formatEventTitleForDisplay(event: CalendarEvent): string {
-      const countryCode = getCountryCode(event.location); // Use location field
-      const prefix = countryCode ? `[${countryCode}] ` : '';
+      const countryFlag = getCountryCode(event.location); // Use location field
+      const prefix = countryFlag ? `${countryFlag} ` : '';
 
       const eventTypeMapping = {
           'annual_leave': 'Annual Leave',
