@@ -286,6 +286,9 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
   const toggleProductSelection = (productId: number) => {
     setSelectedProducts((prev) => {
       const newSelection = new Set(prev);
+      const product = products.find(p => p.id === productId);
+      const isGiftBox = product?.name.toLowerCase().includes('gift box');
+
       if (newSelection.has(productId)) {
         newSelection.delete(productId);
         setSelectedFlavors((prevFlavors) => {
@@ -297,9 +300,11 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
         newSelection.add(productId);
         setSelectedFlavors((prevFlavors) => {
           const newFlavors = { ...prevFlavors };
-          newFlavors[productId] = new Set(
-            productVariants[productId]?.map((variant) => variant.name) || []
-          ); // Select all flavors
+          // If it's a gift box product, initialize with empty selection
+          // Otherwise, select all flavors as before
+          newFlavors[productId] = isGiftBox 
+            ? new Set() 
+            : new Set(productVariants[productId]?.map((variant) => variant.name) || []);
           return newFlavors;
         });
       }
