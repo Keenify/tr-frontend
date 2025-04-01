@@ -328,7 +328,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
 
       setAttachments(updatedAttachments);
 
-      // Create a minimal card update payload for thumbnail change
+      // Create card update payload for thumbnail change
       const thumbnailUpdatePayload: CardUpdate = {
         title: title,
         description: description,
@@ -345,7 +345,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
         position: card.position || 0
       };
 
-      // Call the onThumbnailChange prop to update the board
+      // Call the onThumbnailChange prop with the updated payload
       if (onThumbnailChange) {
         onThumbnailChange(thumbnailUpdatePayload);
       }

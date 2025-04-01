@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 import { deleteCard } from './services/useCard';
-import { getCardAttachments, CardAttachment } from './services/useCardAttachment';
+import { getCardAttachments, CardAttachment, getAttachmentUrl } from './services/useCardAttachment';
 import { TrelloCardModal } from './TrelloCardModal';
 import { Card, CardUpdate } from './types/card.types';
 import { Employee } from '@/shared/types/directory.types';
@@ -98,7 +98,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   title,
   description,
   colorCode,
-  thumbnailUrl,
+  thumbnailUrl: propsThumbnailUrl,
   assignees = [],
   attachmentCount = 0,
   start_date,
@@ -119,6 +119,11 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   const [isLoadingAttachments, setIsLoadingAttachments] = useState(false);
   const [cardAttachments, setCardAttachments] = useState<CardAttachment[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>(propsThumbnailUrl);
+
+  useEffect(() => {
+    setThumbnailUrl(propsThumbnailUrl);
+  }, [propsThumbnailUrl]);
 
   const canManageCard = true; // Everyone can edit
 
@@ -272,6 +277,42 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
     if (onUpdate) {
       onUpdate({ id, attachmentCount: newCount });
     }
+  };
+
+  // Add this handler function
+  const handleThumbnailChange = async (updatedCard: CardUpdate) => {
+    if (onUpdate) {
+      // Find the new thumbnail attachment
+      const newThumbnail = updatedCard.attachments?.find(att => att.is_thumbnail);
+      
+      let newThumbnailUrl: string | undefined = undefined;
+      
+      // If we have a thumbnail, get its proper signed URL
+      if (newThumbnail) {
+        try {
+          // Use getAttachmentUrl to get the proper signed URL instead of using file_url directly
+          newThumbnailUrl = await getAttachmentUrl(newThumbnail.id);
+        } catch (error) {
+          console.error('Failed to get signed thumbnail URL:', error);
+          // Fallback to the file_url if we couldn't get the signed URL
+          newThumbnailUrl = newThumbnail.file_url;
+        }
+      }
+
+      // Update the internal state for immediate visual feedback
+      setThumbnailUrl(newThumbnailUrl);
+      
+      // Update the attachments state as well to maintain consistency
+      setCardAttachments(updatedCard.attachments || []);
+
+      // Then propagate the change to parent components
+      onUpdate({ 
+        id, 
+        ...updatedCard, // Pass all updates from the modal
+        thumbnailUrl: newThumbnailUrl // Use the proper signed URL
+      });
+    }
+    // Keep the modal open, do not call setIsModalOpen(false)
   };
 
   // Add this handler function
@@ -510,6 +551,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
           userId={userId}
           onAttachmentChange={handleAttachmentCountChange}
           onLockChange={handleLockStatusChange}
+          onThumbnailChange={handleThumbnailChange}
         />
       )}
     </>
