@@ -19,6 +19,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     const [salesAccountManager, setSalesAccountManager] = useState<string>('');
     const [showFOBPricePerUnit, setShowFOBPricePerUnit] = useState<boolean>(true);
     const [showCartonBarcode, setShowCartonBarcode] = useState<boolean>(false);
+    const [selectedCurrency, setSelectedCurrency] = useState<'USD' | 'SGD'>('USD');
     const currentDate = new Date().toLocaleDateString("en-GB", {
         day: "2-digit",
         month: "long",
@@ -149,7 +150,8 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
             sales_account_manager: salesAccountManager,
             tableSettings: {
                 showFOBPricePerUnit: showFOBPricePerUnit,
-                showCartonBarcode: showCartonBarcode
+                showCartonBarcode: showCartonBarcode,
+                currency: selectedCurrency
             }
         };
 
@@ -259,6 +261,19 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                     <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     <span className="ms-3 text-sm font-medium text-gray-900">Show Carton Barcode</span>
                 </label>
+
+                <div className="inline-flex items-center">
+                    <label htmlFor="currency-select" className="ms-3 text-sm font-medium text-gray-900 mr-2">Currency:</label>
+                    <select
+                        id="currency-select"
+                        value={selectedCurrency}
+                        onChange={(e) => setSelectedCurrency(e.target.value as 'USD' | 'SGD')}
+                        className="border p-1 rounded text-sm"
+                    >
+                        <option value="USD">USD</option>
+                        <option value="SGD">SGD</option>
+                    </select>
+                </div>
             </div>
             
             <table className="min-w-full border-collapse border border-gray-300">
@@ -273,7 +288,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                         {showFOBPricePerUnit && (
                             <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>FOB Price/Unit</th>
                         )}
-                        <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>RRP (USD)</th>
+                        <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>{`RRP (${selectedCurrency})`}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -310,16 +325,16 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                             <input
                                                 title="Edit Field"
                                                 type="text"
-                                                defaultValue={String(product.variants[0]?.[field as keyof typeof product.variants[0]])}
+                                                defaultValue={String(product.variants[0]?.[field as keyof typeof product.variants[0]] ?? '')}
                                                 onBlur={(e) => handleCellEdit(product.product_id, field, e.target.value)}
                                                 autoFocus
                                                 className="w-full text-center"
                                             />
                                         ) : (
                                             field === 'fob_price_per_unit' 
-                                                ? `$${(Number(product.variants[0]?.fob_price_per_carton) / Number(product.variants[0]?.pack_size_per_carton)).toFixed(2)}`
+                                                ? `$${(Number(product.variants[0]?.fob_price_per_carton ?? 0) / Number(product.variants[0]?.pack_size_per_carton ?? 1)).toFixed(2)}`
                                                 : ['fob_price_per_carton', 'recommended_retail_price_usd'].includes(field)
-                                                    ? `$${Number(product.variants[0]?.[field as keyof typeof product.variants[0]]).toFixed(2)}`
+                                                    ? `$${Number(product.variants[0]?.[field as keyof typeof product.variants[0]] ?? 0).toFixed(2)}`
                                                     : product.variants[0]?.[field as keyof typeof product.variants[0]]
                                         )}
                                     </td>

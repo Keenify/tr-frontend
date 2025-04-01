@@ -37,5 +37,6 @@ export interface QuotationExportPDFData {
     tableSettings?: {
         showFOBPricePerUnit: boolean;
         showCartonBarcode?: boolean;
+        currency?: 'USD' | 'SGD';
     };
 }
