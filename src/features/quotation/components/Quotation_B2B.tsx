@@ -13,19 +13,26 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Card,
+  CardContent,
+  Typography,
+  Chip,
+  Box,
 } from "@mui/material";
 import { Session } from "@supabase/supabase-js";
 import React from "react";
 import PriceTierModal from "./PriceTierModal";
+import GiftBoxModal from "./GiftBoxModal";
 import { getProductsByCompany } from "../../../services/useProducts";
 import { getProductPriceTiers } from "../services/useProductsPriceTier";
 import { getProductVariants } from "../../../services/useProductVariants";
 import { generateQuotationPDF } from "../services/useQuotationPDF";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 import { Product, ProductPriceTier } from "../../../shared/types/Product";
-import { QuotationPDFData } from "../types/QuotationPDF";
+import { GiftBoxConfiguration, QuotationPDFData } from "../types/QuotationPDF";
 import "../styles/Quotation.css";
 import { BranchInfo, CompanyData } from '../../../shared/types/companyType';
+import EditIcon from '@mui/icons-material/Edit';
 
 interface QuotationB2BProps {
   session: Session;
@@ -296,6 +303,11 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
           newFlavors[productId] = new Set(); // Deselect all flavors
           return newFlavors;
         });
+        
+        // Clear gift box configuration if gift box is deselected
+        if (isGiftBox) {
+          setGiftBoxConfiguration(null);
+        }
       } else {
         newSelection.add(productId);
         setSelectedFlavors((prevFlavors) => {
@@ -323,18 +335,35 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
 
   // Function to toggle flavor selection for a given product
   const toggleFlavorSelection = (productId: number, flavor: string) => {
+    const product = products.find(p => p.id === productId);
+    const isGiftBox = product?.name.toLowerCase().includes('gift box');
+
     setSelectedFlavors((prev) => {
       const newFlavors = { ...prev };
       if (!newFlavors[productId]) {
         newFlavors[productId] = new Set();
       }
-      if (newFlavors[productId].has(flavor)) {
-        newFlavors[productId] = new Set(newFlavors[productId]); // Create a new Set to ensure state change
-        newFlavors[productId].delete(flavor); // Uncheck flavor
+
+      // For gift box products, only allow one flavor to be selected
+      if (isGiftBox) {
+        // Clear any previously selected flavors
+        newFlavors[productId] = new Set();
+        
+        // Add the new flavor if it wasn't already selected
+        if (!newFlavors[productId].has(flavor)) {
+          newFlavors[productId].add(flavor);
+        }
       } else {
-        newFlavors[productId] = new Set(newFlavors[productId]); // Create a new Set to ensure state change
-        newFlavors[productId].add(flavor); // Check flavor
+        // For non-gift box products, use the original toggle behavior
+        if (newFlavors[productId].has(flavor)) {
+          newFlavors[productId] = new Set(newFlavors[productId]); // Create a new Set to ensure state change
+          newFlavors[productId].delete(flavor); // Uncheck flavor
+        } else {
+          newFlavors[productId] = new Set(newFlavors[productId]); // Create a new Set to ensure state change
+          newFlavors[productId].add(flavor); // Check flavor
+        }
       }
+      
       return newFlavors;
     });
   };
@@ -421,6 +450,47 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
     }));
   };
 
+  // Replace old gift box states with new configuration
+  const [isGiftBoxModalOpen, setIsGiftBoxModalOpen] = React.useState<boolean>(false);
+  const [giftBoxConfiguration, setGiftBoxConfiguration] = React.useState<GiftBoxConfiguration | null>(null);
+
+  // Remove the old gift box item functions and add these new ones
+  const handleOpenGiftBoxModal = () => {
+    setIsGiftBoxModalOpen(true);
+  };
+
+  const handleCloseGiftBoxModal = () => {
+    setIsGiftBoxModalOpen(false);
+  };
+
+  const handleSaveGiftBoxConfiguration = (config: GiftBoxConfiguration) => {
+    // Check if we have a gift box product that's already selected
+    const giftBoxProductIds = Array.from(selectedProducts).filter(productId => {
+      const product = products.find(p => p.id === productId);
+      return product?.name.toLowerCase().includes('gift box');
+    });
+
+    if (giftBoxProductIds.length > 0) {
+      // We have a gift box product selected
+      const giftBoxProductId = giftBoxProductIds[0];
+      const selectedFlavorsList = Array.from(selectedFlavors[giftBoxProductId] || []);
+      
+      // If we have a selected flavor, use it as the name
+      if (selectedFlavorsList.length > 0) {
+        config.name = selectedFlavorsList[0];
+        
+        // Also get the product name for the description
+        const giftBoxProduct = products.find(p => p.id === giftBoxProductId);
+        if (giftBoxProduct) {
+          config.description = giftBoxProduct.name;
+        }
+      }
+    }
+    
+    setGiftBoxConfiguration(config);
+  };
+
+  // Update PDF data to include gift box configuration
   const handleGeneratePDF = async () => {
     // Check if more than 3 price columns are selected
     if (visibleCartonColumns.size > 3) {
@@ -434,6 +504,37 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
 
     try {
       setIsGeneratingPDF(true);
+      
+      // If we have a gift box product, make sure to use the selected flavor as the name
+      let finalGiftBoxConfig = giftBoxConfiguration;
+      
+      if (isGiftBox) {
+        // Find the gift box product
+        const giftBoxProductIds = Array.from(selectedProducts).filter(productId => {
+          const product = products.find(p => p.id === productId);
+          return product?.name.toLowerCase().includes('gift box');
+        });
+        
+        if (giftBoxProductIds.length > 0) {
+          const giftBoxProductId = giftBoxProductIds[0];
+          const selectedFlavorsList = Array.from(selectedFlavors[giftBoxProductId] || []);
+          
+          // If we have a selected flavor, use it as the name
+          if (selectedFlavorsList.length > 0 && finalGiftBoxConfig) {
+            finalGiftBoxConfig = {
+              ...finalGiftBoxConfig,
+              name: selectedFlavorsList[0]
+            };
+            
+            // Also update the description if needed
+            const giftBoxProduct = products.find(p => p.id === giftBoxProductId);
+            if (giftBoxProduct) {
+              finalGiftBoxConfig.description = giftBoxProduct.name;
+            }
+          }
+        }
+      }
+      
       const pdfData = {
         selectedProducts: Array.from(selectedProducts),
         selectedFlavors: Object.fromEntries(
@@ -464,6 +565,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
           displayType: displayPackCount ? 'pack' : 'carton',
         },
         footer: footerText,
+        giftBoxConfiguration: isGiftBox ? finalGiftBoxConfig : undefined,
       };
 
       console.log("PDF Data:", JSON.stringify(pdfData, null, 2));
@@ -929,6 +1031,61 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
           )}
         </Button>
       </div>
+
+      {/* Replace the old Gift Box Customization Section with this */}
+      {isGiftBox && (
+        <Paper className="gift-box-section" style={{ padding: '20px', marginTop: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <Typography variant="h6">Gift Box Configuration</Typography>
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<EditIcon />}
+              onClick={handleOpenGiftBoxModal}
+            >
+              {giftBoxConfiguration ? 'Edit Gift Box' : 'Configure Gift Box'}
+            </Button>
+          </div>
+
+          {giftBoxConfiguration ? (
+            <div>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold">{giftBoxConfiguration.name}</Typography>
+                <Typography variant="body2" color="text.secondary">{giftBoxConfiguration.description}</Typography>
+              </Box>
+
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                {Object.entries(giftBoxConfiguration.selectedProducts).map(([productId, product]) => (
+                  <Card key={productId} variant="outlined" sx={{ width: 220, height: 'fit-content' }}>
+                    <CardContent>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                        {product.name}
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {product.selectedVariants.length > 0 ? (
+                          product.selectedVariants.map((variant, index) => (
+                            <Chip key={index} label={variant} size="small" />
+                          ))
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            All flavors
+                          </Typography>
+                        )}
+                      </Box>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Box>
+            </div>
+          ) : (
+            <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
+              No configuration yet. Click the button above to configure your gift box.
+            </Typography>
+          )}
+        </Paper>
+      )}
+
+      {/* Keep the price tier modal */}
       <PriceTierModal
         open={isPriceTierModalOpen}
         onClose={() => setIsPriceTierModalOpen(false)}
@@ -936,6 +1093,16 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
         productPriceTiers={productPriceTiers}
         onPriceTierUpdate={handlePriceTierUpdate}
         selectedCurrency={selectedCurrency}
+      />
+
+      {/* Add the new Gift Box Modal */}
+      <GiftBoxModal
+        open={isGiftBoxModalOpen}
+        onClose={handleCloseGiftBoxModal}
+        products={products}
+        productVariants={productVariants}
+        giftBoxConfiguration={giftBoxConfiguration}
+        onSave={handleSaveGiftBoxConfiguration}
       />
     </div>
   );

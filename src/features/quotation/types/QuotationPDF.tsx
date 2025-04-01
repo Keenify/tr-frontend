@@ -1,19 +1,51 @@
 import { CompanyData } from '../../../shared/types/companyType';
-import { Product } from '../../../shared/types/Product';
+import { Product, ProductPriceTier } from '../../../shared/types/Product';
+
+export interface GiftBoxItem {
+  id: string;
+  productId: number;
+  quantity: number;
+  selectedFlavors: string[];
+}
+
+export interface GiftBoxConfiguration {
+  name: string;
+  description: string;
+  selectedProducts: {
+    [productId: number]: {
+      name: string;
+      selectedVariants: string[];
+    };
+  };
+}
 
 export interface QuotationPDFData {
-    selectedProducts: number[];
-    selectedFlavors: { [key: string]: string[] };
-    products: Product[];
-    companyInfo: CompanyData;
-    customerCompanyName: string;
-    currentDate: string;
-    tableSettings: {
-        showPackCount: boolean;
-        showRetailPrice: boolean;
-        visibleCartonColumns: number[];
-    };
-    footer: string;
+  selectedProducts: number[];
+  selectedFlavors: {
+    [key: string]: string[];
+  };
+  products: (Product & {
+    variants: Array<{
+      id: number;
+      name: string;
+      image_url: string | null;
+    }>;
+    priceTiers: ProductPriceTier[];
+  })[];
+  companyInfo: CompanyData;
+  customerCompanyName: string;
+  sales_account_manager: string;
+  currentDate: string;
+  currency: 'SGD' | 'MYR';
+  tableSettings: {
+    showPackCount: boolean;
+    showRetailPrice: boolean;
+    visibleCartonColumns: number[];
+    displayType: 'pack' | 'carton';
+  };
+  footer: string;
+  giftBoxConfiguration?: GiftBoxConfiguration;
+  giftBoxItems?: GiftBoxItem[];
 }
 
 export interface QuotationExportPDFData {
