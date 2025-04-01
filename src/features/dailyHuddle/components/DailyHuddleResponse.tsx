@@ -210,7 +210,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
     const onLeave = isEmployeeOnLeave(employeeName);
     
     if (!dateString) return onLeave ? 
-      <span className="employee-on-leave">Team member is on leave</span> : 
+      <div className="employee-on-leave">Team member is on leave</div> : 
       'Not submitted';
     
     try {
@@ -241,7 +241,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
       if (onLeave) {
         return (
           <div className="submission-info">
-            <span className="employee-on-leave">Team member is on leave</span>
+            <div className="employee-on-leave">Team member is on leave</div>
             <div className={`submission-time ${timeClass}`}>
               {formattedDate}<br />
               {formattedTime}
@@ -538,6 +538,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
           {allResponses.map(({ id, name, response, submittedTime, profile_pic_url, rank }, index) => {
             // Check if employee is on leave
             const onLeave = isEmployeeOnLeave(name);
+            const hasSubmitted = !!submittedTime;
             
             // Determine row class based on rank
             const rowClass = rank && rank <= 3 ? `top-performer-${rank}` : '';
@@ -575,7 +576,12 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                   </div>
                 </td>
                 
-                {onLeave ? (
+                {onLeave && !hasSubmitted ? (
+                  // If employee is on leave and has not submitted, show "Team member is on leave" across all cells
+                  <td colSpan={questions.length + 1} className="employee-on-leave-cell">
+                    <div className="employee-on-leave">Team member is on leave</div>
+                  </td>
+                ) : onLeave && hasSubmitted ? (
                   // If employee is on leave but has submitted responses, show both the leave status and their answers
                   <>
                     {questions.map((q, qIndex) => {
