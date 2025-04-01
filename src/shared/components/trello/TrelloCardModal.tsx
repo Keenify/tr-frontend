@@ -312,9 +312,24 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
     setIsUpdatingThumbnailId(attachmentId);
 
     try {
+      // If we're setting a new thumbnail, first unset any existing thumbnails in backend
+      if (newIsThumbnail) {
+        // Find any existing thumbnails
+        const existingThumbnails = attachments.filter(
+          att => att.is_thumbnail && att.id !== attachmentId
+        );
+        
+        // Update each previous thumbnail in the backend
+        for (const oldThumbnail of existingThumbnails) {
+          console.log(`Unsetting thumbnail status for attachment ${oldThumbnail.id}`);
+          await updateAttachmentThumbnailStatus(oldThumbnail.id, card.id, false);
+        }
+      }
+      
+      // Now update the selected attachment's thumbnail status
       await updateAttachmentThumbnailStatus(attachmentId, card.id, newIsThumbnail);
       
-      // Update local state
+      // Update local state after backend updates
       const updatedAttachments = attachments.map(att => {
         if (att.id === attachmentId) {
           return { ...att, is_thumbnail: newIsThumbnail };
