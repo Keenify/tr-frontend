@@ -368,7 +368,21 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
     className: getEventClassNames(event),
   }));
 
+  function getCountryCode(location: string | null | undefined): string {
+    if (!location) return '';
+    const lowerLocation = location.toLowerCase();
+    // Add more mappings as needed
+    if (lowerLocation.includes('malaysia')) return 'MY';
+    if (lowerLocation.includes('singapore')) return 'SG';
+    // Add a fallback for other countries or return empty
+    // return countryName.substring(0, 2).toUpperCase(); // Example fallback
+    return '' // Default to no code if not specifically mapped
+  }
+
   function formatEventTitleForDisplay(event: CalendarEvent): string {
+      const countryCode = getCountryCode(event.location); // Use location field
+      const prefix = countryCode ? `[${countryCode}] ` : '';
+
       const eventTypeMapping = {
           'annual_leave': 'Annual Leave',
           'sick_leave': 'Sick Leave',
@@ -377,12 +391,13 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
       const isLeaveEvent = ['sick_leave', 'timeoff', 'annual_leave'].includes(event.event_type.toLowerCase());
 
       if (!isLeaveEvent) {
-          return `${event.event_type}: ${event.title}`;
+          // Apply prefix to non-leave events as well
+          return `${prefix}${event.event_type}: ${event.title}`;
       }
 
       const name = event.title.split(' - ')[1] || event.title;
       const formattedEventType = eventTypeMapping[event.event_type.toLowerCase() as keyof typeof eventTypeMapping] || event.event_type;
-       return `${formattedEventType}: ${name}`;
+       return `${prefix}${formattedEventType}: ${name}`;
   }
 
   function getEventClassNames(event: CalendarEvent): string[] {
@@ -496,6 +511,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
             center: 'title',
             right: 'dayGridMonth,dayGridWeek'
           }}
+          displayEventTime={false}
           dayMaxEvents={false}
           events={fullCalendarEvents}
           datesSet={handleDatesSet}

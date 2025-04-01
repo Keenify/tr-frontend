@@ -137,21 +137,6 @@
   border-color: #86efac; /* Slightly darker border */
 }
 
-/* You can also target specific event types directly using the classes we added */
-.fc-event-annual_leave {
-  /* Specific styles for annual leave */
-  /* Example: Use a more saturated background */
-  /* background-color: #fef08a !important; /* Overrides Tailwind if needed */
-  /* color: #a16207 !important; */ 
-}
-
-.fc-event-booth {
-  /* Specific styles for booth events */
-  /* Example: Use a more saturated background */
-  /* background-color: #bfdbfe !important; /* Overrides Tailwind if needed */
-  /* color: #1e40af !important; */ 
-}
-
 /* Ensure the default dot is visible */
 .fc-daygrid-event-dot {
     border-color: inherit !important; /* Use the event's border color */
