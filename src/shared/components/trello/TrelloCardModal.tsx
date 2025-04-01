@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { createCardAttachment, deleteAttachment, getCardAttachments, getAttachmentUrl, CardAttachment } from './services/useCardAttachment';
+import { createCardAttachment, deleteAttachment, getCardAttachments, getAttachmentUrl, updateAttachmentThumbnailStatus, CardAttachment } from './services/useCardAttachment';
 import { assignEmployeeToCard, unassignEmployeeFromCard, getCardAssignees } from './services/useCardAssignee';
 import { Employee } from '../../../shared/types/directory.types';
 import { Card, CardUpdate } from './types/card.types';
@@ -107,6 +107,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
   const [isLocked, setIsLocked] = useState(card.is_locked || false);
   const [lockedBy, setLockedBy] = useState(card.locked_by || '');
+  const [isUpdatingThumbnailId, setIsUpdatingThumbnailId] = useState<string | null>(null);
   
   // Check if the current user is the one who locked the card
   const isLockedByCurrentUser = userInfo?.id === lockedBy;
@@ -297,6 +298,41 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
     } catch (error) {
       console.error('Failed to get attachment URL:', error);
       showToast('Failed to open attachment', 'error');
+    }
+  };
+
+  const handleSetThumbnail = async (attachmentId: string, newIsThumbnail: boolean) => {
+    if (!isEditable) {
+      showToast('Cannot change thumbnail on a locked card', 'error');
+      return;
+    }
+
+    setIsUpdatingThumbnailId(attachmentId);
+
+    try {
+      await updateAttachmentThumbnailStatus(attachmentId, card.id, newIsThumbnail);
+      
+      // Update local state
+      setAttachments(prevAttachments => 
+        prevAttachments.map(att => {
+          if (att.id === attachmentId) {
+            return { ...att, is_thumbnail: newIsThumbnail };
+          }
+          // If we just set a new thumbnail, unset any other potential thumbnail
+          if (newIsThumbnail && att.is_thumbnail) {
+            return { ...att, is_thumbnail: false };
+          }
+          return att;
+        })
+      );
+
+      showToast(`Thumbnail status updated successfully`, 'success');
+
+    } catch (error) {
+      console.error('Failed to update thumbnail status:', error);
+      showToast('Failed to update thumbnail status', 'error');
+    } finally {
+      setIsUpdatingThumbnailId(null);
     }
   };
 
@@ -713,9 +749,30 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                       attachments.map((attachment) => (
                         <div 
                           key={attachment.id}
-                          className="flex items-center justify-between p-2 border-b last:border-b-0"
+                          className="flex items-center justify-between p-2 border-b last:border-b-0 gap-2"
                         >
                           <div className="flex items-center gap-2 flex-1 min-w-0">
+                            {/* Thumbnail Toggle Button - only for images */}                       
+                            {attachment.file_type.startsWith('image/') && isEditable && (
+                              <button
+                                type="button"
+                                onClick={() => handleSetThumbnail(attachment.id, !attachment.is_thumbnail)}
+                                disabled={isUpdatingThumbnailId === attachment.id || !isEditable}
+                                className={`flex-shrink-0 p-1 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed ${attachment.is_thumbnail ? 'text-yellow-500' : 'text-gray-400'}`}
+                                title={attachment.is_thumbnail ? 'Unset as thumbnail' : 'Set as thumbnail'}
+                              >
+                                {isUpdatingThumbnailId === attachment.id ? (
+                                  <svg className="animate-spin h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                ) : (
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                  </svg>
+                                )}
+                              </button>
+                            )}
                             <a
                               onClick={() => handleOpenAttachment(attachment.id)}
                               className="text-blue-500 hover:text-blue-600 cursor-pointer truncate"
@@ -730,6 +787,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                             <button
                               type="button"
                               onClick={() => handleRemoveAttachment(attachment.id)}
+                              disabled={!isEditable}
                               className="text-red-500 hover:text-red-600 flex-shrink-0 ml-2"
                             >
                               Remove

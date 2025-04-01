@@ -133,3 +133,44 @@ export async function createCardAttachment(
 
     return data as CardAttachment;
 }
+
+/**
+ * Updates the thumbnail status of a specific attachment.
+ * @param {string} attachmentId - The ID of the attachment to update.
+ * @param {string} cardId - The ID of the card the attachment belongs to.
+ * @param {boolean} isThumbnail - The new thumbnail status.
+ * @returns {Promise<CardAttachment>} - A promise that resolves to the updated attachment data.
+ */
+export async function updateAttachmentThumbnailStatus(
+    attachmentId: string,
+    cardId: string,
+    isThumbnail: boolean
+): Promise<CardAttachment> {
+    const endpoint = `${API_DOMAIN}/trello/attachments/${encodeURIComponent(attachmentId)}`;
+    const body = JSON.stringify({
+        card_id: cardId,
+        is_thumbnail: isThumbnail,
+    });
+
+    const response = await fetch(endpoint, {
+        method: 'PATCH',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: body,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        console.error('❌ API request failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            data
+        });
+        throw new Error('Failed to update attachment thumbnail status');
+    }
+
+    return data as CardAttachment;
+}
