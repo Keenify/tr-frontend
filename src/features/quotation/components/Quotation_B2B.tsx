@@ -13,10 +13,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Card,
-  CardContent,
   Typography,
-  Chip,
   Box,
 } from "@mui/material";
 import { Session } from "@supabase/supabase-js";
@@ -626,6 +623,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
 
   return (
     <div className="quotation-container">
+      {/* Customer Info and Settings Header */}
       <Grid container spacing={2} className="customer-info-container">
         <Grid item xs={6}>
           <TextField
@@ -790,202 +788,235 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {products.map((product) => (
-              <TableRow key={product.id} hover data-product-id={product.id}>
-                <TableCell align="center" className="table-cell">
-                  <input
-                    title="Select product"
-                    type="checkbox"
-                    checked={selectedProducts.has(product.id)}
-                    onChange={() => toggleProductSelection(product.id)}
-                  />
-                </TableCell>
-                <TableCell
-                  align="center"
-                  className="product-name-cell table-cell"
-                >
-                  {product.name.replace(/-/g, "\n")}
-                </TableCell>
-                <TableCell align="center" className="table-cell">
-                  {(() => {
-                    if (!selectedProducts.has(product.id)) {
-                      return null;
-                    }
-
-                    // Get all selected variants for this product
-                    const selectedVariants =
-                      productVariants[product.id]?.filter((variant) =>
-                        selectedFlavors[product.id]?.has(variant.name)
-                      ) || [];
-
-                    return (
-                      <div className="variant-images-container">
-                        {selectedVariants.map(
-                          (variant) =>
-                            variant.image_url && (
-                              <img
-                                key={variant.id}
-                                src={variant.image_url}
-                                alt={`${variant.name} packaging`}
-                                className="variant-image"
-                                style={{
-                                  width: "50px",
-                                  height: "50px",
-                                  display: "block",
-                                  margin: "2px auto",
-                                }}
-                                crossOrigin="anonymous"
-                                loading="eager"
-                                onError={(e) => {
-                                  console.error(
-                                    "Image failed to load:",
-                                    e.currentTarget.src
-                                  );
-                                  e.currentTarget.style.display = "none";
-                                }}
-                              />
-                            )
-                        )}
-                      </div>
-                    );
-                  })()}
-                </TableCell>
-                {showPackCount && (
+            {products.map((product) => {
+              const isProductGiftBox = product.name.toLowerCase().includes('gift box');
+              const isSelected = selectedProducts.has(product.id);
+              
+              return (
+                <TableRow key={product.id} hover data-product-id={product.id}>
+                  <TableCell align="center" className="table-cell">
+                    <input
+                      title="Select product"
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleProductSelection(product.id)}
+                    />
+                  </TableCell>
                   <TableCell
                     align="center"
-                    className="table-cell"
-                    onDoubleClick={() =>
-                      handleDoubleClick(
-                        product.id,
-                        "pack_count_per_box",
-                        product.pack_count_per_box.toString()
-                      )
-                    }
+                    className="product-name-cell table-cell"
                   >
-                    {editingCell?.productId === product.id &&
-                    editingCell.field === "pack_count_per_box" ? (
-                      <input
-                        type="text"
-                        value={editValue}
-                        onChange={handleInputChange}
-                        onBlur={() =>
-                          handleBlur(product.id, "pack_count_per_box")
-                        }
-                        onKeyDown={(e) =>
-                          handleKeyDown(e, product.id, "pack_count_per_box")
-                        }
-                        autoFocus
-                        placeholder="Enter pack count"
-                      />
-                    ) : (
-                      product.pack_count_per_box
-                    )}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <div>{product.name.replace(/-/g, "\n")}</div>
+                      
+                      {/* Show edit button and configuration summary for selected gift box products */}
+                      {isProductGiftBox && isSelected && (
+                        <div style={{ marginTop: '8px' }}>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            startIcon={<EditIcon />}
+                            onClick={handleOpenGiftBoxModal}
+                            style={{ fontSize: '0.75rem' }}
+                          >
+                            {giftBoxConfiguration ? 'Edit Contents' : 'Configure Box'}
+                          </Button>
+                          
+                          {giftBoxConfiguration && (
+                            <Box sx={{ mt: 1, maxWidth: '200px', margin: '0 auto' }}>
+                              <Typography variant="caption" fontWeight="bold" display="block">
+                                {giftBoxConfiguration.name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                {Object.keys(giftBoxConfiguration.selectedProducts).length} products selected
+                              </Typography>
+                            </Box>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </TableCell>
-                )}
-                <TableCell align="center" className="table-cell">
-                  {productVariants[product.id]?.length > 0 ? (
-                    productVariants[product.id].map((flavor) => (
-                      <div
-                        key={flavor.name}
-                        className="flavor-checkbox-container"
-                        style={{
-                          whiteSpace: "normal", // Changed from 'nowrap'
-                          display: "flex",
-                          alignItems: "flex-start",
-                          margin: "4px 0",
-                        }}
-                      >
+                  <TableCell align="center" className="table-cell">
+                    {(() => {
+                      if (!isSelected) {
+                        return null;
+                      }
+
+                      // Get all selected variants for this product
+                      const selectedVariants =
+                        productVariants[product.id]?.filter((variant) =>
+                          selectedFlavors[product.id]?.has(variant.name)
+                        ) || [];
+
+                      return (
+                        <div className="variant-images-container">
+                          {selectedVariants.map(
+                            (variant) =>
+                              variant.image_url && (
+                                <img
+                                  key={variant.id}
+                                  src={variant.image_url}
+                                  alt={`${variant.name} packaging`}
+                                  className="variant-image"
+                                  style={{
+                                    width: "50px",
+                                    height: "50px",
+                                    display: "block",
+                                    margin: "2px auto",
+                                  }}
+                                  crossOrigin="anonymous"
+                                  loading="eager"
+                                  onError={(e) => {
+                                    console.error(
+                                      "Image failed to load:",
+                                      e.currentTarget.src
+                                    );
+                                    e.currentTarget.style.display = "none";
+                                  }}
+                                />
+                              )
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </TableCell>
+                  {showPackCount && (
+                    <TableCell
+                      align="center"
+                      className="table-cell"
+                      onDoubleClick={() =>
+                        handleDoubleClick(
+                          product.id,
+                          "pack_count_per_box",
+                          product.pack_count_per_box.toString()
+                        )
+                      }
+                    >
+                      {editingCell?.productId === product.id &&
+                      editingCell.field === "pack_count_per_box" ? (
                         <input
-                          type="checkbox"
-                          id={`flavor-checkbox-${product.id}-${flavor.name}`}
-                          checked={
-                            selectedFlavors[product.id]?.has(flavor.name) ||
-                            false
+                          type="text"
+                          value={editValue}
+                          onChange={handleInputChange}
+                          onBlur={() =>
+                            handleBlur(product.id, "pack_count_per_box")
                           }
-                          onChange={() =>
-                            toggleFlavorSelection(product.id, flavor.name)
+                          onKeyDown={(e) =>
+                            handleKeyDown(e, product.id, "pack_count_per_box")
                           }
-                          disabled={!selectedProducts.has(product.id)}
-                          style={{ marginTop: "3px" }}
+                          autoFocus
+                          placeholder="Enter pack count"
                         />
-                        <label
-                          htmlFor={`flavor-checkbox-${product.id}-${flavor.name}`}
-                          className="flavor-label"
+                      ) : (
+                        product.pack_count_per_box
+                      )}
+                    </TableCell>
+                  )}
+                  <TableCell align="center" className="table-cell">
+                    {productVariants[product.id]?.length > 0 ? (
+                      productVariants[product.id].map((flavor) => (
+                        <div
+                          key={flavor.name}
+                          className="flavor-checkbox-container"
                           style={{
-                            marginLeft: "4px",
-                            wordBreak: "break-word",
-                            textAlign: "left",
+                            whiteSpace: "normal", // Changed from 'nowrap'
+                            display: "flex",
+                            alignItems: "flex-start",
+                            margin: "4px 0",
                           }}
                         >
-                          {flavor.name}
-                        </label>
-                      </div>
-                    ))
-                  ) : (
-                    <span>No variants</span>
-                  )}
-                </TableCell>
-                {Array.from(visibleCartonColumns).map((count) => (
-                  <TableCell
-                    key={count}
-                    align="center"
-                    className="table-cell"
-                    onDoubleClick={() =>
-                      handleDoubleClick(
-                        product.id,
-                        displayPackCount ? `price_pack_${count}` : `price_${count}`,
+                          <input
+                            type="checkbox"
+                            id={`flavor-checkbox-${product.id}-${flavor.name}`}
+                            checked={
+                              selectedFlavors[product.id]?.has(flavor.name) ||
+                              false
+                            }
+                            onChange={() =>
+                              toggleFlavorSelection(product.id, flavor.name)
+                            }
+                            disabled={!isSelected}
+                            style={{ marginTop: "3px" }}
+                          />
+                          <label
+                            htmlFor={`flavor-checkbox-${product.id}-${flavor.name}`}
+                            className="flavor-label"
+                            style={{
+                              marginLeft: "4px",
+                              wordBreak: "break-word",
+                              textAlign: "left",
+                            }}
+                          >
+                            {flavor.name}
+                          </label>
+                        </div>
+                      ))
+                    ) : (
+                      <span>No variants</span>
+                    )}
+                  </TableCell>
+                  {Array.from(visibleCartonColumns).map((count) => (
+                    <TableCell
+                      key={count}
+                      align="center"
+                      className="table-cell"
+                      onDoubleClick={() =>
+                        handleDoubleClick(
+                          product.id,
+                          displayPackCount ? `price_pack_${count}` : `price_${count}`,
+                          productPriceTiers[product.id]
+                            ?.find((tier) =>
+                              displayPackCount
+                                ? tier.min_packs === count && tier.currency === selectedCurrency
+                                : tier.min_cartons === count && tier.currency === selectedCurrency
+                            )
+                            ?.price_per_unit.toString() || ""
+                        )
+                      }
+                    >
+                      {editingCell?.productId === product.id &&
+                      editingCell.field === (displayPackCount ? `price_pack_${count}` : `price_${count}`) ? (
+                        <input
+                          type="text"
+                          value={editValue}
+                          onChange={handleInputChange}
+                          onBlur={() =>
+                            handleBlur(
+                              product.id,
+                              displayPackCount ? `price_pack_${count}` : `price_${count}`
+                            )
+                          }
+                          onKeyDown={(e) =>
+                            handleKeyDown(
+                              e,
+                              product.id,
+                              displayPackCount ? `price_pack_${count}` : `price_${count}`
+                            )
+                          }
+                          autoFocus
+                          placeholder="Enter price"
+                        />
+                      ) : (
                         productPriceTiers[product.id]
                           ?.find((tier) =>
                             displayPackCount
                               ? tier.min_packs === count && tier.currency === selectedCurrency
                               : tier.min_cartons === count && tier.currency === selectedCurrency
-                          )
-                          ?.price_per_unit.toString() || ""
-                      )
-                    }
-                  >
-                    {editingCell?.productId === product.id &&
-                    editingCell.field === (displayPackCount ? `price_pack_${count}` : `price_${count}`) ? (
-                      <input
-                        type="text"
-                        value={editValue}
-                        onChange={handleInputChange}
-                        onBlur={() =>
-                          handleBlur(
-                            product.id,
-                            displayPackCount ? `price_pack_${count}` : `price_${count}`
-                          )
-                        }
-                        onKeyDown={(e) =>
-                          handleKeyDown(
-                            e,
-                            product.id,
-                            displayPackCount ? `price_pack_${count}` : `price_${count}`
-                          )
-                        }
-                        autoFocus
-                        placeholder="Enter price"
-                      />
-                    ) : (
-                      productPriceTiers[product.id]
-                        ?.find((tier) =>
-                          displayPackCount
-                            ? tier.min_packs === count && tier.currency === selectedCurrency
-                            : tier.min_cartons === count && tier.currency === selectedCurrency
-                        )?.price_per_unit || "N/A"
-                    )}
-                  </TableCell>
-                ))}
-                {showRetailPrice && (
-                  <TableCell
-                    align="center"
-                    className="table-cell"
-                  >
-                    {product[selectedCurrency === 'SGD' ? 'rrp_sgd' : 'rrp_myr'] || 'N/A'}
-                  </TableCell>
-                )}
-              </TableRow>
-            ))}
+                          )?.price_per_unit || "N/A"
+                      )}
+                    </TableCell>
+                  ))}
+                  {showRetailPrice && (
+                    <TableCell
+                      align="center"
+                      className="table-cell"
+                    >
+                      {product[selectedCurrency === 'SGD' ? 'rrp_sgd' : 'rrp_myr'] || 'N/A'}
+                    </TableCell>
+                  )}
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>
@@ -1002,6 +1033,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
         />
       </div>
 
+      {/* Price Tier and Generate PDF buttons */}
       <div className="button-container">
         <Button
           variant="contained"
@@ -1032,60 +1064,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
         </Button>
       </div>
 
-      {/* Replace the old Gift Box Customization Section with this */}
-      {isGiftBox && (
-        <Paper className="gift-box-section" style={{ padding: '20px', marginTop: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <Typography variant="h6">Gift Box Configuration</Typography>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<EditIcon />}
-              onClick={handleOpenGiftBoxModal}
-            >
-              {giftBoxConfiguration ? 'Edit Gift Box' : 'Configure Gift Box'}
-            </Button>
-          </div>
-
-          {giftBoxConfiguration ? (
-            <div>
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle1" fontWeight="bold">{giftBoxConfiguration.name}</Typography>
-                <Typography variant="body2" color="text.secondary">{giftBoxConfiguration.description}</Typography>
-              </Box>
-
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                {Object.entries(giftBoxConfiguration.selectedProducts).map(([productId, product]) => (
-                  <Card key={productId} variant="outlined" sx={{ width: 220, height: 'fit-content' }}>
-                    <CardContent>
-                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                        {product.name}
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {product.selectedVariants.length > 0 ? (
-                          product.selectedVariants.map((variant, index) => (
-                            <Chip key={index} label={variant} size="small" />
-                          ))
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">
-                            All flavors
-                          </Typography>
-                        )}
-                      </Box>
-                    </CardContent>
-                  </Card>
-                ))}
-              </Box>
-            </div>
-          ) : (
-            <Typography variant="body2" color="text.secondary" align="center" sx={{ py: 4 }}>
-              No configuration yet. Click the button above to configure your gift box.
-            </Typography>
-          )}
-        </Paper>
-      )}
-
-      {/* Keep the price tier modal */}
+      {/* Modals */}
       <PriceTierModal
         open={isPriceTierModalOpen}
         onClose={() => setIsPriceTierModalOpen(false)}
@@ -1095,7 +1074,6 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
         selectedCurrency={selectedCurrency}
       />
 
-      {/* Add the new Gift Box Modal */}
       <GiftBoxModal
         open={isGiftBoxModalOpen}
         onClose={handleCloseGiftBoxModal}
