@@ -295,13 +295,13 @@ const CoreValuesTable: React.FC<CoreValuesTableProps> = ({ session }) => {
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-100">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Cultural Definition
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-36">
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-36">
                 Actions
               </th>
             </tr>
@@ -309,11 +309,11 @@ const CoreValuesTable: React.FC<CoreValuesTableProps> = ({ session }) => {
           <tbody className="divide-y divide-gray-100">
             {coreValues.map(coreValue => (
               <tr key={coreValue.id} className={`transition-colors ${deletingId === coreValue.id ? 'bg-amber-50' : 'hover:bg-gray-50'}`}>
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 text-center">
                   {editingId === coreValue.id ? (
                     <input
                       type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-center"
                       value={editFormData.name}
                       onChange={(e) => handleEditChange('name', e.target.value)}
                       placeholder="Core value name"
@@ -322,11 +322,11 @@ const CoreValuesTable: React.FC<CoreValuesTableProps> = ({ session }) => {
                     <div className="text-sm font-medium text-gray-900">{coreValue.name}</div>
                   )}
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 text-center">
                   {editingId === coreValue.id ? (
                     <textarea
                       rows={2}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-center"
                       value={editFormData.description}
                       onChange={(e) => handleEditChange('description', e.target.value)}
                       placeholder="Define what this value means for your culture"
@@ -335,9 +335,9 @@ const CoreValuesTable: React.FC<CoreValuesTableProps> = ({ session }) => {
                     <div className="text-sm text-gray-700">{coreValue.description}</div>
                   )}
                 </td>
-                <td className="px-6 py-4 text-right">
+                <td className="px-6 py-4 text-center">
                   {editingId === coreValue.id ? (
-                    <div className="flex justify-end space-x-3">
+                    <div className="flex justify-center space-x-3">
                       <button
                         onClick={() => handleUpdateCoreValue(coreValue.id)}
                         className="text-green-600 hover:text-green-800 transition-colors"
@@ -354,7 +354,7 @@ const CoreValuesTable: React.FC<CoreValuesTableProps> = ({ session }) => {
                       </button>
                     </div>
                   ) : (
-                    <div className="flex justify-end space-x-3">
+                    <div className="flex justify-center space-x-3">
                       {isManager ? (
                         <>
                           <button
@@ -386,26 +386,26 @@ const CoreValuesTable: React.FC<CoreValuesTableProps> = ({ session }) => {
             {/* Add new core value row */}
             {addingNew && (
               <tr className="bg-gray-50 border-t border-gray-100">
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 text-center">
                   <input
                     type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-center"
                     value={newCoreValue.name || ''}
                     onChange={(e) => handleNewValueChange('name', e.target.value)}
                     placeholder="Core value name"
                   />
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 text-center">
                   <textarea
                     rows={2}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-center"
                     value={newCoreValue.description || ''}
                     onChange={(e) => handleNewValueChange('description', e.target.value)}
                     placeholder="Define what this value means for your culture"
                   />
                 </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end space-x-3">
+                <td className="px-6 py-4 text-center">
+                  <div className="flex justify-center space-x-3">
                     <button
                       onClick={handleAddCoreValue}
                       className="text-green-600 hover:text-green-800 transition-colors"
