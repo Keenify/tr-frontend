@@ -89,13 +89,13 @@ const navigationConfig = [
     icon: IconChartArrowsVertical,
     isExpandable: true,
     subTabs: [
-      { id: "financeTab", label: "Finance", shortForm: "Fi", icon: ThumbsUp },
       {
         id: "onlineSales",
         label: "Online Sales",
         shortForm: "OS",
         icon: ThumbsUp,
       },
+      { id: "financeTab", label: "Finance", shortForm: "Fi", icon: ThumbsUp },
     ],
   },
   {
