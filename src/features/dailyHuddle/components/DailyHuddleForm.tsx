@@ -22,18 +22,23 @@ interface DailyHuddleFormProps {
  * @returns {string} Date string in YYYY-MM-DD format
  */
 const getEffectiveDate = (): string => {
+  // Get current date in Singapore timezone
   const now = new Date();
-  const currentHour = now.getHours();
   
-  // If it's after 6 PM, use tomorrow's date
+  // Convert to Singapore timezone (UTC+8)
+  const sgDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
+  const currentHour = sgDate.getHours();
+  
+  // If it's after cutoff hour (6 PM), use tomorrow's date
   if (currentHour >= CUTOFF_HOUR) {
-    const tomorrow = new Date(now);
+    const tomorrow = new Date(sgDate);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
+    // Format date as YYYY-MM-DD in Singapore timezone
+    return tomorrow.toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore' });
   }
   
-  // Otherwise use today's date
-  return now.toISOString().split('T')[0];
+  // Otherwise use today's date in Singapore timezone
+  return sgDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore' });
 };
 
 /**
