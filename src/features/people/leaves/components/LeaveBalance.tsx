@@ -115,14 +115,14 @@ export function LeaveBalanceTable({
   };
 
   return (
-    <div className="mt-6 max-w-4xl">
+    <div className="mt-6 max-w-4xl mx-auto">
       <div className="overflow-hidden rounded-lg border border-gray-200 shadow">
         <table className="w-full divide-y divide-gray-200">
           <thead>
             <tr className="bg-gray-50">
               <th 
                 onClick={() => sortData('name')}
-                className="w-40 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 border-r border-gray-200"
+                className="w-40 px-4 py-3 text-center text-sm font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 border-r border-gray-200"
                 rowSpan={2}
               >
                 <div className="flex items-center justify-center gap-2">
@@ -140,7 +140,7 @@ export function LeaveBalanceTable({
               </th>
               <th 
                 onClick={() => sortData('annual_leave_balance')}
-                className="w-24 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 border-r border-gray-200"
+                className="w-24 px-4 py-3 text-center text-sm font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 border-r border-gray-200"
                 rowSpan={2}
               >
                 <div className="flex items-center justify-center gap-2">
@@ -158,7 +158,7 @@ export function LeaveBalanceTable({
               </th>
               <th 
                 onClick={() => sortData('sick_leave_balance')}
-                className="w-24 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 border-r border-gray-200"
+                className="w-24 px-4 py-3 text-center text-sm font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 border-r border-gray-200"
                 rowSpan={2}
               >
                 <div className="flex items-center justify-center gap-2">
@@ -176,13 +176,13 @@ export function LeaveBalanceTable({
               </th>
               <th 
                 colSpan={2}
-                className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 bg-gray-100"
+                className="px-4 py-2 text-center text-sm font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 bg-gray-100"
               >
                 Time Off Balance
               </th>
               {isManager && (
                 <th 
-                  className="w-24 px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200"
+                  className="w-24 px-4 py-3 text-center text-sm font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200"
                   rowSpan={2}
                 >
                   Actions
@@ -192,7 +192,7 @@ export function LeaveBalanceTable({
             <tr className="bg-gray-50">
               <th 
                 onClick={() => sortData('timeoff_days_balance')}
-                className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 border-r border-gray-200"
+                className="w-24 px-4 py-2 text-center text-sm font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 border-r border-gray-200"
               >
                 <div className="flex items-center justify-center gap-2">
                   Days
@@ -209,7 +209,7 @@ export function LeaveBalanceTable({
               </th>
               <th 
                 onClick={() => sortData('timeoff_hours_balance')}
-                className="w-24 px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 border-r border-gray-200"
+                className="w-24 px-4 py-2 text-center text-sm font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 border-r border-gray-200"
               >
                 <div className="flex items-center justify-center gap-2">
                   Hours
@@ -239,11 +239,11 @@ export function LeaveBalanceTable({
                   className={`hover:bg-gray-50 ${isCurrentUser ? 'bg-blue-50 hover:bg-blue-100' : ''}`}
                 >
                   <td className="px-4 py-2 whitespace-nowrap border-r border-gray-200">
-                    <div className="text-sm font-medium text-gray-900 text-center">
+                    <div className="text-base font-medium text-gray-900 text-center">
                       {employee.first_name} {employee.last_name}
                     </div>
                   </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 text-center border-r border-gray-200">
+                  <td className="px-4 py-2 whitespace-nowrap text-base text-gray-500 text-center border-r border-gray-200">
                     {isManager ? (
                       <input
                         title="Annual Leave Balance"
@@ -257,7 +257,7 @@ export function LeaveBalanceTable({
                       leaveBalance?.annual_leave_balance ?? 0
                     )}
                   </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 text-center border-r border-gray-200">
+                  <td className="px-4 py-2 whitespace-nowrap text-base text-gray-500 text-center border-r border-gray-200">
                     {isManager ? (
                       <input
                         title="Sick Leave Balance"
@@ -271,7 +271,7 @@ export function LeaveBalanceTable({
                       leaveBalance?.sick_leave_balance ?? 0
                     )}
                   </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 text-center border-r border-gray-200">
+                  <td className="px-4 py-2 whitespace-nowrap text-base text-gray-500 text-center border-r border-gray-200">
                     {isManager ? (
                       <input
                         title="Time Off (Days)"
@@ -285,7 +285,7 @@ export function LeaveBalanceTable({
                       leaveBalance?.timeoff_days_balance ?? 0
                     )}
                   </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 text-center border-r border-gray-200">
+                  <td className="px-4 py-2 whitespace-nowrap text-base text-gray-500 text-center border-r border-gray-200">
                     {isManager ? (
                       <input
                         title="Time Off (Hours)"
@@ -302,7 +302,7 @@ export function LeaveBalanceTable({
                     )}
                   </td>
                   {isManager && (
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-center w-24 border-r border-gray-200">
+                    <td className="px-4 py-2 whitespace-nowrap text-base text-center w-24 border-r border-gray-200">
                       {hasChanges ? (
                         <button
                           onClick={() => handleUpdateBalance(employee.id)}
