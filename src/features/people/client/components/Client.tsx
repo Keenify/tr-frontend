@@ -9,6 +9,7 @@ import { B2BClientData, CreateB2BClientPayload, UpdateB2BClientPayload } from ".
 import toast from "react-hot-toast";
 import ClientDetailsModal from './ClientDetailsModal';
 import CreateClientModal from './CreateClientModal';
+import { FaWhatsapp } from 'react-icons/fa';
 
 interface ClientProps {
   session: Session;
@@ -142,7 +143,29 @@ const Client: React.FC<ClientProps> = ({ session }) => {
     if (country === 'All') {
       return clients?.length || 0;
     }
+    if (country === 'Uncategorized') {
+       return clients?.filter(c => !c.origin_country).length || 0;
+    }
     return clients?.filter(c => c.origin_country === country).length || 0;
+  };
+
+  // Add this function to handle WhatsApp link
+  const handleWhatsAppClick = (phone: string | null | undefined) => {
+    if (phone) {
+      // Basic check for SG numbers starting with 8 or 9
+      if (phone.startsWith('8') || phone.startsWith('9')) {
+        // Remove any non-digit characters just in case
+        const cleanPhone = phone.replace(/\D/g, '');
+        // Assume '65' prefix if not present for SG numbers starting with 8 or 9
+        const whatsappNumber = cleanPhone.length === 8 ? `65${cleanPhone}` : cleanPhone;
+        window.open(`https://wa.me/${whatsappNumber}`, '_blank');
+      } else {
+         // Handle other potential formats or non-SG numbers if needed
+         console.warn("WhatsApp link opened for non-standard SG number format:", phone);
+         // Fallback: try opening directly if needed, but might not work correctly
+         // window.open(`https://wa.me/${phone.replace(/\D/g, '')}`, '_blank');
+      }
+    }
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -307,7 +330,23 @@ const Client: React.FC<ClientProps> = ({ session }) => {
                             <div className="text-sm text-gray-900 break-words">{client.name}</div>
                           </td>
                           <td className="px-6 py-4 text-center">
-                            <div className="text-sm text-gray-900 break-words">{client.contact_number}</div>
+                            <div className="flex items-center justify-between space-x-2">
+                              <span className="text-sm text-gray-900 break-words flex-grow text-center">
+                                {client.contact_number?.replace(/\s/g, '')}
+                              </span>
+                              {client.contact_number &&
+                               client.origin_country === 'SG' &&
+                               (client.contact_number.startsWith('8') || client.contact_number.startsWith('9')) && (
+                                <FaWhatsapp
+                                  className="text-green-500 cursor-pointer hover:text-green-600"
+                                  size={16}
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Prevent row click
+                                    handleWhatsAppClick(client.contact_number);
+                                  }}
+                                />
+                              )}
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-center">
                             <div className="text-sm text-gray-900 break-words">{client.email}</div>
