@@ -13,13 +13,15 @@ interface ExportPriceTierModalProps {
     onClose: () => void;
     productId: number | null;
     productName: string | null;
+    onTiersUpdated?: () => void;
 }
 
 export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
     isOpen,
     onClose,
     productId,
-    productName
+    productName,
+    onTiersUpdated
 }) => {
     const [priceTiers, setPriceTiers] = useState<ProductExportPriceTier[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -79,6 +81,7 @@ export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
         e.preventDefault();
         if (!productId) return;
         setIsLoading(true);
+        setError(null); // Clear previous errors
         try {
             // Basic validation
             if (!newTierData.tier_name.trim()) {
@@ -88,11 +91,10 @@ export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
                  throw new Error("Prices and RRP cannot be negative.");
             }
 
-
             await createExportPriceTier(
                 newTierData.tier_name,
                 newTierData.fob_price_per_carton,
-                newTierData.fob_price_per_unit, // Consider calculating this if needed
+                newTierData.fob_price_per_unit,
                 newTierData.recommended_rrp,
                 newTierData.is_active,
                 productId
@@ -105,7 +107,8 @@ export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
                 is_active: true,
             });
             setShowAddForm(false);
-            fetchPriceTiers(); // Refresh list
+            fetchPriceTiers(); // Refresh modal's list
+            onTiersUpdated?.(); // Call the callback if provided
         } catch (err) {
              const message = err instanceof Error ? err.message : 'Failed to add price tier.';
              setError(message);
@@ -132,13 +135,14 @@ export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
                 id,
                 editFormData.tier_name ?? '',
                 editFormData.fob_price_per_carton ?? 0,
-                editFormData.fob_price_per_unit ?? 0, // Consider calculation
+                editFormData.fob_price_per_unit ?? 0,
                 editFormData.recommended_rrp ?? 0,
                 editFormData.is_active ?? true
             );
             setIsEditing(null);
             setEditFormData({});
-            fetchPriceTiers(); // Refresh list
+            fetchPriceTiers(); // Refresh modal's list
+            onTiersUpdated?.(); // Call the callback if provided
         } catch (err) {
              const message = err instanceof Error ? err.message : 'Failed to update price tier.';
              setError(message);
@@ -154,7 +158,8 @@ export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
          setError(null); // Clear previous errors
         try {
             await deleteExportPriceTier(id);
-            fetchPriceTiers(); // Refresh list
+            fetchPriceTiers(); // Refresh modal's list
+            onTiersUpdated?.(); // Call the callback if provided
         } catch (err) {
              const message = err instanceof Error ? err.message : 'Failed to delete price tier.';
              setError(message);
@@ -166,15 +171,15 @@ export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
 
     const startEditing = (tier: ProductExportPriceTier) => {
         setIsEditing(tier.id);
-        setEditFormData({ ...tier }); // Pre-fill form with current data
-        setShowAddForm(false); // Hide add form when editing
-        setError(null); // Clear errors when starting edit
+        setEditFormData({ ...tier });
+        setShowAddForm(false);
+        setError(null);
     };
 
     const cancelEditing = () => {
         setIsEditing(null);
         setEditFormData({});
-        setError(null); // Clear errors on cancel
+        setError(null);
     };
 
     const cancelAdd = () => {
@@ -186,12 +191,12 @@ export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
             recommended_rrp: 0,
             is_active: true,
         });
-        setError(null); // Clear errors on cancel
+        setError(null);
     };
 
      const handleModalClose = () => {
-        setError(null); // Clear any errors when closing modal
-        onClose(); // Call the original close handler
+        setError(null);
+        onClose();
     };
 
 

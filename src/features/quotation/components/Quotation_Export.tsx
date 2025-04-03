@@ -1,459 +1,312 @@
 import { Session } from '@supabase/supabase-js';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { getCompanyProductExportDetails, transformToSelectableFormat } from '../../../services/useProductExportDetails';
 import { ProductExportSelection } from '../../../shared/types/ProductExport';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import { generateQuotationExportPDF } from '../services/useQuotationPDF';
 import { QuotationExportPDFData } from '../types/QuotationPDF';
 import { ExportPriceTierModal } from './ExportPriceTierModal';
+import { getProductExportPriceTiers, ProductExportPriceTier } from '../services/useProductsExportPriceTier';
 
 interface QuotationExportProps {
     session: Session;
 }
 
 export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => {
+    // --- Base State ---
     const [selections, setSelections] = useState<ProductExportSelection[]>([]);
     const [editingCell, setEditingCell] = useState<{ id: number, field: string } | null>(null);
-    const { companyInfo, isLoading, error } = useUserAndCompanyData(session.user.id);
+    const { companyInfo, isLoading: isLoadingCompany, error: companyError } = useUserAndCompanyData(session.user.id); // Renamed isLoading
     const [collapsedRows, setCollapsedRows] = useState<Set<number>>(new Set());
     const [customerCompanyName, setCustomerCompanyName] = useState<string>('');
     const [salesAccountManager, setSalesAccountManager] = useState<string>('');
     const [showFOBPricePerUnit, setShowFOBPricePerUnit] = useState<boolean>(true);
     const [showCartonBarcode, setShowCartonBarcode] = useState<boolean>(false);
     const [selectedCurrency, setSelectedCurrency] = useState<'USD' | 'SGD'>('USD');
-    const currentDate = new Date().toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-    });
+    const currentDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
     const [isGeneratingPDF, setIsGeneratingPDF] = useState<boolean>(false);
     const [isPriceTierModalOpen, setIsPriceTierModalOpen] = useState<boolean>(false);
     const [selectedProductIdForModal, setSelectedProductIdForModal] = useState<number | null>(null);
     const [selectedProductNameForModal, setSelectedProductNameForModal] = useState<string | null>(null);
 
+    // --- Global Price Tier State & Logic ---
+    const [allApplicableTiers, setAllApplicableTiers] = useState<Map<number, ProductExportPriceTier[]>>(new Map());
+    const [uniqueTierNames, setUniqueTierNames] = useState<string[]>([]);
+    const [selectedGlobalTierName, setSelectedGlobalTierName] = useState<string>('');
+    const [isFetchingTiers, setIsFetchingTiers] = useState<boolean>(false);
+    const [fetchError, setFetchError] = useState<string | null>(null); // Consolidated error state
+
+    const getDefaultPrices = useCallback((product: ProductExportSelection) => {
+        const defaultVariant = product.variants.length > 0 ? product.variants[0] : null;
+        const defaultFobCarton = defaultVariant ? defaultVariant.fob_price_per_carton : 0;
+        const defaultPackSize = defaultVariant ? defaultVariant.pack_size_per_carton : 1;
+        const defaultFobUnit = defaultPackSize > 0 ? defaultFobCarton / defaultPackSize : 0;
+        const defaultRrp = defaultVariant ? parseFloat(defaultVariant.recommended_retail_price_usd ?? '0') : 0;
+        return { defaultFobCarton, defaultFobUnit, defaultRrp };
+    }, []);
+
+    const fetchAndSetTiers = useCallback(async (products: ProductExportSelection[]) => {
+        if (products.length === 0) {
+            setAllApplicableTiers(new Map()); setUniqueTierNames([]); return;
+        }
+        setIsFetchingTiers(true); setFetchError(null); // Reset error on new fetch
+        try {
+            const tierPromises = products.map(p =>
+                getProductExportPriceTiers(p.product_id) // Assumes this function exists and is imported
+                    .then(tiers => ({ productId: p.product_id, tiers }))
+                    .catch(err => {
+                        // Log specific error but don't block UI, handle gracefully
+                        console.error(`Error fetching tiers for product ${p.product_id}:`, err);
+                        // Set an indicator or placeholder if needed, here just return empty
+                        return { productId: p.product_id, tiers: [] };
+                    })
+            );
+            const tierResults = await Promise.all(tierPromises);
+            const tiersMap = new Map<number, ProductExportPriceTier[]>();
+            const nameSet = new Set<string>();
+            tierResults.forEach(result => {
+                if (result) {
+                    tiersMap.set(result.productId, result.tiers);
+                    result.tiers.forEach(tier => { if (tier.is_active) nameSet.add(tier.tier_name); });
+                }
+            });
+            setAllApplicableTiers(tiersMap);
+            setUniqueTierNames(Array.from(nameSet).sort());
+        } catch (err) {
+             console.error('General error during tier fetching process:', err);
+             setFetchError('Failed to load price tier information.'); // Set general error
+             setAllApplicableTiers(new Map()); setUniqueTierNames([]);
+        } finally {
+             setIsFetchingTiers(false);
+        }
+    }, []); // Ensure dependencies are correct (should be empty if getProduct... is stable)
+
+    // Fetch initial data and tiers
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchInitialData = async () => {
             if (!companyInfo?.id) return;
-            
+            setFetchError(null); // Clear previous errors
             try {
                 const data = await getCompanyProductExportDetails(companyInfo.id);
-                console.log('Raw export details:', data);
                 const transformedData = transformToSelectableFormat(data);
-                console.log('Transformed export details:', transformedData);
                 setSelections(transformedData);
-                setCollapsedRows(new Set(transformedData.map(product => product.product_id)));
-            } catch (error) {
-                console.error('Failed to fetch export details:', error);
+                setCollapsedRows(new Set(transformedData.map(p => p.product_id)));
+                // Fetch tiers only after successfully getting products
+                await fetchAndSetTiers(transformedData);
+            } catch (err: any) {
+                console.error('Failed to fetch initial export details:', err);
+                setFetchError(err.message || 'Failed to load product export details.');
+                setSelections([]); // Clear selections on error
             }
         };
+        if (companyInfo?.id) { // Only run if companyInfo is available
+             fetchInitialData();
+        }
+     }, [companyInfo?.id, fetchAndSetTiers]); // Depends on companyInfo and the fetch function
 
-        fetchData();
-    }, [companyInfo?.id]);
+    // Apply global tier pricing changes
+    useEffect(() => {
+        setSelections(currentSelections =>
+            currentSelections.map(product => {
+                const { defaultFobCarton, defaultFobUnit, defaultRrp } = getDefaultPrices(product);
+                let appliedFobCarton = defaultFobCarton;
+                let appliedFobUnit = defaultFobUnit;
+                let appliedRrp = defaultRrp;
 
-    if (isLoading) {
-        return <div className="text-center py-4">Loading...</div>;
-    }
+                if (selectedGlobalTierName) {
+                    const productTiers = allApplicableTiers.get(product.product_id) || [];
+                    const matchedTier = productTiers.find(tier => tier.tier_name === selectedGlobalTierName && tier.is_active);
+                    if (matchedTier) {
+                        appliedFobCarton = matchedTier.fob_price_per_carton;
+                        appliedFobUnit = matchedTier.fob_price_per_unit;
+                        appliedRrp = matchedTier.recommended_rrp;
+                    }
+                }
+                if (product.applied_fob_price_per_carton === appliedFobCarton &&
+                    product.applied_fob_price_per_unit === appliedFobUnit &&
+                    product.applied_recommended_rrp === appliedRrp) {
+                    return product;
+                }
+                return { ...product, applied_fob_price_per_carton: appliedFobCarton, applied_fob_price_per_unit: appliedFobUnit, applied_recommended_rrp: appliedRrp };
+            })
+        );
+     }, [selectedGlobalTierName, allApplicableTiers, getDefaultPrices]);
 
-    if (error) {
-        return <div className="text-center py-4 text-red-500">Error loading data</div>;
-    }
-
-    const handleProductSelect = (productId: number, isSelected: boolean) => {
-        setSelections(prev => prev.map(product => {
-            if (product.product_id === productId) {
-                return {
-                    ...product,
-                    isSelected,
-                    variants: product.variants.map(variant => ({
-                        ...variant,
-                        isSelected
-                    }))
-                };
-            }
-            return product;
-        }));
-    };
-
-    const handleVariantSelect = (productId: number, variantId: number, isSelected: boolean) => {
-        setSelections(prev => prev.map(product => {
-            if (product.product_id === productId) {
-                const updatedVariants = product.variants.map(variant => 
-                    variant.variant_id === variantId 
-                        ? { ...variant, isSelected }
-                        : variant
-                );
-                // Product is unselected only if all variants are unselected
-                const allVariantsUnselected = updatedVariants.every(v => !v.isSelected);
-                return {
-                    ...product,
-                    isSelected: !allVariantsUnselected,
-                    variants: updatedVariants
-                };
-            }
-            return product;
-        }));
-    };
-
+    // --- Event Handlers ---
+    const handleGlobalTierChange = (event: React.ChangeEvent<HTMLSelectElement>) => { setSelectedGlobalTierName(event.target.value); };
+    const handleTiersUpdated = useCallback(() => { fetchAndSetTiers(selections); }, [fetchAndSetTiers, selections]);
+    const handleProductSelect = (productId: number, isSelected: boolean) => { setSelections(prev => prev.map(p => p.product_id === productId ? { ...p, isSelected, variants: p.variants.map(v => ({ ...v, isSelected })) } : p)); };
+    const handleVariantSelect = (productId: number, variantId: number, isSelected: boolean) => { setSelections(prev => prev.map(p => { if (p.product_id === productId) { const updatedV = p.variants.map(v => v.variant_id === variantId ? { ...v, isSelected } : v); const allVUnselected = updatedV.every(v => !v.isSelected); return { ...p, isSelected: !allVUnselected, variants: updatedV }; } return p; })); };
     const handleCellEdit = (productId: number, field: string, value: string) => {
-        setSelections(prev => prev.map(product => {
-            if (product.product_id === productId) {
-                return {
-                    ...product,
-                    variants: product.variants.map((variant, index) => 
-                        index === 0 ? { ...variant, [field]: value } : variant
-                    )
-                };
-            }
-            return product;
+        setSelections(prev => prev.map(p => {
+            if (p.product_id === productId && !['fob_price_per_carton', 'fob_price_per_unit', 'recommended_retail_price_usd'].includes(field)) {
+                const updatedVariants = p.variants.map((v, i) => i === 0 ? { ...v, [field]: value } : v);
+                const { defaultFobCarton, defaultFobUnit, defaultRrp } = getDefaultPrices({ ...p, variants: updatedVariants });
+                const shouldUpdateApplied = !selectedGlobalTierName; // Update applied only if default pricing is active
+                return { ...p, variants: updatedVariants, applied_fob_price_per_carton: shouldUpdateApplied ? defaultFobCarton : p.applied_fob_price_per_carton, applied_fob_price_per_unit: shouldUpdateApplied ? defaultFobUnit : p.applied_fob_price_per_unit, applied_recommended_rrp: shouldUpdateApplied ? defaultRrp : p.applied_recommended_rrp };
+            } return p;
         }));
         setEditingCell(null);
     };
-
     const handleGeneratePDF = async () => {
-        if (!customerCompanyName || !salesAccountManager || !selections.some(product => product.isSelected)) {
-            console.error('Cannot generate PDF: Missing required information or no products selected.');
-            return;
-        }
-
+        if (!customerCompanyName || !salesAccountManager || !selections.some(p => p.isSelected)) return;
         setIsGeneratingPDF(true);
-
         const selectedProducts = selections
-            .filter(product => product.isSelected)
-            .map(product => ({
-                product_name: product.product_name,
-                product_id: product.product_id,
-                container_size: product.variants[0]?.container_size,
-                cartons_per_container: product.variants[0]?.cartons_per_container,
-                pack_size_per_carton: product.variants[0]?.pack_size_per_carton,
-                fob_price_per_carton: product.variants[0]?.fob_price_per_carton,
-                recommended_retail_price_usd: product.variants[0]?.recommended_retail_price_usd,
-                variants: product.variants
-                    .filter(variant => variant.isSelected)
-                    .map(variant => ({
-                        description: variant.description,
-                        variant_id: variant.variant_id
-                    }))
+            .filter(p => p.isSelected)
+            .map(p => ({
+                product_name: p.product_name, product_id: p.product_id,
+                container_size: p.variants[0]?.container_size, cartons_per_container: p.variants[0]?.cartons_per_container,
+                pack_size_per_carton: p.variants[0]?.pack_size_per_carton,
+                fob_price_per_carton: p.applied_fob_price_per_carton ?? 0,
+                fob_price_per_unit: showFOBPricePerUnit ? (p.applied_fob_price_per_unit ?? 0) : undefined,
+                recommended_retail_price_usd: p.applied_recommended_rrp ?? 0,
+                variants: p.variants.filter(v => v.isSelected).map(v => ({ description: v.description, variant_id: v.variant_id }))
             }))
-            .filter(product => product.variants.length > 0);
+            .filter(p => p.variants.length > 0);
 
         const pdfData: QuotationExportPDFData = {
             selectedProducts,
-            companyInfo: {
-                name: companyInfo?.name || '',
-                address: companyInfo?.address || '',
-                website_url: companyInfo?.website_url || '',
-                phone: companyInfo?.phone || '',
-                logo_url: companyInfo?.logo_url || '',
-                id: companyInfo?.id || '',
-                created_at: companyInfo?.created_at || '',
-                completed_sign_up_sequence: companyInfo?.completed_sign_up_sequence || false,
-                company_brand_color: companyInfo?.company_brand_color || null
-            },
-            customerCompanyName,
-            currentDate,
-            sales_account_manager: salesAccountManager,
-            tableSettings: {
-                showFOBPricePerUnit: showFOBPricePerUnit,
-                showCartonBarcode: showCartonBarcode,
-                currency: selectedCurrency
-            }
+            companyInfo: { name: companyInfo?.name || '', address: companyInfo?.address || '', website_url: companyInfo?.website_url || '', phone: companyInfo?.phone || '', logo_url: companyInfo?.logo_url || '', id: companyInfo?.id || '', created_at: companyInfo?.created_at || '', completed_sign_up_sequence: companyInfo?.completed_sign_up_sequence || false, company_brand_color: companyInfo?.company_brand_color || null },
+            customerCompanyName, currentDate, sales_account_manager: salesAccountManager,
+            tableSettings: { showFOBPricePerUnit, showCartonBarcode, currency: selectedCurrency }
         };
-
-        // Log the payload being sent to the backend
         console.log('Quotation Export Payload:', JSON.stringify(pdfData, null, 2));
-
         try {
             const pdfBlob = await generateQuotationExportPDF(pdfData as QuotationExportPDFData);
-            console.log("PDF generated successfully");
-
             const blobUrl = URL.createObjectURL(pdfBlob);
             const link = document.createElement("a");
             link.href = blobUrl;
             link.download = `export-quotation-${customerCompanyName}-${currentDate}.pdf`;
             link.click();
-
             URL.revokeObjectURL(blobUrl);
-        } catch (error) {
-            console.error("Error generating PDF:", error);
-        } finally {
-            setIsGeneratingPDF(false);
-        }
-    };
-
-    const toggleCollapse = (productId: number) => {
-        setCollapsedRows(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(productId)) {
-                newSet.delete(productId);
-            } else {
-                newSet.add(productId);
-            }
-            return newSet;
-        });
-    };
-
-    // Function to toggle FOB Price/Unit visibility
-    const toggleFOBPricePerUnit = () => {
-        setShowFOBPricePerUnit(prev => !prev);
-    };
-
-    // Function to toggle Carton Barcode visibility
-    const toggleCartonBarcode = () => {
-        setShowCartonBarcode(prev => !prev);
-    };
-
-    // Get the columns to display based on the toggle state
+        } catch (pdfError) { console.error("Error generating PDF:", pdfError); }
+        finally { setIsGeneratingPDF(false); }
+     };
+    const toggleCollapse = (productId: number) => { setCollapsedRows(prev => { const n = new Set(prev); n.has(productId) ? n.delete(productId) : n.add(productId); return n; }); };
+    const openPriceTierModal = (productId: number, productName: string) => { setSelectedProductIdForModal(productId); setSelectedProductNameForModal(productName); setIsPriceTierModalOpen(true); };
+    const closePriceTierModal = () => { setIsPriceTierModalOpen(false); setSelectedProductIdForModal(null); setSelectedProductNameForModal(null); };
+    const toggleFOBPricePerUnit = () => { setShowFOBPricePerUnit(prev => !prev); };
+    const toggleCartonBarcode = () => { setShowCartonBarcode(prev => !prev); };
     const getTableColumns = () => {
-        const baseColumns = [
-            'container_size',
-            'cartons_per_container',
-            'pack_size_per_carton',
-            'fob_price_per_carton',
-            'recommended_retail_price_usd'
-        ];
-        
-        if (showFOBPricePerUnit) {
-            // Insert 'fob_price_per_unit' after 'fob_price_per_carton'
-            const index = baseColumns.indexOf('fob_price_per_carton');
-            if (index !== -1) {
-                baseColumns.splice(index + 1, 0, 'fob_price_per_unit');
-            }
-        }
-        
-        return baseColumns;
+         const base = ['container_size', 'cartons_per_container', 'pack_size_per_carton', 'fob_price_per_carton', 'recommended_retail_price_usd'];
+        if (showFOBPricePerUnit) { const i = base.indexOf('fob_price_per_carton'); if (i !== -1) base.splice(i + 1, 0, 'fob_price_per_unit'); }
+        return base;
     };
 
-    const openPriceTierModal = (productId: number, productName: string) => {
-        setSelectedProductIdForModal(productId);
-        setSelectedProductNameForModal(productName);
-        setIsPriceTierModalOpen(true);
-    };
+    // --- Render Logic ---
+    const mainTableColumnCount = 3 + getTableColumns().length + 1;
+    const variantTableColSpan = mainTableColumnCount;
 
-    const closePriceTierModal = () => {
-        setIsPriceTierModalOpen(false);
-        setSelectedProductIdForModal(null);
-        setSelectedProductNameForModal(null);
-    };
-
-    const mainTableColumnCount = 3 + getTableColumns().length + 1; // +1 for Select, +1 Product Name, +1 Price Tiers
-    const variantTableColSpan = mainTableColumnCount; // Colspan for variant details row
+    // Consolidated Loading State
+     const isLoading = isLoadingCompany || (selections.length === 0 && !fetchError && !companyInfo?.id); // Adjust loading logic
 
     return (
         <div className="quotation-export-container p-4">
-            <div className="mb-4">
-                <input
-                    type="text"
-                    placeholder="Customer Company Name"
-                    value={customerCompanyName}
-                    onChange={(e) => setCustomerCompanyName(e.target.value)}
-                    className="border p-2 w-full mb-2"
-                />
-                <input
-                    type="text"
-                    placeholder="Sales Account Manager"
-                    value={salesAccountManager}
-                    onChange={(e) => setSalesAccountManager(e.target.value)}
-                    className="border p-2 w-full"
-                />
-                <div className="mt-2">Updated At: {currentDate}</div>
-            </div>
-            
-            <div className="flex items-center mb-4 space-x-4">
-                <label className="inline-flex items-center cursor-pointer">
-                    <input 
-                        type="checkbox" 
-                        checked={showFOBPricePerUnit}
-                        onChange={toggleFOBPricePerUnit}
-                        className="sr-only peer"
-                    />
-                    <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    <span className="ms-3 text-sm font-medium text-gray-900">Show FOB Price/Unit</span>
-                </label>
-                
-                <label className="inline-flex items-center cursor-pointer">
-                    <input 
-                        type="checkbox" 
-                        checked={showCartonBarcode}
-                        onChange={toggleCartonBarcode}
-                        className="sr-only peer"
-                    />
-                    <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    <span className="ms-3 text-sm font-medium text-gray-900">Show Carton Barcode</span>
-                </label>
+            {isLoading && <div className="text-center py-4">Loading...</div>}
+            {/* Display company error or fetch error */}
+            {(companyError || fetchError) && !isLoading && <div className="text-center py-4 text-red-500">Error: {companyError?.message || fetchError || 'Unknown error'}</div>}
 
-                <div className="inline-flex items-center">
-                    <label htmlFor="currency-select" className="ms-3 text-sm font-medium text-gray-900 mr-2">Currency:</label>
-                    <select
-                        id="currency-select"
-                        value={selectedCurrency}
-                        onChange={(e) => setSelectedCurrency(e.target.value as 'USD' | 'SGD')}
-                        className="border p-1 rounded text-sm"
-                    >
-                        <option value="USD">USD</option>
-                        <option value="SGD">SGD</option>
-                    </select>
-                </div>
-            </div>
-            
-            <table className="min-w-full border-collapse border border-gray-300">
-                <thead>
-                    <tr className="bg-orange-100">
-                        <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>Select</th>
-                        <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>Product Name</th>
-                        <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>Container Size</th>
-                        <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>Cartons/Container</th>
-                        <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>Pack Size/Carton</th>
-                        <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>FOB Price/Carton</th>
-                        {showFOBPricePerUnit && (
-                            <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>FOB Price/Unit</th>
-                        )}
-                        <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>{`RRP (${selectedCurrency})`}</th>
-                        <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>Price Tiers</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {selections.map((product) => (
-                        <React.Fragment key={product.product_id}>
-                            <tr className="border-b border-gray-300">
-                                <td className="border border-gray-300 p-2 text-center">
-                                    <div className="flex items-center justify-center gap-2">
-                                        <button 
-                                            onClick={() => toggleCollapse(product.product_id)}
-                                            className="w-4 h-4 flex items-center justify-center text-xs"
-                                        >
-                                            {collapsedRows.has(product.product_id) ? '►' : '▼'}
-                                        </button>
-                                        <input
-                                            title="Select Product"
-                                            type="checkbox"
-                                            checked={product.isSelected}
-                                            onChange={(e) => handleProductSelect(product.product_id, e.target.checked)}
-                                            className="h-4 w-4"
-                                        />
-                                    </div>
-                                </td>
-                                <td className="border border-gray-300 p-2 font-medium text-center">
-                                    {product.product_name}
-                                </td>
-                                {getTableColumns().map((field) => (
-                                    <td 
-                                        key={field}
-                                        className="border border-gray-300 p-2 text-center"
-                                        onDoubleClick={() => field !== 'fob_price_per_unit' && setEditingCell({ id: product.product_id, field })}
-                                    >
-                                        {editingCell?.id === product.product_id && editingCell.field === field ? (
-                                            <input
-                                                title="Edit Field"
-                                                type="text"
-                                                defaultValue={String(product.variants[0]?.[field as keyof typeof product.variants[0]] ?? '')}
-                                                onBlur={(e) => handleCellEdit(product.product_id, field, e.target.value)}
-                                                autoFocus
-                                                className="w-full text-center"
-                                            />
-                                        ) : (
-                                            field === 'fob_price_per_unit' 
-                                                ? `$${(Number(product.variants[0]?.fob_price_per_carton ?? 0) / Number(product.variants[0]?.pack_size_per_carton ?? 1)).toFixed(2)}`
-                                                : ['fob_price_per_carton', 'recommended_retail_price_usd'].includes(field)
-                                                    ? `$${Number(product.variants[0]?.[field as keyof typeof product.variants[0]] ?? 0).toFixed(2)}`
-                                                    : product.variants[0]?.[field as keyof typeof product.variants[0]]
-                                        )}
-                                    </td>
-                                ))}
-                                <td className="border border-gray-300 p-2 text-center">
-                                    <button
-                                        onClick={() => openPriceTierModal(product.product_id, product.product_name)}
-                                        className="bg-purple-500 hover:bg-purple-700 text-white text-xs font-bold py-1 px-2 rounded"
-                                        title={`Manage Price Tiers for ${product.product_name}`}
-                                    >
-                                        Tiers
-                                    </button>
-                                </td>
-                            </tr>
-                            {!collapsedRows.has(product.product_id) && (
-                                <tr>
-                                    <td colSpan={variantTableColSpan} className="border border-gray-300 p-2 bg-gray-50">
-                                        <div className="ml-8">
-                                            <table className="w-full border-collapse">
-                                                <thead>
-                                                    <tr className="bg-orange-100 text-sm">
-                                                        <th className="border border-gray-200 p-1 text-center">Select</th>
-                                                        <th className="border border-gray-200 p-1 text-center">Description</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {product.variants.map((variant) => (
-                                                        <tr key={variant.variant_id} className="text-sm">
-                                                            <td className="border border-gray-200 p-1 text-center">
-                                                                <input
-                                                                    title="Select Variant"
-                                                                    type="checkbox"
-                                                                    checked={variant.isSelected}
-                                                                    onChange={(e) => handleVariantSelect(
-                                                                        product.product_id,
-                                                                        variant.variant_id,
-                                                                        e.target.checked
-                                                                    )}
-                                                                    className="h-4 w-4"
-                                                                />
-                                                            </td>
-                                                            <td className="border border-gray-200 p-1 text-center">{variant.description}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </td>
-                                </tr>
+             {/* Render content only if not initial loading and no critical errors */}
+             {!isLoading && !(companyError) && ( // Render even if tier fetch fails, but show indication
+                 <>
+                    <div className="mb-4">
+                        <input type="text" placeholder="Customer Company Name" value={customerCompanyName} onChange={(e) => setCustomerCompanyName(e.target.value)} className="border p-2 w-full mb-2" />
+                        <input type="text" placeholder="Sales Account Manager" value={salesAccountManager} onChange={(e) => setSalesAccountManager(e.target.value)} className="border p-2 w-full" />
+                        <div className="mt-2 text-sm text-gray-600">Updated At: {currentDate}</div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center mb-4 gap-x-4 gap-y-2">
+                        {/* ... Toggles and Currency Selector ... */}
+                        <label className="inline-flex items-center cursor-pointer"> {/* FOB Price */}
+                            <input type="checkbox" checked={showFOBPricePerUnit} onChange={toggleFOBPricePerUnit} className="sr-only peer" />
+                            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                            <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Show FOB Price/Unit</span>
+                        </label>
+                         <label className="inline-flex items-center cursor-pointer"> {/* Barcode */}
+                             <input type="checkbox" checked={showCartonBarcode} onChange={toggleCartonBarcode} className="sr-only peer" />
+                            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                            <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Show Carton Barcode</span>
+                        </label>
+                         <div className="inline-flex items-center"> {/* Currency */}
+                            <label htmlFor="currency-select" className="text-sm font-medium text-gray-900 mr-2 dark:text-gray-300">Currency:</label>
+                            <select id="currency-select" value={selectedCurrency} onChange={(e) => setSelectedCurrency(e.target.value as 'USD' | 'SGD')} className="border p-1 rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                <option value="USD">USD</option><option value="SGD">SGD</option>
+                            </select>
+                        </div>
+                         {/* --- Global Price Tier Selector --- */}
+                         <div className="inline-flex items-center">
+                             <label htmlFor="global-tier-select" className="text-sm font-medium text-gray-900 mr-2 dark:text-gray-300">Price Tier:</label>
+                            <select id="global-tier-select" value={selectedGlobalTierName} onChange={handleGlobalTierChange} disabled={isFetchingTiers || uniqueTierNames.length === 0} className="border p-1 rounded text-sm min-w-[150px] disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white" title="Apply a price tier">
+                                <option value="">-- Default Pricing --</option>
+                                {isFetchingTiers ? ( <option disabled>Loading...</option> ) : ( uniqueTierNames.map(name => (<option key={name} value={name}>{name}</option>)) )
+                                // Add explicit check for fetchError affecting tiers
+                                || fetchError && <option disabled>Error loading tiers</option> }
+                            </select>
+                            {uniqueTierNames.length === 0 && !isFetchingTiers && !fetchError && (
+                                // Added !fetchError condition here too
+                                <span className="ms-2 text-xs text-gray-500 italic dark:text-gray-400">(No active tiers)</span>
                             )}
-                        </React.Fragment>
-                    ))}
-                </tbody>
-            </table>
-            
-            {selections.length === 0 && (
-                <div className="text-center py-4 text-gray-500">
-                    No products available for export
-                </div>
-            )}
-            
-            <div className="mt-4 flex justify-end">
-                <button 
-                    onClick={handleGeneratePDF}
-                    disabled={
-                        isGeneratingPDF || 
-                        !customerCompanyName || 
-                        !salesAccountManager || 
-                        !selections.some(product => product.isSelected)
-                    }
-                    className={`font-bold py-2 px-4 rounded ${
-                        isGeneratingPDF
-                            ? 'bg-blue-300 text-white cursor-not-allowed'
-                            : customerCompanyName && 
-                              salesAccountManager && 
-                              selections.some(product => product.isSelected)
-                                ? 'bg-blue-500 hover:bg-blue-700 text-white'
-                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }`}
-                >
-                    {isGeneratingPDF ? (
-                        <span className="flex items-center">
-                            <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                            </svg>
-                            Generating...
-                        </span>
-                    ) : (
-                        'Generate PDF'
-                    )}
-                </button>
-            </div>
+                         </div>
+                     </div>
+
+                    <table className="min-w-full border-collapse border border-gray-300 dark:border-gray-600">
+                         <thead>
+                            <tr className="bg-orange-100 dark:bg-gray-700">
+                                <th className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm font-medium" style={{ backgroundColor: "#FF9933" }}>Select</th>
+                                <th className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm font-medium" style={{ backgroundColor: "#FF9933" }}>Product Name</th>
+                                <th className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm font-medium" style={{ backgroundColor: "#FF9933" }}>Container Size</th>
+                                <th className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm font-medium" style={{ backgroundColor: "#FF9933" }}>Cartons/Container</th>
+                                <th className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm font-medium" style={{ backgroundColor: "#FF9933" }}>Pack Size/Carton</th>
+                                <th className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm font-medium" style={{ backgroundColor: "#FF9933" }}>FOB Price/Carton</th>
+                                {showFOBPricePerUnit && <th className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm font-medium" style={{ backgroundColor: "#FF9933" }}>FOB Price/Unit</th>}
+                                <th className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm font-medium" style={{ backgroundColor: "#FF9933" }}>{`RRP (${selectedCurrency})`}</th>
+                                <th className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm font-medium" style={{ backgroundColor: "#FF9933" }}>Price Tiers</th>
+                            </tr>
+                         </thead>
+                         <tbody>
+                             {selections.map((product) => (
+                                <React.Fragment key={product.product_id}>
+                                     <tr className="border-b border-gray-300 dark:border-gray-600 dark:text-gray-300">
+                                         {/* Select Cell */} 
+                                         <td className="border border-gray-300 dark:border-gray-600 p-2 text-center"> <div className="flex items-center justify-center gap-2"> <button onClick={() => toggleCollapse(product.product_id)} className="w-4 h-4 flex items-center justify-center text-xs dark:text-gray-400">{collapsedRows.has(product.product_id) ? '►' : '▼'}</button> <input type="checkbox" checked={product.isSelected} onChange={(e) => handleProductSelect(product.product_id, e.target.checked)} className="h-4 w-4 dark:bg-gray-600 dark:border-gray-500" /> </div> </td>
+                                         {/* Product Name Cell */} 
+                                         <td className="border border-gray-300 dark:border-gray-600 p-2 font-medium text-center">{product.product_name}</td>
+                                         {/* Data Cells */} 
+                                         {getTableColumns().map((field) => {
+                                            let displayValue: string | number | undefined;
+                                            const isPriceField = ['fob_price_per_carton', 'fob_price_per_unit', 'recommended_retail_price_usd'].includes(field);
+                                            if (field === 'fob_price_per_carton') displayValue = `$${Number(product.applied_fob_price_per_carton ?? 0).toFixed(2)}`;
+                                            else if (field === 'fob_price_per_unit') displayValue = showFOBPricePerUnit ? `$${Number(product.applied_fob_price_per_unit ?? 0).toFixed(2)}` : undefined;
+                                            else if (field === 'recommended_retail_price_usd') displayValue = `$${Number(product.applied_recommended_rrp ?? 0).toFixed(2)}`;
+                                            else displayValue = product.variants[0]?.[field as keyof typeof product.variants[0]];
+                                            if (field === 'fob_price_per_unit' && !showFOBPricePerUnit) return null;
+                                            return ( <td key={field} className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm" onDoubleClick={() => !isPriceField && setEditingCell({ id: product.product_id, field })}> {editingCell?.id === product.product_id && editingCell.field === field && !isPriceField ? <input type="text" defaultValue={String(displayValue ?? '')} onBlur={(e) => handleCellEdit(product.product_id, field, e.target.value)} autoFocus className="w-full text-center dark:bg-gray-700 dark:text-white" /> : displayValue} </td> );
+                                         })}
+                                         {/* Manage Tiers Button Cell */} 
+                                         <td className="border border-gray-300 dark:border-gray-600 p-1 text-center"><button onClick={() => openPriceTierModal(product.product_id, product.product_name)} className="bg-purple-500 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-800 text-white text-xs font-bold py-1 px-2 rounded" title={`Manage Price Tiers for ${product.product_name}`}> Manage </button></td>
+                                     </tr>
+                                     {!collapsedRows.has(product.product_id) && ( <tr> <td colSpan={variantTableColSpan} className="border border-gray-300 dark:border-gray-600 p-2 bg-gray-50 dark:bg-gray-800"> <div className="ml-8"> {/* Variant Table */} <table className="w-full border-collapse dark:text-gray-300"><thead><tr className="bg-orange-100 dark:bg-gray-700 text-sm"><th className="border ...">Select</th><th className="border ...">Description</th>{showCartonBarcode && <th className="border ...">Carton Barcode</th>}</tr></thead><tbody>{product.variants.map(variant => (<tr key={variant.variant_id} className="text-sm"><td className="border ..."><input type="checkbox" checked={variant.isSelected} onChange={e => handleVariantSelect(product.product_id, variant.variant_id, e.target.checked)} className="h-4 w-4 ..." /></td><td className="border ...">{variant.description}</td>{showCartonBarcode && <td className="border ...">{variant.barcode || '-'}</td>}</tr>))}</tbody></table></div> </td> </tr> )}
+                                 </React.Fragment>
+                             ))}
+                         </tbody>
+                     </table>
+
+                    {selections.length === 0 && !isLoadingCompany && !fetchError && <div className="text-center py-4 text-gray-500 dark:text-gray-400"> No products available for export </div>}
+
+                    <div className="mt-4 flex justify-end">
+                         <button onClick={handleGeneratePDF} disabled={isGeneratingPDF || !customerCompanyName || !salesAccountManager || !selections.some(p => p.isSelected)} className={`font-bold py-2 px-4 rounded ${ isGeneratingPDF ? 'bg-blue-300 text-white cursor-not-allowed opacity-50' : (customerCompanyName && salesAccountManager && selections.some(p => p.isSelected) ? 'bg-blue-500 hover:bg-blue-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50') }`}>
+                             {isGeneratingPDF ? <span className="flex items-center"><svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>Generating...</span> : 'Generate PDF'}
+                         </button>
+                     </div>
+                 </>
+             )}
 
             <ExportPriceTierModal
                 isOpen={isPriceTierModalOpen}
                 onClose={closePriceTierModal}
                 productId={selectedProductIdForModal}
                 productName={selectedProductNameForModal}
+                onTiersUpdated={handleTiersUpdated}
             />
         </div>
     );

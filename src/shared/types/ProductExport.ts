@@ -44,20 +44,26 @@ export interface CompanyProductExportDetails {
     details: ProductVariantExportDetails[];
 }
 
+// Define the missing type for selectable variants based on transformation logic
+export interface ProductExportVariantSelection {
+    variant_id: number;
+    description: string;
+    isSelected: boolean;
+    pack_size_per_carton: number;
+    fob_price_per_carton: number; // Note: Parsed to number in transform
+    fob_price_per_unit: number; // Note: Calculated number in transform
+    recommended_retail_price_usd: string; // Note: Kept as original string in transform
+    container_size: string;
+    cartons_per_container: number;
+    barcode: string | null;
+}
+
 export interface ProductExportSelection {
     product_id: number;
     product_name: string;
     isSelected: boolean;
-    variants: {
-        variant_id: number;
-        description: string;
-        isSelected: boolean;
-        pack_size_per_carton: number;
-        fob_price_per_carton: number;
-        fob_price_per_unit: number;
-        recommended_retail_price_usd: string;
-        container_size: string;
-        cartons_per_container: number;
-        barcode: string | null;
-    }[];
+    variants: ProductExportVariantSelection[]; // Use the defined type
+    applied_fob_price_per_carton: number | null;
+    applied_fob_price_per_unit: number | null;
+    applied_recommended_rrp: number | null;
 }

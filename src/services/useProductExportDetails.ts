@@ -122,28 +122,40 @@ export const getCompanyProductExportDetails = async (
 };
 
 /**
- * Transforms company product export details into a selectable format
+ * Transforms company product export details into a selectable format for the Quotation Export UI.
+ * Initializes applied prices based on the first variant.
  * @param data - The raw company product export details
  * @returns Array of product export selections with computed values
  */
 export const transformToSelectableFormat = (
     data: CompanyProductExportDetails[]
 ): ProductExportSelection[] => {
-    return data.map(product => ({
-        product_id: product.product_id,
-        product_name: product.product_name,
-        isSelected: false,
-        variants: product.details.map(variant => ({
-            variant_id: variant.variant_id,
-            description: variant.product_description,
+    return data.map(product => {
+        const defaultVariant = product.details.length > 0 ? product.details[0] : null;
+        const defaultFobCarton = defaultVariant ? parseFloat(defaultVariant.fob_price_per_carton) : 0;
+        const defaultPackSize = defaultVariant ? defaultVariant.pack_size_per_carton : 1;
+        const defaultFobUnit = defaultPackSize > 0 ? defaultFobCarton / defaultPackSize : 0;
+        const defaultRrp = defaultVariant ? parseFloat(defaultVariant.recommended_retail_price_usd) : 0;
+
+        return {
+            product_id: product.product_id,
+            product_name: product.product_name,
             isSelected: false,
-            pack_size_per_carton: variant.pack_size_per_carton,
-            fob_price_per_carton: parseFloat(variant.fob_price_per_carton),
-            fob_price_per_unit: parseFloat(variant.fob_price_per_carton) / variant.pack_size_per_carton,
-            recommended_retail_price_usd: variant.recommended_retail_price_usd,
-            container_size: variant.container_size,
-            cartons_per_container: variant.cartons_per_container,
-            barcode: variant.barcode
-        }))
-    }));
+            variants: product.details.map(variant => ({
+                variant_id: variant.variant_id,
+                description: variant.product_description,
+                isSelected: false,
+                pack_size_per_carton: variant.pack_size_per_carton,
+                fob_price_per_carton: parseFloat(variant.fob_price_per_carton),
+                fob_price_per_unit: parseFloat(variant.fob_price_per_carton) / (variant.pack_size_per_carton || 1),
+                recommended_retail_price_usd: variant.recommended_retail_price_usd,
+                container_size: variant.container_size,
+                cartons_per_container: variant.cartons_per_container,
+                barcode: variant.carton_barcode ?? variant.product_barcode ?? null
+            })),
+            applied_fob_price_per_carton: defaultFobCarton,
+            applied_fob_price_per_unit: defaultFobUnit,
+            applied_recommended_rrp: defaultRrp,
+        };
+    });
 };
