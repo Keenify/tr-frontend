@@ -278,7 +278,10 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                             if (field === 'fob_price_per_carton') displayValue = `$${Number(product.applied_fob_price_per_carton ?? 0).toFixed(2)}`;
                                             else if (field === 'fob_price_per_unit') displayValue = showFOBPricePerUnit ? `$${Number(product.applied_fob_price_per_unit ?? 0).toFixed(2)}` : undefined;
                                             else if (field === 'recommended_retail_price_usd') displayValue = `$${Number(product.applied_recommended_rrp ?? 0).toFixed(2)}`;
-                                            else displayValue = product.variants[0]?.[field as keyof typeof product.variants[0]];
+                                            else {
+                                                const rawValue = product.variants[0]?.[field as keyof typeof product.variants[0]];
+                                                displayValue = rawValue === null || rawValue === undefined ? '' : String(rawValue);
+                                            }
                                             if (field === 'fob_price_per_unit' && !showFOBPricePerUnit) return null;
                                             return ( <td key={field} className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm" onDoubleClick={() => !isPriceField && setEditingCell({ id: product.product_id, field })}> {editingCell?.id === product.product_id && editingCell.field === field && !isPriceField ? <input type="text" defaultValue={String(displayValue ?? '')} onBlur={(e) => handleCellEdit(product.product_id, field, e.target.value)} autoFocus className="w-full text-center dark:bg-gray-700 dark:text-white" /> : displayValue} </td> );
                                          })}
