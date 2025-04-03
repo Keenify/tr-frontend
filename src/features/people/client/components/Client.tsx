@@ -334,18 +334,23 @@ const Client: React.FC<ClientProps> = ({ session }) => {
                               <span className="text-sm text-gray-900 break-words flex-grow text-center">
                                 {client.contact_number?.replace(/\s/g, '')}
                               </span>
-                              {client.contact_number &&
-                               client.origin_country === 'SG' &&
-                               (client.contact_number.startsWith('8') || client.contact_number.startsWith('9')) && (
-                                <FaWhatsapp
-                                  className="text-green-500 cursor-pointer hover:text-green-600"
-                                  size={16}
-                                  onClick={(e) => {
-                                    e.stopPropagation(); // Prevent row click
-                                    handleWhatsAppClick(client.contact_number);
-                                  }}
-                                />
-                              )}
+                              <div className="w-4 h-4 flex items-center justify-center">
+                                {client.contact_number &&
+                                 client.origin_country === 'SG' &&
+                                 (client.contact_number.startsWith('8') || client.contact_number.startsWith('9')) 
+                                ? (
+                                    <FaWhatsapp
+                                      className="text-green-500 cursor-pointer hover:text-green-600"
+                                      size={16}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleWhatsAppClick(client.contact_number);
+                                      }}
+                                    />
+                                  )
+                                : null 
+                                }
+                              </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 text-center">
