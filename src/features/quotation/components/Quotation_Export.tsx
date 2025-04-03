@@ -5,6 +5,7 @@ import { ProductExportSelection } from '../../../shared/types/ProductExport';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import { generateQuotationExportPDF } from '../services/useQuotationPDF';
 import { QuotationExportPDFData } from '../types/QuotationPDF';
+import { ExportPriceTierModal } from './ExportPriceTierModal';
 
 interface QuotationExportProps {
     session: Session;
@@ -26,6 +27,9 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
         year: "numeric",
     });
     const [isGeneratingPDF, setIsGeneratingPDF] = useState<boolean>(false);
+    const [isPriceTierModalOpen, setIsPriceTierModalOpen] = useState<boolean>(false);
+    const [selectedProductIdForModal, setSelectedProductIdForModal] = useState<number | null>(null);
+    const [selectedProductNameForModal, setSelectedProductNameForModal] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -219,6 +223,21 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
         return baseColumns;
     };
 
+    const openPriceTierModal = (productId: number, productName: string) => {
+        setSelectedProductIdForModal(productId);
+        setSelectedProductNameForModal(productName);
+        setIsPriceTierModalOpen(true);
+    };
+
+    const closePriceTierModal = () => {
+        setIsPriceTierModalOpen(false);
+        setSelectedProductIdForModal(null);
+        setSelectedProductNameForModal(null);
+    };
+
+    const mainTableColumnCount = 3 + getTableColumns().length + 1; // +1 for Select, +1 Product Name, +1 Price Tiers
+    const variantTableColSpan = mainTableColumnCount; // Colspan for variant details row
+
     return (
         <div className="quotation-export-container p-4">
             <div className="mb-4">
@@ -289,6 +308,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                             <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>FOB Price/Unit</th>
                         )}
                         <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>{`RRP (${selectedCurrency})`}</th>
+                        <th className="border border-gray-300 p-2 text-center" style={{ backgroundColor: "#FF9933" }}>Price Tiers</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -299,9 +319,9 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                     <div className="flex items-center justify-center gap-2">
                                         <button 
                                             onClick={() => toggleCollapse(product.product_id)}
-                                            className="w-4 h-4 flex items-center justify-center"
+                                            className="w-4 h-4 flex items-center justify-center text-xs"
                                         >
-                                            {collapsedRows.has(product.product_id) ? '+' : '-'}
+                                            {collapsedRows.has(product.product_id) ? '►' : '▼'}
                                         </button>
                                         <input
                                             title="Select Product"
@@ -339,10 +359,19 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                         )}
                                     </td>
                                 ))}
+                                <td className="border border-gray-300 p-2 text-center">
+                                    <button
+                                        onClick={() => openPriceTierModal(product.product_id, product.product_name)}
+                                        className="bg-purple-500 hover:bg-purple-700 text-white text-xs font-bold py-1 px-2 rounded"
+                                        title={`Manage Price Tiers for ${product.product_name}`}
+                                    >
+                                        Tiers
+                                    </button>
+                                </td>
                             </tr>
                             {!collapsedRows.has(product.product_id) && (
                                 <tr>
-                                    <td colSpan={showFOBPricePerUnit ? 8 : 7} className="border border-gray-300 p-2 bg-gray-50">
+                                    <td colSpan={variantTableColSpan} className="border border-gray-300 p-2 bg-gray-50">
                                         <div className="ml-8">
                                             <table className="w-full border-collapse">
                                                 <thead>
@@ -419,6 +448,13 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                     )}
                 </button>
             </div>
+
+            <ExportPriceTierModal
+                isOpen={isPriceTierModalOpen}
+                onClose={closePriceTierModal}
+                productId={selectedProductIdForModal}
+                productName={selectedProductNameForModal}
+            />
         </div>
     );
 };
