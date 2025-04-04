@@ -1,5 +1,5 @@
 import { Session } from '@supabase/supabase-js';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { getCompanyProductExportDetails, transformToSelectableFormat } from '../../../services/useProductExportDetails';
 import { ProductExportSelection } from '../../../shared/types/ProductExport';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
@@ -28,6 +28,12 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     const [isPriceTierModalOpen, setIsPriceTierModalOpen] = useState<boolean>(false);
     const [selectedProductIdForModal, setSelectedProductIdForModal] = useState<number | null>(null);
     const [selectedProductNameForModal, setSelectedProductNameForModal] = useState<string | null>(null);
+
+    // --- Input Validation State & Refs ---
+    const [customerNameError, setCustomerNameError] = useState<boolean>(false);
+    const [salesManagerError, setSalesManagerError] = useState<boolean>(false);
+    const customerNameRef = useRef<HTMLInputElement>(null);
+    const salesManagerRef = useRef<HTMLInputElement>(null);
 
     // --- Global Price Tier State & Logic ---
     const [allApplicableTiers, setAllApplicableTiers] = useState<Map<number, ProductExportPriceTier[]>>(new Map());
@@ -149,7 +155,37 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
         setEditingCell(null);
     };
     const handleGeneratePDF = async () => {
-        if (!customerCompanyName || !salesAccountManager || !selections.some(p => p.isSelected)) return;
+        // 1. Check if at least one product is selected
+        if (!selections.some(p => p.isSelected)) {
+            alert("Please select at least one product before generating the PDF.");
+            return; // Stop if no products are selected
+        }
+
+        // 2. Reset errors
+        setCustomerNameError(false);
+        setSalesManagerError(false);
+
+        // 3. Validate inputs
+        let hasError = false;
+        if (!customerCompanyName.trim()) {
+            setCustomerNameError(true);
+            customerNameRef.current?.focus();
+            hasError = true;
+        }
+        if (!salesAccountManager.trim()) {
+            setSalesManagerError(true);
+            if (!hasError) { // Only focus if customer name is okay
+                salesManagerRef.current?.focus();
+            }
+            hasError = true;
+        }
+
+        // 4. Stop if there are errors
+        if (hasError) {
+            return;
+        }
+
+        // Proceed with PDF generation if checks pass
         setIsGeneratingPDF(true);
         const selectedProducts = selections
             .filter(p => p.isSelected)
@@ -210,8 +246,24 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
              {!isLoading && !(companyError) && ( // Render even if tier fetch fails, but show indication
                  <>
                     <div className="mb-4">
-                        <input type="text" placeholder="Customer Company Name" value={customerCompanyName} onChange={(e) => setCustomerCompanyName(e.target.value)} className="border p-2 w-full mb-2" />
-                        <input type="text" placeholder="Sales Account Manager" value={salesAccountManager} onChange={(e) => setSalesAccountManager(e.target.value)} className="border p-2 w-full" />
+                        <input
+                            type="text"
+                            placeholder="Customer Company Name"
+                            value={customerCompanyName}
+                            onChange={(e) => setCustomerCompanyName(e.target.value)}
+                            ref={customerNameRef}
+                            onFocus={() => setCustomerNameError(false)}
+                            className={`border p-2 w-full mb-2 ${customerNameError ? 'border-red-500' : 'border-gray-300'}`}
+                        />
+                        <input
+                            type="text"
+                            placeholder="Sales Account Manager"
+                            value={salesAccountManager}
+                            onChange={(e) => setSalesAccountManager(e.target.value)}
+                            ref={salesManagerRef}
+                            onFocus={() => setSalesManagerError(false)}
+                            className={`border p-2 w-full ${salesManagerError ? 'border-red-500' : 'border-gray-300'}`}
+                        />
                         <div className="mt-2 text-sm text-gray-600">Updated At: {currentDate}</div>
                     </div>
 
@@ -297,7 +349,15 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                     {selections.length === 0 && !isLoadingCompany && !fetchError && <div className="text-center py-4 text-gray-500 dark:text-gray-400"> No products available for export </div>}
 
                     <div className="mt-4 flex justify-end">
-                         <button onClick={handleGeneratePDF} disabled={isGeneratingPDF || !customerCompanyName || !salesAccountManager || !selections.some(p => p.isSelected)} className={`font-bold py-2 px-4 rounded ${ isGeneratingPDF ? 'bg-blue-300 text-white cursor-not-allowed opacity-50' : (customerCompanyName && salesAccountManager && selections.some(p => p.isSelected) ? 'bg-blue-500 hover:bg-blue-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50') }`}>
+                         <button
+                            onClick={handleGeneratePDF}
+                            disabled={isGeneratingPDF}
+                            className={`font-bold py-2 px-4 rounded ${
+                                isGeneratingPDF
+                                ? 'bg-blue-300 text-white cursor-not-allowed opacity-50'
+                                : 'bg-blue-500 hover:bg-blue-700 text-white'
+                            }`}
+                        >
                              {isGeneratingPDF ? <span className="flex items-center"><svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>Generating...</span> : 'Generate PDF'}
                          </button>
                      </div>
