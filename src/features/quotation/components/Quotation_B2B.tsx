@@ -97,6 +97,14 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
   // Update the currency state to use branch
   const [selectedCurrency, setSelectedCurrency] = React.useState<'SGD' | 'MYR'>(branch === 'SG' ? 'SGD' : 'MYR');
 
+  // State for input errors
+  const [customerNameError, setCustomerNameError] = React.useState<boolean>(false);
+  const [salesManagerError, setSalesManagerError] = React.useState<boolean>(false);
+
+  // Refs for input fields
+  const customerNameRef = React.useRef<HTMLInputElement>(null);
+  const salesManagerRef = React.useRef<HTMLInputElement>(null);
+
   // Add effect to update currency when branch changes
   React.useEffect(() => {
     setSelectedCurrency(branch === 'SG' ? 'SGD' : 'MYR');
@@ -489,6 +497,29 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
 
   // Update PDF data to include gift box configuration
   const handleGeneratePDF = async () => {
+    // Reset errors
+    setCustomerNameError(false);
+    setSalesManagerError(false);
+
+    let hasError = false;
+    if (!customerCompanyName.trim()) {
+        setCustomerNameError(true);
+        customerNameRef.current?.focus();
+        hasError = true;
+    }
+    if (!salesAccountManager.trim()) {
+        setSalesManagerError(true);
+        // Only focus sales manager if customer name is not already focused
+        if (!hasError) {
+            salesManagerRef.current?.focus();
+        }
+        hasError = true;
+    }
+
+    if (hasError) {
+        return; // Stop PDF generation if there are errors
+    }
+
     // Check if more than 3 price columns are selected
     if (visibleCartonColumns.size > 3) {
       const confirm = window.confirm(
@@ -634,6 +665,10 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
             onChange={(e) => setCustomerCompanyName(e.target.value)}
             placeholder="Enter client company name"
             style={{ marginBottom: '1rem' }}
+            inputRef={customerNameRef}
+            error={customerNameError}
+            helperText={customerNameError ? "Customer name is required" : ""}
+            onFocus={() => setCustomerNameError(false)} // Clear error on focus
           />
           <TextField
             label="Sales Account Manager"
@@ -642,6 +677,10 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
             value={salesAccountManager}
             onChange={(e) => setSalesAccountManager(e.target.value)}
             placeholder="Enter sales account manager name"
+            inputRef={salesManagerRef}
+            error={salesManagerError}
+            helperText={salesManagerError ? "Sales manager name is required" : ""}
+            onFocus={() => setSalesManagerError(false)} // Clear error on focus
           />
           <FormControl 
             variant="outlined" 
@@ -1048,10 +1087,8 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
           variant="contained"
           color="primary"
           onClick={handleGeneratePDF}
-          className={`action-button generate-pdf-button ${
-            !customerCompanyName ? "disabled" : ""
-          }`}
-          disabled={!customerCompanyName || isGeneratingPDF}
+          className={`action-button generate-pdf-button`} // Removed disabled class logic here
+          disabled={isGeneratingPDF} // Only disable when generating
         >
           {isGeneratingPDF ? (
             <>
