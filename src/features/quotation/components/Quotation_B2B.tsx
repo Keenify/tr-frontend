@@ -497,6 +497,12 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
 
   // Update PDF data to include gift box configuration
   const handleGeneratePDF = async () => {
+    // Check if at least one product is selected
+    if (selectedProducts.size === 0) {
+        alert("Please select at least one product before generating the PDF.");
+        return; // Stop PDF generation
+    }
+
     // Reset errors
     setCustomerNameError(false);
     setSalesManagerError(false);
