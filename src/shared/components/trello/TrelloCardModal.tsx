@@ -220,6 +220,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       'application/pdf': [],
       'application/msword': [],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': [],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
       
       // Email formats
       'message/rfc822': ['.eml'],
@@ -865,7 +866,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                               Supports images (including PSD), PDFs, documents,
                             </p>
                             <p className="text-sm text-gray-500">
-                              email files (.eml), and ZIP archives
+                              Excel files (.xlsx), email files (.eml), and ZIP archives
                             </p>
                           </>
                         )}
