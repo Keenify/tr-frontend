@@ -377,10 +377,11 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
   const handleDoubleClick = (
     productId: number,
     field: string,
-    value: string
+    value: string | number | null | undefined // Allow different types
   ) => {
     setEditingCell({ productId, field });
-    setEditValue(value);
+    // If value is null, undefined, or "N/A", start with an empty input
+    setEditValue(value === null || value === undefined || value === "N/A" ? "" : String(value));
   };
 
   // Function to handle input change
@@ -390,48 +391,88 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
 
   // Function to handle input blur (save changes)
   const handleBlur = (productId: number, field: string) => {
-    setProducts((prevProducts) =>
-      prevProducts.map((product) => {
-        if (product.id === productId) {
-          if (field.startsWith("price_")) {
-            // Handle "price_NUMBER" format (carton prices)
-            if (!field.includes("pack")) {
-              const carton = parseInt(field.split("_")[1], 10);
-              const updatedPriceTiers = productPriceTiers[productId].map((tier) =>
-                tier.min_cartons === carton && tier.currency === selectedCurrency
-                  ? { ...tier, price_per_unit: editValue }
-                  : tier
-              );
-              setProductPriceTiers((prev) => ({
-                ...prev,
-                [productId]: updatedPriceTiers,
-              }));
-            } 
-            // Handle "price_pack_NUMBER" format (pack prices)
-            else if (field.startsWith("price_pack_")) {
-              const pack = parseInt(field.split("_")[2], 10);
-              const updatedPriceTiers = productPriceTiers[productId].map((tier) =>
-                tier.min_packs === pack && tier.currency === selectedCurrency
-                  ? { ...tier, price_per_unit: editValue }
-                  : tier
-              );
-              setProductPriceTiers((prev) => ({
-                ...prev,
-                [productId]: updatedPriceTiers,
-              }));
-            }
-          } else {
-            return { ...product, [field]: editValue };
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    const currentTiers = productPriceTiers[productId] || [];
+    let updatedTiers = [...currentTiers]; // Create a copy to modify
+
+    if (field.startsWith("price_")) {
+      let foundTier = false;
+      const parsedValue = parseFloat(editValue); // Try parsing the input value
+      const isValidNumber = !isNaN(parsedValue) && editValue.trim() !== "";
+
+      if (field.startsWith("price_pack_")) { // Handle pack prices first
+        const pack = parseInt(field.split("_")[2], 10);
+        updatedTiers = currentTiers.map((tier) => {
+          if (tier.min_packs === pack && tier.currency === selectedCurrency) {
+            foundTier = true;
+            // Only update if editValue is a valid number
+            return { ...tier, price_per_unit: isValidNumber ? String(parsedValue) : tier.price_per_unit };
           }
+          return tier;
+        });
+
+        // If no existing tier was found and editValue is a valid number, create a new one
+        if (!foundTier && isValidNumber) {
+          const newTier: ProductPriceTier = {
+            product_id: productId,
+            min_cartons: null, // Assuming carton count isn't directly known when adding pack price tier
+            min_packs: pack,
+            price_per_unit: String(parsedValue),
+            currency: selectedCurrency,
+          };
+          updatedTiers.push(newTier);
         }
-        return product;
-      })
-    );
+
+      } else { // Handle carton prices
+        const carton = parseInt(field.split("_")[1], 10);
+        updatedTiers = currentTiers.map((tier) => {
+          if (tier.min_cartons === carton && tier.currency === selectedCurrency) {
+            foundTier = true;
+            // Only update if editValue is a valid number
+            return { ...tier, price_per_unit: isValidNumber ? String(parsedValue) : tier.price_per_unit };
+          }
+          return tier;
+        });
+
+        // If no existing tier was found and editValue is a valid number, create a new one
+        if (!foundTier && isValidNumber) {
+           const newTier: ProductPriceTier = {
+            product_id: productId,
+            min_cartons: carton,
+            min_packs: null, // Assuming pack count isn't directly known when adding carton price tier
+            price_per_unit: String(parsedValue),
+            currency: selectedCurrency,
+          };
+          updatedTiers.push(newTier);
+        }
+      }
+
+      // Only update state if a change occurred or a new tier was added
+      if (foundTier || (!foundTier && isValidNumber)) {
+          setProductPriceTiers((prev) => ({
+            ...prev,
+            [productId]: updatedTiers,
+          }));
+      }
+
+    } else {
+      // Handle other fields like pack_count_per_box
+      setProducts((prevProducts) =>
+        prevProducts.map((p) => {
+          if (p.id === productId) {
+            // Only update if editValue is a valid number for numeric fields
+            const newValue = (field === "pack_count_per_box" && (isNaN(parseInt(editValue)) || editValue.trim() === "")) ? p[field] : editValue;
+            return { ...p, [field]: newValue };
+          }
+          return p;
+        })
+      );
+    }
+
     setEditingCell(null);
-    
-    // We don't need to update visible carton columns after price changes
-    // This was causing all checkboxes to be checked again
-    // Let the user maintain their checkbox selections
+    setEditValue(""); // Reset edit value
   };
 
   // Function to handle input key down (save changes on Enter key)
@@ -1000,57 +1041,57 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
                       <span>No variants</span>
                     )}
                   </TableCell>
-                  {Array.from(visibleCartonColumns).map((count) => (
-                    <TableCell
-                      key={count}
-                      align="center"
-                      className="table-cell"
-                      onDoubleClick={() =>
-                        handleDoubleClick(
-                          product.id,
-                          displayPackCount ? `price_pack_${count}` : `price_${count}`,
-                          productPriceTiers[product.id]
-                            ?.find((tier) =>
-                              displayPackCount
-                                ? tier.min_packs === count && tier.currency === selectedCurrency
-                                : tier.min_cartons === count && tier.currency === selectedCurrency
-                            )
-                            ?.price_per_unit.toString() || ""
-                        )
-                      }
-                    >
-                      {editingCell?.productId === product.id &&
-                      editingCell.field === (displayPackCount ? `price_pack_${count}` : `price_${count}`) ? (
-                        <input
-                          type="text"
-                          value={editValue}
-                          onChange={handleInputChange}
-                          onBlur={() =>
-                            handleBlur(
-                              product.id,
-                              displayPackCount ? `price_pack_${count}` : `price_${count}`
-                            )
-                          }
-                          onKeyDown={(e) =>
-                            handleKeyDown(
-                              e,
-                              product.id,
-                              displayPackCount ? `price_pack_${count}` : `price_${count}`
-                            )
-                          }
-                          autoFocus
-                          placeholder="Enter price"
-                        />
-                      ) : (
-                        productPriceTiers[product.id]
-                          ?.find((tier) =>
-                            displayPackCount
-                              ? tier.min_packs === count && tier.currency === selectedCurrency
-                              : tier.min_cartons === count && tier.currency === selectedCurrency
-                          )?.price_per_unit || "N/A"
-                      )}
-                    </TableCell>
-                  ))}
+                  {Array.from(visibleCartonColumns).map((count) => {
+                    const currentPriceTier = productPriceTiers[product.id]
+                      ?.find((tier) =>
+                        displayPackCount
+                          ? tier.min_packs === count && tier.currency === selectedCurrency
+                          : tier.min_cartons === count && tier.currency === selectedCurrency
+                      );
+                    const priceValue = currentPriceTier?.price_per_unit;
+
+                    return (
+                      <TableCell
+                        key={count}
+                        align="center"
+                        className="table-cell"
+                        onDoubleClick={() =>
+                          handleDoubleClick(
+                            product.id,
+                            displayPackCount ? `price_pack_${count}` : `price_${count}`,
+                            priceValue !== undefined ? priceValue : "N/A" // Pass "N/A" if undefined
+                          )
+                        }
+                      >
+                        {editingCell?.productId === product.id &&
+                        editingCell.field === (displayPackCount ? `price_pack_${count}` : `price_${count}`) ? (
+                          <input
+                            type="text" // Use text to allow empty input initially and handle potential non-numeric temp values
+                            value={editValue}
+                            onChange={handleInputChange}
+                            onBlur={() =>
+                              handleBlur(
+                                product.id,
+                                displayPackCount ? `price_pack_${count}` : `price_${count}`
+                              )
+                            }
+                            onKeyDown={(e) =>
+                              handleKeyDown(
+                                e,
+                                product.id,
+                                displayPackCount ? `price_pack_${count}` : `price_${count}`
+                              )
+                            }
+                            autoFocus
+                            placeholder="Enter price"
+                            style={{ width: '60px', textAlign: 'center' }} // Added style for better input appearance
+                          />
+                        ) : (
+                          priceValue !== undefined ? priceValue : "N/A" // Display "N/A" if undefined
+                        )}
+                      </TableCell>
+                    );
+                  })}
                   {showRetailPrice && (
                     <TableCell
                       align="center"
