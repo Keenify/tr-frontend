@@ -400,20 +400,14 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
 
   function getEventClassNames(event: CalendarEvent): string[] {
     const classes = ['fc-event-custom'];
-    const colorClass = getEventTypeColor(event.event_type);
+    const colorClasses = getEventTypeColor(event.event_type);
 
     // Add the type-specific class
-    classes.push(`fc-event-${event.event_type.toLowerCase()}`); 
+    classes.push(`fc-event-${event.event_type.toLowerCase()}`);
 
-    // Only add the BACKGROUND class from getEventTypeColor
-    if (colorClass) { 
-      const backgroundClass = colorClass.split(' ').find(cls => cls.startsWith('bg-'));
-      if (backgroundClass) {
-        classes.push(backgroundClass);
-      } else {
-        // Fallback if no bg- class found in the string
-        classes.push(colorClass.split(' ')[0]); // Add the first class as a potential background
-      }
+    // Add all classes from the color definition string
+    if (colorClasses) {
+      classes.push(...colorClasses.split(' '));
     }
 
     return classes;
