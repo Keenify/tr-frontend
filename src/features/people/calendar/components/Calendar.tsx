@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { ClipLoader } from 'react-spinners';
 import FullCalendar from '@fullcalendar/react';
+import { EventContentArg } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { deleteCalendarEvent, getCompanyCalendarEvents, createCalendarEvent, updateCalendarEvent } from '../services/useCalendar';
@@ -25,6 +26,7 @@ import {
 import { validateGoogleToken } from '../../../integration/services/useGoogle';
 import { toast } from 'react-hot-toast';
 import { EventClickArg, DateSelectArg, DatesSetArg } from '@fullcalendar/core';
+import ReactCountryFlag from 'react-country-flag';
 
 interface CalendarProps {
   session?: Session;
@@ -371,31 +373,27 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
   function getCountryCode(location: string | null | undefined): string {
     if (!location) return '';
     const lowerLocation = location.toLowerCase();
-    // Return flag emojis instead of country codes
-    if (lowerLocation.includes('malaysia')) return '🇲🇾';
-    if (lowerLocation.includes('singapore')) return '🇸🇬';
-    return ''; // Default to no flag if not specifically mapped
+    // Return ISO country codes
+    if (lowerLocation.includes('malaysia')) return 'MY';
+    if (lowerLocation.includes('singapore')) return 'SG';
+    return ''; // Default to empty string
   }
 
   function formatEventTitleForDisplay(event: CalendarEvent): string {
-      const countryFlag = getCountryCode(event.location); // Use location field
-      const prefix = countryFlag ? `${countryFlag} ` : '';
+    const eventTypeMapping = {
+      'annual_leave': 'Annual Leave',
+      'sick_leave': 'Sick Leave',
+      'timeoff': 'Time Off'
+    };
+    const isLeaveEvent = ['sick_leave', 'timeoff', 'annual_leave'].includes(event.event_type.toLowerCase());
 
-      const eventTypeMapping = {
-          'annual_leave': 'Annual Leave',
-          'sick_leave': 'Sick Leave',
-          'timeoff': 'Time Off'
-      };
-      const isLeaveEvent = ['sick_leave', 'timeoff', 'annual_leave'].includes(event.event_type.toLowerCase());
+    if (!isLeaveEvent) {
+      return `${event.event_type}: ${event.title}`;
+    }
 
-      if (!isLeaveEvent) {
-          // Apply prefix to non-leave events as well
-          return `${prefix}${event.event_type}: ${event.title}`;
-      }
-
-      const name = event.title.split(' - ')[1] || event.title;
-      const formattedEventType = eventTypeMapping[event.event_type.toLowerCase() as keyof typeof eventTypeMapping] || event.event_type;
-       return `${prefix}${formattedEventType}: ${name}`;
+    const name = event.title.split(' - ')[1] || event.title;
+    const formattedEventType = eventTypeMapping[event.event_type.toLowerCase() as keyof typeof eventTypeMapping] || event.event_type;
+    return `${formattedEventType}: ${name}`;
   }
 
   function getEventClassNames(event: CalendarEvent): string[] {
@@ -412,6 +410,33 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
 
     return classes;
   }
+
+  // Define the event content renderer function
+  const renderEventContent = (eventInfo: EventContentArg) => {
+    // Access the original event data from extendedProps
+    const originalEvent = eventInfo.event.extendedProps as CalendarEvent;
+    const countryCode = getCountryCode(originalEvent.location);
+    const flagElement = countryCode ? (
+      <ReactCountryFlag
+        countryCode={countryCode}
+        svg
+        style={{
+          width: '1.2em',
+          height: '1.2em',
+          marginRight: '4px',
+          verticalAlign: 'middle',
+        }}
+        title={countryCode}
+      />
+    ) : null;
+
+    return (
+      <div className="fc-event-title-content" style={{ display: 'flex', alignItems: 'center' }}>
+        {flagElement}
+        <span>{eventInfo.event.title}</span> {/* Use the pre-formatted title */}
+      </div>
+    );
+  };
 
   if (companyLoading) {
     return (
@@ -511,6 +536,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
           select={handleDateClick}
           eventClick={handleEventClick}
           height="auto"
+          eventContent={renderEventContent}
         />
 
         {loading && (
