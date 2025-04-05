@@ -303,7 +303,7 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
       "Wins(1 work + 1 personal)": "Wins (1 Work + 1 Personal)",
       "I need critical help on": "I Need Critical Help On",
       "Main Priority": "OKR",
-      "Today Goals and Targeted Results": "Top 3 Important Task Today"
+      "Today Goals and Targeted Results": "Important Tasks Today"
     };
 
     return replacements[text] || text;
