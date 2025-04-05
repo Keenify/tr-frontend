@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { ClipLoader } from 'react-spinners';
 import FullCalendar from '@fullcalendar/react';
@@ -60,6 +60,11 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
   const { userInfo, companyInfo, error: companyError, isLoading: companyLoading } = useUserAndCompanyData(authUserId || '');
   const userId = userInfo?.id;
   const companyId = companyInfo?.id;
+
+  const calendarRef = useRef<FullCalendar>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lastScrollTime = useRef<number>(0);
+  const scrollTimeout = 500;
 
   const fetchEvents = useCallback(async (startDate: Date, endDate: Date) => {
     if (!companyId) {
@@ -438,6 +443,43 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
     );
   };
 
+  const handleWheelScroll = useCallback((event: WheelEvent) => {
+    const now = Date.now();
+
+    if (now - lastScrollTime.current < scrollTimeout) {
+      return;
+    }
+
+    const calendarApi = calendarRef.current?.getApi();
+    if (!calendarApi) return;
+
+    if (event.deltaY < 0) {
+      console.log('🖱️ Scroll Up Detected -> Previous Month');
+      calendarApi.prev();
+      lastScrollTime.current = now;
+    } else if (event.deltaY > 0) {
+      console.log('🖱️ Scroll Down Detected -> Next Month');
+      calendarApi.next();
+      lastScrollTime.current = now;
+    }
+  }, [scrollTimeout]);
+
+  useEffect(() => {
+    const containerElement = containerRef.current;
+
+    if (containerElement) {
+      containerElement.addEventListener('wheel', handleWheelScroll, { passive: true });
+      console.log('🖱️ Wheel event listener attached to calendar container.');
+    }
+
+    return () => {
+      if (containerElement) {
+        containerElement.removeEventListener('wheel', handleWheelScroll);
+        console.log('🖱️ Wheel event listener removed from calendar container.');
+      }
+    };
+  }, [handleWheelScroll]);
+
   if (companyLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -471,7 +513,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
    }
 
   return (
-    <div className="p-4">
+    <div className="p-4" ref={containerRef}>
       <div className="mb-4 flex flex-wrap justify-between items-center gap-4">
         <div className="flex items-center">
            <h1 className="text-2xl font-bold">Calendar</h1>
@@ -521,6 +563,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
 
       <div className="calendar-container fc-custom-style">
         <FullCalendar
+          ref={calendarRef}
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
           headerToolbar={{
