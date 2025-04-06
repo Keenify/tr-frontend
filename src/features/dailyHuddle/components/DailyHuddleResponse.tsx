@@ -36,6 +36,22 @@ const getEffectiveDate = (): string => {
   return now.toISOString().split('T')[0];
 };
 
+// Helper function to format a Date object to 'YYYY-MM-DD'
+const formatDateToISO = (date: Date): string => {
+  return date.toISOString().split('T')[0];
+};
+
+// Helper function to format a date string or Date object to "Month YYYY"
+const formatMonthYear = (dateString: string | Date): string => {
+  const date = new Date(dateString);
+  // Adjust for timezone offset when creating the date object
+  date.setMinutes(date.getMinutes() + date.getTimezoneOffset()); 
+  return date.toLocaleDateString('en-US', {
+    month: 'long',
+    year: 'numeric',
+  });
+};
+
 // Interface for employee response with rank
 interface RankedEmployeeResponse {
   id: string;
@@ -65,6 +81,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
   const { employeeResponses, error, refreshEmployeeResponses } = useEmployeeResponses(companyInfo?.id, selectedDate);
   const [calendarEvents, setCalendarEvents] = React.useState<CalendarEvent[]>([]);
   const [refreshing, setRefreshing] = React.useState(false);
+  const dateInputRef = React.useRef<HTMLInputElement>(null); // Ref for hidden date input
 
   /**
    * Initializes the component by fetching questions and employee responses.
@@ -77,28 +94,31 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
       } catch (error) {
         console.error("Failed to fetch questions:", error);
       } finally {
-        if (companyInfo && employeeResponses) {
-          setLoading(false);
-        }
+        // Ensure loading is only set to false after initial data fetch attempt
+        // regardless of whether companyInfo or employeeResponses are immediately available
+        setLoading(false);
       }
     };
 
     initialize();
-  }, [companyInfo, employeeResponses]);
+    // We remove companyInfo and employeeResponses from deps as they cause re-renders
+    // We only want to fetch questions once on mount.
+  }, []);
 
   /**
-   * Fetch calendar events when the selected date changes
+   * Fetch calendar events when the selected date or companyInfo changes
    */
   React.useEffect(() => {
     const fetchCalendarEvents = async () => {
       if (!companyInfo?.id) return;
       
-      // Set loading to true when date changes to show loading state
-      setLoading(true);
+      setLoading(true); // Show loading state while fetching
       
       try {
-        // Create date range for the selected date (full day)
         const selectedDateObj = new Date(selectedDate);
+        // Adjust for timezone offset to ensure correct date range
+        selectedDateObj.setMinutes(selectedDateObj.getMinutes() + selectedDateObj.getTimezoneOffset());
+        
         const startDate = new Date(selectedDateObj);
         startDate.setHours(0, 0, 0, 0);
         
@@ -111,42 +131,62 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
           endDate.toISOString()
         );
         
-        // Clear previous events and set new ones
         setCalendarEvents(events as CalendarEvent[]);
       } catch (error) {
         console.error("Failed to fetch calendar events:", error);
+        setCalendarEvents([]); // Reset events on error
       } finally {
-        // Set loading to false after fetching calendar events
-        if (companyInfo && employeeResponses) {
-          setLoading(false);
-        }
+        setLoading(false); // Hide loading state after fetching
       }
     };
     
     fetchCalendarEvents();
-  }, [companyInfo, employeeResponses, companyInfo?.id, selectedDate]);
+  }, [companyInfo?.id, selectedDate]); // Re-run when company ID or selected date changes
 
   /**
-   * Reset component state when date changes
-   */
-  React.useEffect(() => {
-    // Reset state when date changes
-    setLoading(true);
-    
-    // Reset calendar events
-    setCalendarEvents([]);
-    
-    // The employeeResponses will be automatically refreshed by the useEmployeeResponses hook
-    // since it depends on the selectedDate
-  }, [selectedDate]);
-
-  /**
-   * Handle date change in the date picker
+   * Handle date change from the hidden date input
    * @param e - Change event from the date input
    */
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = e.target.value;
-    setSelectedDate(newDate);
+    if (newDate) { // Ensure the date is not empty
+      setSelectedDate(newDate);
+    }
+  };
+
+  /**
+   * Sets the selected date to the previous day.
+   */
+  const handlePreviousDay = () => {
+    const currentDate = new Date(selectedDate);
+    // Directly manipulate the date part, avoiding potential timezone issues with Date constructor
+    currentDate.setDate(currentDate.getDate() - 1);
+    setSelectedDate(formatDateToISO(currentDate));
+  };
+
+  /**
+   * Sets the selected date to the next day.
+   */
+  const handleNextDay = () => {
+    const currentDate = new Date(selectedDate);
+    // Directly manipulate the date part
+    currentDate.setDate(currentDate.getDate() + 1);
+    setSelectedDate(formatDateToISO(currentDate));
+  };
+
+  /**
+   * Sets the selected date to today's effective date.
+   */
+  const handleToday = () => {
+    setSelectedDate(getEffectiveDate());
+  };
+
+  /**
+   * Triggers the hidden date input click event.
+   */
+  const handleCalendarIconClick = () => {
+    // Trigger click on the hidden input element
+    dateInputRef.current?.click(); 
   };
 
   /**
@@ -180,13 +220,21 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
       const eventEndDate = new Date(event.end_time);
       const selectedDateObj = new Date(selectedDateStr);
       
-      // Set hours to noon to avoid timezone issues
+      // Adjust for timezone offset when comparing dates
+      selectedDateObj.setMinutes(selectedDateObj.getMinutes() + selectedDateObj.getTimezoneOffset());
+      eventStartDate.setMinutes(eventStartDate.getMinutes() + eventStartDate.getTimezoneOffset());
+      eventEndDate.setMinutes(eventEndDate.getMinutes() + eventEndDate.getTimezoneOffset());
+
+      // Set hours to avoid time-based comparison issues
       selectedDateObj.setHours(12, 0, 0, 0);
+      eventStartDate.setHours(0, 0, 0, 0);
+      // Set end date check to be inclusive of the end day
+      eventEndDate.setHours(23, 59, 59, 999); 
       
-      // Check if the selected date falls within the event date range
+      // Check if the selected date falls within the event date range (inclusive)
       const isWithinDateRange = 
-        selectedDateObj >= new Date(eventStartDate.setHours(0, 0, 0, 0)) && 
-        selectedDateObj <= new Date(eventEndDate.setHours(23, 59, 59, 999));
+        selectedDateObj >= eventStartDate && 
+        selectedDateObj <= eventEndDate;
       
       return matchesEmployee && isApproved && isWithinDateRange;
     });
@@ -299,18 +347,24 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
     setLoading(true);
     
     try {
-      // Refresh questions
-      const fetchedQuestions = await fetchQuestions();
-      setQuestions(fetchedQuestions);
+      // Refresh questions (only if needed, usually fetched once)
+      // const fetchedQuestions = await fetchQuestions();
+      // setQuestions(fetchedQuestions);
       
       // Refresh employee responses
       if (refreshEmployeeResponses) {
-        await refreshEmployeeResponses();
+        await refreshEmployeeResponses(); // This uses the current selectedDate
+      } else {
+         // If hook isn't ready, force a state update to trigger useEffect for responses
+         setSelectedDate(current => current); 
       }
       
-      // Refresh calendar events
+      // Re-fetch calendar events for the selected date
       if (companyInfo?.id) {
         const selectedDateObj = new Date(selectedDate);
+        // Adjust for timezone offset
+        selectedDateObj.setMinutes(selectedDateObj.getMinutes() + selectedDateObj.getTimezoneOffset());
+
         const startDate = new Date(selectedDateObj);
         startDate.setHours(0, 0, 0, 0);
         
@@ -324,100 +378,127 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
         );
         
         setCalendarEvents(events as CalendarEvent[]);
+      } else {
+        setCalendarEvents([]); // Clear events if no company info
       }
     } catch (error) {
       console.error("Failed to refresh data:", error);
+       // Optionally show an error message to the user
     } finally {
       setRefreshing(false);
-      if (companyInfo && employeeResponses) {
-        setLoading(false);
-      }
+      setLoading(false); // Ensure loading is always turned off
     }
   };
 
-  if (loading) {
-    return (
-      <div className="response-container">
-        <div className="date-picker-container">
-          <label htmlFor="datePicker" className="date-picker-label">Select Date: </label>
-          <input
-            type="date"
-            id="datePicker"
-            value={selectedDate}
-            onChange={handleDateChange}
-            className="date-picker"
-          />
-          <button 
-            onClick={handleRefresh} 
-            className="refresh-button"
-            disabled={true}
-            title="Refresh data"
-          >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              width="16" 
-              height="16" 
-              fill="currentColor" 
-              className="refresh-icon refreshing" 
-              viewBox="0 0 16 16"
-            >
-              <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-              <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-            </svg>
-            Loading...
-          </button>
+  // Initial loading state check
+  // Show loader only if loading is true and either questions or employeeResponses haven't been fetched yet.
+  const showInitialLoader = loading && (!questions.length || !employeeResponses);
+
+  if (showInitialLoader) {
+      return (
+        <div className="response-container">
+           {/* Keep date picker visible during initial load */}
+           <div className="date-picker-container">
+             <button onClick={handleToday} className="today-button">Today</button>
+             <button onClick={handlePreviousDay} className="date-nav-button">&lt;</button>
+             <button onClick={handleNextDay} className="date-nav-button">&gt;</button>
+             <span className="selected-month-year">{formatMonthYear(selectedDate)}</span>
+             {/* Standalone Icon Button */}
+             <button onClick={handleCalendarIconClick} className="calendar-icon-button" aria-label="Select date">
+               <svg className="calendar-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+                </svg>
+             </button>
+             {/* Hidden Date Input */}
+             <input
+               ref={dateInputRef}
+               type="date"
+               value={selectedDate}
+               onChange={handleDateChange}
+               className="hidden-date-input"
+               aria-hidden="true"
+             />
+             {/* Refresh button remains but might be disabled */}
+             <button 
+               onClick={handleRefresh} 
+               className="refresh-button"
+               disabled={true} // Disabled during initial load
+               title="Refresh data"
+             >
+               {/* Loading icon */}
+               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="refresh-icon refreshing" viewBox="0 0 16 16">
+                 <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                 <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+               </svg>
+               Loading...
+             </button>
+           </div>
+           <div className="loading-center">
+             <ClipLoader size={50} color={"#007BFF"} loading={true} />
+             <p className="loading-text">Loading initial data...</p>
+           </div>
         </div>
-        <div className="loading-center">
-          <ClipLoader size={50} color={"#007BFF"} loading={loading} />
-          <p className="loading-text">Loading data for {selectedDate}...</p>
-        </div>
-      </div>
-    );
+      );
   }
 
+  // Error state check
   if (error || dataError) {
     return (
       <div className="response-container">
         <div className="date-picker-container">
-          <label htmlFor="datePicker" className="date-picker-label">Select Date: </label>
-          <input
-            type="date"
-            id="datePicker"
-            value={selectedDate}
-            onChange={handleDateChange}
-            className="date-picker"
-          />
-          <button 
-            onClick={handleRefresh} 
-            className="refresh-button"
-            disabled={refreshing}
-            title="Refresh data"
-          >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              width="16" 
-              height="16" 
-              fill="currentColor" 
-              className={`refresh-icon ${refreshing ? 'refreshing' : ''}`} 
-              viewBox="0 0 16 16"
-            >
-              <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-              <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-            </svg>
-            {refreshing ? 'Refreshing...' : 'Refresh'}
-          </button>
+           <button onClick={handleToday} className="today-button">Today</button>
+           <button onClick={handlePreviousDay} className="date-nav-button">&lt;</button>
+           <button onClick={handleNextDay} className="date-nav-button">&gt;</button>
+           <span className="selected-month-year">{formatMonthYear(selectedDate)}</span>
+           {/* Standalone Icon Button */}
+           <button onClick={handleCalendarIconClick} className="calendar-icon-button" aria-label="Select date">
+              <svg className="calendar-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+              </svg>
+           </button>
+           {/* Hidden Date Input */}
+           <input
+             ref={dateInputRef}
+             type="date"
+             value={selectedDate}
+             onChange={handleDateChange}
+             className="hidden-date-input"
+             aria-hidden="true"
+           />
+           <button 
+             onClick={handleRefresh} 
+             className="refresh-button"
+             disabled={refreshing}
+             title="Refresh data"
+           >
+             <svg 
+               xmlns="http://www.w3.org/2000/svg" 
+               width="16" 
+               height="16" 
+               fill="currentColor" 
+               className={`refresh-icon ${refreshing ? 'refreshing' : ''}`} 
+               viewBox="0 0 16 16"
+             >
+               <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+               <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+             </svg>
+             {refreshing ? 'Refreshing...' : 'Refresh'}
+           </button>
         </div>
-        <div className="error-message">Error loading employee responses: {error?.message || dataError?.message}</div>
+        {/* Display specific error */}
+        <div className="error-message">
+          Error: {error?.message || dataError?.message || "Failed to load data."}
+        </div>
       </div>
     );
   }
 
   // Filter out backup employees and add empty response object if needed
-  const filteredResponses = employeeResponses
-    .filter(emp => !emp.name.toLowerCase().includes('backup'))
+  const filteredResponses = (employeeResponses || []) // Handle potentially undefined responses
+    .filter(emp => emp && emp.name && !emp.name.toLowerCase().includes('backup'))
     .map(emp => ({
       ...emp,
-      response: emp.response || { questions: [] }
+      response: emp.response || { questions: [] } // Ensure response object exists
     }));
 
   // Sort employees by submission time and assign ranks to top 3
@@ -425,8 +506,8 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
     .filter(emp => emp.submittedTime && !isEmployeeOnLeave(emp.name)) // Only consider employees who submitted and are not on leave
     .sort((a, b) => {
       // Sort by submission time (earliest first)
-      if (!a.submittedTime) return 1;
-      if (!b.submittedTime) return -1;
+      if (!a.submittedTime) return 1; // Should not happen due to filter, but safe guard
+      if (!b.submittedTime) return -1; // Should not happen due to filter, but safe guard
       return new Date(a.submittedTime).getTime() - new Date(b.submittedTime).getTime();
     })
     .map((emp, index) => {
@@ -446,59 +527,93 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
   });
 
   // Final list of all responses with rank information
-  // Sort all responses by submission time (earliest first), then put non-submitted at the end
+  // Sort all responses: submitted first (by time), then non-submitted
   const allResponses = filteredResponses
     .map(emp => ({
       ...emp,
       rank: rankMap.get(emp.id)
     }))
     .sort((a, b) => {
-      // If both have submitted, sort by submission time
-      if (a.submittedTime && b.submittedTime) {
+      const aOnLeave = isEmployeeOnLeave(a.name);
+      const bOnLeave = isEmployeeOnLeave(b.name);
+      const aSubmitted = !!a.submittedTime;
+      const bSubmitted = !!b.submittedTime;
+
+      // Prioritize submitted responses over non-submitted
+      if (aSubmitted && !bSubmitted) return -1;
+      if (!aSubmitted && bSubmitted) return 1;
+
+      // If both submitted, sort by submission time
+      if (aSubmitted && bSubmitted && a.submittedTime && b.submittedTime) {
         return new Date(a.submittedTime).getTime() - new Date(b.submittedTime).getTime();
       }
       
-      // If only one has submitted, put the one who submitted first
-      if (a.submittedTime && !b.submittedTime) return -1;
-      if (!a.submittedTime && b.submittedTime) return 1;
-      
-      // If neither has submitted, maintain original order
-      return 0;
+      // If both not submitted, prioritize those NOT on leave
+      if (!aSubmitted && !bSubmitted) {
+         if (!aOnLeave && bOnLeave) return -1;
+         if (aOnLeave && !bOnLeave) return 1;
+      }
+
+      // Otherwise maintain original order or sort alphabetically by name as fallback
+      return a.name.localeCompare(b.name);
     });
 
   return (
     <div className="response-container">
       <div className="date-picker-container">
-        <label htmlFor="datePicker" className="date-picker-label">Select Date: </label>
-        <input
-          type="date"
-          id="datePicker"
-          value={selectedDate}
-          onChange={handleDateChange}
-          className="date-picker"
-        />
-        <button 
-          onClick={handleRefresh} 
-          className="refresh-button"
-          disabled={refreshing}
-          title="Refresh data"
-        >
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            width="16" 
-            height="16" 
-            fill="currentColor" 
-            className={`refresh-icon ${refreshing ? 'refreshing' : ''}`}
-            viewBox="0 0 16 16"
-          >
-            <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-          </svg>
-          {refreshing ? 'Refreshing...' : 'Refresh'}
-        </button>
+         {/* Today, Previous, Next Buttons */}
+         <button onClick={handleToday} className="today-button">Today</button>
+         <button onClick={handlePreviousDay} className="date-nav-button">&lt;</button>
+         <button onClick={handleNextDay} className="date-nav-button">&gt;</button>
+         
+         <span className="selected-month-year">{formatMonthYear(selectedDate)}</span>
+         {/* Standalone Icon Button */}
+         <button onClick={handleCalendarIconClick} className="calendar-icon-button" aria-label="Select date">
+            <svg className="calendar-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+               <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+            </svg>
+         </button>
+         {/* Hidden Date Input - controlled by the button */}
+         <input
+           ref={dateInputRef}
+           type="date"
+           value={selectedDate}
+           onChange={handleDateChange}
+           className="hidden-date-input" 
+           aria-hidden="true"
+         />
+         
+         {/* Refresh Button */}
+         <button 
+           onClick={handleRefresh} 
+           className="refresh-button"
+           disabled={loading || refreshing} // Disable while loading/refreshing
+           title="Refresh data"
+         >
+           <svg 
+             xmlns="http://www.w3.org/2000/svg" 
+             width="16" 
+             height="16" 
+             fill="currentColor" 
+             className={`refresh-icon ${refreshing ? 'refreshing' : ''}`}
+             viewBox="0 0 16 16"
+           >
+             <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+             <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+           </svg>
+           {refreshing ? 'Refreshing...' : (loading ? 'Loading...' : 'Refresh')}
+         </button>
       </div>
       
-      <h3 className="response-title">Submitted Responses</h3>
+      {/* Loading indicator below date picker if loading data for a new date */}
+       {loading && !showInitialLoader && (
+         <div className="loading-inline">
+           <ClipLoader size={20} color={"#007BFF"} loading={true} />
+           <span className="loading-text-inline">Loading data for {selectedDate}...</span>
+         </div>
+       )}
+      
+      <h3 className="response-title">Submitted Responses for {selectedDate}</h3>
       <table className="response-table">
         <thead>
           <tr>
@@ -516,25 +631,32 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
               const displayText = replacements[q.question_text] || q.question_text;
               
               // Determine column class based on question type
-              let columnClass = 'col-wins';
-              if (q.question_text.includes('need critical help')) {
-                columnClass = 'col-help';
-              } else if (q.question_text.includes('One-word opener')) {
-                columnClass = 'col-one-word';
-              } else if (q.question_text.includes('Today Goals and Targeted Results')) {
-                columnClass = 'col-goals';
-              } else if (q.question_text.includes('Main Priority')) {
-                columnClass = 'col-priority';
-              }
+              let columnClass = 'col-wins'; // Default
+               if (q.question_text.includes('need critical help')) {
+                 columnClass = 'col-help';
+               } else if (q.question_text.includes('One-word opener')) {
+                 columnClass = 'col-one-word';
+               } else if (q.question_text.includes('Today Goals and Targeted Results')) {
+                 columnClass = 'col-goals';
+               } else if (q.question_text.includes('Main Priority')) { // OKR
+                 columnClass = 'col-priority';
+               }
               
               return (
-                <th key={index} className={columnClass}>{displayText}</th>
+                <th key={q.id || index} className={columnClass}>{displayText}</th> // Use question ID as key if available
               );
             })}
             <th className="col-submitted">Submitted At</th>
           </tr>
         </thead>
         <tbody>
+           {allResponses.length === 0 && !loading && (
+             <tr>
+               <td colSpan={questions.length + 3} className="no-responses-cell">
+                 No responses submitted for {selectedDate}.
+               </td>
+             </tr>
+           )}
           {allResponses.map(({ id, name, response, submittedTime, profile_pic_url, rank }, index) => {
             // Check if employee is on leave
             const onLeave = isEmployeeOnLeave(name);
@@ -561,7 +683,8 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                           />
                         ) : (
                           <div className="profile-pic-placeholder">
-                            {name.charAt(0)}
+                             {/* Display initials */}
+                             {name?.split(' ').map(n => n[0]).join('') || '?'}
                           </div>
                         )}
                       </div>
@@ -576,107 +699,69 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                   </div>
                 </td>
                 
-                {onLeave && !hasSubmitted ? (
-                  // If employee is on leave and has not submitted, show "Team member is on leave" across all cells
-                  <td colSpan={questions.length + 1} className="employee-on-leave-cell">
-                    <div className="employee-on-leave">Team member is on leave</div>
-                  </td>
-                ) : onLeave && hasSubmitted ? (
-                  // If employee is on leave but has submitted responses, show both the leave status and their answers
-                  <>
-                    {questions.map((q, qIndex) => {
-                      // Determine column class based on question type
-                      let columnClass = '';
-                      if (q.question_text.includes('need critical help')) {
-                        columnClass = 'col-help';
-                      } else if (q.question_text.includes('One-word opener')) {
-                        columnClass = 'col-one-word';
-                      } else if (q.question_text.includes('Today Goals and Targeted Results')) {
-                        columnClass = 'col-goals';
-                      } else if (q.question_text.includes('Main Priority')) {
-                        columnClass = 'col-priority';
-                      } else {
-                        columnClass = 'col-wins';
-                      }
-                      
-                      // Add the "on-leave" class to the column class
-                      columnClass = `${columnClass} on-leave-cell`;
-                      
-                      return (
-                        <td key={qIndex} className={columnClass}>
-                          {response.questions.find((rq) => rq.question_id === q.id)?.answer_text?.split('\n').map((line, i) => {
-                            const isGoalOrResult = q.question_text.includes('Today Goals') || q.question_text.includes('Targeted Results');
-                            const isOneWord = q.question_text.includes('One-word opener');
-                            
-                            // Capitalize the first letter of each line
-                            const capitalizedLine = capitalizeFirstLetter(line);
-                            
-                            // For one-word opener, don't add line breaks and ensure full display
-                            if (isOneWord) {
-                              return <span className="one-word-text">{capitalizedLine}</span>;
-                            }
-                            
-                            return (
-                              <React.Fragment key={i}>
-                                {isGoalOrResult ? `• ${capitalizedLine}` : capitalizedLine}
-                                <br />
-                              </React.Fragment>
-                            );
-                          }) || ''}
-                        </td>
-                      );
-                    })}
-                    <td className="submitted-time col-submitted on-leave-cell">
-                      {formatSubmissionTime(submittedTime, name, rank as number)}
-                    </td>
-                  </>
-                ) : (
-                  // If not on leave, render normal cells
-                  <>
-                    {questions.map((q, qIndex) => {
-                      // Determine column class based on question type
-                      let columnClass = '';
-                      if (q.question_text.includes('need critical help')) {
-                        columnClass = 'col-help';
-                      } else if (q.question_text.includes('One-word opener')) {
-                        columnClass = 'col-one-word';
-                      } else if (q.question_text.includes('Today Goals and Targeted Results')) {
-                        columnClass = 'col-goals';
-                      } else if (q.question_text.includes('Main Priority')) {
-                        columnClass = 'col-priority';
-                      } else {
-                        columnClass = 'col-wins';
-                      }
-                      
-                      return (
-                        <td key={qIndex} className={columnClass}>
-                          {response.questions.find((rq) => rq.question_id === q.id)?.answer_text?.split('\n').map((line, i) => {
-                            const isGoalOrResult = q.question_text.includes('Today Goals') || q.question_text.includes('Targeted Results');
-                            const isOneWord = q.question_text.includes('One-word opener');
-                            
-                            // Capitalize the first letter of each line
-                            const capitalizedLine = capitalizeFirstLetter(line);
-                            
-                            // For one-word opener, don't add line breaks and ensure full display
-                            if (isOneWord) {
-                              return <span className="one-word-text">{capitalizedLine}</span>;
-                            }
-                            
-                            return (
-                              <React.Fragment key={i}>
-                                {isGoalOrResult ? `• ${capitalizedLine}` : capitalizedLine}
-                                <br />
-                              </React.Fragment>
-                            );
-                          }) || ''}
-                        </td>
-                      );
-                    })}
-                    <td className="submitted-time col-submitted">
-                      {formatSubmissionTime(submittedTime, name, rank as number)}
-                    </td>
-                  </>
-                )}
+                {/* Logic for displaying leave status or answers */}
+                 {onLeave && !hasSubmitted ? (
+                   // If employee is on leave and has not submitted, show leave status across all answer cells
+                   <td colSpan={questions.length} className="employee-on-leave-cell-span">
+                     <div className="employee-on-leave">Team member is on leave</div>
+                   </td>
+                 ) : (
+                   // If employee submitted or is not on leave, show answers
+                   <>
+                     {questions.map((q, qIndex) => {
+                       // Determine column class
+                       let columnClass = 'col-wins'; // Default
+                       if (q.question_text.includes('need critical help')) {
+                         columnClass = 'col-help';
+                       } else if (q.question_text.includes('One-word opener')) {
+                         columnClass = 'col-one-word';
+                       } else if (q.question_text.includes('Today Goals and Targeted Results')) {
+                         columnClass = 'col-goals';
+                       } else if (q.question_text.includes('Main Priority')) { // OKR
+                         columnClass = 'col-priority';
+                       }
+                       
+                       // Add "on-leave-cell" class if the employee is on leave but submitted
+                       if (onLeave && hasSubmitted) {
+                         columnClass = `${columnClass} on-leave-cell`;
+                       }
+                       
+                       const answer = response?.questions?.find((rq) => rq.question_id === q.id)?.answer_text || '';
+
+                       return (
+                         <td key={`${id}-${q.id || qIndex}`} className={columnClass}>
+                           {answer.split('\\n').map((line, i) => {
+                             const isGoalOrResult = q.question_text.includes('Today Goals') || q.question_text.includes('Targeted Results');
+                             const isOneWord = q.question_text.includes('One-word opener');
+                             
+                             // Capitalize the first letter, trim whitespace
+                             const capitalizedLine = capitalizeFirstLetter(line.trim());
+                             
+                             if (!capitalizedLine) return null; // Don't render empty lines
+
+                             // For one-word opener, ensure single line display
+                             if (isOneWord) {
+                               // Wrap in span to potentially apply specific styles later
+                               return <span key={i} className="one-word-text">{capitalizedLine}</span>;
+                             }
+                             
+                             return (
+                               <React.Fragment key={i}>
+                                 {isGoalOrResult ? `• ${capitalizedLine}` : capitalizedLine}
+                                 {i < answer.split('\\n').length - 1 && <br />} {/* Add <br> only if not the last line */}
+                               </React.Fragment>
+                             );
+                           })}
+                         </td>
+                       );
+                     })}
+                   </>
+                 )}
+
+                 {/* Submitted At column */}
+                 <td className={`submitted-time col-submitted ${onLeave && hasSubmitted ? 'on-leave-cell' : ''}`}>
+                   {formatSubmissionTime(submittedTime, name, rank as number)}
+                 </td>
               </tr>
             );
           })}

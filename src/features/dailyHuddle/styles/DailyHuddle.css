@@ -80,11 +80,17 @@
   margin-bottom: 20px;
   display: flex;
   align-items: center;
+  gap: 15px;
 }
 
 .date-picker-label {
   margin-right: 10px;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  color: #555;
 }
 
 .date-picker {
@@ -997,4 +1003,140 @@ tr.top-performer-3 {
   display: flex;
   align-items: center;
   margin-bottom: 20px;
+}
+
+/* Style the new Month/Year span */
+.selected-month-year {
+  font-size: 1.2em;
+  font-weight: 500;
+  color: #333;
+  margin: 0 10px;
+  white-space: nowrap;
+}
+
+/* Adjust button styles */
+.today-button {
+  padding: 8px 16px;
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  order: 1;
+}
+
+.today-button:hover {
+  background-color: #f0f0f0;
+}
+
+.date-nav-button {
+  padding: 6px 10px;
+  background-color: transparent;
+  color: #5f6368;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.5em;
+  line-height: 1;
+  order: 2;
+}
+
+.date-nav-button:hover {
+  background-color: #f0f0f0;
+}
+
+/* Position Refresh button last */
+.refresh-button {
+  order: 5;
+}
+
+.response-table td .member-name {
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* Hidden Date Input */
+.hidden-date-input {
+  position: absolute;
+  left: -9999px; /* Move off-screen */
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none; /* Prevent interaction */
+}
+
+/* Standalone calendar icon button */
+.calendar-icon-button {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 6px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  order: 4; /* Position after Month/Year text */
+  margin-left: -5px; /* Nudge closer to the text */
+}
+
+.calendar-icon-button:hover {
+  background-color: #f0f0f0;
+}
+
+/* Style the new Month/Year span */
+.selected-month-year {
+  font-size: 1.2em; /* Slightly larger font */
+  font-weight: 500;
+  color: #333;
+  margin: 0 10px; /* Add spacing around the text */
+  white-space: nowrap;
+  order: 3; /* Position after nav buttons */
+  margin-right: 0; /* Remove previous margin */
+}
+
+/* Calendar Icon Style */
+.calendar-icon {
+  width: 1em; /* Control size using em */
+  height: 1em;
+  line-height: 1;
+  color: #5f6368;
+  vertical-align: middle; /* Align with text */
+}
+
+/* Adjust button styles */
+.today-button {
+  padding: 8px 16px;
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  order: 1;
+}
+
+.today-button:hover {
+  background-color: #f0f0f0;
+}
+
+.date-nav-button {
+  padding: 6px 10px;
+  background-color: transparent;
+  color: #5f6368;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.5em;
+  line-height: 1;
+  order: 2;
+}
+
+.date-nav-button:hover {
+  background-color: #f0f0f0;
+}
+
+/* Position Refresh button last */
+.refresh-button {
+  order: 5;
 }
