@@ -416,8 +416,10 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
         // If no existing tier was found and editValue is a valid number, create a new one
         if (!foundTier && isValidNumber) {
           const newTier: ProductPriceTier = {
+            id: -1, // Temporary ID
+            created_at: new Date().toISOString(), // Temporary timestamp
             product_id: productId,
-            min_cartons: null, // Assuming carton count isn't directly known when adding pack price tier
+            min_cartons: null,
             min_packs: pack,
             price_per_unit: String(parsedValue),
             currency: selectedCurrency,
@@ -439,9 +441,11 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
         // If no existing tier was found and editValue is a valid number, create a new one
         if (!foundTier && isValidNumber) {
            const newTier: ProductPriceTier = {
+            id: -1, // Temporary ID
+            created_at: new Date().toISOString(), // Temporary timestamp
             product_id: productId,
             min_cartons: carton,
-            min_packs: null, // Assuming pack count isn't directly known when adding carton price tier
+            min_packs: null,
             price_per_unit: String(parsedValue),
             currency: selectedCurrency,
           };
