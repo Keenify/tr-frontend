@@ -52,6 +52,30 @@ const formatMonthYear = (dateString: string | Date): string => {
   });
 };
 
+// Helper function to get ordinal suffix for a number
+const getOrdinalSuffix = (day: number): string => {
+  if (day > 3 && day < 21) return 'th';
+  switch (day % 10) {
+    case 1: return 'st';
+    case 2: return 'nd';
+    case 3: return 'rd';
+    default: return 'th';
+  }
+};
+
+// Helper function to format date with ordinal suffix
+const formatDateWithOrdinal = (dateString: string): string => {
+  const date = new Date(dateString);
+  // Adjust for timezone offset
+  date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+  
+  const day = date.getDate();
+  const month = date.toLocaleString('en-US', { month: 'long' });
+  const year = date.getFullYear();
+  
+  return `${day}${getOrdinalSuffix(day)} ${month} ${year}`;
+};
+
 // Interface for employee response with rank
 interface RankedEmployeeResponse {
   id: string;
@@ -672,7 +696,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
          </div>
        )}
       
-      <h3 className="response-title">Submitted Responses for {selectedDate}</h3>
+      <h3 className="response-title">Submitted Responses for {formatDateWithOrdinal(selectedDate)}</h3>
       <table className="response-table">
         <thead>
           <tr>
