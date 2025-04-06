@@ -144,13 +144,23 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
   }, [companyInfo?.id, selectedDate]); // Re-run when company ID or selected date changes
 
   /**
-   * Handle date change from the hidden date input
-   * @param e - Change event from the date input
+   * Handle date change from the date input
    */
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = e.target.value;
-    if (newDate) { // Ensure the date is not empty
+    if (newDate) {
       setSelectedDate(newDate);
+    }
+  };
+
+  /**
+   * Handle calendar icon click
+   */
+  const handleCalendarIconClick = () => {
+    if (dateInputRef.current) {
+      // Focus and show the date picker
+      dateInputRef.current.focus();
+      dateInputRef.current.showPicker();
     }
   };
 
@@ -179,14 +189,6 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
    */
   const handleToday = () => {
     setSelectedDate(getEffectiveDate());
-  };
-
-  /**
-   * Triggers the hidden date input click event.
-   */
-  const handleCalendarIconClick = () => {
-    // Trigger click on the hidden input element
-    dateInputRef.current?.click(); 
   };
 
   /**
@@ -403,21 +405,40 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
              <button onClick={handlePreviousDay} className="date-nav-button">&lt;</button>
              <button onClick={handleNextDay} className="date-nav-button">&gt;</button>
              <span className="selected-month-year">{formatMonthYear(selectedDate)}</span>
-             {/* Standalone Icon Button */}
-             <button onClick={handleCalendarIconClick} className="calendar-icon-button" aria-label="Select date">
-               <svg className="calendar-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
-                </svg>
-             </button>
-             {/* Hidden Date Input */}
-             <input
-               ref={dateInputRef}
-               type="date"
-               value={selectedDate}
-               onChange={handleDateChange}
-               className="hidden-date-input"
-               aria-hidden="true"
-             />
+             {/* Calendar Icon Button with its container for positioning */}
+             <div style={{ position: 'relative' }}>
+               <button 
+                 onClick={handleCalendarIconClick} 
+                 className="calendar-icon-button" 
+                 aria-label="Select date"
+               >
+                 <svg className="calendar-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                   <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+                 </svg>
+               </button>
+               
+               {/* Date Input - positioned relative to its container */}
+               <input
+                 ref={dateInputRef}
+                 type="date"
+                 value={selectedDate}
+                 onChange={handleDateChange}
+                 className="hidden-date-input"
+                 aria-label="Select date"
+                 title="Select date"
+                 style={{
+                   position: 'absolute',
+                   opacity: 0,
+                   cursor: 'pointer',
+                   top: '100%', // Position below the button
+                   left: '50%', // Center horizontally
+                   transform: 'translateX(-50%)', // Center adjustment
+                   width: '40px',
+                   height: '40px',
+                   zIndex: 1,
+                 }}
+               />
+             </div>
              {/* Refresh button remains but might be disabled */}
              <button 
                onClick={handleRefresh} 
@@ -450,21 +471,40 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
            <button onClick={handlePreviousDay} className="date-nav-button">&lt;</button>
            <button onClick={handleNextDay} className="date-nav-button">&gt;</button>
            <span className="selected-month-year">{formatMonthYear(selectedDate)}</span>
-           {/* Standalone Icon Button */}
-           <button onClick={handleCalendarIconClick} className="calendar-icon-button" aria-label="Select date">
-              <svg className="calendar-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
-              </svg>
-           </button>
-           {/* Hidden Date Input */}
-           <input
-             ref={dateInputRef}
-             type="date"
-             value={selectedDate}
-             onChange={handleDateChange}
-             className="hidden-date-input"
-             aria-hidden="true"
-           />
+           {/* Calendar Icon Button with its container for positioning */}
+           <div style={{ position: 'relative' }}>
+             <button 
+               onClick={handleCalendarIconClick} 
+               className="calendar-icon-button" 
+               aria-label="Select date"
+             >
+               <svg className="calendar-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                 <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+               </svg>
+             </button>
+             
+             {/* Date Input - positioned relative to its container */}
+             <input
+               ref={dateInputRef}
+               type="date"
+               value={selectedDate}
+               onChange={handleDateChange}
+               className="hidden-date-input"
+               aria-label="Select date"
+               title="Select date"
+               style={{
+                 position: 'absolute',
+                 opacity: 0,
+                 cursor: 'pointer',
+                 top: '100%', // Position below the button
+                 left: '50%', // Center horizontally
+                 transform: 'translateX(-50%)', // Center adjustment
+                 width: '40px',
+                 height: '40px',
+                 zIndex: 1,
+               }}
+             />
+           </div>
            <button 
              onClick={handleRefresh} 
              className="refresh-button"
@@ -567,21 +607,40 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
          <button onClick={handleNextDay} className="date-nav-button">&gt;</button>
          
          <span className="selected-month-year">{formatMonthYear(selectedDate)}</span>
-         {/* Standalone Icon Button */}
-         <button onClick={handleCalendarIconClick} className="calendar-icon-button" aria-label="Select date">
-            <svg className="calendar-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+         {/* Calendar Icon Button with its container for positioning */}
+         <div style={{ position: 'relative' }}>
+           <button 
+             onClick={handleCalendarIconClick} 
+             className="calendar-icon-button" 
+             aria-label="Select date"
+           >
+             <svg className="calendar-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
-            </svg>
-         </button>
-         {/* Hidden Date Input - controlled by the button */}
-         <input
-           ref={dateInputRef}
-           type="date"
-           value={selectedDate}
-           onChange={handleDateChange}
-           className="hidden-date-input" 
-           aria-hidden="true"
-         />
+             </svg>
+           </button>
+           
+           {/* Date Input - positioned relative to its container */}
+           <input
+             ref={dateInputRef}
+             type="date"
+             value={selectedDate}
+             onChange={handleDateChange}
+             className="hidden-date-input"
+             aria-label="Select date"
+             title="Select date"
+             style={{
+               position: 'absolute',
+               opacity: 0,
+               cursor: 'pointer',
+               top: '100%', // Position below the button
+               left: '50%', // Center horizontally
+               transform: 'translateX(-50%)', // Center adjustment
+               width: '40px',
+               height: '40px',
+               zIndex: 1,
+             }}
+           />
+         </div>
          
          {/* Refresh Button */}
          <button 

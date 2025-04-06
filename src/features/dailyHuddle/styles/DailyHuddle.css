@@ -1058,12 +1058,17 @@ tr.top-performer-3 {
 
 /* Hidden Date Input */
 .hidden-date-input {
-  position: absolute;
-  left: -9999px; /* Move off-screen */
-  opacity: 0;
-  width: 1px;
-  height: 1px;
-  pointer-events: none; /* Prevent interaction */
+  /* Visually hide but keep accessible for programmatic click */
+  opacity: 0; 
+  position: absolute; /* Take out of flow, but keep near button */
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  z-index: -1; /* Ensure it's behind other elements */
 }
 
 /* Standalone calendar icon button */
@@ -1139,4 +1144,57 @@ tr.top-performer-3 {
 /* Position Refresh button last */
 .refresh-button {
   order: 5;
+}
+
+/* Calendar icon button container */
+.calendar-icon-button {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.calendar-icon-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Calendar icon */
+.calendar-icon {
+  width: 16px;
+  height: 16px;
+  color: #666;
+}
+
+/* Hidden date input container */
+.date-picker-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  position: relative; /* Ensure proper stacking context */
+}
+
+/* Hidden date input */
+.hidden-date-input {
+  position: absolute;
+  opacity: 0;
+  z-index: 100; /* Ensure it's above other elements */
+}
+
+/* Ensure the calendar popup appears above other content */
+.hidden-date-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  z-index: 101;
 }
