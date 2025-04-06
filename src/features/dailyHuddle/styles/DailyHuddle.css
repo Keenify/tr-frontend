@@ -1198,3 +1198,23 @@ tr.top-performer-3 {
   cursor: pointer;
   z-index: 101;
 }
+
+/* Remove task-item related styles */
+/* .task-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+
+.task-bullet {
+  margin-right: 8px;
+  min-width: 12px;
+}
+
+.task-text {
+  flex: 1;
+}
+
+.task-item:last-child {
+  margin-bottom: 0;
+} */

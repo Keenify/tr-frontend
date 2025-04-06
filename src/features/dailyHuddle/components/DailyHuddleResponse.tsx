@@ -813,7 +813,8 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
 
                        return (
                          <td key={`${id}-${q.id || qIndex}`} className={columnClass}>
-                           {answer.split('\\n').map((line, i) => {
+                           {/* Split by actual newline character */}
+                           {answer.split('\n').map((line, i) => {
                              const isGoalOrResult = q.question_text.includes('Today Goals') || q.question_text.includes('Targeted Results');
                              const isOneWord = q.question_text.includes('One-word opener');
                              
@@ -824,14 +825,23 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
 
                              // For one-word opener, ensure single line display
                              if (isOneWord) {
-                               // Wrap in span to potentially apply specific styles later
                                return <span key={i} className="one-word-text">{capitalizedLine}</span>;
                              }
                              
+                             // For Important Tasks Today, render each line as a bullet point
+                             if (isGoalOrResult) {
+                               return (
+                                 // Use a simple div with the bullet point character directly
+                                 <div key={i}>
+                                   • {capitalizedLine}
+                                 </div>
+                               );
+                             }
+                             
+                             // For other questions, display as plain text
                              return (
                                <React.Fragment key={i}>
-                                 {isGoalOrResult ? `• ${capitalizedLine}` : capitalizedLine}
-                                 {i < answer.split('\\n').length - 1 && <br />} {/* Add <br> only if not the last line */}
+                                 {capitalizedLine}
                                </React.Fragment>
                              );
                            })}
