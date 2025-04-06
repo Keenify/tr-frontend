@@ -212,7 +212,13 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
             const blobUrl = URL.createObjectURL(pdfBlob);
             const link = document.createElement("a");
             link.href = blobUrl;
-            link.download = `export-quotation-${customerCompanyName}-${currentDate}.pdf`;
+            // Format date as YYYY-MM-DD for the filename
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+            const day = String(now.getDate()).padStart(2, '0');
+            const formattedDateForFilename = `${year}-${month}-${day}`;
+            link.download = `Quotation - ${customerCompanyName} (${formattedDateForFilename}).pdf`;
             link.click();
             URL.revokeObjectURL(blobUrl);
         } catch (pdfError) { console.error("Error generating PDF:", pdfError); }
