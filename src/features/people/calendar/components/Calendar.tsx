@@ -445,13 +445,27 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
 
   const handleWheelScroll = useCallback((event: WheelEvent) => {
     const now = Date.now();
+    const containerElement = containerRef.current;
+    const calendarApi = calendarRef.current?.getApi();
+
+    if (!containerElement || !calendarApi) return;
+
+    // Check if the scroll event occurred within the calendar container bounds
+    const rect = containerElement.getBoundingClientRect();
+    const isWithinBounds = 
+      event.clientX >= rect.left &&
+      event.clientX <= rect.right &&
+      event.clientY >= rect.top &&
+      event.clientY <= rect.bottom;
+
+    if (!isWithinBounds) return;
+
+    // Prevent default scroll behavior when within calendar bounds
+    event.preventDefault();
 
     if (now - lastScrollTime.current < scrollTimeout) {
       return;
     }
-
-    const calendarApi = calendarRef.current?.getApi();
-    if (!calendarApi) return;
 
     if (event.deltaY < 0) {
       console.log('🖱️ Scroll Up Detected -> Previous Month');
@@ -468,7 +482,8 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
     const containerElement = containerRef.current;
 
     if (containerElement) {
-      containerElement.addEventListener('wheel', handleWheelScroll, { passive: true });
+      // Remove passive option to allow preventDefault()
+      containerElement.addEventListener('wheel', handleWheelScroll, { passive: false });
       console.log('🖱️ Wheel event listener attached to calendar container.');
     }
 
