@@ -28,6 +28,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     const [isPriceTierModalOpen, setIsPriceTierModalOpen] = useState<boolean>(false);
     const [selectedProductIdForModal, setSelectedProductIdForModal] = useState<number | null>(null);
     const [selectedProductNameForModal, setSelectedProductNameForModal] = useState<string | null>(null);
+    const [selectAllStatus, setSelectAllStatus] = useState<'none' | 'some' | 'all'>('none'); // State for Select All checkbox
 
     // --- Input Validation State & Refs ---
     const [customerNameError, setCustomerNameError] = useState<boolean>(false);
@@ -145,6 +146,16 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     const handleTiersUpdated = useCallback(() => { fetchAndSetTiers(selections); }, [fetchAndSetTiers, selections]);
     const handleProductSelect = (productId: number, isSelected: boolean) => { setSelections(prev => prev.map(p => p.product_id === productId ? { ...p, isSelected, variants: p.variants.map(v => ({ ...v, isSelected })) } : p)); };
     const handleVariantSelect = (productId: number, variantId: number, isSelected: boolean) => { setSelections(prev => prev.map(p => { if (p.product_id === productId) { const updatedV = p.variants.map(v => v.variant_id === variantId ? { ...v, isSelected } : v); const allVUnselected = updatedV.every(v => !v.isSelected); return { ...p, isSelected: !allVUnselected, variants: updatedV }; } return p; })); };
+    const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const isChecked = event.target.checked;
+        setSelections(prev => 
+            prev.map(p => ({
+                ...p,
+                isSelected: isChecked,
+                variants: p.variants.map(v => ({ ...v, isSelected: isChecked }))
+            }))
+        );
+    };
     const handleCellEdit = (productId: number, field: string, value: string) => {
         setSelections(prev => prev.map(p => {
             if (p.product_id === productId && !['fob_price_per_carton', 'fob_price_per_unit', 'recommended_retail_price_usd'].includes(field)) {
@@ -247,6 +258,24 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
         return base;
     };
 
+    // --- Effect for Select All Checkbox State ---
+    useEffect(() => {
+        if (selections.length === 0) {
+            setSelectAllStatus('none');
+            return;
+        }
+        const allSelected = selections.every(p => p.isSelected);
+        const noneSelected = selections.every(p => !p.isSelected);
+
+        if (allSelected) {
+            setSelectAllStatus('all');
+        } else if (noneSelected) {
+            setSelectAllStatus('none');
+        } else {
+            setSelectAllStatus('some');
+        }
+    }, [selections]);
+
     // --- Render Logic ---
     const mainTableColumnCount = 3 + getTableColumns().length + 1;
     const variantTableColSpan = mainTableColumnCount;
@@ -322,7 +351,22 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                     <table className="min-w-full border-collapse border border-gray-300 dark:border-gray-600">
                          <thead>
                             <tr className="bg-orange-100 dark:bg-gray-700">
-                                <th className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm font-medium" style={{ backgroundColor: "#FF9933" }}>Select</th>
+                                <th className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm font-medium" style={{ backgroundColor: "#FF9933" }}>
+                                    {/* Select All Checkbox */}
+                                    <input 
+                                        type="checkbox" 
+                                        className="h-4 w-4 dark:bg-gray-600 dark:border-gray-500"
+                                        aria-label="Select all products"
+                                        checked={selectAllStatus === 'all'}
+                                        ref={input => {
+                                            if (input) {
+                                                input.indeterminate = selectAllStatus === 'some';
+                                            }
+                                        }}
+                                        onChange={handleSelectAll}
+                                        disabled={selections.length === 0} // Disable if no products
+                                    />
+                                </th>
                                 <th className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm font-medium" style={{ backgroundColor: "#FF9933" }}>Product Name</th>
                                 <th className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm font-medium" style={{ backgroundColor: "#FF9933" }}>Container Size</th>
                                 <th className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm font-medium" style={{ backgroundColor: "#FF9933" }}>Cartons/Container</th>

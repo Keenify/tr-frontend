@@ -105,6 +105,9 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
   const customerNameRef = React.useRef<HTMLInputElement>(null);
   const salesManagerRef = React.useRef<HTMLInputElement>(null);
 
+  // Add state for Select All checkbox
+  const [selectAllStatus, setSelectAllStatus] = React.useState<'none' | 'some' | 'all'>('none');
+
   // Add effect to update currency when branch changes
   React.useEffect(() => {
     setSelectedCurrency(branch === 'SG' ? 'SGD' : 'MYR');
@@ -293,6 +296,36 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
     });
     setIsGiftBox(hasGiftBoxProduct);
   }, [selectedProducts, products]);
+
+  // Function to handle Select All checkbox change
+  const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const isChecked = event.target.checked;
+    if (isChecked) {
+      const allProductIds = new Set(products.map(p => p.id));
+      setSelectedProducts(allProductIds);
+
+      // Select all flavors for non-gift box items
+      const newFlavors: { [key: number]: Set<string> } = {};
+      products.forEach(product => {
+        const isGiftBox = product.name.toLowerCase().includes('gift box');
+        if (!isGiftBox && productVariants[product.id]) {
+          newFlavors[product.id] = new Set(productVariants[product.id].map(v => v.name));
+        } else {
+          // For gift boxes or products with no variants, initialize with empty set
+          newFlavors[product.id] = new Set();
+        }
+      });
+      setSelectedFlavors(newFlavors);
+      // Check if any selected product is a gift box
+      const hasGiftBox = products.some(p => p.name.toLowerCase().includes('gift box'));
+      setIsGiftBox(hasGiftBox);
+    } else {
+      setSelectedProducts(new Set());
+      setSelectedFlavors({});
+      setIsGiftBox(false); // No products selected, so no gift box
+      setGiftBoxConfiguration(null); // Clear gift box config
+    }
+  };
 
   // Function to toggle product selection
   const toggleProductSelection = (productId: number) => {
@@ -701,6 +734,22 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
     whiteSpace: 'nowrap'
   };
 
+  // Effect to update the Select All checkbox status
+  React.useEffect(() => {
+    if (products.length === 0) {
+      setSelectAllStatus('none');
+      return;
+    }
+    const numSelected = selectedProducts.size;
+    if (numSelected === 0) {
+      setSelectAllStatus('none');
+    } else if (numSelected === products.length) {
+      setSelectAllStatus('all');
+    } else {
+      setSelectAllStatus('some');
+    }
+  }, [selectedProducts, products]);
+
   if (loadingProducts) {
     return <div>Loading products...</div>;
   }
@@ -813,7 +862,20 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
                 className="table-header-cell"
                 style={{ width: "60px", backgroundColor: "#FF9933" }}
               >
-                Select
+                {/* Select All Checkbox */}
+                <input 
+                  type="checkbox" 
+                  title="Select all products"
+                  style={{ transform: 'scale(1.2)' }} // Slightly larger checkbox
+                  checked={selectAllStatus === 'all'}
+                  ref={input => {
+                      if (input) {
+                          input.indeterminate = selectAllStatus === 'some';
+                      }
+                  }}
+                  onChange={handleSelectAll}
+                  disabled={products.length === 0} // Disable if no products
+                />
               </TableCell>
               <TableCell
                 align="center"
