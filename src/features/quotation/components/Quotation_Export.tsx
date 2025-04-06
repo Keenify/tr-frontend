@@ -99,9 +99,11 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                 setCollapsedRows(new Set(transformedData.map(p => p.product_id)));
                 // Fetch tiers only after successfully getting products
                 await fetchAndSetTiers(transformedData);
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('Failed to fetch initial export details:', err);
-                setFetchError(err.message || 'Failed to load product export details.');
+                // Type check before accessing message
+                const errorMessage = (err instanceof Error) ? err.message : 'Failed to load product export details.';
+                setFetchError(errorMessage);
                 setSelections([]); // Clear selections on error
             }
         };
@@ -224,7 +226,17 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
         } catch (pdfError) { console.error("Error generating PDF:", pdfError); }
         finally { setIsGeneratingPDF(false); }
      };
-    const toggleCollapse = (productId: number) => { setCollapsedRows(prev => { const n = new Set(prev); n.has(productId) ? n.delete(productId) : n.add(productId); return n; }); };
+    const toggleCollapse = (productId: number) => {
+        setCollapsedRows(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(productId)) {
+                newSet.delete(productId);
+            } else {
+                newSet.add(productId);
+            }
+            return newSet;
+        });
+    };
     const openPriceTierModal = (productId: number, productName: string) => { setSelectedProductIdForModal(productId); setSelectedProductNameForModal(productName); setIsPriceTierModalOpen(true); };
     const closePriceTierModal = () => { setIsPriceTierModalOpen(false); setSelectedProductIdForModal(null); setSelectedProductNameForModal(null); };
     const toggleFOBPricePerUnit = () => { setShowFOBPricePerUnit(prev => !prev); };
@@ -325,8 +337,8 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                              {selections.map((product) => (
                                 <React.Fragment key={product.product_id}>
                                      <tr className="border-b border-gray-300 dark:border-gray-600 dark:text-gray-300">
-                                         {/* Select Cell */} 
-                                         <td className="border border-gray-300 dark:border-gray-600 p-2 text-center"> <div className="flex items-center justify-center gap-2"> <button onClick={() => toggleCollapse(product.product_id)} className="w-4 h-4 flex items-center justify-center text-xs dark:text-gray-400">{collapsedRows.has(product.product_id) ? '►' : '▼'}</button> <input type="checkbox" checked={product.isSelected} onChange={(e) => handleProductSelect(product.product_id, e.target.checked)} className="h-4 w-4 dark:bg-gray-600 dark:border-gray-500" /> </div> </td>
+                                         {/* Select Cell */ } 
+                                         <td className="border border-gray-300 dark:border-gray-600 p-2 text-center"> <div className="flex items-center justify-center gap-2"> <button onClick={() => toggleCollapse(product.product_id)} className="w-4 h-4 flex items-center justify-center text-xs dark:text-gray-400" aria-label={collapsedRows.has(product.product_id) ? `Expand variants for ${product.product_name}` : `Collapse variants for ${product.product_name}`}>{collapsedRows.has(product.product_id) ? '►' : '▼'}</button> <input type="checkbox" checked={product.isSelected} onChange={(e) => handleProductSelect(product.product_id, e.target.checked)} className="h-4 w-4 dark:bg-gray-600 dark:border-gray-500" aria-label={`Select product ${product.product_name}`} /> </div> </td>
                                          {/* Product Name Cell */} 
                                          <td className="border border-gray-300 dark:border-gray-600 p-2 font-medium text-center">{product.product_name}</td>
                                          {/* Data Cells */} 
@@ -341,12 +353,25 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                                 displayValue = rawValue === null || rawValue === undefined ? '' : String(rawValue);
                                             }
                                             if (field === 'fob_price_per_unit' && !showFOBPricePerUnit) return null;
-                                            return ( <td key={field} className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm" onDoubleClick={() => !isPriceField && setEditingCell({ id: product.product_id, field })}> {editingCell?.id === product.product_id && editingCell.field === field && !isPriceField ? <input type="text" defaultValue={String(displayValue ?? '')} onBlur={(e) => handleCellEdit(product.product_id, field, e.target.value)} autoFocus className="w-full text-center dark:bg-gray-700 dark:text-white" /> : displayValue} </td> );
+                                            return (
+                                                <td key={field} className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm" onDoubleClick={() => !isPriceField && setEditingCell({ id: product.product_id, field })}>
+                                                    {editingCell?.id === product.product_id && editingCell.field === field && !isPriceField ? 
+                                                        <input 
+                                                            type="text" 
+                                                            defaultValue={String(displayValue ?? '')} 
+                                                            onBlur={(e) => handleCellEdit(product.product_id, field, e.target.value)} 
+                                                            autoFocus 
+                                                            className="w-full text-center dark:bg-gray-700 dark:text-white" 
+                                                            aria-label={`Edit ${field.replace(/_/g, ' ')} for ${product.product_name}`}
+                                                        /> 
+                                                        : displayValue}
+                                                </td>
+                                            );
                                          })}
                                          {/* Manage Tiers Button Cell */} 
                                          <td className="border border-gray-300 dark:border-gray-600 p-1 text-center"><button onClick={() => openPriceTierModal(product.product_id, product.product_name)} className="bg-purple-500 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-800 text-white text-xs font-bold py-1 px-2 rounded" title={`Manage Price Tiers for ${product.product_name}`}> Manage </button></td>
                                      </tr>
-                                     {!collapsedRows.has(product.product_id) && ( <tr> <td colSpan={variantTableColSpan} className="border border-gray-300 dark:border-gray-600 p-2 bg-gray-50 dark:bg-gray-800"> <div className="ml-8"> {/* Variant Table */} <table className="w-full border-collapse dark:text-gray-300"><thead><tr className="bg-orange-100 dark:bg-gray-700 text-sm"><th className="border ...">Select</th><th className="border ...">Description</th>{showCartonBarcode && <th className="border ...">Carton Barcode</th>}</tr></thead><tbody>{product.variants.map(variant => (<tr key={variant.variant_id} className="text-sm"><td className="border ..."><input type="checkbox" checked={variant.isSelected} onChange={e => handleVariantSelect(product.product_id, variant.variant_id, e.target.checked)} className="h-4 w-4 ..." /></td><td className="border ...">{variant.description}</td>{showCartonBarcode && <td className="border ...">{variant.barcode || '-'}</td>}</tr>))}</tbody></table></div> </td> </tr> )}
+                                     {!collapsedRows.has(product.product_id) && ( <tr> <td colSpan={variantTableColSpan} className="border border-gray-300 dark:border-gray-600 p-2 bg-gray-50 dark:bg-gray-800"> <div className="ml-8"> {/* Variant Table */} <table className="w-full border-collapse dark:text-gray-300"><thead><tr className="bg-orange-100 dark:bg-gray-700 text-sm"><th className="border p-1 text-center">Select</th><th className="border p-1 text-left">Description</th>{showCartonBarcode && <th className="border p-1 text-center">Carton Barcode</th>}</tr></thead><tbody>{product.variants.map(variant => (<tr key={variant.variant_id} className="text-sm"><td className="border border-gray-200 dark:border-gray-700 p-1 text-center"><input type="checkbox" checked={variant.isSelected} onChange={e => handleVariantSelect(product.product_id, variant.variant_id, e.target.checked)} className="h-4 w-4 dark:bg-gray-600 dark:border-gray-500" aria-label={`Select variant ${variant.description} for ${product.product_name}`} /></td><td className="border border-gray-200 dark:border-gray-700 p-1 text-left">{variant.description}</td>{showCartonBarcode && <td className="border border-gray-200 dark:border-gray-700 p-1 text-center">{variant.barcode || '-'}</td>}</tr>))}</tbody></table></div> </td> </tr> )}
                                  </React.Fragment>
                              ))}
                          </tbody>
