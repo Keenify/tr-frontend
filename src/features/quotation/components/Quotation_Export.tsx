@@ -319,22 +319,22 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                         <label className="inline-flex items-center cursor-pointer"> {/* FOB Price */}
                             <input type="checkbox" checked={showFOBPricePerUnit} onChange={toggleFOBPricePerUnit} className="sr-only peer" />
                             <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                            <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Show FOB Price/Unit</span>
+                            <span className="ms-3 text-sm font-medium text-gray-900">Show FOB Price/Unit</span>
                         </label>
                          <label className="inline-flex items-center cursor-pointer"> {/* Barcode */}
                              <input type="checkbox" checked={showCartonBarcode} onChange={toggleCartonBarcode} className="sr-only peer" />
                             <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                            <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Show Carton Barcode</span>
+                            <span className="ms-3 text-sm font-medium text-gray-900">Show Carton Barcode</span>
                         </label>
                          <div className="inline-flex items-center"> {/* Currency */}
-                            <label htmlFor="currency-select" className="text-sm font-medium text-gray-900 mr-2 dark:text-gray-300">Currency:</label>
+                            <label htmlFor="currency-select" className="text-sm font-medium text-gray-900 mr-2">Currency:</label>
                             <select id="currency-select" value={selectedCurrency} onChange={(e) => setSelectedCurrency(e.target.value as 'USD' | 'SGD')} className="border p-1 rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                                 <option value="USD">USD</option><option value="SGD">SGD</option>
                             </select>
                         </div>
                          {/* --- Global Price Tier Selector --- */}
                          <div className="inline-flex items-center">
-                             <label htmlFor="global-tier-select" className="text-sm font-medium text-gray-900 mr-2 dark:text-gray-300">Price Tier:</label>
+                             <label htmlFor="global-tier-select" className="text-sm font-medium text-gray-900 mr-2">Price Tier:</label>
                             <select id="global-tier-select" value={selectedGlobalTierName} onChange={handleGlobalTierChange} disabled={isFetchingTiers || uniqueTierNames.length === 0} className="border p-1 rounded text-sm min-w-[150px] disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white" title="Apply a price tier">
                                 <option value="">-- Default Pricing --</option>
                                 {isFetchingTiers ? ( <option disabled>Loading...</option> ) : ( uniqueTierNames.map(name => (<option key={name} value={name}>{name}</option>)) )
@@ -343,7 +343,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                             </select>
                             {uniqueTierNames.length === 0 && !isFetchingTiers && !fetchError && (
                                 // Added !fetchError condition here too
-                                <span className="ms-2 text-xs text-gray-500 italic dark:text-gray-400">(No active tiers)</span>
+                                <span className="ms-2 text-xs text-black italic">(No active tiers)</span>
                             )}
                          </div>
                      </div>
@@ -382,9 +382,9 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                 <React.Fragment key={product.product_id}>
                                      <tr className="border-b border-gray-300 dark:border-gray-600 dark:text-gray-300">
                                          {/* Select Cell */ } 
-                                         <td className="border border-gray-300 dark:border-gray-600 p-2 text-center"> <div className="flex items-center justify-center gap-2"> <button onClick={() => toggleCollapse(product.product_id)} className="w-4 h-4 flex items-center justify-center text-xs dark:text-gray-400" aria-label={collapsedRows.has(product.product_id) ? `Expand variants for ${product.product_name}` : `Collapse variants for ${product.product_name}`}>{collapsedRows.has(product.product_id) ? '►' : '▼'}</button> <input type="checkbox" checked={product.isSelected} onChange={(e) => handleProductSelect(product.product_id, e.target.checked)} className="h-4 w-4 dark:bg-gray-600 dark:border-gray-500" aria-label={`Select product ${product.product_name}`} /> </div> </td>
+                                         <td className="border border-gray-300 dark:border-gray-600 p-2 text-center"> <div className="flex items-center justify-center gap-2"> <button onClick={() => toggleCollapse(product.product_id)} className="w-4 h-4 flex items-center justify-center text-xs text-black" aria-label={collapsedRows.has(product.product_id) ? `Expand variants for ${product.product_name}` : `Collapse variants for ${product.product_name}`}>{collapsedRows.has(product.product_id) ? '►' : '▼'}</button> <input type="checkbox" checked={product.isSelected} onChange={(e) => handleProductSelect(product.product_id, e.target.checked)} className="h-4 w-4 dark:bg-gray-600 dark:border-gray-500" aria-label={`Select product ${product.product_name}`} /> </div> </td>
                                          {/* Product Name Cell */} 
-                                         <td className="border border-gray-300 dark:border-gray-600 p-2 font-medium text-center">{product.product_name}</td>
+                                         <td className="border border-gray-300 dark:border-gray-600 p-2 font-medium text-center text-black">{product.product_name}</td>
                                          {/* Data Cells */} 
                                          {getTableColumns().map((field) => {
                                             let displayValue: string | number | undefined;
@@ -398,7 +398,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                             }
                                             if (field === 'fob_price_per_unit' && !showFOBPricePerUnit) return null;
                                             return (
-                                                <td key={field} className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm" onDoubleClick={() => !isPriceField && setEditingCell({ id: product.product_id, field })}>
+                                                <td key={field} className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm text-black" onDoubleClick={() => !isPriceField && setEditingCell({ id: product.product_id, field })}>
                                                     {editingCell?.id === product.product_id && editingCell.field === field && !isPriceField ? 
                                                         <input 
                                                             type="text" 
@@ -415,13 +415,13 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                          {/* Manage Tiers Button Cell */} 
                                          <td className="border border-gray-300 dark:border-gray-600 p-1 text-center"><button onClick={() => openPriceTierModal(product.product_id, product.product_name)} className="bg-purple-500 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-800 text-white text-xs font-bold py-1 px-2 rounded" title={`Manage Price Tiers for ${product.product_name}`}> Manage </button></td>
                                      </tr>
-                                     {!collapsedRows.has(product.product_id) && ( <tr> <td colSpan={variantTableColSpan} className="border border-gray-300 dark:border-gray-600 p-2 bg-gray-50 dark:bg-gray-800"> <div className="ml-8"> {/* Variant Table */} <table className="w-full border-collapse dark:text-gray-300"><thead><tr className="bg-orange-100 dark:bg-gray-700 text-sm"><th className="border p-1 text-center">Select</th><th className="border p-1 text-left">Description</th>{showCartonBarcode && <th className="border p-1 text-center">Carton Barcode</th>}</tr></thead><tbody>{product.variants.map(variant => (<tr key={variant.variant_id} className="text-sm"><td className="border border-gray-200 dark:border-gray-700 p-1 text-center"><input type="checkbox" checked={variant.isSelected} onChange={e => handleVariantSelect(product.product_id, variant.variant_id, e.target.checked)} className="h-4 w-4 dark:bg-gray-600 dark:border-gray-500" aria-label={`Select variant ${variant.description} for ${product.product_name}`} /></td><td className="border border-gray-200 dark:border-gray-700 p-1 text-left">{variant.description}</td>{showCartonBarcode && <td className="border border-gray-200 dark:border-gray-700 p-1 text-center">{variant.barcode || '-'}</td>}</tr>))}</tbody></table></div> </td> </tr> )}
+                                     {!collapsedRows.has(product.product_id) && ( <tr> <td colSpan={variantTableColSpan} className="border border-gray-300 dark:border-gray-600 p-2 bg-gray-50 dark:bg-gray-800"> <div className="ml-8"> {/* Variant Table */} <table className="w-full border-collapse text-black"><thead><tr className="bg-orange-100 dark:bg-gray-700 text-sm"><th className="border p-1 text-center">Select</th><th className="border p-1 text-left">Description</th>{showCartonBarcode && <th className="border p-1 text-center">Carton Barcode</th>}</tr></thead><tbody>{product.variants.map(variant => (<tr key={variant.variant_id} className="text-sm"><td className="border border-gray-200 dark:border-gray-700 p-1 text-center"><input type="checkbox" checked={variant.isSelected} onChange={e => handleVariantSelect(product.product_id, variant.variant_id, e.target.checked)} className="h-4 w-4 dark:bg-gray-600 dark:border-gray-500" aria-label={`Select variant ${variant.description} for ${product.product_name}`} /></td><td className="border border-gray-200 dark:border-gray-700 p-1 text-left text-black">{variant.description}</td>{showCartonBarcode && <td className="border border-gray-200 dark:border-gray-700 p-1 text-center text-black">{variant.barcode || '-'}</td>}</tr>))}</tbody></table></div> </td> </tr> )}
                                  </React.Fragment>
                              ))}
                          </tbody>
                      </table>
 
-                    {selections.length === 0 && !isLoadingCompany && !fetchError && <div className="text-center py-4 text-gray-500 dark:text-gray-400"> No products available for export </div>}
+                    {selections.length === 0 && !isLoadingCompany && !fetchError && <div className="text-center py-4 text-black"> No products available for export </div>}
 
                     <div className="mt-4 flex justify-end">
                          <button
