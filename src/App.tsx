@@ -711,7 +711,7 @@ const App: React.FC = () => {
                           activeSubTab="ccc"
                           onTabChange={() => {}}
                         >
-                          <CashAccelerationStrategies />
+                          <CashAccelerationStrategies session={session} />
                         </DashboardLayout>
                       }
                     />
