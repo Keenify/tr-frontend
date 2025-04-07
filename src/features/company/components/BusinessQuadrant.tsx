@@ -27,14 +27,33 @@ const BusinessQuadrant: React.FC<BusinessQuadrantProps> = ({ session }) => {
   // Local state for saving status, loading timeout, and unsaved changes
   const [isSaving, setIsSaving] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
-  const [isDirty, setIsDirty] = useState(false); // State to track unsaved changes
+  const [isDirty, setIsDirty] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  
+  // --- Browser-level Navigation Prompt ---
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (isEditing && isDirty) {
+        const message = "You have unsaved changes. Are you sure you want to leave?";
+        event.preventDefault();
+        event.returnValue = message;
+        return message;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isDirty, isEditing]);
+  // --- End Browser-level Prompt Logic ---
   
   // Set a timeout for loading to handle cases where the API might not respond
   useEffect(() => {
     let timer: number | undefined;
     
     if (loading) {
-      // If still loading after 5 seconds, assume there's an issue
       timer = window.setTimeout(() => {
         setLoadingTimeout(true);
       }, 5000);
@@ -54,33 +73,32 @@ const BusinessQuadrant: React.FC<BusinessQuadrantProps> = ({ session }) => {
         capture_value: quadrantData.capture_value || '',
         defend_value: quadrantData.defend_value || ''
       });
-      setIsDirty(false); // Reset dirty state after loading data
+      setIsEditing(false);
+      setTimeout(() => setIsDirty(false), 0);
     }
   }, [quadrantData]);
   
   // Handle input changes
   const handleInputChange = (field: string, value: string) => {
+    if (!isEditing) return;
     setFormValues(prev => ({ ...prev, [field]: value }));
-    setIsDirty(true); // Mark changes as unsaved
+    setIsDirty(true);
   };
   
   // Handle save
   const handleSave = async () => {
-    if (!companyId) {
-      toast.error('Error: Company information not available');
-      return;
-    }
+    if (!companyId || !isDirty || !isEditing) return;
     
     setIsSaving(true);
     
     try {
-      // Corrected: Directly use formValues as it no longer contains 'notes'
       const dataToSave = formValues; 
       const result = await updateQuadrantData(dataToSave);
       
       if (result.success) {
         toast.success('Changes saved successfully!');
-        setIsDirty(false); // Reset dirty state after successful save
+        setIsDirty(false);
+        setIsEditing(false);
       } else {
         toast.error(`Error: ${result.error || 'Failed to save changes'}`);
       }
@@ -91,25 +109,6 @@ const BusinessQuadrant: React.FC<BusinessQuadrantProps> = ({ session }) => {
       setIsSaving(false);
     }
   };
-  
-  // Effect to handle unsaved changes prompt when leaving the page
-  useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (isDirty) {
-        const message = "You have unsaved changes. Are you sure you want to leave?";
-        event.preventDefault(); // Standard for most browsers
-        event.returnValue = message; // For older browsers
-        return message;
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    // Cleanup listener on component unmount
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [isDirty]); // Rerun effect if isDirty changes
   
   // Show loading while company info is being fetched
   if (isLoadingCompany) {
@@ -157,6 +156,10 @@ const BusinessQuadrant: React.FC<BusinessQuadrantProps> = ({ session }) => {
     );
   }
 
+  const textAreaBaseClass = "w-full h-32 md:h-40 p-4 rounded border focus:outline-none resize-none text-center flex items-center justify-center transition-colors duration-200";
+  const editableTextAreaClass = "bg-white/10 text-white placeholder-gray-400 border-white/30 focus:border-indigo-400 focus:ring-indigo-400";
+  const readOnlyTextAreaClass = "bg-gray-700/50 text-gray-300 placeholder-gray-500 border-gray-600 cursor-default";
+
   return (
     <div className="container mx-auto p-4 md:p-8 min-h-screen bg-gray-50">
       <Toaster position="top-right" />
@@ -178,19 +181,29 @@ const BusinessQuadrant: React.FC<BusinessQuadrantProps> = ({ session }) => {
         <div className="bg-white p-6 rounded-lg shadow border border-gray-200 flex flex-col justify-center">
           <h2 className="text-xl font-semibold mb-3 text-gray-700">Actions</h2>
           <div className="mt-auto">
-            <button 
-              className={`w-full min-w-[120px] px-4 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out ${isSaving ? 'opacity-70 cursor-not-allowed' : ''}`}
-              onClick={handleSave}
-              disabled={isSaving}
-            >
-              {isSaving ? 'Saving...' : 'Save Changes'}
-            </button>
+            {isEditing ? (
+              <button
+                className={`w-full min-w-[120px] px-4 py-2 text-white rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out 
+                          ${isSaving || !isDirty ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+                onClick={handleSave}
+                disabled={isSaving || !isDirty}
+              >
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+            ) : (
+              <button
+                className="w-full min-w-[120px] px-4 py-2 bg-gray-600 text-white rounded-md font-medium hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-150 ease-in-out"
+                onClick={() => setIsEditing(true)} 
+              >
+                Edit Quadrant
+              </button>
+            )}
           </div>
         </div>
       </div>
       
       {/* Main Quadrant */}
-      <div className="relative bg-gradient-to-br from-gray-700 to-gray-900 rounded-lg shadow-xl overflow-hidden border border-gray-600">
+      <div className={`relative bg-gradient-to-br from-gray-700 to-gray-900 rounded-lg shadow-xl overflow-hidden border border-gray-600 ${!isEditing ? 'opacity-90' : ''}`}>
         {/* Center Business Model */}
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 bg-white text-center py-4 px-6 rounded-full shadow-2xl border-4 border-indigo-500">
           <h3 className="text-lg font-bold text-gray-800">Business<br />Model</h3>
@@ -202,10 +215,11 @@ const BusinessQuadrant: React.FC<BusinessQuadrantProps> = ({ session }) => {
           <div className="border-r border-b border-white/20 p-4 md:p-6 flex flex-col items-center justify-center">
             <h3 className="text-xl font-semibold text-white mb-4 text-center">Create Value</h3>
             <textarea 
-              className="w-full h-32 md:h-40 bg-white/10 text-white placeholder-gray-400 p-4 rounded border border-white/30 focus:border-indigo-400 focus:ring-indigo-400 focus:outline-none resize-none text-center flex items-center justify-center"
+              className={`${textAreaBaseClass} ${isEditing ? editableTextAreaClass : readOnlyTextAreaClass}`}
               placeholder="How does your business create value for customers? What problems do you solve?"
               value={formValues.create_value}
               onChange={(e) => handleInputChange('create_value', e.target.value)}
+              readOnly={!isEditing}
             ></textarea>
           </div>
           
@@ -213,10 +227,11 @@ const BusinessQuadrant: React.FC<BusinessQuadrantProps> = ({ session }) => {
           <div className="border-b border-white/20 p-4 md:p-6 flex flex-col items-center justify-center">
             <h3 className="text-xl font-semibold text-white mb-4 text-center">Deliver Value</h3>
             <textarea 
-              className="w-full h-32 md:h-40 bg-white/10 text-white placeholder-gray-400 p-4 rounded border border-white/30 focus:border-indigo-400 focus:ring-indigo-400 focus:outline-none resize-none text-center flex items-center justify-center"
+              className={`${textAreaBaseClass} ${isEditing ? editableTextAreaClass : readOnlyTextAreaClass}`}
               placeholder="How do you deliver your product/service to customers? What channels do you use?"
               value={formValues.deliver_value}
               onChange={(e) => handleInputChange('deliver_value', e.target.value)}
+              readOnly={!isEditing}
             ></textarea>
           </div>
           
@@ -224,10 +239,11 @@ const BusinessQuadrant: React.FC<BusinessQuadrantProps> = ({ session }) => {
           <div className="border-r border-white/20 p-4 md:p-6 flex flex-col items-center justify-center">
             <h3 className="text-xl font-semibold text-white mb-4 text-center">Capture Value</h3>
             <textarea 
-              className="w-full h-32 md:h-40 bg-white/10 text-white placeholder-gray-400 p-4 rounded border border-white/30 focus:border-indigo-400 focus:ring-indigo-400 focus:outline-none resize-none text-center flex items-center justify-center"
+              className={`${textAreaBaseClass} ${isEditing ? editableTextAreaClass : readOnlyTextAreaClass}`}
               placeholder="How does your business monetize? What's your revenue model and pricing strategy?"
               value={formValues.capture_value}
               onChange={(e) => handleInputChange('capture_value', e.target.value)}
+              readOnly={!isEditing}
             ></textarea>
           </div>
           
@@ -235,10 +251,11 @@ const BusinessQuadrant: React.FC<BusinessQuadrantProps> = ({ session }) => {
           <div className="p-4 md:p-6 flex flex-col items-center justify-center">
             <h3 className="text-xl font-semibold text-white mb-4 text-center">Defend Value</h3>
             <textarea 
-              className="w-full h-32 md:h-40 bg-white/10 text-white placeholder-gray-400 p-4 rounded border border-white/30 focus:border-indigo-400 focus:ring-indigo-400 focus:outline-none resize-none text-center flex items-center justify-center"
+              className={`${textAreaBaseClass} ${isEditing ? editableTextAreaClass : readOnlyTextAreaClass}`}
               placeholder="How do you protect your business from competition? What are your competitive advantages?"
               value={formValues.defend_value}
               onChange={(e) => handleInputChange('defend_value', e.target.value)}
+              readOnly={!isEditing}
             ></textarea>
           </div>
         </div>
