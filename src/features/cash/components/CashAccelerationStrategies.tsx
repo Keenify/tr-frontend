@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Table,
   TableBody,
@@ -11,105 +11,283 @@ import {
   TextField,
   Typography,
   Box,
+  Button,
+  IconButton,
 } from '@mui/material';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import CashConversionCycleImage from '../../../assets/home/cash_conversion_cycle.png'; // Adjust path if needed
+import { useCashStrategies } from '../hooks/useCashStrategies';
+import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData'; // Import the hook
+import toast, { Toaster } from 'react-hot-toast'; // Import toast
+import { CashAccelerationStrategies as StrategiesType, StrategyItem } from '../types/cashAcceleration'; // Import types
+import { Session } from '@supabase/supabase-js'; // Import Session type
 
-interface Strategy {
-  id: number;
-  description: string; // In a real app, users would input this.
-  shortenCycle: boolean;
-  eliminateMistakes: boolean;
-  improveModel: boolean;
+// Define props for the component, including session
+interface CashAccelerationStrategiesProps {
+  session: Session; // Changed to require Session (non-nullable)
 }
 
-interface SectionData {
-  title: string;
-  strategies: Strategy[];
-}
+// Helper to create a new empty StrategyItem for adding
+const createEmptyStrategyItem = (): StrategyItem => ({
+    strategy: '',
+    shorten_cycle_times: false,
+    eliminate_mistakes: false,
+    improve_business_model_pnl: false,
+});
 
-// Initialize data structure based on the image
-const initialData: SectionData[] = [
-  {
-    title: 'Ways to improve your Sales Cycle',
-    strategies: Array.from({ length: 5 }, (_, i) => ({
-      id: i + 1,
-      description: '',
-      shortenCycle: false,
-      eliminateMistakes: false,
-      improveModel: false,
-    })),
-  },
-  {
-    title: 'Ways to improve your Make/Production & Inventory Cycle',
-    strategies: Array.from({ length: 5 }, (_, i) => ({
-      id: i + 1,
-      description: '',
-      shortenCycle: false,
-      eliminateMistakes: false,
-      improveModel: false,
-    })),
-  },
-  {
-    title: 'Ways to improve your Delivery Cycle',
-    strategies: Array.from({ length: 5 }, (_, i) => ({
-      id: i + 1,
-      description: '',
-      shortenCycle: false,
-      eliminateMistakes: false,
-      improveModel: false,
-    })),
-  },
-  {
-    title: 'Ways to improve your Billing & Payment Cycle',
-    strategies: Array.from({ length: 5 }, (_, i) => ({
-      id: i + 1,
-      description: '',
-      shortenCycle: false,
-      eliminateMistakes: false,
-      improveModel: false,
-    })),
-  },
-];
+const CashAccelerationStrategies: React.FC<CashAccelerationStrategiesProps> = ({ session }) => {
+  // --- Call Hooks Unconditionally --- 
+  console.log('session', session);
 
-const CashAccelerationStrategies: React.FC = () => {
-  const [sections, setSections] = useState<SectionData[]>(initialData);
 
-  // Handles description changes
+  // Use optional chaining for safety when accessing user ID
+  const { companyInfo, isLoading: isLoadingCompany } = useUserAndCompanyData(session?.user?.id);
+  const companyId = companyInfo?.id;
+
+  // This hook already handles null/undefined companyId
+  const { strategies, setStrategies: setApiStrategies, loading, error, updateStrategies, refetch } = useCashStrategies(companyId);
+
+  // Local state for UI control
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+
+  // --- Browser-level Navigation Prompt ---
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (isEditing && isDirty) {
+        const message = "You have unsaved changes. Are you sure you want to leave?";
+        event.preventDefault();
+        event.returnValue = message;
+        return message;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isDirty, isEditing]);
+  // --- End Browser-level Prompt Logic ---
+
+  // Map section keys to titles for rendering
+  const sectionDetails: Record<keyof StrategiesType, { title: string; letter: string }> = {
+    sales_cycle_improvement: { title: 'Ways to improve your Sales Cycle', letter: 'A' },
+    make_production_inventory_improvement: { title: 'Ways to improve your Make/Production & Inventory Cycle', letter: 'B' },
+    delivery_cycle_improvement: { title: 'Ways to improve your Delivery Cycle', letter: 'C' },
+    billing_payment_cycle_improvement: { title: 'Ways to improve your Billing & Payment Cycle', letter: 'D' },
+  };
+  const sectionKeys = Object.keys(sectionDetails) as (keyof StrategiesType)[];
+
+  // Refs for input fields to manage focus
+  const inputRefs = useRef<Record<string, Record<number, HTMLInputElement | null>>>({});
+
+  // Ensure refs object has keys for each section
+  useEffect(() => {
+      sectionKeys.forEach(key => {
+          if (!inputRefs.current[key]) {
+              inputRefs.current[key] = {};
+          }
+      });
+  }, [sectionKeys]);
+
+  // Function to update local state (strategies in the hook's state)
+  const updateLocalStrategy = (
+    sectionKey: keyof StrategiesType,
+    strategyIndex: number,
+    field: keyof StrategyItem,
+    value: string | boolean
+  ) => {
+    if (!isEditing || !strategies) return;
+
+    setApiStrategies(prevStrategies => {
+        if (!prevStrategies) return null;
+        const newStrategies = JSON.parse(JSON.stringify(prevStrategies)) as StrategiesType;
+        const section = newStrategies[sectionKey];
+        if (section && section[strategyIndex]) {
+             const targetStrategy = section[strategyIndex];
+             if (field === 'strategy' && typeof value === 'string') {
+                 targetStrategy.strategy = value;
+             } else if ((field === 'shorten_cycle_times' || field === 'eliminate_mistakes' || field === 'improve_business_model_pnl') && typeof value === 'boolean') {
+                 targetStrategy[field] = value;
+             }
+        }
+        return newStrategies;
+    });
+    setIsDirty(true);
+  };
+
+  // Handles description changes - directly updates the local state
   const handleDescriptionChange = (
-    sectionIndex: number,
+    sectionKey: keyof StrategiesType,
     strategyIndex: number,
     value: string
   ) => {
-    setSections((prevSections) => {
-      const newSections = JSON.parse(JSON.stringify(prevSections));
-      newSections[sectionIndex].strategies[strategyIndex].description = value;
-      return newSections;
-    });
+    updateLocalStrategy(sectionKey, strategyIndex, 'strategy', value);
   };
 
-  // Handles checkbox state changes
+  // Handles checkbox state changes - directly updates the local state
   const handleCheckboxChange = (
-    sectionIndex: number,
+    sectionKey: keyof StrategiesType,
     strategyIndex: number,
-    field: keyof Pick<Strategy, 'shortenCycle' | 'eliminateMistakes' | 'improveModel'>
+    field: keyof Pick<StrategyItem, 'shorten_cycle_times' | 'eliminate_mistakes' | 'improve_business_model_pnl'>
   ) => {
-    setSections((prevSections) => {
-      // Create a deep copy to avoid direct state mutation
-      const newSections = JSON.parse(JSON.stringify(prevSections));
-      const strategy = newSections[sectionIndex].strategies[strategyIndex];
-      strategy[field] = !strategy[field];
-      return newSections;
-    });
+    if (!isEditing || !strategies) return;
+    const currentValue = strategies[sectionKey]?.[strategyIndex]?.[field];
+    if (typeof currentValue === 'boolean') {
+         updateLocalStrategy(sectionKey, strategyIndex, field, !currentValue);
+    }
   };
+
+  // --- Add/Remove Strategy Handlers ---
+  const handleAddStrategy = (sectionKey: keyof StrategiesType) => {
+      if (!isEditing || !strategies) return;
+
+      setApiStrategies(prevStrategies => {
+          if (!prevStrategies) return null;
+          const newStrategies = JSON.parse(JSON.stringify(prevStrategies)) as StrategiesType;
+          newStrategies[sectionKey].push(createEmptyStrategyItem());
+          return newStrategies;
+      });
+      setIsDirty(true);
+
+      // Focus the new input after state update
+      setTimeout(() => {
+          const newIndex = strategies ? strategies[sectionKey].length : 0; // Index will be the old length
+          inputRefs.current[sectionKey]?.[newIndex]?.focus();
+      }, 0);
+  };
+
+  const handleRemoveStrategy = (sectionKey: keyof StrategiesType, index: number) => {
+      if (!isEditing || !strategies) return;
+
+      setApiStrategies(prevStrategies => {
+          if (!prevStrategies) return null;
+          const newStrategies = JSON.parse(JSON.stringify(prevStrategies)) as StrategiesType;
+          if (newStrategies[sectionKey]?.[index]) {
+             newStrategies[sectionKey].splice(index, 1);
+          }
+          return newStrategies;
+      });
+      setIsDirty(true);
+  };
+  // --- End Add/Remove --- 
+
+  // Handle save
+  const handleSave = async () => {
+    if (!companyId || !isDirty || !isEditing || !strategies) return;
+
+    setIsSaving(true);
+
+    try {
+      // The `strategies` state managed by the hook is already up-to-date
+      const result = await updateStrategies(strategies);
+
+      if (result.success) {
+        toast.success('Changes saved successfully!');
+        setIsDirty(false);
+        setIsEditing(false); // Exit edit mode after successful save
+        // Optional: refetch to ensure data consistency if needed, though updateStrategies should handle it
+        // refetch();
+      } else {
+        toast.error(`Error: ${result.error || 'Failed to save changes'}`);
+      }
+    } catch (err) {
+      console.error('Error saving changes:', err);
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred';
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handle Cancel/Discard Changes
+  const handleCancel = () => {
+    if (isDirty) {
+        // Optional: Could add a confirmation dialog here
+        refetch(); // Refetch original data to discard local changes
+    }
+    setIsEditing(false);
+    setIsDirty(false);
+  };
+
+  // --- Conditional Rendering Logic --- 
+
+  // Check for session validity *after* hooks
+  if (!session || !session.user) {
+     // Render loading or placeholder while session is resolving
+     return (
+       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+         <Typography>Loading user session...</Typography>
+       </Box>
+     );
+  }
+
+  // Loading state for company or strategies
+   if (isLoadingCompany || (loading && !strategies)) {
+     return (
+       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+         <Typography>Loading strategy data...</Typography>
+         {/* Optionally add a spinner here */}
+       </Box>
+     );
+   }
+
+  // Error state
+  if (error) {
+    return (
+      <Box sx={{ padding: 2 }}>
+        <Typography color="error">Error loading strategies: {error}</Typography>
+         <Button onClick={refetch} variant="outlined" sx={{ mt: 1 }}>Retry</Button>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ padding: 2 }}>
-      <Typography variant="h5" component="h1" sx={{ marginBottom: 0.5 }}>
-        Cash: Cash Acceleration Strategies (CASh)
-      </Typography>
-      <Typography variant="subtitle1" component="h2" sx={{ marginBottom: 1.5 }}>
-        Cash Conversion Cycle (CCC)
-      </Typography>
+      <Toaster position="top-right" />
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Box>
+            <Typography variant="h5" component="h1" sx={{ marginBottom: 0.5 }}>
+                Cash: Cash Acceleration Strategies (CASh)
+            </Typography>
+            <Typography variant="subtitle1" component="h2" sx={{ marginBottom: 1.5 }}>
+                Cash Conversion Cycle (CCC)
+            </Typography>
+        </Box>
+        {/* Edit/Save/Cancel Buttons */}
+        <Box>
+            {isEditing ? (
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleSave}
+                        disabled={isSaving || !isDirty}
+                    >
+                        {isSaving ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                     <Button
+                        variant="outlined"
+                        onClick={handleCancel}
+                        disabled={isSaving}
+                    >
+                        Cancel
+                    </Button>
+                </Box>
+            ) : (
+                <Button
+                    variant="contained"
+                    onClick={() => setIsEditing(true)}
+                    disabled={loading || !!error} // Disable if loading or error
+                >
+                    Edit Strategies
+                </Button>
+            )}
+        </Box>
+      </Box>
       <Box
         component="img"
         src={CashConversionCycleImage}
@@ -136,68 +314,107 @@ const CashAccelerationStrategies: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {sections.map((section, sectionIndex) => (
-              // Use React.Fragment to group section header and strategy rows
-              <React.Fragment key={sectionIndex}>
-                {/* Section Header Row */}
+            {/* Render directly from strategies state */} 
+            {strategies && sectionKeys.map((sectionKey) => (
+              <React.Fragment key={sectionKey}>
+                {/* Section Header Row */} 
                 <TableRow sx={{ backgroundColor: '#606060', '& > *': { color: 'white !important', fontWeight: 'bold', borderBottom: 'none', paddingY: 0.5 }, "&:hover": { backgroundColor: '#606060' } }}>
                   <TableCell align="center" sx={{ borderRight: 1, borderColor: 'grey.500', paddingY: 0.5 }}>
-                    {String.fromCharCode(65 + sectionIndex)} {/* A, B, C, D */}
+                    {sectionDetails[sectionKey].letter}
                   </TableCell>
                   <TableCell colSpan={4} sx={{ paddingY: 0.5 }}>
-                    {section.title}
+                    {sectionDetails[sectionKey].title}
                   </TableCell>
                 </TableRow>
-                {/* Strategy Rows */}
-                {section.strategies.map((strategy, strategyIndex) => (
+                {/* Strategy Rows */} 
+                {strategies[sectionKey].map((strategy: StrategyItem, strategyIndex: number) => (
                   <TableRow
-                    key={`${sectionIndex}-${strategy.id}`}
+                    key={`${sectionKey}-${strategyIndex}`} // Use index for key as items can be added/removed
                     sx={{ '& td, & th': { borderRight: 1, borderColor: 'divider', paddingY: 0.25 }, '&:last-child td, &:last-child th': { borderBottom: 0 } }}
                   >
-                    <TableCell align="center" component="th" scope="row" sx={{ paddingY: 0.25 }}>
-                      {strategy.id}
+                    <TableCell align="center" component="th" scope="row" sx={{ paddingY: 0.25, width: '5%' }}>
+                      {strategyIndex + 1} {/* Display 1-based index */}
+                      {/* Remove Button - Visible only in Edit Mode */} 
+                      {isEditing && (
+                         <IconButton
+                            size="small"
+                            onClick={() => handleRemoveStrategy(sectionKey, strategyIndex)}
+                            title="Remove strategy"
+                            sx={{ padding: 0.1, marginLeft: 0.5, color: 'error.main' }}
+                         >
+                           <DeleteOutlineIcon fontSize="inherit" />
+                         </IconButton>
+                      )}
                     </TableCell>
-                     {/* Placeholder for strategy description - Replace with TextField later */}
-                    <TableCell sx={{ padding: 0.25 }}> {/* Further reduced padding */}
-                      <TextField
-                        fullWidth
-                        variant="outlined" // Use outlined variant
-                        size="small" // Make it compact
-                        value={strategy.description}
-                        onChange={(e) => handleDescriptionChange(sectionIndex, strategyIndex, e.target.value)}
-                        placeholder="Enter strategy description..."
-                        InputProps={{
-                          sx: { fontSize: '0.8rem' } // Slightly reduced font size
-                        }}
-                      />
-                    </TableCell>
-                    {/* Checkbox Cells */}
-                    <TableCell align="center" sx={{ padding: 0 }}> {/* Keep padding 0 */}
-                      <Checkbox
-                        checked={strategy.shortenCycle}
-                        onChange={() => handleCheckboxChange(sectionIndex, strategyIndex, 'shortenCycle')}
-                        inputProps={{ 'aria-label': `Shorten Cycle Times for ${section.title} strategy ${strategy.id}` }}
-                        sx={{ padding: 0.25 }} // Reduced padding
-                      />
-                    </TableCell>
-                    <TableCell align="center" sx={{ padding: 0 }}>
-                      <Checkbox
-                        checked={strategy.eliminateMistakes}
-                        onChange={() => handleCheckboxChange(sectionIndex, strategyIndex, 'eliminateMistakes')}
-                        inputProps={{ 'aria-label': `Eliminate Mistakes for ${section.title} strategy ${strategy.id}` }}
-                        sx={{ padding: 0.25 }}
-                      />
-                    </TableCell>
-                    <TableCell align="center" sx={{ padding: 0 }}>
-                      <Checkbox
-                        checked={strategy.improveModel}
-                        onChange={() => handleCheckboxChange(sectionIndex, strategyIndex, 'improveModel')}
-                        inputProps={{ 'aria-label': `Improve Business Model & P/L for ${section.title} strategy ${strategy.id}` }}
-                        sx={{ padding: 0.25 }}
-                      />
-                    </TableCell>
+                    <TableCell sx={{ padding: 0.25, width: '71%' }}>
+                       <TextField
+                         fullWidth
+                         variant="outlined"
+                         size="small"
+                         value={strategy.strategy} // Use field from StrategyItem
+                         inputRef={el => { // Store input ref
+                             if (!inputRefs.current[sectionKey]) inputRefs.current[sectionKey] = {};
+                             inputRefs.current[sectionKey][strategyIndex] = el;
+                         }}
+                         onChange={(e) => handleDescriptionChange(sectionKey, strategyIndex, e.target.value)}
+                         onKeyDown={(e) => { // Handle Enter key
+                            if (e.key === 'Enter' && isEditing) {
+                                e.preventDefault();
+                                handleAddStrategy(sectionKey);
+                            }
+                         }}
+                         placeholder="Enter strategy description..."
+                         disabled={!isEditing}
+                         InputProps={{
+                           sx: { fontSize: '0.8rem' } 
+                         }}
+                       />
+                     </TableCell>
+                     {/* Checkbox Cells */} 
+                    <TableCell align="center" sx={{ padding: 0, width: '8%' }}>
+                       <Checkbox
+                         checked={strategy.shorten_cycle_times} // Use field from StrategyItem
+                         onChange={() => handleCheckboxChange(sectionKey, strategyIndex, 'shorten_cycle_times')}
+                         inputProps={{ 'aria-label': `Shorten Cycle Times for ${sectionDetails[sectionKey].title} strategy ${strategyIndex + 1}` }}
+                         disabled={!isEditing}
+                         sx={{ padding: 0.25 }}
+                       />
+                     </TableCell>
+                    <TableCell align="center" sx={{ padding: 0, width: '8%' }}>
+                       <Checkbox
+                         checked={strategy.eliminate_mistakes} // Use field from StrategyItem
+                         onChange={() => handleCheckboxChange(sectionKey, strategyIndex, 'eliminate_mistakes')}
+                         inputProps={{ 'aria-label': `Eliminate Mistakes for ${sectionDetails[sectionKey].title} strategy ${strategyIndex + 1}` }}
+                         disabled={!isEditing}
+                         sx={{ padding: 0.25 }}
+                       />
+                     </TableCell>
+                    <TableCell align="center" sx={{ padding: 0, width: '8%' }}>
+                       <Checkbox
+                         checked={strategy.improve_business_model_pnl} // Use field from StrategyItem
+                         onChange={() => handleCheckboxChange(sectionKey, strategyIndex, 'improve_business_model_pnl')}
+                         inputProps={{ 'aria-label': `Improve Business Model & P/L for ${sectionDetails[sectionKey].title} strategy ${strategyIndex + 1}` }}
+                         disabled={!isEditing}
+                         sx={{ padding: 0.25 }}
+                       />
+                     </TableCell>
                   </TableRow>
                 ))}
+                {/* Add Strategy Button Row - Visible only in Edit Mode */} 
+                {isEditing && (
+                    <TableRow>
+                        <TableCell colSpan={5} align="left" sx={{ borderTop: 1, borderColor: 'divider', padding: 0.5 }}>
+                            <Button
+                                size="small"
+                                startIcon={<AddCircleOutlineIcon />}
+                                onClick={() => handleAddStrategy(sectionKey)}
+                                disabled={isSaving}
+                            >
+                                Add Strategy
+                            </Button>
+                        </TableCell>
+                    </TableRow>
+                )}
               </React.Fragment>
             ))}
           </TableBody>
