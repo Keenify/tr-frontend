@@ -21,13 +21,13 @@ const BusinessQuadrant: React.FC<BusinessQuadrantProps> = ({ session }) => {
     create_value: '',
     deliver_value: '',
     capture_value: '',
-    defend_value: '',
-    notes: ''
+    defend_value: ''
   });
   
-  // Local state for saving status and loading timeout
+  // Local state for saving status, loading timeout, and unsaved changes
   const [isSaving, setIsSaving] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const [isDirty, setIsDirty] = useState(false); // State to track unsaved changes
   
   // Set a timeout for loading to handle cases where the API might not respond
   useEffect(() => {
@@ -52,15 +52,16 @@ const BusinessQuadrant: React.FC<BusinessQuadrantProps> = ({ session }) => {
         create_value: quadrantData.create_value || '',
         deliver_value: quadrantData.deliver_value || '',
         capture_value: quadrantData.capture_value || '',
-        defend_value: quadrantData.defend_value || '',
-        notes: quadrantData.notes || ''
+        defend_value: quadrantData.defend_value || ''
       });
+      setIsDirty(false); // Reset dirty state after loading data
     }
   }, [quadrantData]);
   
   // Handle input changes
   const handleInputChange = (field: string, value: string) => {
     setFormValues(prev => ({ ...prev, [field]: value }));
+    setIsDirty(true); // Mark changes as unsaved
   };
   
   // Handle save
@@ -73,10 +74,13 @@ const BusinessQuadrant: React.FC<BusinessQuadrantProps> = ({ session }) => {
     setIsSaving(true);
     
     try {
-      const result = await updateQuadrantData(formValues);
+      // Corrected: Directly use formValues as it no longer contains 'notes'
+      const dataToSave = formValues; 
+      const result = await updateQuadrantData(dataToSave);
       
       if (result.success) {
         toast.success('Changes saved successfully!');
+        setIsDirty(false); // Reset dirty state after successful save
       } else {
         toast.error(`Error: ${result.error || 'Failed to save changes'}`);
       }
@@ -87,6 +91,25 @@ const BusinessQuadrant: React.FC<BusinessQuadrantProps> = ({ session }) => {
       setIsSaving(false);
     }
   };
+  
+  // Effect to handle unsaved changes prompt when leaving the page
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (isDirty) {
+        const message = "You have unsaved changes. Are you sure you want to leave?";
+        event.preventDefault(); // Standard for most browsers
+        event.returnValue = message; // For older browsers
+        return message;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Cleanup listener on component unmount
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isDirty]); // Rerun effect if isDirty changes
   
   // Show loading while company info is being fetched
   if (isLoadingCompany) {
@@ -156,7 +179,7 @@ const BusinessQuadrant: React.FC<BusinessQuadrantProps> = ({ session }) => {
           <h2 className="text-xl font-semibold mb-3 text-gray-700">Actions</h2>
           <div className="mt-auto">
             <button 
-              className={`w-full px-4 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out ${isSaving ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`w-full min-w-[120px] px-4 py-2 bg-indigo-600 text-white rounded-md font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out ${isSaving ? 'opacity-70 cursor-not-allowed' : ''}`}
               onClick={handleSave}
               disabled={isSaving}
             >
@@ -219,18 +242,6 @@ const BusinessQuadrant: React.FC<BusinessQuadrantProps> = ({ session }) => {
             ></textarea>
           </div>
         </div>
-      </div>
-      
-      {/* Notes Section */}
-      <div className="mt-6 bg-white p-6 rounded-lg shadow border border-gray-200">
-        <h3 className="text-xl font-semibold mb-3 text-gray-700">Notes & Insights</h3>
-        <textarea 
-          className="w-full p-4 border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none resize-vertical min-h-[100px]"
-          rows={4}
-          placeholder="Add your notes and insights about your business model..."
-          value={formValues.notes}
-          onChange={(e) => handleInputChange('notes', e.target.value)}
-        ></textarea>
       </div>
     </div>
   );
