@@ -292,38 +292,33 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
    * @returns Formatted date and time string or "Team member is on leave" if applicable
    */
   const formatSubmissionTime = (dateString: string | undefined, employeeName: string, rank?: number) => {
-    // Check if employee is on leave for the selected date
-    const onLeave = isEmployeeOnLeave(employeeName);
+    // Check if employee is on leave *only if* there is a submission time
+    const onLeave = dateString ? isEmployeeOnLeave(employeeName) : false;
     
-    if (!dateString) return onLeave ? 
-      <div className="employee-on-leave">Team member is on leave</div> : 
-      'Not submitted';
+    // If no submission time, just return "Not submitted"
+    if (!dateString) return 'Not submitted';
     
     try {
       const date = new Date(dateString);
       
-      // Check if the date is valid
       if (isNaN(date.getTime())) {
         return 'Invalid date';
       }
       
-      // Format the date without year
       const formattedDate = date.toLocaleDateString([], { 
         day: 'numeric',
         month: 'short'
       });
       
-      // Format the time
       const formattedTime = date.toLocaleTimeString([], { 
         hour: '2-digit', 
         minute: '2-digit',
         hour12: true 
-      }).toLowerCase(); // Convert to lowercase for "pm" instead of "PM"
+      }).toLowerCase();
       
-      // Add visual indicator for top 3 earliest submissions
       const timeClass = rank && rank <= 3 ? `submission-time-rank-${rank}` : '';
       
-      // If employee is on leave but has submitted, show both statuses
+      // If employee is on leave (and has submitted), show both statuses
       if (onLeave) {
         return (
           <div className="submission-info">
@@ -336,7 +331,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
         );
       }
       
-      // Return date and time on separate lines with appropriate styling
+      // Otherwise (submitted, not on leave), return just the time
       return (
         <div className={`submission-time ${timeClass}`}>
           {formattedDate}<br />
