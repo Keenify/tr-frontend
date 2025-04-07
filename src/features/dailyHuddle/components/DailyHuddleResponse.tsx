@@ -139,16 +139,12 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
       setLoading(true); // Show loading state while fetching
       
       try {
-        const selectedDateObj = new Date(selectedDate);
-        // Adjust for timezone offset to ensure correct date range
-        selectedDateObj.setMinutes(selectedDateObj.getMinutes() + selectedDateObj.getTimezoneOffset());
-        
-        const startDate = new Date(selectedDateObj);
-        startDate.setHours(0, 0, 0, 0);
-        
-        const endDate = new Date(selectedDateObj);
-        endDate.setHours(23, 59, 59, 999);
-        
+        // Construct start and end dates directly from the selectedDate string (YYYY-MM-DD)
+        // Assuming selectedDate represents the target *local* date
+        const startDate = new Date(`${selectedDate}T00:00:00`); // Start of the local day
+        const endDate = new Date(`${selectedDate}T23:59:59.999`); // End of the local day
+
+        // Convert to ISO strings for the API call (will likely be UTC)
         const events = await getCompanyCalendarEvents(
           companyInfo.id,
           startDate.toISOString(),
@@ -223,46 +219,62 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
   const isEmployeeOnLeave = (employeeName: string): boolean => {
     if (!calendarEvents || !calendarEvents.length) return false;
     
-    // Get the selected date in YYYY-MM-DD format for comparison
+    // selectedDate is already in YYYY-MM-DD format
     const selectedDateStr = selectedDate;
     
-    // Find leave events for this employee
     return calendarEvents.some(event => {
-      // Check if it's a leave event
+      // 1. Check if it's a relevant leave event type
       const isLeaveEvent = ['sick_leave', 'timeoff', 'annual_leave'].includes(event.event_type.toLowerCase());
-      
       if (!isLeaveEvent) return false;
       
-      // Check if the event is for this employee (title format: "Leave Request - Employee Name")
-      const eventEmployeeName = event.title.split(' - ')[1] || '';
+      // 2. Check if the event is for this employee (title format: "Leave Request - Employee Name")
+      const eventEmployeeName = event.title.split(' - ')[1]?.trim() || '';
       const matchesEmployee = eventEmployeeName.toLowerCase() === employeeName.toLowerCase();
+      if (!matchesEmployee) return false;
       
-      // Check if the event is approved (not pending or rejected)
+      // 3. Check if the event is approved (not pending or rejected in description)
       const description = event.description?.toLowerCase() || '';
       const isApproved = !description.includes('pending') && !description.includes('rejected');
-      
-      // Check if the event is for the selected date
-      const eventStartDate = new Date(event.start_time);
-      const eventEndDate = new Date(event.end_time);
-      const selectedDateObj = new Date(selectedDateStr);
-      
-      // Adjust for timezone offset when comparing dates
-      selectedDateObj.setMinutes(selectedDateObj.getMinutes() + selectedDateObj.getTimezoneOffset());
-      eventStartDate.setMinutes(eventStartDate.getMinutes() + eventStartDate.getTimezoneOffset());
-      eventEndDate.setMinutes(eventEndDate.getMinutes() + eventEndDate.getTimezoneOffset());
+      if (!isApproved) return false;
 
-      // Set hours to avoid time-based comparison issues
-      selectedDateObj.setHours(12, 0, 0, 0);
-      eventStartDate.setHours(0, 0, 0, 0);
-      // Set end date check to be inclusive of the end day
-      eventEndDate.setHours(23, 59, 59, 999); 
-      
-      // Check if the selected date falls within the event date range (inclusive)
-      const isWithinDateRange = 
-        selectedDateObj >= eventStartDate && 
-        selectedDateObj <= eventEndDate;
-      
-      return matchesEmployee && isApproved && isWithinDateRange;
+      // 4. Check if the selected date falls within the event date range (inclusive)
+      try {
+        const eventStartDate = new Date(event.start_time); 
+        const eventEndDate = new Date(event.end_time);
+
+        // Ensure dates are valid
+        if (isNaN(eventStartDate.getTime()) || isNaN(eventEndDate.getTime())) {
+          console.warn(`Invalid event dates for event ID ${event.id}`);
+          return false; 
+        }
+
+        // Iterate from event start date to end date (day by day)
+        const currentDate = new Date(eventStartDate);
+        // Set time to midday to avoid timezone/DST shift issues affecting the date part
+        currentDate.setHours(12, 0, 0, 0);
+
+        // Ensure the loop checks the end date itself
+        const finalCheckDate = new Date(eventEndDate);
+        finalCheckDate.setHours(12, 0, 0, 0); // Use midday for comparison
+
+        while (currentDate <= finalCheckDate) {
+          // Format the current date in the loop to YYYY-MM-DD
+          const currentEventDayStr = formatDateToISO(currentDate);
+          
+          // Check if the current day in the event range matches the selected date
+          if (currentEventDayStr === selectedDateStr) {
+            return true; // Match found!
+          }
+          
+          // Move to the next day
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+      } catch (e) {
+        console.error("Error comparing dates in isEmployeeOnLeave:", e, "Event:", event);
+        return false; // Error during date processing
+      }
+
+      return false; // If loop completes without finding a match
     });
   };
 
