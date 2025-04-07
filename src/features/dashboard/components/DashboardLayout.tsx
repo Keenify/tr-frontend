@@ -165,7 +165,8 @@ const navigationConfig = [
     subTabs: [
       { id: "peak", label: "Peak", shortForm: "Pe", icon: ThumbsUp },
       { id: "vivid_vision", label: "Vivid Vision", shortForm: "Vv", icon: ThumbsUp },
-      { id: "businessQuadrant", label: "Business Quadrant", shortForm: "Bq", icon: ThumbsUp }
+      { id: "businessQuadrant", label: "Business Quadrant", shortForm: "Bq", icon: ThumbsUp },
+      { id: "ccc", label: "CCC", shortForm: "CC", icon: ThumbsUp }
     ],
   },
 ]
@@ -207,7 +208,8 @@ type SubTabType =
   | "peak"
   | "integration"
   | "vivid_vision"
-  | "businessQuadrant";
+  | "businessQuadrant"
+  | "ccc";
 
 interface LayoutProps {
   children: React.ReactNode;

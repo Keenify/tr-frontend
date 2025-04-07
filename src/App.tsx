@@ -53,6 +53,7 @@ import Leaderboard from "./features/teamHealth/components/Leaderboard";
 import Integration from "./features/integration/components/Integration";
 import GoogleOAuthCallback from "./features/integration/components/GoogleOAuthCallback";
 import BusinessQuadrant from "./features/company/components/BusinessQuadrant";
+import CashAccelerationStrategies from "./features/cash/components/CashAccelerationStrategies";
 
 // Import the public daily huddle component
 import PublicDailyHuddle from "./features/dailyHuddle/components/PublicDailyHuddle";
@@ -692,6 +693,25 @@ const App: React.FC = () => {
                           onTabChange={() => {}}
                         >
                           <BusinessQuadrant session={session} />
+                        </DashboardLayout>
+                      }
+                    />
+                  }
+                />
+                <Route
+                  path="/:userId/ccc"
+                  element={
+                    <ProtectedRoute
+                      session={session}
+                      element={
+                        <DashboardLayout
+                          session={session}
+                          signOut={signOut}
+                          activeTab="thePlan"
+                          activeSubTab="ccc"
+                          onTabChange={() => {}}
+                        >
+                          <CashAccelerationStrategies />
                         </DashboardLayout>
                       }
                     />
