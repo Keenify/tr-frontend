@@ -13,10 +13,14 @@ import {
   Box,
   Button,
   IconButton,
+  Grid,
+  CircularProgress,
 } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import CashConversionCycleImage from '../../../assets/home/cash_conversion_cycle.png'; // Adjust path if needed
+import EditIcon from '@mui/icons-material/Edit';
+import CancelIcon from '@mui/icons-material/Cancel';
+import CashConversionCycleImage from '../../../assets/home/cash_conversion_cycle.png';
 import { useCashStrategies } from '../hooks/useCashStrategies';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData'; // Import the hook
 import toast, { Toaster } from 'react-hot-toast'; // Import toast
@@ -246,180 +250,242 @@ const CashAccelerationStrategies: React.FC<CashAccelerationStrategiesProps> = ({
   }
 
   return (
-    <Box sx={{ padding: 2 }}>
+    // Apply overall page styling: background and padding
+    <Box sx={{ padding: { xs: 2, md: 4 }, backgroundColor: 'grey.50', minHeight: '100vh' }}>
       <Toaster position="top-right" />
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Box>
-            <Typography variant="h5" component="h1" sx={{ marginBottom: 0.5 }}>
-                Cash: Cash Acceleration Strategies (CASh)
-            </Typography>
-            <Typography variant="subtitle1" component="h2" sx={{ marginBottom: 1.5 }}>
-                Cash Conversion Cycle (CCC)
-            </Typography>
-        </Box>
-        {/* Edit/Save/Cancel Buttons */}
-        <Box>
-            {isEditing ? (
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleSave}
-                        disabled={isSaving || !isDirty}
-                    >
-                        {isSaving ? 'Saving...' : 'Save Changes'}
-                    </Button>
+      
+      {/* Main Title */} 
+      <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: 'text.primary', mb: 4 }}>
+        Cash Acceleration Strategies (CASh)
+      </Typography>
+
+      {/* Grid layout for Info and Actions cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {/* Informational Card - Simplified */} 
+        <Grid item xs={12} md={7}>
+          <Paper elevation={1} sx={{ padding: 2.5, borderRadius: 2, border: '1px solid', borderColor: 'grey.300', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* Title Removed */}
+            {/* <Typography variant="h6" sx={{ mb: 2 }}>Cash Conversion Cycle (CCC)</Typography> */}
+            {/* Image - Centered */} 
+            <Box component="img" src={CashConversionCycleImage} alt="CCC Diagram" sx={{ maxWidth: '95%', maxHeight: '95%', height: 'auto', display: 'block', borderRadius: 1 }} />
+          </Paper>
+        </Grid>
+
+        {/* Actions Card (existing enhanced version) */} 
+        <Grid item xs={12} md={5}>
+          <Paper
+            elevation={1} // Match info card elevation
+            sx={{
+              padding: 2.5, 
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+              backgroundColor: 'white', // White background for contrast
+              borderRadius: 2, 
+              border: '1px solid', 
+              borderColor: 'grey.300', // Match info card border
+            }}
+          >
+             <Typography variant="overline" color="text.secondary" sx={{ mb: 1.5, display: 'block' }}>
+               Status & Actions
+             </Typography>
+             <Typography variant="body2" sx={{ mb: 2 }}>
+               Mode: {isEditing ? <Typography component="span" sx={{ fontWeight: 'bold', color: 'primary.main' }}>Editing</Typography> : <Typography component="span" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>Read Only</Typography>}
+             </Typography>
+
+             <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                 {isEditing ? (
+                     <>
+                         {/* Save Button */} 
+                         <Button
+                             variant="contained"
+                             color="primary"
+                             size="medium"
+                             onClick={handleSave}
+                             disabled={isSaving || !isDirty}
+                             startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : null}
+                         >
+                             {isSaving ? 'Saving...' : 'Save Changes'}
+                         </Button>
+                         {/* Cancel Button */} 
+                         <Button
+                             variant="outlined"
+                             color="secondary"
+                             size="medium"
+                             onClick={handleCancel}
+                             disabled={isSaving}
+                             startIcon={<CancelIcon />}
+                         >
+                             Cancel
+                         </Button>
+                     </>
+                 ) : (
+                     // Edit Button
                      <Button
-                        variant="outlined"
-                        onClick={handleCancel}
-                        disabled={isSaving}
-                    >
-                        Cancel
-                    </Button>
-                </Box>
-            ) : (
-                <Button
-                    variant="contained"
-                    onClick={() => setIsEditing(true)}
-                    disabled={loading || !!error} // Disable if loading or error
-                >
-                    Edit Strategies
-                </Button>
-            )}
-        </Box>
-      </Box>
-      <Box
+                         variant="contained"
+                         size="medium"
+                         onClick={() => setIsEditing(true)}
+                         disabled={loading || !!error || isLoadingCompany}
+                         startIcon={<EditIcon />}
+                     >
+                         Edit Strategies
+                     </Button>
+                 )}
+             </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* Remove the standalone image */}
+      {/* <Box
         component="img"
         src={CashConversionCycleImage}
-        alt="Cash Conversion Cycle Diagram"
-        sx={{
-          maxWidth: '100%', // Ensure it fits the width
-          height: 'auto', // Maintain aspect ratio
-          display: 'block', // Remove extra space below image
-          marginBottom: 2, // Add space below image
+        ...
+      /> */}
+
+      {/* Table Area - Wrapped in Paper for distinct background/elevation */} 
+      <Paper 
+        elevation={2} 
+        sx={{ 
+            borderRadius: 2, 
+            overflow: 'hidden', // Ensures table border radius is clipped
+            border: isEditing ? '2px solid' : '1px solid', // Thicker border when editing
+            borderColor: isEditing ? 'primary.main' : 'grey.300',
+            transition: 'border-color 0.3s', // Smooth transition
+            backgroundColor: 'white', // Use white background for the table area
         }}
-      />
-      <TableContainer component={Paper}>
-        <Table sx={{ minWidth: 650 }} aria-label="cash acceleration strategies table" size="small">
-          <TableHead>
-            <TableRow>
-              {/* Empty cell for section letter column */}
-              <TableCell sx={{ width: '5%', borderRight: 1, borderColor: 'divider', backgroundColor: 'grey.200', "&:hover": { backgroundColor: 'grey.200' }, paddingY: 0.1, verticalAlign: 'middle', textAlign: 'center' }} />
-              {/* Description column header */}
-              <TableCell sx={{ width: '71%', borderRight: 1, borderColor: 'divider', backgroundColor: 'grey.200', "&:hover": { backgroundColor: 'grey.200' }, paddingY: 0.1, fontSize: '0.9rem', verticalAlign: 'middle', textAlign: 'center' }}>Strategy Description</TableCell>
-              {/* Headers for the checkbox columns - Reduced width */}
-              <TableCell align="center" sx={{ width: '8%', fontWeight: 'bold', fontSize: '0.85rem', borderLeft: 1, borderColor: 'divider', verticalAlign: 'middle', textAlign: 'center', paddingX: 0.25, paddingY: 0.1, backgroundColor: 'grey.200', "&:hover": { backgroundColor: 'grey.200' } }}>Shorten Cycle Times</TableCell>
-              <TableCell align="center" sx={{ width: '8%', fontWeight: 'bold', fontSize: '0.85rem', borderLeft: 1, borderColor: 'divider', verticalAlign: 'middle', textAlign: 'center', paddingX: 0.25, paddingY: 0.1, backgroundColor: 'grey.200', "&:hover": { backgroundColor: 'grey.200' } }}>Eliminate Mistakes</TableCell>
-              <TableCell align="center" sx={{ width: '8%', fontWeight: 'bold', fontSize: '0.85rem', borderLeft: 1, borderColor: 'divider', verticalAlign: 'middle', textAlign: 'center', paddingX: 0.25, paddingY: 0.1, backgroundColor: 'grey.200', "&:hover": { backgroundColor: 'grey.200' } }}>Improve Business Model & P/L</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {/* Render directly from strategies state */} 
-            {strategies && sectionKeys.map((sectionKey) => (
-              <React.Fragment key={sectionKey}>
-                {/* Section Header Row */} 
-                <TableRow sx={{ backgroundColor: '#606060', '& > *': { color: 'white !important', fontWeight: 'bold', borderBottom: 'none', paddingY: 0.5 }, "&:hover": { backgroundColor: '#606060' } }}>
-                  <TableCell align="center" sx={{ borderRight: 1, borderColor: 'grey.500', paddingY: 0.5 }}>
-                    {sectionDetails[sectionKey].letter}
-                  </TableCell>
-                  <TableCell colSpan={4} sx={{ paddingY: 0.5 }}>
-                    {sectionDetails[sectionKey].title}
-                  </TableCell>
-                </TableRow>
-                {/* Strategy Rows */} 
-                {strategies[sectionKey].map((strategy: StrategyItem, strategyIndex: number) => (
-                  <TableRow
-                    key={`${sectionKey}-${strategyIndex}`} // Use index for key as items can be added/removed
-                    sx={{ '& td, & th': { borderRight: 1, borderColor: 'divider', paddingY: 0.25 }, '&:last-child td, &:last-child th': { borderBottom: 0 } }}
-                  >
-                    <TableCell align="center" component="th" scope="row" sx={{ paddingY: 0.25, width: '5%' }}>
-                      {strategyIndex + 1} {/* Display 1-based index */}
-                      {/* Remove Button - Visible only in Edit Mode */} 
-                      {isEditing && (
-                         <IconButton
-                            size="small"
-                            onClick={() => handleRemoveStrategy(sectionKey, strategyIndex)}
-                            title="Remove strategy"
-                            sx={{ padding: 0.1, marginLeft: 0.5, color: 'error.main' }}
-                         >
-                           <DeleteOutlineIcon fontSize="inherit" />
-                         </IconButton>
-                      )}
+      >
+        <TableContainer 
+          component={Box} // Use Box instead of Paper for the container itself
+          // elevation={isEditing ? 3 : 1} - Handled by outer Paper
+          sx={{ 
+            // border: isEditing ? 2 : 1, 
+            // borderColor: isEditing ? 'primary.main' : 'grey.300', 
+            // transition: 'border-color 0.3s, box-shadow 0.3s', 
+          }}
+        >
+          {/* The actual Table component */}
+          <Table sx={{ minWidth: 650 }} aria-label="cash acceleration strategies table" size="small">
+            <TableHead>
+              <TableRow sx={{ backgroundColor: 'grey.100' }}>
+                {/* Empty cell for section letter column */}
+                <TableCell sx={{ width: '5%', borderRight: 1, borderColor: 'divider', backgroundColor: 'grey.200', "&:hover": { backgroundColor: 'grey.200' }, paddingY: 0.1, verticalAlign: 'middle', textAlign: 'center' }} />
+                {/* Description column header */}
+                <TableCell sx={{ width: '71%', borderRight: 1, borderColor: 'divider', backgroundColor: 'grey.200', "&:hover": { backgroundColor: 'grey.200' }, paddingY: 0.1, fontSize: '0.9rem', verticalAlign: 'middle', textAlign: 'center' }}>Strategy Description</TableCell>
+                {/* Headers for the checkbox columns - Reduced width */}
+                <TableCell align="center" sx={{ width: '8%', fontWeight: 'bold', fontSize: '0.85rem', borderLeft: 1, borderColor: 'divider', verticalAlign: 'middle', textAlign: 'center', paddingX: 0.25, paddingY: 0.1, backgroundColor: 'grey.200', "&:hover": { backgroundColor: 'grey.200' } }}>Shorten Cycle Times</TableCell>
+                <TableCell align="center" sx={{ width: '8%', fontWeight: 'bold', fontSize: '0.85rem', borderLeft: 1, borderColor: 'divider', verticalAlign: 'middle', textAlign: 'center', paddingX: 0.25, paddingY: 0.1, backgroundColor: 'grey.200', "&:hover": { backgroundColor: 'grey.200' } }}>Eliminate Mistakes</TableCell>
+                <TableCell align="center" sx={{ width: '8%', fontWeight: 'bold', fontSize: '0.85rem', borderLeft: 1, borderColor: 'divider', verticalAlign: 'middle', textAlign: 'center', paddingX: 0.25, paddingY: 0.1, backgroundColor: 'grey.200', "&:hover": { backgroundColor: 'grey.200' } }}>Improve Business Model & P/L</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {/* Render directly from strategies state */} 
+              {strategies && sectionKeys.map((sectionKey) => (
+                <React.Fragment key={sectionKey}>
+                  {/* Section Header Row */} 
+                  <TableRow sx={{ backgroundColor: '#606060', '& > *': { color: 'white !important', fontWeight: 'bold', borderBottom: 'none', paddingY: 0.5 }, "&:hover": { backgroundColor: '#606060' } }}>
+                    <TableCell align="center" sx={{ borderRight: 1, borderColor: 'grey.500', paddingY: 0.5 }}>
+                      {sectionDetails[sectionKey].letter}
                     </TableCell>
-                    <TableCell sx={{ padding: 0.25, width: '71%' }}>
-                       <TextField
-                         fullWidth
-                         variant="outlined"
-                         size="small"
-                         value={strategy.strategy} // Use field from StrategyItem
-                         inputRef={el => { // Store input ref
-                             if (!inputRefs.current[sectionKey]) inputRefs.current[sectionKey] = {};
-                             inputRefs.current[sectionKey][strategyIndex] = el;
-                         }}
-                         onChange={(e) => handleDescriptionChange(sectionKey, strategyIndex, e.target.value)}
-                         onKeyDown={(e) => { // Handle Enter key
-                            if (e.key === 'Enter' && isEditing) {
-                                e.preventDefault();
-                                handleAddStrategy(sectionKey);
-                            }
-                         }}
-                         placeholder="Enter strategy description..."
-                         disabled={!isEditing}
-                         InputProps={{
-                           sx: { fontSize: '0.8rem' } 
-                         }}
-                       />
-                     </TableCell>
-                     {/* Checkbox Cells */} 
-                    <TableCell align="center" sx={{ padding: 0, width: '8%' }}>
-                       <Checkbox
-                         checked={strategy.shorten_cycle_times} // Use field from StrategyItem
-                         onChange={() => handleCheckboxChange(sectionKey, strategyIndex, 'shorten_cycle_times')}
-                         inputProps={{ 'aria-label': `Shorten Cycle Times for ${sectionDetails[sectionKey].title} strategy ${strategyIndex + 1}` }}
-                         disabled={!isEditing}
-                         sx={{ padding: 0.25 }}
-                       />
-                     </TableCell>
-                    <TableCell align="center" sx={{ padding: 0, width: '8%' }}>
-                       <Checkbox
-                         checked={strategy.eliminate_mistakes} // Use field from StrategyItem
-                         onChange={() => handleCheckboxChange(sectionKey, strategyIndex, 'eliminate_mistakes')}
-                         inputProps={{ 'aria-label': `Eliminate Mistakes for ${sectionDetails[sectionKey].title} strategy ${strategyIndex + 1}` }}
-                         disabled={!isEditing}
-                         sx={{ padding: 0.25 }}
-                       />
-                     </TableCell>
-                    <TableCell align="center" sx={{ padding: 0, width: '8%' }}>
-                       <Checkbox
-                         checked={strategy.improve_business_model_pnl} // Use field from StrategyItem
-                         onChange={() => handleCheckboxChange(sectionKey, strategyIndex, 'improve_business_model_pnl')}
-                         inputProps={{ 'aria-label': `Improve Business Model & P/L for ${sectionDetails[sectionKey].title} strategy ${strategyIndex + 1}` }}
-                         disabled={!isEditing}
-                         sx={{ padding: 0.25 }}
-                       />
-                     </TableCell>
+                    <TableCell colSpan={4} sx={{ paddingY: 0.5 }}>
+                      {sectionDetails[sectionKey].title}
+                    </TableCell>
                   </TableRow>
-                ))}
-                {/* Add Strategy Button Row - Visible only in Edit Mode */} 
-                {isEditing && (
-                    <TableRow>
-                        <TableCell colSpan={5} align="left" sx={{ borderTop: 1, borderColor: 'divider', padding: 0.5 }}>
-                            <Button
-                                size="small"
-                                startIcon={<AddCircleOutlineIcon />}
-                                onClick={() => handleAddStrategy(sectionKey)}
-                                disabled={isSaving}
-                            >
-                                Add Strategy
-                            </Button>
-                        </TableCell>
+                  {/* Strategy Rows */} 
+                  {strategies[sectionKey].map((strategy: StrategyItem, strategyIndex: number) => (
+                    <TableRow
+                      key={`${sectionKey}-${strategyIndex}`} // Use index for key as items can be added/removed
+                      sx={{ '& td, & th': { borderRight: 1, borderColor: 'divider', paddingY: 0.25 }, '&:last-child td, &:last-child th': { borderBottom: 0 } }}
+                    >
+                      <TableCell align="center" component="th" scope="row" sx={{ paddingY: 0.25, width: '5%' }}>
+                        {strategyIndex + 1} {/* Display 1-based index */}
+                        {/* Remove Button - Visible only in Edit Mode */} 
+                        {isEditing && (
+                           <IconButton
+                              size="small"
+                              onClick={() => handleRemoveStrategy(sectionKey, strategyIndex)}
+                              title="Remove strategy"
+                              sx={{ padding: 0.1, marginLeft: 0.5, color: 'error.main' }}
+                           >
+                             <DeleteOutlineIcon fontSize="inherit" />
+                           </IconButton>
+                        )}
+                      </TableCell>
+                      <TableCell sx={{ padding: 0.25, width: '71%' }}>
+                         <TextField
+                           fullWidth
+                           variant="outlined"
+                           size="small"
+                           value={strategy.strategy} // Use field from StrategyItem
+                           inputRef={el => { // Store input ref
+                               if (!inputRefs.current[sectionKey]) inputRefs.current[sectionKey] = {};
+                               inputRefs.current[sectionKey][strategyIndex] = el;
+                           }}
+                           onChange={(e) => handleDescriptionChange(sectionKey, strategyIndex, e.target.value)}
+                           onKeyDown={(e) => { // Handle Enter key
+                              if (e.key === 'Enter' && isEditing) {
+                                  e.preventDefault();
+                                  handleAddStrategy(sectionKey);
+                              }
+                           }}
+                           placeholder="Enter strategy description..."
+                           disabled={!isEditing}
+                           InputProps={{
+                             sx: { fontSize: '0.8rem' } 
+                           }}
+                         />
+                       </TableCell>
+                       {/* Checkbox Cells */} 
+                      <TableCell align="center" sx={{ padding: 0, width: '8%' }}>
+                         <Checkbox
+                           checked={strategy.shorten_cycle_times} // Use field from StrategyItem
+                           onChange={() => handleCheckboxChange(sectionKey, strategyIndex, 'shorten_cycle_times')}
+                           inputProps={{ 'aria-label': `Shorten Cycle Times for ${sectionDetails[sectionKey].title} strategy ${strategyIndex + 1}` }}
+                           disabled={!isEditing}
+                           sx={{ padding: 0.25 }}
+                         />
+                       </TableCell>
+                      <TableCell align="center" sx={{ padding: 0, width: '8%' }}>
+                         <Checkbox
+                           checked={strategy.eliminate_mistakes} // Use field from StrategyItem
+                           onChange={() => handleCheckboxChange(sectionKey, strategyIndex, 'eliminate_mistakes')}
+                           inputProps={{ 'aria-label': `Eliminate Mistakes for ${sectionDetails[sectionKey].title} strategy ${strategyIndex + 1}` }}
+                           disabled={!isEditing}
+                           sx={{ padding: 0.25 }}
+                         />
+                       </TableCell>
+                      <TableCell align="center" sx={{ padding: 0, width: '8%' }}>
+                         <Checkbox
+                           checked={strategy.improve_business_model_pnl} // Use field from StrategyItem
+                           onChange={() => handleCheckboxChange(sectionKey, strategyIndex, 'improve_business_model_pnl')}
+                           inputProps={{ 'aria-label': `Improve Business Model & P/L for ${sectionDetails[sectionKey].title} strategy ${strategyIndex + 1}` }}
+                           disabled={!isEditing}
+                           sx={{ padding: 0.25 }}
+                         />
+                       </TableCell>
                     </TableRow>
-                )}
-              </React.Fragment>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                  ))}
+                  {/* Add Strategy Button Row - Visible only in Edit Mode */} 
+                  {isEditing && (
+                      <TableRow>
+                          <TableCell colSpan={5} align="left" sx={{ borderTop: 1, borderColor: 'divider', padding: 0.5 }}>
+                              <Button
+                                  size="small"
+                                  startIcon={<AddCircleOutlineIcon />}
+                                  onClick={() => handleAddStrategy(sectionKey)}
+                                  disabled={isSaving}
+                              >
+                                  Add Strategy
+                              </Button>
+                          </TableCell>
+                      </TableRow>
+                  )}
+                </React.Fragment>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
     </Box>
   );
 };
