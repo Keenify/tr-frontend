@@ -18,8 +18,6 @@ import {
 } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import EditIcon from '@mui/icons-material/Edit';
-import CancelIcon from '@mui/icons-material/Cancel';
 import CashConversionCycleImage from '../../../assets/home/cash_conversion_cycle.png';
 import { useCashStrategies } from '../hooks/useCashStrategies';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData'; // Import the hook
@@ -207,16 +205,6 @@ const CashAccelerationStrategies: React.FC<CashAccelerationStrategiesProps> = ({
     }
   };
 
-  // Handle Cancel/Discard Changes
-  const handleCancel = () => {
-    if (isDirty) {
-        // Optional: Could add a confirmation dialog here
-        refetch(); // Refetch original data to discard local changes
-    }
-    setIsEditing(false);
-    setIsDirty(false);
-  };
-
   // --- Conditional Rendering Logic --- 
 
   // Check for session validity *after* hooks
@@ -271,66 +259,61 @@ const CashAccelerationStrategies: React.FC<CashAccelerationStrategiesProps> = ({
           </Paper>
         </Grid>
 
-        {/* Actions Card (existing enhanced version) */} 
+        {/* Actions Card (Modified to match BusinessQuadrant) */} 
         <Grid item xs={12} md={5}>
           <Paper
-            elevation={1} // Match info card elevation
+            elevation={1} 
             sx={{
               padding: 2.5, 
               display: 'flex',
               flexDirection: 'column',
               height: '100%',
-              backgroundColor: 'white', // White background for contrast
+              backgroundColor: 'white',
               borderRadius: 2, 
               border: '1px solid', 
-              borderColor: 'grey.300', // Match info card border
+              borderColor: 'grey.300',
             }}
           >
-             <Typography variant="overline" color="text.secondary" sx={{ mb: 1.5, display: 'block' }}>
-               Status & Actions
+             {/* Simple Title */} 
+             <Typography variant="h6" sx={{ mb: 1.5 }}>
+               Actions
              </Typography>
-             <Typography variant="body2" sx={{ mb: 2 }}>
-               Mode: {isEditing ? <Typography component="span" sx={{ fontWeight: 'bold', color: 'primary.main' }}>Editing</Typography> : <Typography component="span" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>Read Only</Typography>}
-             </Typography>
+             {/* Mode Indicator Removed */} 
 
-             <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                 {isEditing ? (
-                     <>
-                         {/* Save Button */} 
-                         <Button
-                             variant="contained"
-                             color="primary"
-                             size="medium"
-                             onClick={handleSave}
-                             disabled={isSaving || !isDirty}
-                             startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : null}
-                         >
-                             {isSaving ? 'Saving...' : 'Save Changes'}
-                         </Button>
-                         {/* Cancel Button */} 
-                         <Button
-                             variant="outlined"
-                             color="secondary"
-                             size="medium"
-                             onClick={handleCancel}
-                             disabled={isSaving}
-                             startIcon={<CancelIcon />}
-                         >
-                             Cancel
-                         </Button>
-                     </>
-                 ) : (
-                     // Edit Button
-                     <Button
-                         variant="contained"
-                         size="medium"
-                         onClick={() => setIsEditing(true)}
-                         disabled={loading || !!error || isLoadingCompany}
-                         startIcon={<EditIcon />}
-                     >
-                         Edit Strategies
-                     </Button>
-                 )}
+             {/* Wrapper Box to center button vertically */} 
+             <Box sx={{ 
+                 flexGrow: 1, // Take remaining vertical space
+                 display: 'flex', 
+                 alignItems: 'center', // Center vertically in this box
+                 justifyContent: 'center', // Center horizontally
+                 width: '100%'
+             }}>
+               {/* Button Box (already contains logic) */} 
+               <Box sx={{ width: '100%' }}> {/* Ensure inner box allows fullWidth */} 
+                   {isEditing ? (
+                       <Button 
+                           variant="contained" 
+                           color="primary" 
+                           size="medium" 
+                           onClick={handleSave} 
+                           disabled={isSaving || !isDirty} 
+                           startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : null}
+                           fullWidth // Make button full width
+                       > 
+                           {isSaving ? 'Saving...' : 'Save Changes'} 
+                       </Button>
+                   ) : (
+                       <Button
+                           variant="contained"
+                           size="medium"
+                           onClick={() => setIsEditing(true)}
+                           disabled={loading || !!error || isLoadingCompany}
+                           fullWidth // Make button full width
+                       >
+                           Edit Strategies
+                       </Button>
+                   )}
+               </Box>
              </Box>
           </Paper>
         </Grid>
