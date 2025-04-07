@@ -166,7 +166,7 @@ const navigationConfig = [
       { id: "peak", label: "Peak", shortForm: "Pe", icon: ThumbsUp },
       { id: "vivid_vision", label: "Vivid Vision", shortForm: "Vv", icon: ThumbsUp },
       { id: "businessQuadrant", label: "Business Quadrant", shortForm: "Bq", icon: ThumbsUp },
-      { id: "ccc", label: "CCC", shortForm: "CC", icon: ThumbsUp }
+      { id: "ccc", label: "Cash Acceleration", shortForm: "CC", icon: ThumbsUp }
     ],
   },
 ]
