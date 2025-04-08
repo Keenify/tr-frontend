@@ -129,7 +129,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl p-0 w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col animate-fadeIn">
+      <div className="bg-white rounded-xl shadow-2xl p-0 w-full max-w-lg overflow-hidden flex flex-col animate-fadeIn">
         {/* Header */}
         <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-5 flex justify-between items-center">
           <h2 className="text-xl font-bold text-white">Create Event</h2>
@@ -142,7 +142,10 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
+        <form
+          onSubmit={handleSubmit}
+          className="flex-1"
+        >
           <div className="p-6 space-y-5">
             {/* Title */}
             <div>
@@ -321,6 +324,7 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 closeMenuOnSelect={false}
                 isClearable={true}
                 isSearchable={true}
+                menuPortalTarget={document.body}
                 styles={{
                   control: (base) => ({
                     ...base,
@@ -356,7 +360,16 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   menu: (base) => ({
                     ...base,
                     borderRadius: '0.5rem',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                    zIndex: 9999
+                  }),
+                  menuPortal: (base) => ({
+                    ...base,
+                    zIndex: 9999
+                  }),
+                  menuList: (base) => ({
+                    ...base,
+                    maxHeight: '220px',
+                    overflowY: 'auto'
                   }),
                   option: (base, state) => ({
                     ...base,
