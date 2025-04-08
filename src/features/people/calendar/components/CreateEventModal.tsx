@@ -5,8 +5,7 @@ import { formatDateTimeForInput, createISOString } from '../utils/dateUtils';
 import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
 import { loadGoogleMapsScript } from '../../../../utils/loadGoogleMapsScript';
 import { Employee } from '../../../../shared/types/directory.types';
-import Select from 'react-select';
-import { MultiValue } from 'react-select';
+import Select, { MultiValue, SingleValue } from 'react-select';
 
 interface CreateEventModalProps {
   isOpen: boolean;
@@ -14,6 +13,7 @@ interface CreateEventModalProps {
   onSubmit: (event: CreateCalendarEventPayload) => void;
   initialDate?: Date;
   employees: Employee[];
+  currentUser: Employee;
 }
 
 interface GooglePlace {
@@ -28,7 +28,7 @@ interface SelectOption {
   label: string;
 }
 
-const EVENT_TYPES: EventType[] = ['Booth', 'Meeting', 'Other'];
+const EVENT_TYPES: EventType[] = ['Booth', 'Meeting', '1 to 1 Meeting', 'Other'];
 
 const CreateEventModal: React.FC<CreateEventModalProps> = ({
   isOpen,
@@ -36,24 +36,38 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
   onSubmit,
   initialDate,
   employees,
+  currentUser,
 }) => {
+  // --- Calculate initial dates --- 
+  const now = new Date();
+  const initialStartTime = initialDate || now;
+  const initialEndTime = initialDate ? new Date(initialDate) : new Date();
+  // Default end time to 1 hour after start time if not provided
+  if (!initialDate) {
+    initialEndTime.setHours(initialEndTime.getHours() + 1);
+  }
+  const initialStartTimeISO = initialStartTime.toISOString();
+  const initialEndTimeISO = initialEndTime.toISOString();
+  // --- End Calculate initial dates ---
+
   const [formData, setFormData] = useState<CreateCalendarEventPayload>({
     title: '',
     event_type: EVENT_TYPES[0],
-    start_time: initialDate ? formatDateTimeForInput(initialDate.toISOString()) : '',
-    end_time: initialDate ? formatDateTimeForInput(initialDate.toISOString()) : '',
+    start_time: initialStartTimeISO, // Use calculated initial ISO string
+    end_time: initialEndTimeISO,   // Use calculated initial ISO string
     location: '',
     description: '',
     participant_ids: [],
   });
 
   const [dateTimeInputs, setDateTimeInputs] = useState({
-    start_time: initialDate ? formatDateTimeForInput(initialDate.toISOString()) : '',
-    end_time: initialDate ? formatDateTimeForInput(initialDate.toISOString()) : '',
+    start_time: formatDateTimeForInput(initialStartTimeISO), // Use formatted initial value
+    end_time: formatDateTimeForInput(initialEndTimeISO), // Use formatted initial value
   });
 
   const [locationValue, setLocationValue] = useState<GooglePlace | null>(null);
   const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
+  const [selectedManagerId, setSelectedManagerId] = useState<string | null>(null);
 
   useEffect(() => {
     loadGoogleMapsScript()
@@ -68,8 +82,53 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[CreateEventModal] handleSubmit called.');
+    console.log('[CreateEventModal] Form Data:', formData);
+    console.log('[CreateEventModal] Selected Manager ID:', selectedManagerId);
+    console.log('[CreateEventModal] Current User:', currentUser);
+
+    let finalParticipantIds: string[] = [];
+
+    if (formData.event_type === '1 to 1 Meeting') {
+      console.log('[CreateEventModal] Event type is 1 to 1 Meeting. Checking conditions...');
+      // Ensure currentUser is available
+      if (!currentUser || !currentUser.id) {
+        console.error("[CreateEventModal] Validation Failed: Current user data is missing or invalid.");
+        alert("Error: Cannot create event. Your user information is missing. Please refresh and try again.");
+        return; // Prevent submission
+      }
+
+      // Ensure a manager is selected
+      if (!selectedManagerId) {
+         console.error("[CreateEventModal] Validation Failed: No manager selected.");
+         alert("Please select a manager for the 1-to-1 meeting.");
+         return; // Prevent submission
+      }
+      console.log('[CreateEventModal] 1-to-1 conditions met.');
+      const ids = new Set<string>([currentUser.id, selectedManagerId]);
+      finalParticipantIds = Array.from(ids);
+
+    } else {
+      console.log(`[CreateEventModal] Event type is ${formData.event_type}. Using participant_ids.`);
+      // Optional: Add validation for minimum participants if needed for other types
+      // if (!formData.participant_ids || formData.participant_ids.length === 0) {
+      //   alert("Please select at least one participant.");
+      //   return;
+      // }
+      finalParticipantIds = formData.participant_ids || [];
+    }
+
+    // Ensure start time is before end time
+    console.log('[CreateEventModal] Checking start/end time order...');
+    if (new Date(formData.start_time) >= new Date(formData.end_time)) {
+      console.error('[CreateEventModal] Validation Failed: Start time is not before end time.');
+      alert("Error: Start time must be before end time.");
+      return;
+    }
+    console.log('[CreateEventModal] All validations passed. Calling onSubmit...');
     onSubmit({
       ...formData,
+      participant_ids: finalParticipantIds,
     });
     onClose();
   };
@@ -90,6 +149,19 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
         ...prev,
         [name]: isoString,
       }));
+    } else if (name === 'event_type') {
+      const newEventType = value as EventType;
+      setFormData((prev) => ({
+        ...prev,
+        [name]: newEventType,
+        participant_ids: newEventType === '1 to 1 Meeting' ? [] : prev.participant_ids,
+      }));
+      if (newEventType !== '1 to 1 Meeting') {
+        setSelectedManagerId(null);
+      }
+      if (newEventType === '1 to 1 Meeting') {
+         setFormData(prev => ({ ...prev, participant_ids: [] }));
+      }
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -120,12 +192,38 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     }));
   };
 
+  const handleManagerChange = (selectedOption: SingleValue<SelectOption>) => {
+    setSelectedManagerId(selectedOption ? selectedOption.value : null);
+  };
+
   if (!isOpen) return null;
 
-  const employeeOptions = employees.map(employee => ({
-    value: employee.id,
-    label: `${employee.first_name} ${employee.last_name}`,
-  }));
+  // Filter out users whose first name is 'backup' (case-insensitive)
+  const employeeOptions: SelectOption[] = employees
+    .filter(employee => 
+      employee.first_name.toLowerCase() !== 'backup' // Check first_name instead of role
+    )
+    .map(employee => ({
+      value: employee.id,
+      label: `${employee.first_name} ${employee.last_name}`,
+    }));
+
+  const managerOptions: SelectOption[] = employees
+    // Filter for managers, excluding users whose first name is 'backup' (case-insensitive)
+    .filter(employee => 
+      employee.role && 
+      employee.role.toLowerCase().includes('manager') &&
+      employee.first_name.toLowerCase() !== 'backup' // Check first_name instead of role
+    )
+    .map(employee => ({
+      value: employee.id,
+      label: `${employee.first_name} ${employee.last_name}`,
+    }));
+
+  const selectedManagerOption = managerOptions.find(option => option.value === selectedManagerId) || null;
+  const selectedParticipantOptions = employeeOptions.filter(option =>
+    formData.participant_ids?.includes(option.value)
+  );
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -305,81 +403,139 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
               />
             </div>
 
-            {/* Participants */}
-            <div>
-              <label htmlFor="participants" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Participants
-              </label>
-              <Select
-                isMulti
-                name="participants"
-                options={employeeOptions}
-                className="basic-multi-select"
-                classNamePrefix="select"
-                placeholder="Search and select participants..."
-                onChange={handleParticipantChange}
-                value={employeeOptions.filter(option => 
-                  formData.participant_ids?.includes(option.value)
-                )}
-                closeMenuOnSelect={false}
-                isClearable={true}
-                isSearchable={true}
-                menuPortalTarget={document.body}
-                styles={{
-                  control: (base) => ({
-                    ...base,
-                    borderColor: '#D1D5DB',
-                    borderRadius: '0.5rem',
-                    boxShadow: 'none',
-                    padding: '1px',
-                    '&:hover': {
-                      borderColor: '#6366F1'
-                    }
-                  }),
-                  multiValue: (base) => ({
-                    ...base,
-                    backgroundColor: '#EEF2FF',
-                    borderRadius: '0.375rem',
-                    margin: '2px 4px 2px 0',
-                    padding: '0 2px'
-                  }),
-                  multiValueLabel: (base) => ({
-                    ...base,
-                    color: '#4F46E5',
-                    fontWeight: 500,
-                    padding: '2px 4px'
-                  }),
-                  multiValueRemove: (base) => ({
-                    ...base,
-                    color: '#4F46E5',
-                    '&:hover': {
-                      backgroundColor: '#E0E7FF',
-                      color: '#4338CA'
-                    }
-                  }),
-                  menu: (base) => ({
-                    ...base,
-                    borderRadius: '0.5rem',
-                    zIndex: 9999
-                  }),
-                  menuPortal: (base) => ({
-                    ...base,
-                    zIndex: 9999
-                  }),
-                  menuList: (base) => ({
-                    ...base,
-                    maxHeight: '220px',
-                    overflowY: 'auto'
-                  }),
-                  option: (base, state) => ({
-                    ...base,
-                    backgroundColor: state.isSelected ? '#6366F1' : state.isFocused ? '#EEF2FF' : 'white',
-                    color: state.isSelected ? 'white' : '#374151',
-                    cursor: 'pointer'
-                  })
-                }}
-              />
-            </div>
+            {/* Participants / Manager Section - Conditional Rendering */}
+            {formData.event_type === '1 to 1 Meeting' ? (
+              // Manager Selection for '1 to 1 Meeting'
+              <div>
+                <label htmlFor="manager" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Manager
+                </label>
+                <Select // Use single Select
+                  name="manager"
+                  options={managerOptions}
+                  className="basic-single-select"
+                  classNamePrefix="select"
+                  placeholder="Select a manager..."
+                  onChange={handleManagerChange} // Use handleManagerChange
+                  value={selectedManagerOption} // Use selectedManagerOption
+                  isClearable={true}
+                  isSearchable={true}
+                  menuPortalTarget={document.body}
+                  styles={{ // Reuse styles, adjust for single select if needed
+                     control: (base) => ({
+                       ...base,
+                       borderColor: '#D1D5DB',
+                       borderRadius: '0.5rem',
+                       boxShadow: 'none',
+                       padding: '1px',
+                       '&:hover': {
+                         borderColor: '#6366F1'
+                       }
+                     }),
+                     menu: (base) => ({
+                       ...base,
+                       borderRadius: '0.5rem',
+                       zIndex: 9999
+                     }),
+                     menuPortal: (base) => ({
+                       ...base,
+                       zIndex: 9999
+                     }),
+                     menuList: (base) => ({
+                       ...base,
+                       maxHeight: '220px',
+                       overflowY: 'auto'
+                     }),
+                     option: (base, state) => ({
+                       ...base,
+                       backgroundColor: state.isSelected ? '#6366F1' : state.isFocused ? '#EEF2FF' : 'white',
+                       color: state.isSelected ? 'white' : '#374151',
+                       cursor: 'pointer'
+                     })
+                  }}
+                />
+                 {/* Add conditional rendering based on currentUser existence */}
+                 {currentUser && (
+                   <p className="mt-1.5 text-xs text-gray-500">
+                     You ({currentUser.first_name} {currentUser.last_name}) will be automatically added as a participant.
+                   </p>
+                 )}
+              </div>
+            ) : (
+              // Participants Selection for other event types
+              <div>
+                <label htmlFor="participants" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Participants
+                </label>
+                <Select // Use multi Select
+                  isMulti
+                  name="participants"
+                  options={employeeOptions}
+                  className="basic-multi-select"
+                  classNamePrefix="select"
+                  placeholder="Search and select participants..."
+                  onChange={handleParticipantChange} // Use handleParticipantChange
+                  value={selectedParticipantOptions} // Use selectedParticipantOptions
+                  closeMenuOnSelect={false}
+                  isClearable={true}
+                  isSearchable={true}
+                  menuPortalTarget={document.body}
+                  styles={{ // Keep existing multi-select styles
+                     control: (base) => ({
+                       ...base,
+                       borderColor: '#D1D5DB',
+                       borderRadius: '0.5rem',
+                       boxShadow: 'none',
+                       padding: '1px',
+                       '&:hover': {
+                         borderColor: '#6366F1'
+                       }
+                     }),
+                     multiValue: (base) => ({
+                       ...base,
+                       backgroundColor: '#EEF2FF',
+                       borderRadius: '0.375rem',
+                       margin: '2px 4px 2px 0',
+                       padding: '0 2px'
+                     }),
+                     multiValueLabel: (base) => ({
+                       ...base,
+                       color: '#4F46E5',
+                       fontWeight: 500,
+                       padding: '2px 4px'
+                     }),
+                     multiValueRemove: (base) => ({
+                       ...base,
+                       color: '#4F46E5',
+                       '&:hover': {
+                         backgroundColor: '#E0E7FF',
+                         color: '#4338CA'
+                       }
+                     }),
+                     menu: (base) => ({
+                       ...base,
+                       borderRadius: '0.5rem',
+                       zIndex: 9999
+                     }),
+                     menuPortal: (base) => ({
+                       ...base,
+                       zIndex: 9999
+                     }),
+                     menuList: (base) => ({
+                       ...base,
+                       maxHeight: '220px',
+                       overflowY: 'auto'
+                     }),
+                     option: (base, state) => ({
+                       ...base,
+                       backgroundColor: state.isSelected ? '#6366F1' : state.isFocused ? '#EEF2FF' : 'white',
+                       color: state.isSelected ? 'white' : '#374151',
+                       cursor: 'pointer'
+                     })
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Footer */}

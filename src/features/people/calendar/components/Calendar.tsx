@@ -68,7 +68,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
 
   const fetchEvents = useCallback(async (startDate: Date, endDate: Date) => {
     if (!companyId) {
-      setError('Company ID is required');
+      setError('Company ID is not available yet');
       setLoading(false);
       return;
     }
@@ -182,7 +182,12 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
   };
 
   const handleCreateEvent = async (eventData: CreateCalendarEventPayload) => {
-    if (!companyId || !userId) return;
+    console.log('[Calendar.tsx] handleCreateEvent called with data:', eventData);
+    if (!companyId || !userId) {
+      console.error('[Calendar.tsx] handleCreateEvent failed: Missing companyId or userId');
+      toast.error('Cannot create event: Missing company or user information.');
+      return;
+    }
 
     try {
       console.log('Creating event with payload:', { eventData, companyId, userId });
@@ -527,6 +532,11 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
      );
    }
 
+  // --- Log userInfo right before final render --- 
+  if (!userInfo) {
+     console.log('[Calendar.tsx] userInfo from useUserAndCompanyData is missing/undefined right before return statement.');
+  }
+
   return (
     <div className="p-4" ref={containerRef}>
       <div className="mb-4 flex flex-wrap justify-between items-center gap-4">
@@ -621,16 +631,20 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
           {loading && <p className="mt-2 text-blue-600">Loading events...</p>}
        </div>
 
-      <CreateEventModal
-        isOpen={activeModal === 'create'}
-        onClose={() => setActiveModal('none')}
-        onSubmit={(eventData) => {
-          handleCreateEvent(eventData);
-          setActiveModal('none');
-        }}
-        initialDate={selectedDateForModal || undefined}
-        employees={employees}
-      />
+      {/* Conditionally render the modal only if userInfo (current user data from hook) is found */}
+      {userInfo && (
+        <CreateEventModal
+          isOpen={activeModal === 'create'}
+          onClose={() => setActiveModal('none')}
+          onSubmit={(eventData) => {
+            handleCreateEvent(eventData);
+            setActiveModal('none');
+          }}
+          initialDate={selectedDateForModal || undefined}
+          employees={employees}
+          currentUser={userInfo}
+        />
+      )}
 
        {selectedEvent && (
          <DayEventsModal

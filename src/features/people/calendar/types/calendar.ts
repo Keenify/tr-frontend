@@ -1,4 +1,4 @@
-export type EventType = 'Employee Leave' | 'Booth' | 'Meeting' | 'Other';
+export type EventType = 'Employee Leave' | 'Booth' | 'Meeting' | '1 to 1 Meeting' | 'Other';
 
 export interface Participant {
   id: string;
