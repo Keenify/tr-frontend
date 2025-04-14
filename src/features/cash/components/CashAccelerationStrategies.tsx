@@ -465,12 +465,7 @@ const CashAccelerationStrategies: React.FC<CashAccelerationStrategiesProps> = ({
       </Paper>
 
       {/* Add CashConversionMap component here, after the strategy table */}
-      <CashConversionMap 
-        onDataChange={(type, data) => {
-          console.log('CCC data changed:', type, data);
-          // Handle the data change here if needed
-        }}
-      />
+      {companyId && <CashConversionMap companyId={companyId} />}
     </Box>
   );
 };
