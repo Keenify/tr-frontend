@@ -19,6 +19,7 @@ import {
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import CashConversionCycleImage from '../../../assets/home/cash_conversion_cycle.png';
+import CashConversionMap from './CashConversionMap';
 import { useCashStrategies } from '../hooks/useCashStrategies';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData'; // Import the hook
 import toast, { Toaster } from 'react-hot-toast'; // Import toast
@@ -238,7 +239,6 @@ const CashAccelerationStrategies: React.FC<CashAccelerationStrategiesProps> = ({
   }
 
   return (
-    // Apply overall page styling: background and padding
     <Box sx={{ padding: { xs: 2, md: 4 }, backgroundColor: 'grey.50', minHeight: '100vh' }}>
       <Toaster position="top-right" />
       
@@ -319,23 +319,17 @@ const CashAccelerationStrategies: React.FC<CashAccelerationStrategiesProps> = ({
         </Grid>
       </Grid>
 
-      {/* Remove the standalone image */}
-      {/* <Box
-        component="img"
-        src={CashConversionCycleImage}
-        ...
-      /> */}
-
       {/* Table Area - Wrapped in Paper for distinct background/elevation */} 
       <Paper 
         elevation={2} 
         sx={{ 
             borderRadius: 2, 
-            overflow: 'hidden', // Ensures table border radius is clipped
-            border: isEditing ? '2px solid' : '1px solid', // Thicker border when editing
+            overflow: 'hidden',
+            border: isEditing ? '2px solid' : '1px solid',
             borderColor: isEditing ? 'primary.main' : 'grey.300',
-            transition: 'border-color 0.3s', // Smooth transition
-            backgroundColor: 'white', // Use white background for the table area
+            transition: 'border-color 0.3s',
+            backgroundColor: 'white',
+            mb: 4, // Add margin bottom to create space between this and the CashConversionMap
         }}
       >
         <TableContainer 
@@ -469,6 +463,14 @@ const CashAccelerationStrategies: React.FC<CashAccelerationStrategiesProps> = ({
           </Table>
         </TableContainer>
       </Paper>
+
+      {/* Add CashConversionMap component here, after the strategy table */}
+      <CashConversionMap 
+        onDataChange={(type, data) => {
+          console.log('CCC data changed:', type, data);
+          // Handle the data change here if needed
+        }}
+      />
     </Box>
   );
 };
