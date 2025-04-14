@@ -101,6 +101,9 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
   font-weight: 500; /* Keep text slightly bolder */
   cursor: pointer;
+  margin: 1px 0 !important;
+  position: relative !important;
+  z-index: 2 !important;
 }
 
 /* Target the inner title element specifically for text styling */
@@ -114,4 +117,57 @@
 /* Ensure the default dot is visible */
 .fc-daygrid-event-dot {
     border-color: inherit !important; /* Use the event's border color */
+}
+
+/* Style for today's cell - Google Calendar style */
+.fc .fc-day-today {
+  background-color: transparent !important;
+  border: none !important;
+  position: relative !important;
+}
+
+/* Style the date number for today's cell with a circle */
+.fc .fc-day-today .fc-daygrid-day-number {
+  background-color: #0000FF !important;
+  color: #FFFFFF !important;
+  border-radius: 50% !important;
+  width: 25px !important;
+  height: 25px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: absolute !important;
+  top: 4px !important;
+  right: 4px !important;
+  z-index: 1 !important;
+  font-weight: bold !important;
+  font-size: 14px !important;
+}
+
+/* Consistent padding for all day cells */
+.fc .fc-daygrid-day-frame {
+  padding-top: 28px !important;
+}
+
+/* Event styling */
+.fc-event-custom {
+  margin: 1px 0 !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* Remove previous hover and frame styles */
+.fc .fc-daygrid-day.fc-day-today:hover {
+  background-color: transparent !important;
+}
+
+.fc .fc-day-today .fc-daygrid-day-frame {
+  background-color: transparent !important;
+}
+
+/* Ensure all date numbers have consistent positioning */
+.fc .fc-daygrid-day-number {
+  position: absolute !important;
+  top: 4px !important;
+  right: 4px !important;
 } 
