@@ -96,6 +96,7 @@ const navigationConfig = [
         icon: ThumbsUp,
       },
       { id: "financeTab", label: "Finance", shortForm: "Fi", icon: ThumbsUp },
+      { id: "ccc", label: "Cash Conversion Cycle", shortForm: "CC", icon: ThumbsUp }
     ],
   },
   {
@@ -165,8 +166,7 @@ const navigationConfig = [
     subTabs: [
       { id: "peak", label: "Peak", shortForm: "Pe", icon: ThumbsUp },
       { id: "vivid_vision", label: "Vivid Vision", shortForm: "Vv", icon: ThumbsUp },
-      { id: "businessQuadrant", label: "Business Quadrant", shortForm: "Bq", icon: ThumbsUp },
-      { id: "ccc", label: "Cash Acceleration", shortForm: "CC", icon: ThumbsUp }
+      { id: "businessQuadrant", label: "Business Quadrant", shortForm: "Bq", icon: ThumbsUp }
     ],
   },
 ]

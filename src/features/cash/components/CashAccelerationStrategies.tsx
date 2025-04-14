@@ -244,7 +244,7 @@ const CashAccelerationStrategies: React.FC<CashAccelerationStrategiesProps> = ({
       
       {/* Main Title */} 
       <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: 'text.primary', mb: 4 }}>
-        Cash Acceleration Strategies (CASh)
+        Cash Conversion Cycle Strategies
       </Typography>
 
       {/* Grid layout for Info and Actions cards */}
