@@ -701,7 +701,8 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                 "Wins(1 work + 1 personal)": "Wins (1 Work + 1 Personal)",
                 "I need critical help on": "I Need Critical Help On",
                 "Main Priority": "OKR",
-                "Today Goals and Targeted Results": "Important Tasks Today"
+                "Today Goals and Targeted Results": "Important Tasks Today",
+                "Thank You To": "Thank You To"
               };
               
               const displayText = replacements[q.question_text] || q.question_text;
@@ -716,10 +717,12 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                  columnClass = 'col-goals';
                } else if (q.question_text.includes('Main Priority')) { // OKR
                  columnClass = 'col-priority';
+               } else if (q.question_text.includes('Thank You To')) { // Thank You To
+                 columnClass = 'col-thank-you';
                }
               
               return (
-                <th key={q.id || index} className={columnClass}>{displayText}</th> // Use question ID as key if available
+                <th key={q.id || index} className={columnClass}>{displayText}</th>
               );
             })}
             <th className="col-submitted">Submitted At</th>

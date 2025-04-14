@@ -152,53 +152,18 @@
 
 /* Column width classes for better control */
 .col-number {
-  width: 40px !important;
-  min-width: 40px !important;
-  max-width: 40px !important;
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
   white-space: nowrap !important;
   text-align: center;
-}
-
-.col-number, td.col-number {
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  font-weight: bold;
+  overflow: visible;
 }
 
 .col-member {
   width: 10%;
   text-align: center;
-}
-
-.team-member-column {
-  text-align: center;
-  vertical-align: middle;
-}
-
-.team-member-cell {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 100%;
-}
-
-/* Row with profile pic and name */
-.profile-name-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  width: 100%;
-  margin-bottom: 5px;
-  justify-content: center;
-}
-
-/* Badge row */
-.badge-row {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  min-height: 20px; /* Ensure consistent spacing even if no badge */
 }
 
 .col-one-word {
@@ -221,14 +186,31 @@
 }
 
 .col-help {
-  width: 11.2%; /* Reduced by 30% from original 16% */
+  width: 11.2%;
+}
+
+.col-thank-you {
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: bold;
+}
+
+td.col-thank-you {
+  font-size: 0.85rem;
+  padding: 4px 8px;
 }
 
 .col-submitted {
-  width: 80px !important;
-  min-width: 80px !important;
-  white-space: pre-line !important;
+  width: 120px !important;
+  min-width: 120px !important;
   text-align: center;
+  font-weight: bold;
+  white-space: nowrap !important;
+  overflow: visible;
 }
 
 /* Override general table header styles for submitted column */
@@ -244,13 +226,6 @@ td.col-submitted {
   text-align: center;
   padding: 6px 4px;
   line-height: 1.2;
-}
-
-td.col-one-word {
-  overflow: visible;
-  white-space: normal;
-  word-break: keep-all;
-  text-align: center;
 }
 
 .loading-center {
