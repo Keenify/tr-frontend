@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import CashConversionCycleImage from '../../../assets/home/cash_conversion_cycle.png';
+import CashConversionCycleImage from '../../../assets/home/cash_conversion_cycle_upscale.png';
 import CashConversionMap from './CashConversionMap';
 import { useCashStrategies } from '../hooks/useCashStrategies';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData'; // Import the hook
