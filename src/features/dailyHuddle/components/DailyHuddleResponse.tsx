@@ -292,11 +292,10 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
    * @returns Formatted date and time string or "Team member is on leave" if applicable
    */
   const formatSubmissionTime = (dateString: string | undefined, employeeName: string, rank?: number) => {
-    // Check if employee is on leave *only if* there is a submission time
-    const onLeave = dateString ? isEmployeeOnLeave(employeeName) : false;
-    
-    // If no submission time, just return "Not submitted"
-    if (!dateString) return 'Not submitted';
+    // If no submission time, check if employee is on leave
+    if (!dateString) {
+      return isEmployeeOnLeave(employeeName) ? 'Team member is on leave' : 'Not submitted';
+    }
     
     try {
       const date = new Date(dateString);
@@ -318,20 +317,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
       
       const timeClass = rank && rank <= 3 ? `submission-time-rank-${rank}` : '';
       
-      // If employee is on leave (and has submitted), show both statuses
-      if (onLeave) {
-        return (
-          <div className="submission-info">
-            <div className="employee-on-leave">Team member is on leave</div>
-            <div className={`submission-time ${timeClass}`}>
-              {formattedDate}<br />
-              {formattedTime}
-            </div>
-          </div>
-        );
-      }
-      
-      // Otherwise (submitted, not on leave), return just the time
+      // If submitted, just show the time regardless of leave status
       return (
         <div className={`submission-time ${timeClass}`}>
           {formattedDate}<br />
@@ -574,7 +560,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
 
   // Sort employees by submission time and assign ranks to top 3
   const rankedResponses: RankedEmployeeResponse[] = [...filteredResponses]
-    .filter(emp => emp.submittedTime && !isEmployeeOnLeave(emp.name)) // Only consider employees who submitted and are not on leave
+    .filter(emp => emp.submittedTime) // Only consider employees who submitted, regardless of leave status
     .sort((a, b) => {
       // Sort by submission time (earliest first)
       if (!a.submittedTime) return 1; // Should not happen due to filter, but safe guard
