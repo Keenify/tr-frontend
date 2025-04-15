@@ -479,20 +479,27 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   // --- Label Handler Functions using labelService ---
   const handleLabelToggleAssign = async (labelId: string) => {
       const isAssigned = assignedLabelIds.includes(labelId);
+      // Calculate the next state of assigned labels
+      const nextAssignedLabelIds = isAssigned
+          ? assignedLabelIds.filter(id => id !== labelId) // Remove the ID
+          : [...assignedLabelIds, labelId]; // Add the ID
+
+      console.log(`[TrelloCardModal] Updating card ${card.id} labels to:`, nextAssignedLabelIds);
+
       try {
-          if (isAssigned) {
-              await labelService.unassignLabelFromCard(card.id, labelId); // Use service
-              setAssignedLabelIds(prev => prev.filter(id => id !== labelId));
-              showToast('Label unassigned', 'success');
-          } else {
-              await labelService.assignLabelToCard(card.id, labelId); // Use service
-              setAssignedLabelIds(prev => [...prev, labelId]);
-              showToast('Label assigned', 'success');
-          }
+          // Call the single update function with the new complete list
+          await labelService.updateCardLabels(card.id, nextAssignedLabelIds);
+
+          // Update local state on success
+          setAssignedLabelIds(nextAssignedLabelIds);
+
+          // Show appropriate toast
+          showToast(isAssigned ? 'Label unassigned' : 'Label assigned', 'success');
+
       } catch (error) {
-          console.error("Failed to toggle label assignment:", error);
+          console.error("Failed to update card labels:", error);
           showToast("Failed to update label assignment", "error");
-          // Optionally revert state changes on error?
+          // State wasn't updated, so no rollback needed
       }
   };
 
@@ -927,10 +934,10 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                             {isEditable && (
                                 <button
                                     type="button"
-                                    onClick={() => handleLabelToggleAssign(label.id)} // Use direct unassign toggle
+                                    onClick={() => handleLabelToggleAssign(label.id)}
                                     className="ml-1 opacity-60 hover:opacity-100"
                                     style={{ color: label.color_code }}
-                                    disabled={isLoadingLabels} // Disable while loading anything label related?
+                                    disabled={isLoadingLabels}
                                     title={`Unassign ${label.text}`}
                                 >
                                     &times;
@@ -948,7 +955,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                         type="button"
                         onClick={() => setShowLabelManager(!showLabelManager)}
                         className="text-sm text-blue-600 hover:text-blue-800 inline-flex items-center gap-1"
-                        disabled={isLoadingLabels} // Disable button while initially loading
+                        disabled={isLoadingLabels}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />

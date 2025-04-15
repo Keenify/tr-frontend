@@ -1,4 +1,5 @@
 import { Label } from "../types/label.types";
+import { Card } from "../components/trello/types/card.types";
 
 // Access environment variables from .env
 const API_BASE_URL = import.meta.env.VITE_BACKEND_API_DOMAIN;
@@ -151,32 +152,35 @@ export const labelService = {
   },
 
   /**
-   * Assigns a label to a card.
-   * @param cardId - The ID of the card.
-   * @param labelId - The ID of the label to assign.
-   * @returns A promise that resolves when the assignment is complete.
-   * @throws Will throw an error if the operation fails.
+   * Updates the list of labels associated with a specific card.
+   * @param cardId - The ID of the card to update.
+   * @param labelIds - The complete array of label IDs to associate with the card.
+   * @returns A promise that resolves to the updated card object (or void/boolean depending on actual API).
+   * @throws Will throw an error if the update operation fails.
    */
-  async assignLabelToCard(cardId: string, labelId: string): Promise<void> {
-    console.warn("[Placeholder] assignLabelToCard called. Implement real API call.", cardId, labelId);
-    // Simulate API call - replace with actual endpoint
-    // Example: POST to /cards/{cardId}/labels/{labelId} or similar
-    await new Promise(resolve => setTimeout(resolve, 150));
-    // Check response status if needed
-  },
+  async updateCardLabels(cardId: string, labelIds: string[]): Promise<Card> {
+    console.log(`[labelService] updateCardLabels called for card ${cardId} with labels:`, labelIds);
+    const response = await fetch(`${API_BASE_URL}/trello/cards/${cardId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "accept": "application/json",
+      },
+      body: JSON.stringify({ label_ids: labelIds }),
+    });
+    console.log('[labelService] updateCardLabels raw response status:', response.status);
+    const responseBody = await response.text();
+    console.log('[labelService] updateCardLabels raw response body:', responseBody);
 
-  /**
-   * Unassigns a label from a card.
-   * @param cardId - The ID of the card.
-   * @param labelId - The ID of the label to unassign.
-   * @returns A promise that resolves when the unassignment is complete.
-   * @throws Will throw an error if the operation fails.
-   */
-  async unassignLabelFromCard(cardId: string, labelId: string): Promise<void> {
-    console.warn("[Placeholder] unassignLabelFromCard called. Implement real API call.", cardId, labelId);
-    // Simulate API call - replace with actual endpoint
-    // Example: DELETE from /cards/{cardId}/labels/{labelId} or similar
-    await new Promise(resolve => setTimeout(resolve, 150));
-    // Check response status if needed
+    if (!response.ok) {
+        console.error(`[labelService] Failed to update card labels. Status: ${response.status}, Body: ${responseBody}`);
+        throw new Error(`Failed to update card labels. Status: ${response.status}`);
+    }
+    try {
+        return JSON.parse(responseBody);
+    } catch (e) {
+        console.error('[labelService] Failed to parse updateCardLabels response body:', e);
+        throw new Error('Failed to parse server response for updateCardLabels.');
+    }
   },
 };
