@@ -1,3 +1,5 @@
+import { Label } from "../../../shared/types/label.types";
+
 export interface Card {
     id: string;
     title: string;
@@ -8,6 +10,15 @@ export interface Card {
     due_date: string | null;
     created_at: string;
     thumbnail_url?: string;
+    is_locked?: boolean;
+    locked_by?: string | null;
+    labels?: Label[];
+    assignees?: {
+        card_id: string;
+        employee_id: string;
+        assigned_at: string;
+    }[];
+    attachment_count?: number;
 }
 
 export interface List {
@@ -18,6 +29,7 @@ export interface List {
     board_id: string;
     cards: Card[];
     created_at?: string;
+    country?: string;
 }
 
 export type BoardDetails = List[]; 

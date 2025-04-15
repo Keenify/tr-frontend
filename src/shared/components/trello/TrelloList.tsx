@@ -4,6 +4,7 @@ import { StrictModeDroppable } from './StrictModeDroppable';
 import { Draggable } from 'react-beautiful-dnd';
 import { CardAttachment } from './services/useCardAttachment';
 import { Card } from './types/card.types';
+import { Label } from '../../types/label.types';
 import { Employee } from '@/shared/types/directory.types';
 import lookup from 'country-code-lookup';
 
@@ -23,8 +24,9 @@ interface TrelloListProps {
     start_date?: string;
     end_date?: string;
     is_locked?: boolean;
-    locked_by?: string;
+    locked_by?: string | undefined;
     attachmentCount?: number;
+    labels?: Label[];
   }>;
   onTitleChange?: (newTitle: string) => void;
   onCountryChange?: (newCountry: string) => void;
@@ -398,42 +400,37 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                   ref={dropProvided.innerRef}
                   {...dropProvided.droppableProps}
                   className={`
-                    flex-grow
-                    flex flex-col
+                    flex-1 overflow-y-auto
                     min-h-[100px]
-                    ${snapshot.isDraggingOver ? 'bg-gray-200/50' : 'bg-gray-100'}
-                    rounded-lg
-                    transition-colors
-                    duration-200
-                    ${filteredCards.length === 0 ? 'border-2 border-dashed border-gray-300' : ''}
+                    -m-2 p-2
+                    ${snapshot.isDraggingOver ? 'bg-blue-50' : ''}
                   `}
                 >
                   {filteredCards.map((card, cardIndex) => (
                     <TrelloCard
                       key={card.id}
-                      {...card}
-                      is_locked={card.is_locked || false}
-                      locked_by={card.locked_by || ""}
+                      id={card.id}
                       index={cardIndex}
-                      onDelete={() => onCardDelete?.(card.id)}
-                      onUpdate={(updatedCard) => onCardUpdate?.(card.id, {
-                        ...updatedCard,
-                        title: updatedCard.title || card.title
-                      })}
+                      title={card.title}
+                      description={card.description}
+                      colorCode={card.colorCode}
+                      thumbnailUrl={card.thumbnailUrl}
+                      assignees={card.assignees}
+                      attachmentCount={card.attachmentCount}
+                      start_date={card.start_date}
+                      end_date={card.end_date}
+                      is_locked={card.is_locked ?? false}
+                      locked_by={card.locked_by ?? ''}
+                      labels={card.labels}
+                      onDelete={() => onCardDelete && onCardDelete(card.id)}
+                      onUpdate={(updatedCard) => onCardUpdate && onCardUpdate(card.id, { ...updatedCard, id: card.id })}
                       userRole={userRole}
-                      onClick={() => onCardClick?.(card)}
+                      onCardClick={onCardClick}
                       employees={employees}
-                      assignees={card.assignees || []}
-                      attachmentCount={card.attachmentCount || 0}
                       userId={userId}
                     />
                   ))}
                   {dropProvided.placeholder}
-                  {filteredCards.length === 0 && !snapshot.isDraggingOver && (
-                    <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-                      {searchTerm ? 'No matching cards or assignees' : 'Drop cards here'}
-                    </div>
-                  )}
                 </div>
               )}
             </StrictModeDroppable>

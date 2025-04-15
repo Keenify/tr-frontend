@@ -1,6 +1,16 @@
 import { useState, useCallback } from 'react';
 import { DropResult } from 'react-beautiful-dnd';
 import { CardAttachment } from '../services/useCardAttachment';
+import { Label } from '../../../types/label.types';
+import { Card } from '../types/card.types';
+
+// Define the expected input type, matching TrelloBoardProps['initialLists']
+type InitialListInputType = Array<{
+  id: string;
+  title: string;
+  country?: string;
+  cards: Card[]; // Use the base Card type here
+}>;
 
 /**
  * Represents a list in the Trello-like board
@@ -25,13 +35,26 @@ interface TrelloCard {
   /** Title of the card */
   title: string;
   /** Optional description of the card */
-  description?: string;
+  description?: string | undefined;
   /** Optional color code for card styling */
   colorCode?: string;
   /** Optional URL for card thumbnail */
   thumbnailUrl?: string;
   /** Optional array of attachments associated with the card */
   attachments?: CardAttachment[];
+  labels?: Label[];
+  is_locked: boolean;
+  locked_by?: string | undefined;
+  start_date?: string | undefined;
+  end_date?: string | undefined;
+  assignees?: string[];
+  color_code?: string;
+  position?: number;
+  due_date?: string | undefined;
+  list_id?: string;
+  created_at?: string;
+  attachmentCount?: number;
+  label_ids?: string[];
 }
 
 /**
@@ -49,7 +72,11 @@ interface TrelloBoardHookProps {
     cardId: string
   ) => Promise<void>;
   /** Callback function when a card's content is updated */
-  onCardUpdate?: (listId: string, cardId: string, updates: Partial<TrelloCard>) => Promise<void>;
+  onCardUpdate?: (
+    listId: string, 
+    cardId: string, 
+    updates: Partial<TrelloCard> & { description?: string | null }
+  ) => Promise<void>;
   /** Callback function when a list's title is changed */
   onListTitleChange?: (listId: string, newTitle: string) => Promise<void>;
   /** Callback function when a list's country is changed */
@@ -89,7 +116,7 @@ interface TrelloBoardHookProps {
  * ```
  */
 export const useTrelloBoard = (
-  initialLists: TrelloList[],
+  initialListsInput: InitialListInputType,
   {
     onListMove,
     onCardMove,
@@ -102,7 +129,23 @@ export const useTrelloBoard = (
     onListDelete
   }: TrelloBoardHookProps = {}
 ) => {
-  const [lists, setLists] = useState(initialLists);
+  // Create the transformed initial data *once* to use for initialization and rollback
+  const transformedInitialLists: TrelloList[] = initialListsInput.map(list => ({
+    ...list,
+    cards: list.cards.map(card => ({
+      ...card,
+      is_locked: card.is_locked ?? false,
+      locked_by: card.locked_by ?? undefined,
+      description: card.description ?? undefined,
+      start_date: card.start_date ?? undefined,
+      end_date: card.end_date ?? undefined,
+      due_date: card.due_date ?? undefined,
+      labels: card.labels ?? [],
+    }))
+  }));
+
+  // Initialize state with the transformed data
+  const [lists, setLists] = useState<TrelloList[]>(transformedInitialLists);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -126,8 +169,8 @@ export const useTrelloBoard = (
           } catch (error) {
             // If API fails, revert the optimistic update
             console.error('Failed to move list:', error);
-            const originalLists = Array.from(lists);
-            setLists(originalLists);
+            // Use the transformed data for rollback
+            setLists(transformedInitialLists);
           }
         }
       } else {
@@ -155,17 +198,18 @@ export const useTrelloBoard = (
               );
             } catch (error) {
               console.error('Failed to move card:', error);
-              const originalLists = Array.from(lists);
-              setLists(originalLists);
+              // Use the transformed data for rollback
+              setLists(transformedInitialLists);
             }
           }
         }
       }
     } catch (err) {
       console.error('Error during drag and drop:', err);
-      setLists(initialLists);
+      // Use the transformed data for rollback
+      setLists(transformedInitialLists);
     }
-  }, [lists, initialLists, onListMove, onCardMove]);
+  }, [lists, transformedInitialLists, onListMove, onCardMove]);
 
   const handleCardUpdate = useCallback(async (
     listId: string,
@@ -183,7 +227,12 @@ export const useTrelloBoard = (
             ...list,
             cards: list.cards.map(card => 
               card.id === cardId
-                ? { ...card, ...updatedCard }
+                ? { 
+                    ...card, 
+                    ...updatedCard, 
+                    // Ensure description is string | undefined for state
+                    description: updatedCard.description === null ? undefined : updatedCard.description 
+                  }
                 : card
             )
           };
@@ -197,11 +246,12 @@ export const useTrelloBoard = (
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-      setLists(initialLists);
+      // Use the transformed data for rollback
+      setLists(transformedInitialLists);
     } finally {
       setIsLoading(false);
     }
-  }, [lists, initialLists, onCardUpdate]);
+  }, [lists, transformedInitialLists, onCardUpdate]);
 
   const handleTitleChange = useCallback(async (listId: string, newTitle: string) => {
     setIsLoading(true);
@@ -219,11 +269,12 @@ export const useTrelloBoard = (
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-      setLists(initialLists);
+      // Use the transformed data for rollback
+      setLists(transformedInitialLists);
     } finally {
       setIsLoading(false);
     }
-  }, [lists, initialLists, onListTitleChange]);
+  }, [lists, transformedInitialLists, onListTitleChange]);
 
   const handleCountryChange = useCallback(async (
     listId: string,
@@ -244,23 +295,30 @@ export const useTrelloBoard = (
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-      setLists(initialLists);
+      // Use the transformed data for rollback
+      setLists(transformedInitialLists);
     } finally {
       setIsLoading(false);
     }
-  }, [lists, initialLists, onListCountryChange]);
+  }, [lists, transformedInitialLists, onListCountryChange]);
 
   const handleAddCard = useCallback(async (listId: string, title: string) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Create temporary card first
-      const tempId = `${Date.now()}`;
-      const newCard = {
+      // Create temporary card first, including required fields
+      const tempId = `${Date.now()}-temp`;
+      const newCard: TrelloCard = {
         id: tempId,
         title,
-        description: ''
+        description: '',
+        labels: [],
+        is_locked: false,
+        locked_by: undefined,
+        start_date: undefined,
+        end_date: undefined,
+        due_date: undefined,
       };
 
       // Optimistic update with temp ID
@@ -290,11 +348,12 @@ export const useTrelloBoard = (
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-      setLists(initialLists);
+      // Use the transformed data for rollback
+      setLists(transformedInitialLists);
     } finally {
       setIsLoading(false);
     }
-  }, [lists, initialLists, onCardAdd]);
+  }, [lists, transformedInitialLists, onCardAdd]);
 
   const handleAddList = useCallback(async (
     title: string,
@@ -344,11 +403,12 @@ export const useTrelloBoard = (
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-      setLists(initialLists);
+      // Use the transformed data for rollback
+      setLists(transformedInitialLists);
     } finally {
       setIsLoading(false);
     }
-  }, [lists, initialLists, onCardDelete]);
+  }, [lists, transformedInitialLists, onCardDelete]);
 
   const handleListDelete = useCallback(async (listId: string) => {
     setIsLoading(true);
@@ -364,11 +424,12 @@ export const useTrelloBoard = (
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-      setLists(initialLists); // Rollback on error
+      // Use the transformed data for rollback
+      setLists(transformedInitialLists);
     } finally {
       setIsLoading(false);
     }
-  }, [lists, initialLists, onListDelete]);
+  }, [lists, transformedInitialLists, onListDelete]);
 
   return {
     lists,

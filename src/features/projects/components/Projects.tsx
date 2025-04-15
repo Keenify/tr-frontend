@@ -4,6 +4,7 @@ import { createCard, updateCard } from "../../../shared/components/trello/servic
 import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { CardUpdate, Card as TrelloCard } from "../../../shared/components/trello/types/card.types";
+import { Label } from "../../../shared/types/label.types";
 import { getBoardDetails, HARDCODED_BOARD_ID } from "../services/useBoard";
 import { List, Card as ProjectCard } from "../types/board";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
@@ -29,6 +30,7 @@ interface ModifiedList extends Omit<List, 'cards'> {
     thumbnailUrl?: string;
     colorCode?: string;
     due_date?: string;
+    labels?: Label[];
   })[];
 }
 
@@ -55,6 +57,10 @@ const Project: React.FC<ProjectProps> = ({
           thumbnailUrl: card.thumbnail_url,
           colorCode: card.color_code,
           due_date: card.due_date || undefined, // Convert null to undefined
+          // Provide default values for potentially undefined fields
+          is_locked: card.is_locked ?? false,
+          locked_by: card.locked_by ?? null,
+          labels: card.labels ?? [], // Also ensure labels has a default
         })),
       }));
       setLists(transformedLists as ModifiedList[]);
@@ -137,8 +143,15 @@ const Project: React.FC<ProjectProps> = ({
         ...updates,
         list_id: listId,
         color_code: updates.colorCode,
+        description: updates.description === null ? undefined : updates.description,
+        // Convert null dates to undefined
+        start_date: updates.start_date === null ? undefined : updates.start_date,
+        end_date: updates.end_date === null ? undefined : updates.end_date,
+        // Convert null locked_by to undefined
+        locked_by: updates.locked_by === null ? undefined : updates.locked_by,
       };
       delete apiUpdates.colorCode;
+      
       await updateCard(cardId, apiUpdates);
     } catch (error) {
       console.error('Failed to update card:', error);

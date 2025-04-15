@@ -9,6 +9,7 @@ import { useUserAndCompanyData } from '../../hooks/useUserAndCompanyData';
 import { directoryService } from '../../../shared/services/directoryService';
 import { Employee } from '@/shared/types/directory.types';
 import { Card, CardUpdate } from './types/card.types';
+import { Card as TrelloCard } from './types/card.types';
 import { Tab } from '@headlessui/react';
 
 /**
@@ -423,29 +424,35 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
           isOpen={true}
           onClose={() => setSelectedCard(null)}
           onSave={(updatedCard) => {
+            // Convert nulls to undefined for the hook call
+            const updatesForHook: Partial<TrelloCard> = {
+              ...updatedCard,
+              description: updatedCard.description === null ? undefined : updatedCard.description,
+              start_date: updatedCard.start_date === null ? undefined : updatedCard.start_date,
+              end_date: updatedCard.end_date === null ? undefined : updatedCard.end_date,
+              locked_by: updatedCard.locked_by === null ? undefined : updatedCard.locked_by,
+              // Add other potentially null fields from CardUpdate if needed
+            };
+
             // Check if this is a lock operation (only contains is_locked and locked_by properties)
             const isLockOperation = 
               Object.keys(updatedCard).length === 2 && 
               'is_locked' in updatedCard && 
               'locked_by' in updatedCard;
             
-            // If it's a lock operation, we need to update our state but keep the modal open
             if (isLockOperation) {
-              // Update the card
-              handleCardUpdate(selectedCard.listId, selectedCard.card.id, updatedCard);
+              handleCardUpdate(selectedCard.listId, selectedCard.card.id, updatesForHook);
               
-              // Update the selected card state to reflect the lock changes
               setSelectedCard(prev => prev ? {
                 ...prev,
                 card: {
                   ...prev.card,
-                  is_locked: updatedCard.is_locked,
-                  locked_by: updatedCard.locked_by
+                  is_locked: updatedCard.is_locked ?? false, // Use ?? false for boolean
+                  locked_by: updatedCard.locked_by ?? undefined // Use ?? undefined for state update
                 }
               } : null);
             } else {
-              // For regular updates, handle normally and close the modal
-              handleCardUpdate(selectedCard.listId, selectedCard.card.id, updatedCard);
+              handleCardUpdate(selectedCard.listId, selectedCard.card.id, updatesForHook);
               setSelectedCard(null);
             }
           }}

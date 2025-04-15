@@ -4,6 +4,7 @@ import { deleteCard } from './services/useCard';
 import { getCardAttachments, CardAttachment, getAttachmentUrl } from './services/useCardAttachment';
 import { TrelloCardModal } from './TrelloCardModal';
 import { Card, CardUpdate } from './types/card.types';
+import { Label } from '../../types/label.types';
 import { Employee } from '@/shared/types/directory.types';
 import '../../styles/TrelloCardDescription.css';
 
@@ -46,13 +47,17 @@ interface TrelloCardProps {
   end_date?: string;
   onClick?: () => void;
   onDelete?: () => void;
-  onUpdate?: (updatedCard: CardUpdate & { id: string }) => void;
+  onUpdate?: (updatedCard: CardUpdate & { 
+    id: string; 
+    title: string; 
+  }) => void;
   userRole: string;
   onCardClick?: (card: Card) => void;
   employees: Employee[];
   userId?: string;
   is_locked: boolean;
   locked_by: string;
+  labels?: Label[];
 }
 
 /**
@@ -91,6 +96,7 @@ interface TrelloCardProps {
  * @param {string} userId - User ID for permissions and data fetching
  * @param {boolean} is_locked - Indicates if the card is locked
  * @param {string} locked_by - ID of the user who locked the card
+ * @param {Label[]} labels - Array of labels for the card
  */
 export const TrelloCard: React.FC<TrelloCardProps> = ({
   id,
@@ -111,6 +117,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   userId = '',
   is_locked,
   locked_by,
+  labels = [],
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPosition, setDragStartPosition] = useState({ x: 0, y: 0 });
@@ -275,11 +282,10 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
 
   const handleAttachmentCountChange = (newCount: number) => {
     if (onUpdate) {
-      onUpdate({ id, attachmentCount: newCount });
+      onUpdate({ id, title, attachmentCount: newCount });
     }
   };
 
-  // Add this handler function
   const handleThumbnailChange = async (updatedCard: CardUpdate) => {
     if (onUpdate) {
       // Find the new thumbnail attachment
@@ -308,20 +314,24 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
       // Then propagate the change to parent components
       onUpdate({ 
         id, 
-        ...updatedCard, // Pass all updates from the modal
-        thumbnailUrl: newThumbnailUrl // Use the proper signed URL
+        title: updatedCard.title || title,
+        description: updatedCard.description,
+        colorCode: updatedCard.colorCode,
+        assignees: updatedCard.assignees,
+        start_date: updatedCard.start_date,
+        end_date: updatedCard.end_date,
+        attachmentCount: updatedCard.attachmentCount,
+        is_locked: updatedCard.is_locked,
+        locked_by: updatedCard.locked_by,
       });
     }
     // Keep the modal open, do not call setIsModalOpen(false)
   };
 
-  // Add this handler function
   const handleLockStatusChange = (isLocked: boolean, lockedBy: string) => {
     if (onUpdate) {
-      onUpdate({ id, is_locked: isLocked, locked_by: lockedBy });
+      onUpdate({ id, title, is_locked: isLocked, locked_by: lockedBy });
     }
-    // Note: We don't update local state here directly, 
-    // assuming the parent component will pass down the updated props.
   };
 
   return (
@@ -415,6 +425,28 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
                     html={description}
                     className="max-w-none" 
                   />
+                </div>
+              )}
+              
+              {/* Labels - Render before assignees/dates for visual hierarchy */} 
+              {labels && labels.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-1">
+                  {labels.slice(0, 3).map((label) => (
+                    <span
+                      key={label.id}
+                      className="px-1.5 py-0.5 rounded-full text-xs font-medium"
+                      style={{ backgroundColor: label.color_code + '33', color: label.color_code }}
+                      title={label.text}
+                    >
+                      {label.text}
+                    </span>
+                  ))}
+                  {labels.length > 3 && (
+                    <span className="px-1.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-600"
+                          title={`${labels.length - 3} more labels`}>
+                       +{labels.length - 3}
+                    </span>
+                  )}
                 </div>
               )}
               
@@ -517,7 +549,9 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
           onClose={() => setIsModalOpen(false)}
           onSave={(updatedCard) => {
             if (onUpdate) {
-              onUpdate({
+              // onUpdate in TrelloCard should handle general card updates, not label-specific ones
+              // Labels are updated via updateCardLabels in the modal
+              const generalUpdates: CardUpdate & { id: string } = {
                 id,
                 title: updatedCard.title || title,
                 description: updatedCard.description,
@@ -525,10 +559,14 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
                 assignees: updatedCard.assignees,
                 start_date: updatedCard.start_date,
                 end_date: updatedCard.end_date,
-                attachments: updatedCard.attachments || cardAttachments,
+                // attachments: updatedCard.attachments || cardAttachments, // Attachments handled separately?
+                attachmentCount: updatedCard.attachmentCount,
                 is_locked: updatedCard.is_locked,
-                locked_by: updatedCard.locked_by
-              });
+                locked_by: updatedCard.locked_by,
+                // Do NOT pass labels here
+              };
+              // Explicitly cast to satisfy the stricter onUpdate prop type
+              onUpdate(generalUpdates as CardUpdate & { id: string; title: string });
             }
             setIsModalOpen(false);
           }}
@@ -542,7 +580,8 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
             start_date,
             end_date,
             is_locked,
-            locked_by
+            locked_by,
+            labels, // Pass current labels for display
           }}
           isLoadingAttachments={isLoadingAttachments}
           userRole={userRole}
