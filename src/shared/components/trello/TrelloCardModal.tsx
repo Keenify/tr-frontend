@@ -4,10 +4,28 @@ import { createCardAttachment, deleteAttachment, getCardAttachments, getAttachme
 import { assignEmployeeToCard, unassignEmployeeFromCard, getCardAssignees } from './services/useCardAssignee';
 import { Employee } from '../../../shared/types/directory.types';
 import { Card, CardUpdate } from './types/card.types';
+import { Label } from '../../types/label.types';
 import { useUserAndCompanyData } from '../../hooks/useUserAndCompanyData';
 import { updateCard } from './services/useCard';
+import { labelService } from '../../services/labelService';
 import { TrelloCardDescription } from './TrelloCardDescription';
+import { TrelloCardLabelManager } from './TrelloCardLabelManager';
 import '../../styles/TrelloCardDescription.css';
+
+// --- Remove Placeholder Label Data and Service ---
+/*
+const MOCK_COMPANY_LABELS: Label[] = [
+  // ... mock data ...
+];
+const MOCK_CARD_LABELS: { [cardId: string]: string[] } = {
+  'card-1': ['label-1', 'label-3'] 
+};
+
+const placeholderLabelService = {
+  // ... placeholder functions ...
+};
+*/
+// --- End Removal ---
 
 interface TrelloCardModalProps {
   isOpen: boolean;
@@ -73,6 +91,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
 }) => {
   // Always call the hook with a string value, even if it's empty
   const { userInfo } = useUserAndCompanyData(userId);
+  const companyId = userInfo?.company_id || '';
 
   // Log the employee ID when userInfo changes and userId is provided
   useEffect(() => {
@@ -111,6 +130,12 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   const [lockedBy, setLockedBy] = useState(card.locked_by || '');
   const [isUpdatingThumbnailId, setIsUpdatingThumbnailId] = useState<string | null>(null);
   
+  // Label State
+  const [companyLabels, setCompanyLabels] = useState<Label[]>([]);
+  const [assignedLabelIds, setAssignedLabelIds] = useState<string[]>([]);
+  const [showLabelManager, setShowLabelManager] = useState(false);
+  const [isLoadingLabels, setIsLoadingLabels] = useState(false);
+  
   // Check if the current user is the one who locked the card
   const isLockedByCurrentUser = userInfo?.id === lockedBy;
   
@@ -130,6 +155,16 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       emp.last_name.toLowerCase().includes(term)
     );
   }, [employees, searchTerm]);
+
+  // Get assigned employee names for display
+  const assignedEmployees = useMemo(() => {
+    return employees.filter(emp => assignees.includes(emp.id));
+  }, [employees, assignees]);
+
+  // Get assigned label objects for display
+  const assignedLabels = useMemo(() => {
+      return companyLabels.filter(label => assignedLabelIds.includes(label.id));
+  }, [companyLabels, assignedLabelIds]);
 
   // Show toast message
   const showToast = (message: string, type: 'success' | 'error') => {
@@ -172,6 +207,29 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
     };
     fetchAttachments();
   }, [card.id]);
+
+  // Fetch Labels using actual service
+  useEffect(() => {
+    const fetchLabels = async () => {
+        if (!companyId || !card.id) return;
+        setIsLoadingLabels(true);
+        try {
+            // Use labelService
+            const [fetchedCompanyLabels, fetchedCardLabelIds] = await Promise.all([
+                labelService.fetchLabelsByCompany(companyId),
+                card.id.startsWith('temp-') ? Promise.resolve([]) : labelService.fetchLabelsByCard(card.id)
+            ]);
+            setCompanyLabels(fetchedCompanyLabels);
+            setAssignedLabelIds(fetchedCardLabelIds);
+        } catch (error) {
+            console.error("Failed to fetch labels:", error);
+            showToast("Failed to load labels", "error");
+        } finally {
+            setIsLoadingLabels(false);
+        }
+    };
+    fetchLabels();
+  }, [companyId, card.id]);
 
   // Update dates when card changes
   useEffect(() => {
@@ -418,6 +476,75 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
     }
   };
 
+  // --- Label Handler Functions using labelService ---
+  const handleLabelToggleAssign = async (labelId: string) => {
+      const isAssigned = assignedLabelIds.includes(labelId);
+      try {
+          if (isAssigned) {
+              await labelService.unassignLabelFromCard(card.id, labelId); // Use service
+              setAssignedLabelIds(prev => prev.filter(id => id !== labelId));
+              showToast('Label unassigned', 'success');
+          } else {
+              await labelService.assignLabelToCard(card.id, labelId); // Use service
+              setAssignedLabelIds(prev => [...prev, labelId]);
+              showToast('Label assigned', 'success');
+          }
+      } catch (error) {
+          console.error("Failed to toggle label assignment:", error);
+          showToast("Failed to update label assignment", "error");
+          // Optionally revert state changes on error?
+      }
+  };
+
+  const handleLabelCreate = async (data: Pick<Label, 'text' | 'color_code' | 'company_id'>): Promise<Label | null> => {
+      console.log('[TrelloCardModal] handleLabelCreate received data:', data);
+      try {
+          const newLabel = await labelService.createLabel(data); // Use service
+          console.log('[TrelloCardModal] labelService.createLabel response:', newLabel);
+          if (newLabel) {
+              setCompanyLabels(prev => [...prev, newLabel]);
+              return newLabel;
+          }
+          return null;
+      } catch (error) {
+          console.error("Failed to create label:", error);
+          showToast("Failed to create label", "error");
+          return null; // Indicate failure to LabelManager
+      }
+  };
+
+  const handleLabelUpdate = async (labelId: string, data: Partial<Pick<Label, 'text' | 'color_code'>>): Promise<Label | null> => {
+      try {
+          const updatedLabel = await labelService.updateLabel(labelId, data); // Use service
+          if (updatedLabel) {
+              setCompanyLabels(prev => prev.map(l => l.id === updatedLabel.id ? updatedLabel : l));
+              return updatedLabel;
+          }
+          return null;
+      } catch (error) {
+          console.error("Failed to update label:", error);
+          showToast("Failed to update label", "error");
+          return null; // Indicate failure to LabelManager
+      }
+  };
+
+  const handleLabelDelete = async (labelId: string): Promise<boolean> => {
+      try {
+          const success = await labelService.deleteLabel(labelId); // Use service
+          if (success) {
+              setCompanyLabels(prev => prev.filter(l => l.id !== labelId));
+              setAssignedLabelIds(prev => prev.filter(id => id !== labelId));
+          }
+          return success;
+      } catch (error) {
+          console.error("Failed to delete label:", error);
+          showToast("Failed to delete label", "error");
+          return false; // Indicate failure to LabelManager
+      }
+  };
+
+  // --- End Label Handlers ---
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isEditable) {
@@ -437,7 +564,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       is_locked: isLocked,
       locked_by: isLocked ? userInfo?.id : "",
       list_id: card.list_id || "",
-      position: card.position || 0
+      position: card.position || 0,
     };
 
     console.log('Card Update Payload:', updatedCard);
@@ -464,9 +591,6 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       </div>
     );
   }
-
-  // Get assigned employee names for display
-  const assignedEmployees = employees.filter(emp => assignees.includes(emp.id));
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -773,6 +897,79 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                             ))
                           )}
                         </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Labels Section */}      
+                <div className="mb-6">
+                  <label className="block text-gray-700 text-sm font-bold mb-2">
+                    Labels
+                  </label>
+
+                  {/* Display Assigned Labels */}       
+                  <div className="mb-2 min-h-[30px] flex flex-wrap gap-2">
+                     {isLoadingLabels ? (
+                        <span className="text-gray-500 italic text-sm">Loading labels...</span>
+                     ) : assignedLabels.length === 0 ? (
+                       <span className="text-gray-500 italic text-sm">No labels assigned</span>
+                     ) : (
+                       assignedLabels.map(label => (
+                         <span
+                           key={label.id}
+                           className="px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1"
+                           style={{ backgroundColor: label.color_code + '33', color: label.color_code }}
+                           title={label.text}
+                         >
+                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: label.color_code }}></span>
+                            <span className="truncate max-w-[150px]">{label.text}</span>
+                            {isEditable && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleLabelToggleAssign(label.id)} // Use direct unassign toggle
+                                    className="ml-1 opacity-60 hover:opacity-100"
+                                    style={{ color: label.color_code }}
+                                    disabled={isLoadingLabels} // Disable while loading anything label related?
+                                    title={`Unassign ${label.text}`}
+                                >
+                                    &times;
+                                </button>
+                             )}
+                         </span>
+                       ))
+                     )}
+                  </div>
+
+                  {/* Add/Manage Labels Button & Dropdown */} 
+                  {isEditable && (
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowLabelManager(!showLabelManager)}
+                        className="text-sm text-blue-600 hover:text-blue-800 inline-flex items-center gap-1"
+                        disabled={isLoadingLabels} // Disable button while initially loading
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                        {showLabelManager ? 'Close Labels' : 'Manage Labels'}
+                      </button>
+
+                      {/* Label Manager Popover */} 
+                      {showLabelManager && companyId && (
+                        <TrelloCardLabelManager
+                           companyId={companyId}
+                           availableLabels={companyLabels}
+                           assignedLabelIds={assignedLabelIds}
+                           onToggleAssign={handleLabelToggleAssign}
+                           onCreateLabel={handleLabelCreate}
+                           onUpdateLabel={handleLabelUpdate}
+                           onDeleteLabel={handleLabelDelete}
+                           isEditable={isEditable}
+                           showToast={showToast}
+                           onClose={() => setShowLabelManager(false)}
+                        />
                       )}
                     </div>
                   )}

@@ -60,12 +60,28 @@ export const labelService = {
   },
 
   /**
+   * Fetches label IDs assigned to a specific card.
+   * @param cardId - The ID of the card.
+   * @returns A promise that resolves to an array of assigned label IDs.
+   * @throws Will throw an error if the fetch operation fails.
+   */
+  async fetchLabelsByCard(cardId: string): Promise<string[]> {
+    console.warn("[Placeholder] fetchLabelsByCard called. Implement real API call.", cardId);
+    // Simulate fetching - replace with actual API endpoint for card-label associations
+    await new Promise(resolve => setTimeout(resolve, 150)); 
+    // Return an empty array or mock data based on your backend structure
+    // Example: Fetch from /cards/{cardId}/labels 
+    return []; // Placeholder return
+  },
+
+  /**
    * Adds a new label.
    * @param labelData - Data for the new label (text, color_code, company_id).
    * @returns A promise that resolves to the newly added Label object.
    * @throws Will throw an error if the add operation fails.
    */
   async createLabel(labelData: CreateLabelData): Promise<Label> {
+    console.log('[labelService] createLabel called with:', labelData);
     const response = await fetch(`${API_BASE_URL}/labels/`, {
       method: "POST",
       headers: {
@@ -73,12 +89,22 @@ export const labelService = {
       },
       body: JSON.stringify(labelData),
     });
+    console.log('[labelService] createLabel raw response status:', response.status);
+    const responseBody = await response.text(); // Read body once as text
+    console.log('[labelService] createLabel raw response body:', responseBody);
+
     if (!response.ok) { // Check for 201 Created specifically? API returns 201
         if (response.status !== 201) {
+             console.error(`[labelService] Failed to add label. Status: ${response.status}, Body: ${responseBody}`);
              throw new Error(`Failed to add label. Status: ${response.status}`);
         }
     }
-    return response.json();
+    try {
+        return JSON.parse(responseBody); // Parse the stored text body
+    } catch (e) {
+        console.error('[labelService] Failed to parse createLabel response body:', e);
+        throw new Error('Failed to parse server response for createLabel.');
+    }
   },
 
   /**
@@ -105,18 +131,52 @@ export const labelService = {
   /**
    * Deletes a label by its ID.
    * @param labelId - The ID of the label to delete.
-   * @returns A promise that resolves to the deleted Label object (as returned by the API).
-   * @throws Will throw an error if the delete operation fails.
+   * @returns A promise that resolves to true if deletion was successful, false otherwise.
+   * @throws Will throw an error if the delete operation fails unexpectedly.
    */
-  async deleteLabel(labelId: string): Promise<Label> {
+  async deleteLabel(labelId: string): Promise<boolean> {
     const response = await fetch(`${API_BASE_URL}/labels/${labelId}`, {
       method: "DELETE",
     });
-    // Check specifically for 200 OK, as DELETE often returns 204 No Content or 200 OK with body
+    // Check specifically for 200 OK or potentially 204 No Content if API changes
     if (!response.ok) {
-        throw new Error(`Failed to delete label. Status: ${response.status}`);
+        // Log error but return false, or re-throw if preferred
+        console.error(`Failed to delete label. Status: ${response.status}`);
+        // throw new Error(`Failed to delete label. Status: ${response.status}`); 
+        return false; // Indicate failure
     }
-    // The API seems to return the deleted object with status 200
-    return response.json();
+    // Consider response body? API might return the deleted object or nothing (204)
+    // For now, success is indicated by response.ok
+    return true; // Indicate success
+  },
+
+  /**
+   * Assigns a label to a card.
+   * @param cardId - The ID of the card.
+   * @param labelId - The ID of the label to assign.
+   * @returns A promise that resolves when the assignment is complete.
+   * @throws Will throw an error if the operation fails.
+   */
+  async assignLabelToCard(cardId: string, labelId: string): Promise<void> {
+    console.warn("[Placeholder] assignLabelToCard called. Implement real API call.", cardId, labelId);
+    // Simulate API call - replace with actual endpoint
+    // Example: POST to /cards/{cardId}/labels/{labelId} or similar
+    await new Promise(resolve => setTimeout(resolve, 150));
+    // Check response status if needed
+  },
+
+  /**
+   * Unassigns a label from a card.
+   * @param cardId - The ID of the card.
+   * @param labelId - The ID of the label to unassign.
+   * @returns A promise that resolves when the unassignment is complete.
+   * @throws Will throw an error if the operation fails.
+   */
+  async unassignLabelFromCard(cardId: string, labelId: string): Promise<void> {
+    console.warn("[Placeholder] unassignLabelFromCard called. Implement real API call.", cardId, labelId);
+    // Simulate API call - replace with actual endpoint
+    // Example: DELETE from /cards/{cardId}/labels/{labelId} or similar
+    await new Promise(resolve => setTimeout(resolve, 150));
+    // Check response status if needed
   },
 };
