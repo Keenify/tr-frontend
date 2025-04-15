@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { TrelloCard } from './TrelloCard';
 import { StrictModeDroppable } from './StrictModeDroppable';
 import { Draggable } from 'react-beautiful-dnd';
@@ -52,6 +52,7 @@ interface TrelloListProps {
   employees: Employee[];
   userId?: string;
   companyLabels: Label[];
+  selectedLabelIds?: string[];
 }
 
 /**
@@ -89,6 +90,7 @@ interface TrelloListProps {
  * @param {Array} employees - Array of employee objects
  * @param {string} userId - User ID for card permissions
  * @param {Array} companyLabels - Array of company labels
+ * @param {string[]} selectedLabelIds - Array of selected label IDs for filtering cards
  */
 
 export const TrelloList: React.FC<TrelloListProps> = ({
@@ -109,6 +111,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   employees = [],
   userId = '',
   companyLabels,
+  selectedLabelIds = [],
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingCountry, setIsEditingCountry] = useState(false);
@@ -193,36 +196,52 @@ export const TrelloList: React.FC<TrelloListProps> = ({
     }
   };
 
-  // Filter cards based on search term - now including assignees
-  const filteredCards = searchTerm 
-    ? cards.filter(card => {
-        // Search in title and description
-        const titleMatch = card.title.toLowerCase().includes(searchTerm.toLowerCase());
-        const descriptionMatch = card.description && card.description.toLowerCase().includes(searchTerm.toLowerCase());
+  // Filter cards based on search term AND selected labels (must match ALL selected labels)
+  const filteredCards = useMemo(() => {
+    // Log the inputs to the filter logic
+    console.log(`[TrelloList ${id}] Filtering cards. Search: '${searchTerm}', Selected Labels:`, selectedLabelIds);
+    console.log(`[TrelloList ${id}] Incoming cards with label_ids:`, cards.map(c => ({id: c.id, title: c.title, label_ids: c.label_ids })) );
+
+    let cardsToFilter = cards;
+
+    // Apply label filter first (card must have ALL selected labels)
+    if (selectedLabelIds && selectedLabelIds.length > 0) {
+      cardsToFilter = cardsToFilter.filter(card => { 
+        const cardLabelSet = new Set(card.label_ids || []);
+        // Using .every() - requires all selected labels to be present
+        const hasAllSelectedLabels = selectedLabelIds.every(id => cardLabelSet.has(id)); 
+        // console.log(` - Card ${card.id}: Checking against ${selectedLabelIds.join(', ')}. Has all: ${hasAllSelectedLabels}`); // Uncomment for very verbose logging
+        return hasAllSelectedLabels;
+      });
+      console.log(`[TrelloList ${id}] Cards after label filter:`, cardsToFilter.map(c=>c.id));
+    }
+
+    // Apply search term filter
+    if (searchTerm) {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      cardsToFilter = cardsToFilter.filter(card => {
+        const titleMatch = card.title.toLowerCase().includes(lowerSearchTerm);
+        const descriptionMatch = card.description && card.description.toLowerCase().includes(lowerSearchTerm);
         
-        // Search in assignees
-        const assigneeMatch = card.assignees && card.assignees.some(assignee => {
-          // Handle both string IDs and object format
-          const assigneeId = typeof assignee === 'string' 
-            ? assignee 
-            : (assignee as { employee_id: string }).employee_id;
-          
-          const employee = employees.find(emp => emp.id === assigneeId);
-          
-          // Match against employee name or email
+        const assigneeMatch = card.assignees?.some(assignee => {
+          const employeeId = typeof assignee === 'string' ? assignee : (assignee as { employee_id: string }).employee_id;
+          const employee = employees.find(emp => emp.id === employeeId);
           return employee && (
-            (employee.first_name && employee.first_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (employee.last_name && employee.last_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (employee.email && employee.email.toLowerCase().includes(searchTerm.toLowerCase()))
+            (employee.first_name && employee.first_name.toLowerCase().includes(lowerSearchTerm)) ||
+            (employee.last_name && employee.last_name.toLowerCase().includes(lowerSearchTerm)) ||
+            (employee.email && employee.email.toLowerCase().includes(lowerSearchTerm))
           );
         });
-        
         return titleMatch || descriptionMatch || assigneeMatch;
-      })
-    : cards;
+      });
+      console.log(`[TrelloList ${id}] Cards after search filter:`, cardsToFilter.map(c=>c.id));
+    }
+    
+    return cardsToFilter;
+  }, [cards, searchTerm, selectedLabelIds, employees]);
 
-  // Don't render the list at all if searching and no matches found
-  if (searchTerm && filteredCards.length === 0) {
+  // Adjust condition for showing the list based on combined filters
+  if ((searchTerm || (selectedLabelIds && selectedLabelIds.length > 0)) && filteredCards.length === 0) {
     return null;
   }
 
@@ -429,7 +448,18 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                       labelIds={card.label_ids}
                       companyLabels={companyLabels}
                       onDelete={() => onCardDelete && onCardDelete(card.id)}
-                      onUpdate={(updatedCard) => onCardUpdate && onCardUpdate(card.id, { ...updatedCard, id: card.id })}
+                      onUpdate={(updatedCard) =>
+                        onCardUpdate &&
+                        onCardUpdate(card.id, { 
+                          ...updatedCard, 
+                          id: card.id, // Ensure id is passed correctly
+                          // Convert nulls to undefined before passing up
+                          description: updatedCard.description === null ? undefined : updatedCard.description,
+                          start_date: updatedCard.start_date === null ? undefined : updatedCard.start_date,
+                          end_date: updatedCard.end_date === null ? undefined : updatedCard.end_date,
+                          locked_by: updatedCard.locked_by === null ? undefined : updatedCard.locked_by,
+                        })
+                      }
                       userRole={userRole}
                       onCardClick={onCardClick}
                       employees={employees}
@@ -441,8 +471,8 @@ export const TrelloList: React.FC<TrelloListProps> = ({
               )}
             </StrictModeDroppable>
 
-            {/* Add Card Form/Button - Only show when not searching */}
-            {!searchTerm && (
+            {/* Add Card Section - Conditionally render based on label filter? */}
+            {(!searchTerm && (!selectedLabelIds || selectedLabelIds.length === 0)) && (
               <>
                 {isAddingCard ? (
                   <form onSubmit={handleCardSubmit} className="mt-2">
