@@ -67,12 +67,29 @@ export const labelService = {
    * @throws Will throw an error if the fetch operation fails.
    */
   async fetchLabelsByCard(cardId: string): Promise<string[]> {
-    console.warn("[Placeholder] fetchLabelsByCard called. Implement real API call.", cardId);
-    // Simulate fetching - replace with actual API endpoint for card-label associations
-    await new Promise(resolve => setTimeout(resolve, 150)); 
-    // Return an empty array or mock data based on your backend structure
-    // Example: Fetch from /cards/{cardId}/labels 
-    return []; // Placeholder return
+    console.log(`[labelService] Fetching labels for card: ${cardId}`);
+    try {
+      // Use the GET /trello/cards/{cardId} endpoint 
+      const response = await fetch(`${API_BASE_URL}/trello/cards/${cardId}`); 
+      
+      if (!response.ok) {
+        console.error(`[labelService] Failed to fetch card ${cardId}. Status: ${response.status}`);
+        throw new Error(`Failed to fetch card details for labels. Status: ${response.status}`);
+      }
+      
+      const cardData: Card = await response.json(); 
+      
+      // Extract label_ids from the response
+      const labelIds = cardData.label_ids ?? []; 
+      console.log(`[labelService] Fetched label IDs for card ${cardId}:`, labelIds);
+      return labelIds;
+
+    } catch (error) {
+      console.error(`[labelService] Error fetching labels for card ${cardId}:`, error);
+      // Re-throw the error to be caught by the calling component (TrelloCardModal)
+      throw error; 
+      // Alternatively, return empty array if preferred: return [];
+    }
   },
 
   /**
