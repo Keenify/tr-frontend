@@ -27,6 +27,7 @@ interface TrelloListProps {
     locked_by?: string | undefined;
     attachmentCount?: number;
     labels?: Label[];
+    label_ids?: string[];
   }>;
   onTitleChange?: (newTitle: string) => void;
   onCountryChange?: (newCountry: string) => void;
@@ -50,6 +51,7 @@ interface TrelloListProps {
   onCardClick?: (card: Card) => void;
   employees: Employee[];
   userId?: string;
+  companyLabels: Label[];
 }
 
 /**
@@ -86,6 +88,7 @@ interface TrelloListProps {
  * @param {Function} onCardClick - Handler for card click events
  * @param {Array} employees - Array of employee objects
  * @param {string} userId - User ID for card permissions
+ * @param {Array} companyLabels - Array of company labels
  */
 
 export const TrelloList: React.FC<TrelloListProps> = ({
@@ -105,6 +108,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   onCardClick,
   employees = [],
   userId = '',
+  companyLabels,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingCountry, setIsEditingCountry] = useState(false);
@@ -422,6 +426,8 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                       is_locked={card.is_locked ?? false}
                       locked_by={card.locked_by ?? ''}
                       labels={card.labels}
+                      labelIds={card.label_ids}
+                      companyLabels={companyLabels}
                       onDelete={() => onCardDelete && onCardDelete(card.id)}
                       onUpdate={(updatedCard) => onCardUpdate && onCardUpdate(card.id, { ...updatedCard, id: card.id })}
                       userRole={userRole}

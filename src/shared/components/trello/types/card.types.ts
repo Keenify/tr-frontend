@@ -39,4 +39,5 @@ export interface CardUpdate {
   locked_by?: string | null;
   list_id?: string;
   position?: number;
+  label_ids?: string[];
 } 

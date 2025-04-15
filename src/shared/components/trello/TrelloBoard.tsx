@@ -11,6 +11,8 @@ import { Employee } from '@/shared/types/directory.types';
 import { Card, CardUpdate } from './types/card.types';
 import { Card as TrelloCard } from './types/card.types';
 import { Tab } from '@headlessui/react';
+import { Label } from '../../types/label.types';
+import { labelService } from '../../services/labelService';
 
 /**
  * Props for the TrelloBoard component
@@ -123,6 +125,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   const [newListCountry, setNewListCountry] = useState('');
   const [selectedCountry, setSelectedCountry] = useState<string>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [companyLabels, setCompanyLabels] = useState<Label[]>([]);
   
   const { companyInfo } = useUserAndCompanyData(userId);
 
@@ -147,6 +150,21 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
     }
     return lists.filter(list => list.country === selectedCountry);
   }, [lists, selectedCountry]);
+
+  // Fetch company labels
+  useEffect(() => {
+    const fetchCompanyLabels = async () => {
+      if (!companyInfo?.id) return;
+      try {
+        const labels = await labelService.fetchLabelsByCompany(companyInfo.id);
+        setCompanyLabels(labels);
+      } catch (error) {
+        console.error("Failed to fetch company labels:", error);
+        // Optionally show a toast or error message
+      }
+    };
+    fetchCompanyLabels();
+  }, [companyInfo?.id]);
 
   // Improved employee fetching using directoryService
   useEffect(() => {
@@ -370,6 +388,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
                   userRole={userRole}
                   searchTerm={searchTerm}
                   userId={userId}
+                  companyLabels={companyLabels}
                 />
               ))}
               {provided.placeholder}
@@ -424,35 +443,56 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
           isOpen={true}
           onClose={() => setSelectedCard(null)}
           onSave={(updatedCard) => {
-            // Convert nulls to undefined for the hook call
+            // Create a version of updates compatible with the hook
             const updatesForHook: Partial<TrelloCard> = {
               ...updatedCard,
               description: updatedCard.description === null ? undefined : updatedCard.description,
               start_date: updatedCard.start_date === null ? undefined : updatedCard.start_date,
               end_date: updatedCard.end_date === null ? undefined : updatedCard.end_date,
               locked_by: updatedCard.locked_by === null ? undefined : updatedCard.locked_by,
-              // Add other potentially null fields from CardUpdate if needed
             };
 
-            // Check if this is a lock operation (only contains is_locked and locked_by properties)
+            // Check if this is ONLY a label update
+            const isLabelOnlyUpdate = 
+                Object.keys(updatedCard).length === 1 && 
+                'label_ids' in updatedCard;
+
+            // Check if this is a lock operation
             const isLockOperation = 
               Object.keys(updatedCard).length === 2 && 
               'is_locked' in updatedCard && 
               'locked_by' in updatedCard;
             
+            // Apply the update via the hook regardless
+            handleCardUpdate(selectedCard.listId, selectedCard.card.id, updatesForHook);
+
+            // Update local state or close modal based on operation type
             if (isLockOperation) {
-              handleCardUpdate(selectedCard.listId, selectedCard.card.id, updatesForHook);
-              
+              // Update the selected card state to reflect the lock changes
               setSelectedCard(prev => prev ? {
                 ...prev,
                 card: {
                   ...prev.card,
-                  is_locked: updatedCard.is_locked ?? false, // Use ?? false for boolean
-                  locked_by: updatedCard.locked_by ?? undefined // Use ?? undefined for state update
+                  is_locked: updatedCard.is_locked ?? false,
+                  locked_by: updatedCard.locked_by ?? undefined 
                 }
               } : null);
+              // Keep modal open for lock changes
+            } else if (isLabelOnlyUpdate) {
+              // Update the selected card state to reflect the label changes
+              setSelectedCard(prev => prev ? {
+                ...prev,
+                card: {
+                  ...prev.card,
+                  // We need the full Label objects here, not just IDs.
+                  // Fetching them again or getting them from the PATCH response is needed.
+                  // For now, just updating the IDs for consistency if Card type includes label_ids
+                  label_ids: updatedCard.label_ids 
+                }
+              } : null);
+              // Keep modal open for label changes
             } else {
-              handleCardUpdate(selectedCard.listId, selectedCard.card.id, updatesForHook);
+              // For regular updates, close the modal
               setSelectedCard(null);
             }
           }}

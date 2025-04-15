@@ -479,19 +479,26 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   // --- Label Handler Functions using labelService ---
   const handleLabelToggleAssign = async (labelId: string) => {
       const isAssigned = assignedLabelIds.includes(labelId);
-      // Calculate the next state of assigned labels
       const nextAssignedLabelIds = isAssigned
-          ? assignedLabelIds.filter(id => id !== labelId) // Remove the ID
-          : [...assignedLabelIds, labelId]; // Add the ID
+          ? assignedLabelIds.filter(id => id !== labelId)
+          : [...assignedLabelIds, labelId];
 
-      console.log(`[TrelloCardModal] Updating card ${card.id} labels to:`, nextAssignedLabelIds);
+      console.log(`[TrelloCardModal] Updating card ${card.id} labels via service to:`, nextAssignedLabelIds);
 
       try {
-          // Call the single update function with the new complete list
+          // Call the API update function
           await labelService.updateCardLabels(card.id, nextAssignedLabelIds);
 
-          // Update local state on success
+          // Update local state *after* successful API call
           setAssignedLabelIds(nextAssignedLabelIds);
+
+          // Propagate the label change up using onSave
+          // Create a minimal update payload
+          const labelUpdatePayload: CardUpdate = {
+            label_ids: nextAssignedLabelIds
+          };
+          onSave(labelUpdatePayload); // Call onSave with just the label update
+          console.log('[TrelloCardModal] Called onSave with label update:', labelUpdatePayload);
 
           // Show appropriate toast
           showToast(isAssigned ? 'Label unassigned' : 'Label assigned', 'success');
@@ -499,7 +506,6 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
       } catch (error) {
           console.error("Failed to update card labels:", error);
           showToast("Failed to update label assignment", "error");
-          // State wasn't updated, so no rollback needed
       }
   };
 

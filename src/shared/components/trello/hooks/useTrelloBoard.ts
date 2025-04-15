@@ -230,8 +230,9 @@ export const useTrelloBoard = (
                 ? { 
                     ...card, 
                     ...updatedCard, 
-                    // Ensure description is string | undefined for state
-                    description: updatedCard.description === null ? undefined : updatedCard.description 
+                    // Apply label_ids if present in the update
+                    label_ids: updatedCard.label_ids !== undefined ? updatedCard.label_ids : card.label_ids,
+                    description: updatedCard.description === null ? undefined : updatedCard.description,
                   }
                 : card
             )
@@ -242,7 +243,8 @@ export const useTrelloBoard = (
 
       // API call
       if (onCardUpdate) {
-        await onCardUpdate(listId, cardId, updatedCard);
+        // Pass the original updates (which might include label_ids) to the callback
+        await onCardUpdate(listId, cardId, updatedCard); 
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');

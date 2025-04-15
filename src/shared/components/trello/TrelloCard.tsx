@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 import { deleteCard } from './services/useCard';
 import { getCardAttachments, CardAttachment, getAttachmentUrl } from './services/useCardAttachment';
@@ -58,6 +58,8 @@ interface TrelloCardProps {
   is_locked: boolean;
   locked_by: string;
   labels?: Label[];
+  labelIds?: string[];
+  companyLabels?: Label[];
 }
 
 /**
@@ -97,6 +99,8 @@ interface TrelloCardProps {
  * @param {boolean} is_locked - Indicates if the card is locked
  * @param {string} locked_by - ID of the user who locked the card
  * @param {Label[]} labels - Array of labels for the card
+ * @param {string[]} labelIds - Array of label IDs for the card
+ * @param {Label[]} companyLabels - Array of company labels for the card
  */
 export const TrelloCard: React.FC<TrelloCardProps> = ({
   id,
@@ -117,7 +121,9 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   userId = '',
   is_locked,
   locked_by,
-  labels = [],
+  labels: initialLabels = [],
+  labelIds = [],
+  companyLabels = [],
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPosition, setDragStartPosition] = useState({ x: 0, y: 0 });
@@ -334,6 +340,15 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
     }
   };
 
+  // Derive displayed labels from IDs and companyLabels for reactivity
+  const derivedLabels = useMemo(() => {
+    if (labelIds && labelIds.length > 0 && companyLabels && companyLabels.length > 0) {
+      return labelIds.map(id => companyLabels.find(cl => cl.id === id)).filter(Boolean) as Label[];
+    } 
+    // Fallback to initialLabels if IDs/companyLabels aren't available/populated yet
+    return initialLabels;
+  }, [labelIds, companyLabels, initialLabels]);
+
   return (
     <>
       <Draggable draggableId={`card-${id}`} index={index} isDragDisabled={isLocked}>
@@ -428,10 +443,10 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
                 </div>
               )}
               
-              {/* Labels - Render before assignees/dates for visual hierarchy */} 
-              {labels && labels.length > 0 && (
+              {/* Labels - Use derivedLabels */} 
+              {derivedLabels && derivedLabels.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-1">
-                  {labels.slice(0, 3).map((label) => (
+                  {derivedLabels.slice(0, 3).map((label) => (
                     <span
                       key={label.id}
                       className="px-1.5 py-0.5 rounded-full text-xs font-medium"
@@ -441,10 +456,10 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
                       {label.text}
                     </span>
                   ))}
-                  {labels.length > 3 && (
+                  {derivedLabels.length > 3 && (
                     <span className="px-1.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-600"
-                          title={`${labels.length - 3} more labels`}>
-                       +{labels.length - 3}
+                          title={`${derivedLabels.length - 3} more labels`}>
+                       +{derivedLabels.length - 3}
                     </span>
                   )}
                 </div>
@@ -581,7 +596,8 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
             end_date,
             is_locked,
             locked_by,
-            labels, // Pass current labels for display
+            labels: derivedLabels,
+            label_ids: labelIds,
           }}
           isLoadingAttachments={isLoadingAttachments}
           userRole={userRole}
