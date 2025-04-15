@@ -238,7 +238,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
     }
     
     return cardsToFilter;
-  }, [cards, searchTerm, selectedLabelIds, employees]);
+  }, [cards, searchTerm, selectedLabelIds, employees, id]);
 
   // Adjust condition for showing the list based on combined filters
   if ((searchTerm || (selectedLabelIds && selectedLabelIds.length > 0)) && filteredCards.length === 0) {
