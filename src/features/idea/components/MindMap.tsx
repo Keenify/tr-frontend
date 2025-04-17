@@ -326,10 +326,6 @@ function Flow({ session, mindmapId }: MindMapProps) {
         aria-label="Show Mind Map Instructions"
         title="Show Mind Map Instructions"
       >
-        <svg width="54" height="54" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="27" cy="27" r="27" fill="#2563eb"/>
-          <text x="27" y="34" textAnchor="middle" fontSize="28" fontWeight="bold" fill="white" fontFamily="Arial, Helvetica, sans-serif">i</text>
-        </svg>
       </button>
 
       {/* Instructions Modal/Overlay */}
