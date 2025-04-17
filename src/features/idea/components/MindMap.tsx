@@ -59,6 +59,9 @@ interface MindMapProps {
  * @returns {JSX.Element} Mind map interface
  */
 function Flow({ session, mindmapId }: MindMapProps) {
+  // State for showing/hiding instructions panel
+  // Only show instructions when info icon is clicked
+  const [showInstructions, setShowInstructions] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [title, setTitle] = useState('Double click to edit title');
@@ -302,6 +305,90 @@ function Flow({ session, mindmapId }: MindMapProps) {
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
+      {/* Help Icon Button */}
+      <button
+        onClick={() => setShowInstructions(true)}
+        style={{
+          position: 'fixed',
+          top: 28,
+          right: 36,
+          zIndex: 200,
+          background: 'transparent',
+          border: 'none',
+          padding: 0,
+          width: 54,
+          height: 54,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+        }}
+        aria-label="Show Mind Map Instructions"
+        title="Show Mind Map Instructions"
+      >
+        <svg width="54" height="54" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="27" cy="27" r="27" fill="#2563eb"/>
+          <text x="27" y="34" textAnchor="middle" fontSize="28" fontWeight="bold" fill="white" fontFamily="Arial, Helvetica, sans-serif">i</text>
+        </svg>
+      </button>
+
+      {/* Instructions Modal/Overlay */}
+      {showInstructions && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(31, 41, 55, 0.25)',
+          zIndex: 300,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <div style={{
+            background: '#f9fafb',
+            border: '1px solid #e5e7eb',
+            borderRadius: '10px',
+            padding: '32px 28px 24px 28px',
+            maxWidth: '680px',
+            width: '90%',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.10)',
+            position: 'relative',
+          }}>
+            <button
+              onClick={() => setShowInstructions(false)}
+              style={{
+                position: 'absolute',
+                top: 12,
+                right: 18,
+                background: 'transparent',
+                border: 'none',
+                fontSize: 26,
+                cursor: 'pointer',
+                color: '#6b7280',
+                fontWeight: 700,
+              }}
+              aria-label="Close instructions"
+              title="Close instructions"
+            >
+              ×
+            </button>
+            <h2 style={{ fontSize: '1.35rem', fontWeight: 700, marginBottom: 14, color: '#1e293b' }}>How to Use the Mind Map</h2>
+            <ol style={{ paddingLeft: 24, margin: 0, color: '#334155', fontSize: '1rem' }}>
+              <li style={{ marginBottom: 8 }}><b>Create or Edit a Mind Map:</b> If you’re starting fresh, a root node will appear. If you’re editing, your existing mind map will load automatically.</li>
+              <li style={{ marginBottom: 8 }}><b>Edit Title and Description:</b> Double-click the title or description at the top-left to edit them. Click outside or press enter to save your changes.</li>
+              <li style={{ marginBottom: 8 }}><b>Add Nodes:</b> To add a node, point to an existing node until you see the <b>+</b> icon, then drag to empty space.</li>
+              <li style={{ marginBottom: 8 }}><b>Connect Nodes:</b> Drag from a node’s handle to another node to create a connection (edge) between them.</li>
+              <li style={{ marginBottom: 8 }}><b>Edit Node Content:</b> Double-click any node to edit its label or description.</li>
+              <li style={{ marginBottom: 8 }}><b>Save Your Work:</b> Click the “Save Changes” or “Update Mind Map” button at the top-right to save your progress. Unsaved changes will be indicated.</li>
+              <li style={{ marginBottom: 8 }}><b>Auto-Save & Warnings:</b> The tool auto-detects unsaved changes and warns you if you try to leave before saving.</li>
+            </ol>
+          </div>
+        </div>
+      )}
+
+
       {isLoading ? (
         <div className="flex items-center justify-center h-full">
           <p>Loading...</p>
@@ -329,26 +416,72 @@ function Flow({ session, mindmapId }: MindMapProps) {
           <Controls showInteractive={false} />
           <Panel position="top-left" className="header z-50 mt-16">
             <div className="flex flex-col gap-2">
-              <input
-                type="text"
-                className={`px-2 py-1 text-xl font-semibold ${
-                  isTitleEditing 
-                    ? 'border rounded bg-white' 
-                    : 'border-none bg-transparent text-black'
-                }`}
-                value={title}
-                placeholder="Double click to edit title"
-                readOnly={!isTitleEditing}
-                onDoubleClick={() => setIsTitleEditing(true)}
-                onChange={handleTitleChange}
-                onBlur={() => setIsTitleEditing(false)}
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <input
+                  type="text"
+                  className={`text-xl font-semibold transition-all duration-150 ${
+                    isTitleEditing
+                      ? 'bg-white border-blue-500 border-2 shadow-lg'
+                      : 'bg-gray-50 border border-gray-300 shadow-sm text-black'
+                  }`}
+                  style={{
+                    minWidth: 220,
+                    maxWidth: 340,
+                    borderRadius: 8,
+                    padding: '10px 16px',
+                    outline: 'none',
+                    marginBottom: 2,
+                  }}
+                  value={title}
+                  placeholder="Double click to edit title"
+                  readOnly={!isTitleEditing}
+                  onDoubleClick={() => setIsTitleEditing(true)}
+                  onChange={handleTitleChange}
+                  onBlur={() => setIsTitleEditing(false)}
+                />
+                <button 
+                  onClick={handleSave}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow-sm font-semibold transition-all"
+                  style={{ marginLeft: 4 }}
+                >
+                  {hasUnsavedChanges ? '* Save Changes' : (currentMindMapId ? 'Update Mind Map' : 'Create Mind Map')}
+                </button>
+                <button
+                  onClick={() => setShowInstructions(true)}
+                  aria-label="Show Mind Map Instructions"
+                  title="Show Mind Map Instructions"
+                  style={{
+                    marginLeft: 6,
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {/* Material Design Info SVG */}
+                  <svg width="38" height="38" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="12" fill="#2563eb"/>
+                    <path d="M12 16v-4" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+                    <circle cx="12" cy="8.5" r="1.2" fill="#fff"/>
+                  </svg>
+                </button>
+              </div>
               <textarea
-                className={`px-2 py-1 text-sm ${
-                  isDescriptionEditing 
-                    ? 'border rounded resize-none bg-white' 
-                    : 'border-none bg-transparent text-black resize-none'
+                className={`text-sm transition-all duration-150 resize-none ${
+                  isDescriptionEditing
+                    ? 'bg-white border-blue-500 border-2 shadow-lg'
+                    : 'bg-gray-50 border border-gray-300 shadow-sm text-black'
                 }`}
+                style={{
+                  minWidth: 220,
+                  maxWidth: 340,
+                  borderRadius: 8,
+                  padding: '10px 16px',
+                  outline: 'none',
+                  marginTop: 2,
+                }}
                 rows={2}
                 value={description}
                 placeholder="Double click to edit description"
@@ -358,14 +491,6 @@ function Flow({ session, mindmapId }: MindMapProps) {
                 onBlur={() => setIsDescriptionEditing(false)}
               />
             </div>
-          </Panel>
-          <Panel position="top-right" className="z-50">
-            <button 
-              onClick={handleSave}
-              className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
-            >
-              {hasUnsavedChanges ? '* Save Changes' : (currentMindMapId ? 'Update Mind Map' : 'Create Mind Map')}
-            </button>
           </Panel>
         </ReactFlow>
       )}
