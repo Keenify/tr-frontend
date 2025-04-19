@@ -71,12 +71,18 @@ const Sales = ({ session }: { session: Session }) => {
 
   const handleListMove = async (sourceIndex: number, destinationIndex: number) => {
     try {
-      const sourceList = lists[sourceIndex];
-      const destinationList = lists[destinationIndex];
-      await Promise.all([
-        updateList(sourceList.id, { position: destinationIndex }),
-        updateList(destinationList.id, { position: sourceIndex })
-      ]);
+      // Create a new array reflecting the new order
+      const newLists = Array.from(lists);
+      const [removed] = newLists.splice(sourceIndex, 1);
+      newLists.splice(destinationIndex, 0, removed);
+
+      // Update all lists with their new positions (1-based index)
+      await Promise.all(
+        newLists.map((list, idx) =>
+          updateList(list.id, { position: idx + 1 })
+        )
+      );
+      setLists(newLists);
     } catch (error) {
       console.error('Failed to update list positions:', error);
     }

@@ -24,6 +24,8 @@ interface TrelloList {
   country?: string;
   /** Array of cards contained in the list */
   cards: TrelloCard[];
+  /** Position of the list (for ordering) */
+  position: number;
 }
 
 /**
@@ -133,8 +135,9 @@ export const useTrelloBoard = (
   console.log('[useTrelloBoard] Received initialListsInput:', JSON.stringify(initialListsInput.map(l => ({ ...l, cards: l.cards.map(c => ({ id: c.id, title: c.title, labels: c.labels, label_ids: c.label_ids })) })), null, 2));
 
   // Create the transformed initial data *once* to use for initialization and rollback
-  const transformedInitialLists: TrelloList[] = initialListsInput.map(list => ({
+  const transformedInitialLists: TrelloList[] = initialListsInput.map((list, idx) => ({
     ...list,
+    position: idx + 1, // Ensure position is set (1-based index; adjust as needed)
     cards: list.cards.map(card => {
       // Explicitly create label_ids from labels if labels exist, otherwise use existing label_ids or default to []
       const final_label_ids = card.labels && card.labels.length > 0 
@@ -173,17 +176,27 @@ export const useTrelloBoard = (
         const newLists = Array.from(lists);
         const [removed] = newLists.splice(source.index, 1);
         newLists.splice(destination.index, 0, removed);
-        setLists(newLists);
+        // Always reindex all positions to match new order
+        const reindexedLists = newLists.map((list, idx) => ({
+          ...list,
+          position: idx + 1,
+        }));
+        setLists(reindexedLists);
 
         // Then perform API update
         if (onListMove) {
           try {
             await onListMove(source.index, destination.index);
+            // After API call, reindex again to guarantee contiguous positions
+            setLists(currentLists =>
+              currentLists.map((l, i) => ({ ...l, position: i + 1 }))
+            );
           } catch (error) {
-            // If API fails, revert the optimistic update
+            // If API fails, revert the optimistic update and reindex
             console.error('Failed to move list:', error);
-            // Use the transformed data for rollback
-            setLists(transformedInitialLists);
+            setLists(
+              transformedInitialLists.map((l, i) => ({ ...l, position: i + 1 }))
+            );
           }
         }
       } else {
@@ -399,7 +412,8 @@ export const useTrelloBoard = (
             id: newListId,
             title,
             country,
-            cards: []
+            cards: [],
+            position: lists.length + 1
           }
         ]);
         
