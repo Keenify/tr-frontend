@@ -490,7 +490,8 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
               {...provided.droppableProps}
               ref={provided.innerRef}
               className={`
-                flex flex-wrap content-start gap-6 
+                flex flex-nowrap gap-6
+                overflow-x-auto
                 h-[calc(100vh-12rem)]
                 p-1
                 ${snapshot.isDraggingOver ? 'bg-gray-50' : ''}
