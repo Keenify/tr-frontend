@@ -490,7 +490,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
               {...provided.droppableProps}
               ref={provided.innerRef}
               className={`
-                flex flex-nowrap gap-6
+                flex flex-row flex-nowrap gap-6
                 overflow-x-auto
                 h-[calc(100vh-12rem)]
                 p-1
