@@ -155,7 +155,7 @@ const navigationConfig = [
       },
       { id: "milestone", label: "Milestone", shortForm: "Mi", icon: ThumbsUp },
       { id: "feedback", label: "Feedback", shortForm: "Fe", icon: ThumbsUp },
-      { id: "issue_statement", label: "Issue Statement", shortForm: "Is", icon: ThumbsUp },
+      { id: "issue_statement", label: "Issue Statement", shortForm: "Is", icon: ThumbsUp }
     ],
   },
   {
@@ -210,7 +210,8 @@ type SubTabType =
   | "integration"
   | "vivid_vision"
   | "businessQuadrant"
-  | "ccc";
+  | "ccc"
+  | "issue_statement";
 
 interface LayoutProps {
   children: React.ReactNode;

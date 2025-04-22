@@ -11,9 +11,17 @@ export function useUserAndCompanyData(userId: string) {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!userId) {
+        setError(new Error('User ID is required'));
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
+        console.log('Fetching user data for ID:', userId);
         const userData = await getUserData(userId);
+        console.log('User data received:', userData);
         setUserInfo(userData);
         const companyData = await getCompanyData(userData.company_id) as CompanyData;
         setCompanyInfo(companyData);

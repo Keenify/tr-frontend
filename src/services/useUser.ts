@@ -39,7 +39,12 @@ export interface UpdateUserData {
  * @returns {Promise<UserData>} - A promise that resolves to the user data with id being the employee ID.
  */
 export async function getUserData(userId: string): Promise<UserData> {
-    const endpoint = `${API_DOMAIN}/employees/${userId}`;
+    if (!userId) {
+        throw new Error('User ID is required');
+    }
+
+    const endpoint = `${API_DOMAIN}/employees/${encodeURIComponent(userId)}`;
+    console.log('Fetching user data from endpoint:', endpoint);
 
     const response = await fetch(endpoint, {
         method: 'GET',
@@ -54,7 +59,8 @@ export async function getUserData(userId: string): Promise<UserData> {
         console.error('❌ API request failed:', {
             status: response.status,
             statusText: response.statusText,
-            data
+            data,
+            endpoint
         });
         throw new Error('Failed to fetch user data');
     }
