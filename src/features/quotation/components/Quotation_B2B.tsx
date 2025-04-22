@@ -74,8 +74,9 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
     field: string;
   } | null>(null);
   const [editValue, setEditValue] = React.useState<string>("");
-  const [customerCompanyName, setCustomerCompanyName] =
-    React.useState<string>("");
+  const [customerCompanyName, setCustomerCompanyName] = React.useState<string>(() => {
+    return localStorage.getItem('b2b_customer_name') || '';
+  });
   const [isPriceTierModalOpen, setIsPriceTierModalOpen] =
     React.useState<boolean>(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = React.useState<boolean>(false);
@@ -89,7 +90,9 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
   const [isGiftBox, setIsGiftBox] = React.useState<boolean>(false);
 
   // Add sales account manager state
-  const [salesAccountManager, setSalesAccountManager] = React.useState<string>("");
+  const [salesAccountManager, setSalesAccountManager] = React.useState<string>(() => {
+    return localStorage.getItem('b2b_sales_manager') || '';
+  });
 
   // Add new state for toggling between carton and pack count
   const [displayPackCount, setDisplayPackCount] = React.useState<boolean>(false);
@@ -573,12 +576,27 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
     setGiftBoxConfiguration(config);
   };
 
-  // Update PDF data to include gift box configuration
+  // Add handlers for input blur
+  const handleCustomerNameBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    localStorage.setItem('b2b_customer_name', value);
+  };
+
+  const handleSalesManagerBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    localStorage.setItem('b2b_sales_manager', value);
+  };
+
+  // Update the handleGeneratePDF function to clear cache
   const handleGeneratePDF = async () => {
+    // Clear the cache
+    localStorage.removeItem('b2b_customer_name');
+    localStorage.removeItem('b2b_sales_manager');
+
     // Check if at least one product is selected
     if (selectedProducts.size === 0) {
         alert("Please select at least one product before generating the PDF.");
-        return; // Stop PDF generation
+        return;
     }
 
     // Reset errors
@@ -769,12 +787,13 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
             fullWidth
             value={customerCompanyName}
             onChange={(e) => setCustomerCompanyName(e.target.value)}
+            onBlur={handleCustomerNameBlur}
             placeholder="Enter client company name"
             style={{ marginBottom: '1rem' }}
             inputRef={customerNameRef}
             error={customerNameError}
             helperText={customerNameError ? "Customer name is required" : ""}
-            onFocus={() => setCustomerNameError(false)} // Clear error on focus
+            onFocus={() => setCustomerNameError(false)}
           />
           <TextField
             label="Sales Account Manager"
@@ -782,11 +801,12 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
             fullWidth
             value={salesAccountManager}
             onChange={(e) => setSalesAccountManager(e.target.value)}
+            onBlur={handleSalesManagerBlur}
             placeholder="Enter sales account manager name"
             inputRef={salesManagerRef}
             error={salesManagerError}
             helperText={salesManagerError ? "Sales manager name is required" : ""}
-            onFocus={() => setSalesManagerError(false)} // Clear error on focus
+            onFocus={() => setSalesManagerError(false)}
           />
           <FormControl 
             variant="outlined" 

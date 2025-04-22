@@ -18,8 +18,12 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     const [editingCell, setEditingCell] = useState<{ id: number, field: string } | null>(null);
     const { companyInfo, isLoading: isLoadingCompany, error: companyError } = useUserAndCompanyData(session.user.id); // Renamed isLoading
     const [collapsedRows, setCollapsedRows] = useState<Set<number>>(new Set());
-    const [customerCompanyName, setCustomerCompanyName] = useState<string>('');
-    const [salesAccountManager, setSalesAccountManager] = useState<string>('');
+    const [customerCompanyName, setCustomerCompanyName] = useState<string>(() => {
+        return localStorage.getItem('export_customer_name') || '';
+    });
+    const [salesAccountManager, setSalesAccountManager] = useState<string>(() => {
+        return localStorage.getItem('export_sales_manager') || '';
+    });
     const [showFOBPricePerUnit, setShowFOBPricePerUnit] = useState<boolean>(true);
     const [showCartonBarcode, setShowCartonBarcode] = useState<boolean>(false);
     const [selectedCurrency, setSelectedCurrency] = useState<'USD' | 'SGD'>('USD');
@@ -167,11 +171,23 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
         }));
         setEditingCell(null);
     };
+    const handleCustomerNameBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        localStorage.setItem('export_customer_name', value);
+    };
+    const handleSalesManagerBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        localStorage.setItem('export_sales_manager', value);
+    };
     const handleGeneratePDF = async () => {
+        // Clear the cache
+        localStorage.removeItem('export_customer_name');
+        localStorage.removeItem('export_sales_manager');
+
         // 1. Check if at least one product is selected
         if (!selections.some(p => p.isSelected)) {
             alert("Please select at least one product before generating the PDF.");
-            return; // Stop if no products are selected
+            return;
         }
 
         // 2. Reset errors
@@ -298,6 +314,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                             placeholder="Customer Company Name"
                             value={customerCompanyName}
                             onChange={(e) => setCustomerCompanyName(e.target.value)}
+                            onBlur={handleCustomerNameBlur}
                             ref={customerNameRef}
                             onFocus={() => setCustomerNameError(false)}
                             className={`border p-2 w-full mb-2 ${customerNameError ? 'border-red-500' : 'border-gray-300'}`}
@@ -307,6 +324,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                             placeholder="Sales Account Manager"
                             value={salesAccountManager}
                             onChange={(e) => setSalesAccountManager(e.target.value)}
+                            onBlur={handleSalesManagerBlur}
                             ref={salesManagerRef}
                             onFocus={() => setSalesManagerError(false)}
                             className={`border p-2 w-full ${salesManagerError ? 'border-red-500' : 'border-gray-300'}`}
