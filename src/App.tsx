@@ -50,6 +50,7 @@ import Admin from "./features/admin/components/Admin";
 import Milestone from "./features/teamHealth/components/Milestone";
 import Award from "./features/teamHealth/components/Award";
 import Leaderboard from "./features/teamHealth/components/Leaderboard";
+import IssueStatement from "./features/teamHealth/components/IssueStatement";
 import Integration from "./features/integration/components/Integration";
 import GoogleOAuthCallback from "./features/integration/components/GoogleOAuthCallback";
 import BusinessQuadrant from "./features/company/components/BusinessQuadrant";
@@ -617,6 +618,25 @@ const App: React.FC = () => {
                           onTabChange={() => {}}
                         >
                           <Milestone session={session} />
+                        </DashboardLayout>
+                      }
+                    />
+                  }
+                />
+                <Route
+                  path="/:userId/issue_statement"
+                  element={
+                    <ProtectedRoute
+                      session={session}
+                      element={
+                        <DashboardLayout
+                          session={session}
+                          signOut={signOut}
+                          activeTab="teamHealth"
+                          activeSubTab="issue_statement"
+                          onTabChange={() => {}}
+                        >
+                          <IssueStatement session={session} />
                         </DashboardLayout>
                       }
                     />
