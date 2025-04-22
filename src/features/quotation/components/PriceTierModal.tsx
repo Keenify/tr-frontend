@@ -176,7 +176,7 @@ const PriceTierModal: React.FC<PriceTierModalProps> = ({ open, onClose, products
                                             tier.min_packs !== 0 &&
                                             tier.currency === selectedCurrency
                                         )
-                                        .sort((a, b) => a.min_packs - b.min_packs)
+                                        .sort((a, b) => (a.min_packs ?? 0) - (b.min_packs ?? 0))
                                         .map(tier => (
                                             <div key={tier.id} style={{ marginBottom: '4px' }}>
                                                 <input
