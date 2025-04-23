@@ -11,29 +11,20 @@ interface IssueStatementPageProps {
 }
 
 export const IssueStatementPage: React.FC<IssueStatementPageProps> = ({ session }) => {
-    console.log('Session:', session);
-    console.log('Session User ID:', session?.user?.id);
-    
     const { userInfo, isLoading: isUserLoading, error: userError } = useUserAndCompanyData(session.user.id);
     
-    useEffect(() => {
-        console.log('User Info:', userInfo);
-        console.log('User ID:', userInfo?.id);
-        console.log('Is Loading:', isUserLoading);
-        console.log('User Error:', userError);
-    }, [userInfo, isUserLoading, userError]);
-
-    const { issueStatements, loading, error, employeeId } = useIssueStatementData(
-        userInfo?.id || '',
-        userInfo?.company_id || ''
+    const { issueStatements, loading, error, employeeId, refreshData, employees } = useIssueStatementData(
+        userInfo?.id || null,
+        userInfo?.company_id || null
     );
-    
+
     useEffect(() => {
-        console.log('Issue Statements:', issueStatements);
-        console.log('Issue Statements Loading:', loading);
-        console.log('Issue Statements Error:', error);
-        console.log('Employee ID:', employeeId);
-    }, [issueStatements, loading, error, employeeId]);
+        if (userInfo) {
+            console.log('Company ID:', userInfo.company_id);
+            console.log('Employee ID:', userInfo.id);
+            console.log('Issue Statements:', issueStatements);
+        }
+    }, [userInfo, issueStatements]);
 
     const [newQuestion, setNewQuestion] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,20 +46,21 @@ export const IssueStatementPage: React.FC<IssueStatementPageProps> = ({ session 
                 employee_id: userInfo?.id || ''
             };
 
-            console.log('Creating issue statement with payload:', JSON.stringify(payload, null, 2));
-            console.log('userInfo:', JSON.stringify(userInfo, null, 2));
+            console.log('Creating issue statement with payload:', payload);
 
             await createIssueStatement(payload);
-
             setNewQuestion('');
-            // Refresh the data
-            window.location.reload();
+            await refreshData();
         } catch (err) {
             setErrorMessage('Failed to create issue statement. Please try again.');
             console.error('Error creating issue statement:', err);
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const handleAnswerAdded = async () => {
+        await refreshData();
     };
 
     if (isUserLoading || loading) {
@@ -80,9 +72,13 @@ export const IssueStatementPage: React.FC<IssueStatementPageProps> = ({ session 
     }
 
     if (userError || error) {
+        console.error('User Error:', userError);
+        console.error('Issue Statement Error:', error);
         return (
             <div className="flex justify-center items-center h-screen">
-                <div className="text-red-500">Error loading data. Please try again later.</div>
+                <div className="text-red-500">
+                    {userError?.message || error?.message || 'Error loading data. Please try again later.'}
+                </div>
             </div>
         );
     }
@@ -127,12 +123,14 @@ export const IssueStatementPage: React.FC<IssueStatementPageProps> = ({ session 
                 {issueStatements && issueStatements.length > 0 ? (
                     <div className="space-y-4">
                         {issueStatements.map((statement: IssueStatementWithAnswers) => (
-                            <IssueStatementCard
-                                key={statement.id}
-                                statement={statement}
-                                employeeId={employeeId || ''}
-                                onAnswerAdded={() => window.location.reload()}
-                            />
+                            <div key={statement.id}>
+                                <IssueStatementCard
+                                    statement={statement}
+                                    employeeId={employeeId || ''}
+                                    onAnswerAdded={handleAnswerAdded}
+                                    employees={employees}
+                                />
+                            </div>
                         ))}
                     </div>
                 ) : (

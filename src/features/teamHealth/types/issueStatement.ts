@@ -1,3 +1,5 @@
+import { UserData } from '../../../services/useUser';
+
 export interface IssueStatementData {
     id: string;
     question: string;
@@ -21,6 +23,7 @@ export interface IssueStatementAnswerData {
 
 export interface IssueStatementWithAnswers extends IssueStatementData {
     answers: IssueStatementAnswerData[];
+    employee?: UserData;
 }
 
 export interface CreateIssueStatementPayload {
@@ -46,4 +49,13 @@ export interface UpdateIssueStatementPayload {
 export interface PaginationParams {
     skip?: number;
     limit?: number;
+}
+
+export interface UseIssueStatementDataReturn {
+    loading: boolean;
+    error: Error | null;
+    issueStatements: IssueStatementWithAnswers[];
+    employeeId: string | null;
+    refreshData: () => Promise<void>;
+    employees: Record<string, UserData>;
 } 
