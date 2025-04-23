@@ -422,90 +422,104 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
     setEditValue(value === null || value === undefined || value === "N/A" ? "" : String(value));
   };
 
-  // Function to handle input change
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditValue(e.target.value);
+  // Add utility function for formatting numbers
+  const formatToTwoDecimals = (value: string | number | null | undefined): string => {
+    if (value === null || value === undefined || value === '') return 'N/A';
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    return isNaN(num) ? 'N/A' : num.toFixed(2);
   };
 
-  // Function to handle input blur (save changes)
+  // Update the handleInputChange for price editing to ensure 2 decimal places
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+      setEditValue('');
+      return;
+    }
+    // Allow only numbers and one decimal point
+    if (/^\d*\.?\d*$/.test(value)) {
+      setEditValue(value);
+    }
+  };
+
+  // Update handleBlur to format the value before saving
   const handleBlur = (productId: number, field: string) => {
     const product = products.find(p => p.id === productId);
     if (!product) return;
 
     const currentTiers = productPriceTiers[productId] || [];
-    let updatedTiers = [...currentTiers]; // Create a copy to modify
+    let updatedTiers = [...currentTiers];
 
     if (field.startsWith("price_")) {
       let foundTier = false;
-      const parsedValue = parseFloat(editValue); // Try parsing the input value
+      const parsedValue = parseFloat(editValue);
       const isValidNumber = !isNaN(parsedValue) && editValue.trim() !== "";
 
-      if (field.startsWith("price_pack_")) { // Handle pack prices first
+      if (field.startsWith("price_pack_")) {
         const pack = parseInt(field.split("_")[2], 10);
         updatedTiers = currentTiers.map((tier) => {
           if (tier.min_packs === pack && tier.currency === selectedCurrency) {
             foundTier = true;
-            // Only update if editValue is a valid number
-            return { ...tier, price_per_unit: isValidNumber ? String(parsedValue) : tier.price_per_unit };
+            return { 
+              ...tier, 
+              price_per_unit: isValidNumber ? formatToTwoDecimals(parsedValue) : tier.price_per_unit 
+            };
           }
           return tier;
         });
 
-        // If no existing tier was found and editValue is a valid number, create a new one
         if (!foundTier && isValidNumber) {
           const newTier: ProductPriceTier = {
-            id: -1, // Temporary ID
-            created_at: new Date().toISOString(), // Temporary timestamp
+            id: -1,
+            created_at: new Date().toISOString(),
             product_id: productId,
             min_cartons: null,
             min_packs: pack,
-            price_per_unit: String(parsedValue),
+            price_per_unit: formatToTwoDecimals(parsedValue),
             currency: selectedCurrency,
           };
           updatedTiers.push(newTier);
         }
-
-      } else { // Handle carton prices
+      } else {
         const carton = parseInt(field.split("_")[1], 10);
         updatedTiers = currentTiers.map((tier) => {
           if (tier.min_cartons === carton && tier.currency === selectedCurrency) {
             foundTier = true;
-            // Only update if editValue is a valid number
-            return { ...tier, price_per_unit: isValidNumber ? String(parsedValue) : tier.price_per_unit };
+            return { 
+              ...tier, 
+              price_per_unit: isValidNumber ? formatToTwoDecimals(parsedValue) : tier.price_per_unit 
+            };
           }
           return tier;
         });
 
-        // If no existing tier was found and editValue is a valid number, create a new one
         if (!foundTier && isValidNumber) {
-           const newTier: ProductPriceTier = {
-            id: -1, // Temporary ID
-            created_at: new Date().toISOString(), // Temporary timestamp
+          const newTier: ProductPriceTier = {
+            id: -1,
+            created_at: new Date().toISOString(),
             product_id: productId,
             min_cartons: carton,
             min_packs: null,
-            price_per_unit: String(parsedValue),
+            price_per_unit: formatToTwoDecimals(parsedValue),
             currency: selectedCurrency,
           };
           updatedTiers.push(newTier);
         }
       }
 
-      // Only update state if a change occurred or a new tier was added
       if (foundTier || (!foundTier && isValidNumber)) {
-          setProductPriceTiers((prev) => ({
-            ...prev,
-            [productId]: updatedTiers,
-          }));
+        setProductPriceTiers((prev) => ({
+          ...prev,
+          [productId]: updatedTiers,
+        }));
       }
-
     } else {
-      // Handle other fields like pack_count_per_box
       setProducts((prevProducts) =>
         prevProducts.map((p) => {
           if (p.id === productId) {
-            // Only update if editValue is a valid number for numeric fields
-            const newValue = (field === "pack_count_per_box" && (isNaN(parseInt(editValue)) || editValue.trim() === "")) ? p[field] : editValue;
+            const newValue = (field === "pack_count_per_box" && (isNaN(parseInt(editValue)) || editValue.trim() === "")) 
+              ? p[field] 
+              : editValue;
             return { ...p, [field]: newValue };
           }
           return p;
@@ -514,7 +528,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
     }
 
     setEditingCell(null);
-    setEditValue(""); // Reset edit value
+    setEditValue("");
   };
 
   // Function to handle input key down (save changes on Enter key)
@@ -1123,15 +1137,16 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
                   )}
                   <TableCell align="center" className="table-cell">
                     {productVariants[product.id]?.length > 0 ? (
-                      productVariants[product.id].map((flavor) => (
+                      productVariants[product.id].map((flavor, index) => (
                         <div
                           key={flavor.name}
                           className="flavor-checkbox-container"
                           style={{
-                            whiteSpace: "normal", // Changed from 'nowrap'
                             display: "flex",
-                            alignItems: "flex-start",
-                            margin: "4px 0",
+                            alignItems: "center",
+                            padding: "8px 0",
+                            borderBottom: index < productVariants[product.id].length - 1 ? "1px solid #eee" : "none",
+                            minHeight: "36px"
                           }}
                         >
                           <input
@@ -1145,14 +1160,14 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
                               toggleFlavorSelection(product.id, flavor.name)
                             }
                             disabled={!isSelected}
-                            style={{ marginTop: "3px" }}
+                            style={{ marginRight: "8px" }}
                           />
                           <label
                             htmlFor={`flavor-checkbox-${product.id}-${flavor.name}`}
                             className="flavor-label"
                             style={{
-                              marginLeft: "4px",
-                              wordBreak: "break-word",
+                              margin: 0,
+                              flex: 1,
                               textAlign: "left",
                             }}
                           >
@@ -1164,18 +1179,30 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
                       <span>No variants</span>
                     )}
                   </TableCell>
-                  {/* Add COGS value cell */}
+                  {/* COGS Column */}
                   <TableCell 
                     align="center" 
                     className="table-cell"
-                    style={{ backgroundColor: "#F9E6F0" }} // Lighter pink for the body cells
+                    style={{ backgroundColor: "#F9E6F0" }}
                   >
-                    {productVariants[product.id]?.map((flavor) => (
-                      selectedFlavors[product.id]?.has(flavor.name) && (
-                        <div key={flavor.name} style={{ padding: "4px 0" }}>
-                          {flavor.cost_of_goods_sold || 'N/A'}
-                        </div>
-                      )
+                    {productVariants[product.id]?.map((flavor, index) => (
+                      <div 
+                        key={flavor.name} 
+                        style={{ 
+                          padding: "8px 0",
+                          borderBottom: index < productVariants[product.id].length - 1 ? "1px solid #eee" : "none",
+                          minHeight: "36px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center"
+                        }}
+                      >
+                        {selectedFlavors[product.id]?.has(flavor.name) ? (
+                          formatToTwoDecimals(flavor.cost_of_goods_sold)
+                        ) : (
+                          <span style={{ color: "#999" }}>-</span>
+                        )}
+                      </div>
                     ))}
                   </TableCell>
                   {getSortedVisibleColumns().map((count) => {
@@ -1196,14 +1223,14 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
                           handleDoubleClick(
                             product.id,
                             displayPackCount ? `price_pack_${count}` : `price_${count}`,
-                            priceValue !== undefined ? priceValue : "N/A" // Pass "N/A" if undefined
+                            priceValue !== undefined ? formatToTwoDecimals(priceValue) : "N/A"
                           )
                         }
                       >
                         {editingCell?.productId === product.id &&
                         editingCell.field === (displayPackCount ? `price_pack_${count}` : `price_${count}`) ? (
                           <input
-                            type="text" // Use text to allow empty input initially and handle potential non-numeric temp values
+                            type="text"
                             value={editValue}
                             onChange={handleInputChange}
                             onBlur={() =>
@@ -1221,10 +1248,10 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
                             }
                             autoFocus
                             placeholder="Enter price"
-                            style={{ width: '60px', textAlign: 'center' }} // Added style for better input appearance
+                            style={{ width: '60px', textAlign: 'center' }}
                           />
                         ) : (
-                          priceValue !== undefined ? priceValue : "N/A" // Display "N/A" if undefined
+                          formatToTwoDecimals(priceValue)
                         )}
                       </TableCell>
                     );
