@@ -22,6 +22,7 @@ export const IssueStatementPage: React.FC<IssueStatementPageProps> = ({ session 
     const [newQuestion, setNewQuestion] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [openCards, setOpenCards] = useState<Set<string>>(new Set());
 
     const handleSubmitStatement = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -52,6 +53,18 @@ export const IssueStatementPage: React.FC<IssueStatementPageProps> = ({ session 
 
     const handleAnswerAdded = async () => {
         await refreshData();
+    };
+
+    const handleCardToggle = (statementId: string, isOpen: boolean) => {
+        setOpenCards(prev => {
+            const newSet = new Set(prev);
+            if (isOpen) {
+                newSet.add(statementId);
+            } else {
+                newSet.delete(statementId);
+            }
+            return newSet;
+        });
     };
 
     const breakpointColumns = {
@@ -132,6 +145,8 @@ export const IssueStatementPage: React.FC<IssueStatementPageProps> = ({ session 
                                     onEdit={handleAnswerAdded}
                                     employees={employees.reduce((acc, emp) => ({ ...acc, [emp.id]: emp }), {})}
                                     currentUserId={userInfo?.id || ''}
+                                    defaultOpen={openCards.has(statement.id)}
+                                    onToggle={(isOpen) => handleCardToggle(statement.id, isOpen)}
                                 />
                             </div>
                         ))}

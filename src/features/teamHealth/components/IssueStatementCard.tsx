@@ -11,6 +11,8 @@ interface IssueStatementCardProps {
     employees: Record<string, UserData>;
     onEdit: () => void;
     currentUserId: string;
+    defaultOpen?: boolean;
+    onToggle?: (isOpen: boolean) => void;
 }
 
 const IssueStatementCard: React.FC<IssueStatementCardProps> = ({
@@ -18,10 +20,13 @@ const IssueStatementCard: React.FC<IssueStatementCardProps> = ({
     employees,
     onEdit,
     currentUserId,
+    defaultOpen = false,
+    onToggle
 }) => {
     const [newAnswer, setNewAnswer] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [isOpen, setIsOpen] = useState(defaultOpen);
 
     const handleSubmitAnswer = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -63,94 +68,103 @@ const IssueStatementCard: React.FC<IssueStatementCardProps> = ({
 
     return (
         <div className="bg-white shadow rounded-lg mb-4">
-            <Disclosure>
-                {({ open }) => (
-                    <>
-                        <div className="flex items-center justify-between p-4">
-                            <Disclosure.Button className="flex-1 flex items-center justify-between">
-                                <div className="flex items-center space-x-4">
-                                    <UserAvatar
-                                        name={`${employees[statement.employee_id]?.first_name || 'Unknown'} ${employees[statement.employee_id]?.last_name || 'Unknown'}`}
-                                        imageUrl={employees[statement.employee_id]?.profile_pic_url}
-                                    />
-                                    <div>
-                                        <h3 className="text-lg font-medium">{statement.question}</h3>
-                                        <div className="text-sm text-gray-500 space-y-1">
-                                            <p>
-                                                Created by {`${employees[statement.employee_id]?.first_name || 'Unknown'} ${employees[statement.employee_id]?.last_name || 'Unknown'}`}
-                                            </p>
-                                            <p>
-                                                {format(new Date(statement.created_at), 'MMM d, yyyy HH:mm')}
-                                            </p>
-                                            <p>
-                                                {statement.answers.length} {statement.answers.length === 1 ? 'answer' : 'answers'}
-                                            </p>
+            <Disclosure defaultOpen={isOpen}>
+                {({ open }) => {
+                    // Update internal state when Disclosure changes
+                    if (open !== isOpen) {
+                        setIsOpen(open);
+                        onToggle?.(open);
+                    }
+                    return (
+                        <>
+                            <div className="flex items-center justify-between p-4">
+                                <Disclosure.Button className="flex-1 flex items-center justify-between">
+                                    <div className="flex items-center space-x-4">
+                                        <UserAvatar
+                                            name={`${employees[statement.employee_id]?.first_name || 'Unknown'} ${employees[statement.employee_id]?.last_name || 'Unknown'}`}
+                                            imageUrl={employees[statement.employee_id]?.profile_pic_url}
+                                        />
+                                        <div>
+                                            <h3 className="text-lg font-medium">{statement.question}</h3>
+                                            <div className="text-sm text-gray-500 space-y-1">
+                                                <p>
+                                                    Created by {`${employees[statement.employee_id]?.first_name || 'Unknown'} ${employees[statement.employee_id]?.last_name || 'Unknown'}`}
+                                                </p>
+                                                <p>
+                                                    {format(new Date(statement.created_at), 'MMM d, yyyy HH:mm')}
+                                                </p>
+                                                <p>
+                                                    {statement.answers.length} {statement.answers.length === 1 ? 'answer' : 'answers'}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className={`transform transition-transform ${open ? 'rotate-180' : ''}`}>
-                                    ▼
-                                </div>
-                            </Disclosure.Button>
-                        </div>
-                        <Disclosure.Panel className="bg-gray-50">
-                            <div className="p-4 space-y-4">
-                                {statement.answers.map((answer: IssueStatementAnswerData) => (
-                                    <div key={answer.id} className="bg-white rounded-lg shadow-sm p-4">
-                                        <div className="flex items-start gap-2">
-                                            <UserAvatar
-                                                name={`${employees[answer.employee_id]?.first_name || 'Unknown'} ${employees[answer.employee_id]?.last_name || 'Unknown'}`}
-                                                imageUrl={employees[answer.employee_id]?.profile_pic_url}
-                                            />
-                                            <div className="flex-1">
-                                                <p className="text-gray-900">{answer.answer}</p>
-                                                <div className="text-sm text-gray-500 mt-2">
-                                                    <p>
-                                                        Answered by {`${employees[answer.employee_id]?.first_name || 'Unknown'} ${employees[answer.employee_id]?.last_name || 'Unknown'}`}
-                                                    </p>
-                                                    <p>
-                                                        {format(new Date(answer.created_at), 'MMM d, yyyy HH:mm')}
-                                                    </p>
+                                    <div className={`transform transition-transform ${open ? 'rotate-180' : ''}`}>
+                                        ▼
+                                    </div>
+                                </Disclosure.Button>
+                            </div>
+                            <Disclosure.Panel static>
+                                {open && (
+                                    <div className="bg-gray-50 p-4 space-y-4">
+                                        {statement.answers.map((answer: IssueStatementAnswerData) => (
+                                            <div key={answer.id} className="bg-white rounded-lg shadow-sm p-4">
+                                                <div className="flex items-start gap-2">
+                                                    <UserAvatar
+                                                        name={`${employees[answer.employee_id]?.first_name || 'Unknown'} ${employees[answer.employee_id]?.last_name || 'Unknown'}`}
+                                                        imageUrl={employees[answer.employee_id]?.profile_pic_url}
+                                                    />
+                                                    <div className="flex-1">
+                                                        <p className="text-gray-900">{answer.answer}</p>
+                                                        <div className="text-sm text-gray-500 mt-2">
+                                                            <p>
+                                                                Answered by {`${employees[answer.employee_id]?.first_name || 'Unknown'} ${employees[answer.employee_id]?.last_name || 'Unknown'}`}
+                                                            </p>
+                                                            <p>
+                                                                {format(new Date(answer.created_at), 'MMM d, yyyy HH:mm')}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    {answer.employee_id === currentUserId && (
+                                                        <button
+                                                            onClick={handleDeleteAnswer}
+                                                            data-answer-id={answer.id}
+                                                            className="text-sm font-medium text-red-500 hover:text-red-600 transition-colors duration-200"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
-                                            {answer.employee_id === currentUserId && (
-                                                <button
-                                                    onClick={handleDeleteAnswer}
-                                                    data-answer-id={answer.id}
-                                                    className="text-sm font-medium text-red-500 hover:text-red-600 transition-colors duration-200"
-                                                >
-                                                    Delete
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
+                                        ))}
 
-                                <form onSubmit={handleSubmitAnswer} className="mt-4">
-                                    <textarea
-                                        value={newAnswer}
-                                        onChange={(e) => setNewAnswer(e.target.value)}
-                                        placeholder="Write your answer..."
-                                        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                                        rows={3}
-                                    />
-                                    {errorMessage && (
-                                        <div className="text-red-500 text-sm mt-2">{errorMessage}</div>
-                                    )}
-                                    <div className="mt-2 flex justify-end">
-                                        <button
-                                            type="submit"
-                                            disabled={isSubmitting || !newAnswer.trim()}
-                                            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                                        >
-                                            {isSubmitting ? 'Submitting...' : 'Submit Answer'}
-                                        </button>
+                                        <form onSubmit={handleSubmitAnswer} className="mt-4">
+                                            <textarea
+                                                value={newAnswer}
+                                                onChange={(e) => setNewAnswer(e.target.value)}
+                                                placeholder="Write your answer..."
+                                                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                                rows={3}
+                                            />
+                                            {errorMessage && (
+                                                <div className="text-red-500 text-sm mt-2">{errorMessage}</div>
+                                            )}
+                                            <div className="mt-2 flex justify-end">
+                                                <button
+                                                    type="submit"
+                                                    disabled={isSubmitting || !newAnswer.trim()}
+                                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                                                >
+                                                    {isSubmitting ? 'Submitting...' : 'Submit Answer'}
+                                                </button>
+                                            </div>
+                                        </form>
                                     </div>
-                                </form>
-                            </div>
-                        </Disclosure.Panel>
-                    </>
-                )}
+                                )}
+                            </Disclosure.Panel>
+                        </>
+                    );
+                }}
             </Disclosure>
         </div>
     );
