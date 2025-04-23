@@ -67,69 +67,85 @@ const IssueStatementCard: React.FC<IssueStatementCardProps> = ({
     };
 
     return (
-        <div className="bg-white shadow rounded-lg mb-4">
+        <div className="bg-white shadow rounded-lg mb-4 hover:shadow-md transition-shadow duration-200">
             <Disclosure defaultOpen={isOpen}>
                 {({ open }) => {
-                    // Update internal state when Disclosure changes
                     if (open !== isOpen) {
                         setIsOpen(open);
                         onToggle?.(open);
                     }
                     return (
                         <>
-                            <div className="flex items-center justify-between p-4">
-                                <Disclosure.Button className="flex-1 flex items-center justify-between">
-                                    <div className="flex items-center space-x-4">
-                                        <UserAvatar
-                                            name={`${employees[statement.employee_id]?.first_name || 'Unknown'} ${employees[statement.employee_id]?.last_name || 'Unknown'}`}
-                                            imageUrl={employees[statement.employee_id]?.profile_pic_url}
-                                        />
-                                        <div>
-                                            <h3 className="text-lg font-medium">{statement.question}</h3>
-                                            <div className="text-sm text-gray-500 space-y-1">
-                                                <p>
-                                                    Created by {`${employees[statement.employee_id]?.first_name || 'Unknown'} ${employees[statement.employee_id]?.last_name || 'Unknown'}`}
+                            <div className="p-5">
+                                <Disclosure.Button className="w-full">
+                                    <div className="flex items-start space-x-4">
+                                        <div className="flex-shrink-0 mt-1">
+                                            <UserAvatar
+                                                name={`${employees[statement.employee_id]?.first_name || 'Unknown'} ${employees[statement.employee_id]?.last_name || 'Unknown'}`}
+                                                imageUrl={employees[statement.employee_id]?.profile_pic_url}
+                                            />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="text-xl font-semibold text-gray-900 mb-2 text-left">
+                                                {statement.question}
+                                            </h3>
+                                            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                                                <p className="flex items-center">
+                                                    <span className="text-gray-400">Asked by</span>
+                                                    <span className="ml-1 font-medium text-gray-900">
+                                                        {`${employees[statement.employee_id]?.first_name || 'Unknown'} ${employees[statement.employee_id]?.last_name || 'Unknown'}`}
+                                                    </span>
                                                 </p>
-                                                <p>
+                                                <span className="text-gray-300">•</span>
+                                                <p className="text-gray-400">
                                                     {format(new Date(statement.created_at), 'MMM d, yyyy HH:mm')}
                                                 </p>
-                                                <p>
-                                                    {statement.answers.length} {statement.answers.length === 1 ? 'answer' : 'answers'}
-                                                </p>
+                                                <span className="text-gray-300">•</span>
+                                                <div className="flex items-center">
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${statement.answers.length > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                        {statement.answers.length} {statement.answers.length === 1 ? 'answer' : 'answers'}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className={`transform transition-transform ${open ? 'rotate-180' : ''}`}>
-                                        ▼
+                                        <div className={`flex-shrink-0 ml-2 transform transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>
+                                            <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                            </svg>
+                                        </div>
                                     </div>
                                 </Disclosure.Button>
                             </div>
                             <Disclosure.Panel static>
                                 {open && (
-                                    <div className="bg-gray-50 p-4 space-y-4">
+                                    <div className="border-t border-gray-100 bg-gray-50 p-5 space-y-4">
                                         {statement.answers.map((answer: IssueStatementAnswerData) => (
-                                            <div key={answer.id} className="bg-white rounded-lg shadow-sm p-4">
-                                                <div className="flex items-start gap-2">
-                                                    <UserAvatar
-                                                        name={`${employees[answer.employee_id]?.first_name || 'Unknown'} ${employees[answer.employee_id]?.last_name || 'Unknown'}`}
-                                                        imageUrl={employees[answer.employee_id]?.profile_pic_url}
-                                                    />
-                                                    <div className="flex-1">
-                                                        <p className="text-gray-900">{answer.answer}</p>
-                                                        <div className="text-sm text-gray-500 mt-2">
-                                                            <p>
-                                                                Answered by {`${employees[answer.employee_id]?.first_name || 'Unknown'} ${employees[answer.employee_id]?.last_name || 'Unknown'}`}
-                                                            </p>
-                                                            <p>
+                                            <div key={answer.id} className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow duration-200">
+                                                <div className="flex items-start gap-4">
+                                                    <div className="flex-shrink-0">
+                                                        <UserAvatar
+                                                            name={`${employees[answer.employee_id]?.first_name || 'Unknown'} ${employees[answer.employee_id]?.last_name || 'Unknown'}`}
+                                                            imageUrl={employees[answer.employee_id]?.profile_pic_url}
+                                                            size="sm"
+                                                        />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-gray-900 whitespace-pre-wrap">{answer.answer}</p>
+                                                        <div className="mt-2 flex items-center gap-3 text-sm">
+                                                            <span className="font-medium text-gray-900">
+                                                                {`${employees[answer.employee_id]?.first_name || 'Unknown'} ${employees[answer.employee_id]?.last_name || 'Unknown'}`}
+                                                            </span>
+                                                            <span className="text-gray-300">•</span>
+                                                            <span className="text-gray-500">
                                                                 {format(new Date(answer.created_at), 'MMM d, yyyy HH:mm')}
-                                                            </p>
+                                                            </span>
                                                         </div>
                                                     </div>
                                                     {answer.employee_id === currentUserId && (
                                                         <button
                                                             onClick={handleDeleteAnswer}
                                                             data-answer-id={answer.id}
-                                                            className="text-sm font-medium text-red-500 hover:text-red-600 transition-colors duration-200"
+                                                            className="flex-shrink-0 text-sm font-medium text-red-500 hover:text-red-600 transition-colors duration-200"
                                                         >
                                                             Delete
                                                         </button>
@@ -138,22 +154,22 @@ const IssueStatementCard: React.FC<IssueStatementCardProps> = ({
                                             </div>
                                         ))}
 
-                                        <form onSubmit={handleSubmitAnswer} className="mt-4">
+                                        <form onSubmit={handleSubmitAnswer} className="mt-6">
                                             <textarea
                                                 value={newAnswer}
                                                 onChange={(e) => setNewAnswer(e.target.value)}
                                                 placeholder="Write your answer..."
-                                                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                                                className="w-full p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white resize-none"
                                                 rows={3}
                                             />
                                             {errorMessage && (
-                                                <div className="text-red-500 text-sm mt-2">{errorMessage}</div>
+                                                <div className="mt-2 text-red-500 text-sm">{errorMessage}</div>
                                             )}
-                                            <div className="mt-2 flex justify-end">
+                                            <div className="mt-3 flex justify-end">
                                                 <button
                                                     type="submit"
                                                     disabled={isSubmitting || !newAnswer.trim()}
-                                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 font-medium"
                                                 >
                                                     {isSubmitting ? 'Submitting...' : 'Submit Answer'}
                                                 </button>
