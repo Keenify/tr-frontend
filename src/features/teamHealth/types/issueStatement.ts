@@ -57,5 +57,5 @@ export interface UseIssueStatementDataReturn {
     issueStatements: IssueStatementWithAnswers[];
     employeeId: string | null;
     refreshData: () => Promise<void>;
-    employees: Record<string, UserData>;
+    employees: UserData[];
 } 

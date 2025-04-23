@@ -1,43 +1,36 @@
 import React from 'react';
 
-interface UserAvatarProps {
-    profileUrl?: string | null;
-    firstName?: string;
-    lastName?: string;
+export interface UserAvatarProps {
+    name: string;
+    imageUrl?: string;
     size?: 'sm' | 'md' | 'lg';
-    className?: string;
 }
 
-export const UserAvatar: React.FC<UserAvatarProps> = ({
-    profileUrl,
-    firstName = '',
-    lastName = '',
-    size = 'md',
-    className = ''
-}) => {
+export const UserAvatar: React.FC<UserAvatarProps> = ({ name, imageUrl, size = 'md' }) => {
     const sizeClasses = {
-        sm: 'w-8 h-8 text-sm',
-        md: 'w-10 h-10 text-base',
-        lg: 'w-12 h-12 text-lg'
+        sm: 'w-8 h-8 text-xs',
+        md: 'w-10 h-10 text-sm',
+        lg: 'w-12 h-12 text-base'
     };
 
-    const isValidImageUrl = profileUrl?.toLowerCase().startsWith('https://');
-    const initials = firstName ? firstName.charAt(0).toUpperCase() : '?';
-    const bgColor = `bg-blue-${Math.abs(firstName?.charCodeAt(0) ?? 0) % 5 + 4}00`;
-
-    if (isValidImageUrl) {
-        return (
-            <img 
-                src={profileUrl}
-                alt={`${firstName} ${lastName}`}
-                className={`rounded-full object-cover ${sizeClasses[size]} ${className}`}
-            />
-        );
-    }
+    const initials = name
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
 
     return (
-        <div className={`rounded-full flex items-center justify-center text-white font-medium ${bgColor} ${sizeClasses[size]} ${className}`}>
-            {initials}
+        <div className={`relative inline-flex items-center justify-center rounded-full bg-blue-100 ${sizeClasses[size]}`}>
+            {imageUrl ? (
+                <img
+                    src={imageUrl}
+                    alt={`${name}'s avatar`}
+                    className="w-full h-full object-cover rounded-full"
+                />
+            ) : (
+                <span className="font-medium text-blue-700">{initials}</span>
+            )}
         </div>
     );
 }; 

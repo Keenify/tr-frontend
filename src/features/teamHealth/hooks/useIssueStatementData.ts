@@ -67,6 +67,6 @@ export const useIssueStatementData = (userId: string | null, companyId: string |
         issueStatements,
         employeeId,
         refreshData,
-        employees
+        employees: Object.values(employees)
     };
 }; 
