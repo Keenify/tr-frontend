@@ -78,25 +78,12 @@ const IssueStatementCard: React.FC<IssueStatementCardProps> = ({
                         <>
                             <div className="p-5">
                                 <Disclosure.Button className="w-full">
-                                    <div className="flex items-start space-x-4">
-                                        <div className="flex-shrink-0 mt-1">
-                                            <UserAvatar
-                                                name={`${employees[statement.employee_id]?.first_name || 'Unknown'} ${employees[statement.employee_id]?.last_name || 'Unknown'}`}
-                                                imageUrl={employees[statement.employee_id]?.profile_pic_url}
-                                            />
-                                        </div>
+                                    <div className="flex items-start justify-between">
                                         <div className="flex-1 min-w-0">
                                             <h3 className="text-xl font-semibold text-gray-900 mb-2 text-left">
                                                 {statement.question}
                                             </h3>
                                             <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
-                                                <p className="flex items-center">
-                                                    <span className="text-gray-400">Asked by</span>
-                                                    <span className="ml-1 font-medium text-gray-900">
-                                                        {`${employees[statement.employee_id]?.first_name || 'Unknown'} ${employees[statement.employee_id]?.last_name || 'Unknown'}`}
-                                                    </span>
-                                                </p>
-                                                <span className="text-gray-300">•</span>
                                                 <p className="text-gray-400">
                                                     {format(new Date(statement.created_at), 'MMM d, yyyy HH:mm')}
                                                 </p>
