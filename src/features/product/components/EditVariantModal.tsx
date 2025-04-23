@@ -11,6 +11,7 @@ interface EditVariantModalProps {
         image?: File;
         product_barcode?: string;
         carton_barcode?: string;
+        cost_of_goods_sold: string;
     }) => void;
     onDelete?: () => void;
     variant: ProductVariant;
@@ -20,6 +21,7 @@ const EditVariantModal: React.FC<EditVariantModalProps> = ({ isOpen, onClose, on
     const [name, setName] = React.useState(variant.name);
     const [productBarcode, setProductBarcode] = React.useState(variant.product_barcode || '');
     const [cartonBarcode, setCartonBarcode] = React.useState(variant.carton_barcode || '');
+    const [costOfGoodsSold, setCostOfGoodsSold] = React.useState(variant.cost_of_goods_sold || '0.00');
     const [image, setImage] = React.useState<File | null>(null);
     const [isDragging, setIsDragging] = React.useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -29,6 +31,7 @@ const EditVariantModal: React.FC<EditVariantModalProps> = ({ isOpen, onClose, on
         setName(variant.name);
         setProductBarcode(variant.product_barcode || '');
         setCartonBarcode(variant.carton_barcode || '');
+        setCostOfGoodsSold(variant.cost_of_goods_sold || '0.00');
         setImage(null);
     }, [variant]);
 
@@ -66,13 +69,15 @@ const EditVariantModal: React.FC<EditVariantModalProps> = ({ isOpen, onClose, on
                 name, 
                 image: image || undefined,
                 product_barcode: productBarcode,
-                carton_barcode: cartonBarcode
+                carton_barcode: cartonBarcode,
+                cost_of_goods_sold: costOfGoodsSold
             });
             onSubmit({ 
                 name, 
                 image: image || undefined,
                 product_barcode: productBarcode,
-                carton_barcode: cartonBarcode
+                carton_barcode: cartonBarcode,
+                cost_of_goods_sold: costOfGoodsSold
             });
             setImage(null);
             onClose();
@@ -136,6 +141,20 @@ const EditVariantModal: React.FC<EditVariantModalProps> = ({ isOpen, onClose, on
                             value={cartonBarcode}
                             onChange={(e) => setCartonBarcode(e.target.value)}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Cost of Goods Sold</label>
+                        <input
+                            title="Enter cost of goods sold"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={costOfGoodsSold}
+                            onChange={(e) => setCostOfGoodsSold(e.target.value)}
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            required
                         />
                     </div>
 

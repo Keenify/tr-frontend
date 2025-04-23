@@ -37,6 +37,9 @@ export const createProductVariant = async (data: CreateProductVariantRequest): P
         url.searchParams.append('carton_barcode', data.carton_barcode);
     }
 
+    // Add cost of goods sold
+    url.searchParams.append('cost_of_goods_sold', data.cost_of_goods_sold);
+
     const response = await fetch(url.toString(), {
         method: 'POST',
         body: formData,
@@ -73,6 +76,11 @@ export const updateProductVariant = async (
     
     if (data.carton_barcode !== undefined) {
         url.searchParams.append('carton_barcode', data.carton_barcode);
+    }
+
+    // Add cost of goods sold if provided
+    if (data.cost_of_goods_sold !== undefined) {
+        url.searchParams.append('cost_of_goods_sold', data.cost_of_goods_sold);
     }
 
     const response = await fetch(url.toString(), {

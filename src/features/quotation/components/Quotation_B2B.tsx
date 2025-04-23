@@ -53,6 +53,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
       id: number;
       name: string;
       image_url: string | null;
+      cost_of_goods_sold: string;
     }>;
   }>({});
   const [productPriceTiers, setProductPriceTiers] = React.useState<{
@@ -192,6 +193,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
               id: number;
               name: string;
               image_url: string | null;
+              cost_of_goods_sold: string;
             }>;
           } = {};
           const newProductPriceTiers: { [key: number]: ProductPriceTier[] } =
@@ -936,6 +938,30 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
               >
                 Flavour
               </TableCell>
+              {/* Add COGS Column */}
+              <TableCell
+                align="center"
+                rowSpan={2}
+                className="table-header-cell"
+                style={{ 
+                  width: "100px", 
+                  backgroundColor: "#E6B3CC",  // Light pink background
+                  position: "relative"
+                }}
+              >
+                COGS ({selectedCurrency})
+                <div style={{ 
+                  fontSize: "0.7em",
+                  color: "#666",
+                  fontStyle: "italic",
+                  position: "absolute",
+                  bottom: "2px",
+                  left: "0",
+                  right: "0"
+                }}>
+                  (Not in quotation)
+                </div>
+              </TableCell>
               {visibleCartonColumns.size > 0 && (
                 <TableCell
                   align="center"
@@ -1137,6 +1163,20 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
                     ) : (
                       <span>No variants</span>
                     )}
+                  </TableCell>
+                  {/* Add COGS value cell */}
+                  <TableCell 
+                    align="center" 
+                    className="table-cell"
+                    style={{ backgroundColor: "#F9E6F0" }} // Lighter pink for the body cells
+                  >
+                    {productVariants[product.id]?.map((flavor) => (
+                      selectedFlavors[product.id]?.has(flavor.name) && (
+                        <div key={flavor.name} style={{ padding: "4px 0" }}>
+                          {flavor.cost_of_goods_sold || 'N/A'}
+                        </div>
+                      )
+                    ))}
                   </TableCell>
                   {getSortedVisibleColumns().map((count) => {
                     const currentPriceTier = productPriceTiers[product.id]

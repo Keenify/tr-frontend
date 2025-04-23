@@ -14,6 +14,7 @@ export interface ProductVariant {
     image_url: string | null;
     product_barcode?: string;
     carton_barcode?: string;
+    cost_of_goods_sold: string;
     id: number;
     product_id: number;
     created_at: string;
@@ -52,6 +53,7 @@ export interface CreateProductVariantRequest {
     product_id: number;
     product_barcode?: string;
     carton_barcode?: string;
+    cost_of_goods_sold: string;
 }
 
 export interface UpdateProductVariantRequest {
@@ -59,6 +61,7 @@ export interface UpdateProductVariantRequest {
     image?: File;
     product_barcode?: string;
     carton_barcode?: string;
+    cost_of_goods_sold?: string;
 }
 
 export interface DeleteProductVariantRequest {

@@ -108,7 +108,8 @@ const Product: React.FC<ProductProps> = ({ session }) => {
       await createProductVariant({
         name: data.name,
         image: data.image,
-        product_id: productId
+        product_id: productId,
+        cost_of_goods_sold: '0.00'
       });
       await fetchProducts();
       toast.success('Variant created successfully');
