@@ -736,6 +736,11 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
     });
   };
 
+  // Add a function to get sorted visible columns
+  const getSortedVisibleColumns = () => {
+    return Array.from(visibleCartonColumns).sort((a, b) => a - b);
+  };
+
   // Add or update the CSS styles in your Quotation.css file
   const toggleContainerStyles = {
     display: 'grid',
@@ -953,7 +958,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
               )}
             </TableRow>
             <TableRow>
-              {Array.from(visibleCartonColumns).map((count) => (
+              {getSortedVisibleColumns().map((count) => (
                 <TableCell
                   key={count}
                   align="center"
@@ -1133,7 +1138,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
                       <span>No variants</span>
                     )}
                   </TableCell>
-                  {Array.from(visibleCartonColumns).map((count) => {
+                  {getSortedVisibleColumns().map((count) => {
                     const currentPriceTier = productPriceTiers[product.id]
                       ?.find((tier) =>
                         displayPackCount
