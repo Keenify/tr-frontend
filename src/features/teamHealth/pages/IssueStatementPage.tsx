@@ -82,8 +82,6 @@ export const IssueStatementPage: React.FC<IssueStatementPageProps> = ({ session 
     }
 
     if (userError || error) {
-        console.error('User Error:', userError);
-        console.error('Issue Statement Error:', error);
         return (
             <div className="flex justify-center items-center h-screen">
                 <div className="text-red-500">
@@ -102,37 +100,66 @@ export const IssueStatementPage: React.FC<IssueStatementPageProps> = ({ session 
     }
 
     return (
-        <div className="px-4 py-6">
+        <div className="px-4 py-6 bg-gray-50 min-h-screen">
             <div className="max-w-4xl mx-auto mb-8">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h2 className="text-2xl font-semibold text-gray-900 mb-6">Ask a Question</h2>
-                    <form onSubmit={handleSubmitStatement} className="space-y-4">
-                        <div>
-                            <input
-                                type="text"
-                                value={newQuestion}
-                                onChange={(e) => setNewQuestion(e.target.value)}
-                                placeholder="What's your question?"
-                                className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
-                                disabled={isSubmitting}
-                            />
-                        </div>
-                        {errorMessage && (
-                            <div className="text-red-500 text-sm">{errorMessage}</div>
-                        )}
-                        <button
-                            type="submit"
-                            disabled={isSubmitting || !newQuestion.trim()}
-                            className="w-full p-4 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 font-medium"
-                        >
-                            {isSubmitting ? 'Submitting...' : 'Submit Question'}
-                        </button>
-                    </form>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                    <div className="max-w-2xl mx-auto">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-3">Share an Issue Statement</h2>
+                        <p className="text-gray-600 mb-6">
+                            Help improve our team by sharing issues that need attention. Your statement will be anonymous, 
+                            allowing the team to openly discuss and brainstorm solutions together.
+                        </p>
+                        <form onSubmit={handleSubmitStatement} className="space-y-4">
+                            <div>
+                                <textarea
+                                    value={newQuestion}
+                                    onChange={(e) => setNewQuestion(e.target.value)}
+                                    placeholder="What issue would you like the team to address? Be specific about the challenge or situation that needs improvement..."
+                                    className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 min-h-[120px] resize-none"
+                                    disabled={isSubmitting}
+                                />
+                            </div>
+                            {errorMessage && (
+                                <div className="text-red-500 text-sm">{errorMessage}</div>
+                            )}
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm text-gray-500 flex items-center">
+                                    <svg className="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                    Anonymous submission
+                                </p>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting || !newQuestion.trim()}
+                                    className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 font-medium flex items-center gap-2"
+                                >
+                                    {isSubmitting ? (
+                                        <>
+                                            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                            </svg>
+                                            <span>Submitting...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                            <span>Submit Issue Statement</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
 
             {issueStatements && issueStatements.length > 0 ? (
                 <div className="max-w-7xl mx-auto">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-6 px-4">Team Issue Statements</h3>
                     <Masonry
                         breakpointCols={breakpointColumns}
                         className="flex -ml-4 w-auto"
@@ -157,19 +184,20 @@ export const IssueStatementPage: React.FC<IssueStatementPageProps> = ({ session 
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
                         <div className="text-gray-500 mb-6">
                             <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
                             </svg>
                         </div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-3">No Questions Yet</h3>
+                        <h3 className="text-xl font-semibold text-gray-900 mb-3">Be the First to Submit an Issue Statement</h3>
                         <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                            Be the first to ask a question! Your question will help improve team communication and collaboration.
+                            Your input is crucial for team improvement. Share an issue statement anonymously and let's work together to find solutions.
                         </p>
                         <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg inline-block">
-                            <p className="font-medium mb-2">Tips for asking good questions:</p>
+                            <p className="font-medium mb-2">Tips for effective issue statements:</p>
                             <ul className="list-disc list-inside space-y-1 text-left">
-                                <li>Be specific and clear about your concern</li>
-                                <li>Provide relevant context when needed</li>
-                                <li>Be constructive and solution-oriented</li>
+                                <li>Clearly describe the specific issue or challenge</li>
+                                <li>Explain the impact on team or work</li>
+                                <li>Be objective and factual</li>
+                                <li>Focus on improvement opportunities</li>
                             </ul>
                         </div>
                     </div>
