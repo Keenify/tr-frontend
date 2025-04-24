@@ -1,6 +1,6 @@
 import React from 'react';
 import { Platform } from './PlatformSelector';
-import { SHOPEE_SHOP_NAMES } from '../constant/Shopee';
+import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES } from '../constant/Shopname';
 
 interface PlatformInfoHeaderProps {
   platform: Platform;
@@ -46,7 +46,8 @@ const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
   };
 
   // Shopee shop name mapping
-  const shopName = platform === 'shopee' && selectedEntityId ? SHOPEE_SHOP_NAMES[selectedEntityId as string] || selectedEntityId : undefined;
+  const shopName = platform === 'shopee' && selectedEntityId ? SHOPEE_SHOP_NAMES[selectedEntityId as string] || selectedEntityId :
+    platform === 'lazada' && selectedEntityId ? LAZADA_ACCOUNT_NAMES[selectedEntityId as string] || selectedEntityId : undefined;
 
   return (
     <div className={`mb-4 p-3 rounded-lg shadow border-l-4 ${
@@ -64,7 +65,10 @@ const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
             {platform === 'shopee' && shopName && (
               <><span className="font-medium">Shopee Shop:</span> {shopName}</>
             )}
-            {platform !== 'shopee' && selectedEntityId && (
+            {platform === 'lazada' && shopName && selectedEntityId && (
+              <><span className="font-medium">Lazada Shop:</span> {shopName} ({selectedEntityId})</>
+            )}
+            {platform !== 'shopee' && platform !== 'lazada' && selectedEntityId && (
               <><span className="font-medium">{getEntityFieldName()}:</span> {selectedEntityId}</>
             )}
           </p>

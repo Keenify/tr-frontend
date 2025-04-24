@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
 import { subDays, startOfMonth, startOfYear, startOfDay, endOfDay } from "date-fns";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
-import { SHOPEE_SHOP_NAMES } from '../constant/Shopee';
+import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES } from '../constant/Shopname';
 
 // Import custom hook
 import { useMetricsData } from "../hooks/useMetricsData";
@@ -59,7 +59,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
 
   // After entities are loaded, set default Shopee shop if not set
   useEffect(() => {
-    if (selectedPlatform === 'shopee' && !selectedEntityId && entities.length > 0) {
+    if ((selectedPlatform === 'shopee' || selectedPlatform === 'lazada') && !selectedEntityId && entities.length > 0) {
       setSelectedEntityId(entities[0].id);
     }
     // eslint-disable-next-line
@@ -71,6 +71,12 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     if (selectedEntityId === 976040827 || selectedEntityId === '976040827') {
       currency = 'MYR';
     } else if (selectedEntityId === 2421911 || selectedEntityId === '2421911') {
+      currency = 'SGD';
+    }
+  } else if (selectedPlatform === 'lazada') {
+    if (selectedEntityId === 'leon@thekettlegourmet.com') {
+      currency = 'MYR';
+    } else if (selectedEntityId === 'flo@thekettlegourmet.com') {
       currency = 'SGD';
     }
   }
@@ -142,7 +148,12 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   // Determine enabled platforms
   const enabledPlatforms: Platform[] = ["shopee", "lazada", "shopify"];
 
-  const shopName = selectedPlatform === 'shopee' ? SHOPEE_SHOP_NAMES[selectedEntityId as string] || selectedEntityId : undefined;
+  let shopName: string | undefined = undefined;
+  if (selectedPlatform === 'shopee') {
+    shopName = SHOPEE_SHOP_NAMES[selectedEntityId as string] || selectedEntityId as string;
+  } else if (selectedPlatform === 'lazada') {
+    shopName = LAZADA_ACCOUNT_NAMES[selectedEntityId as string] || selectedEntityId as string;
+  }
 
   return (
     <div className="flex flex-col w-full p-4">
@@ -270,6 +281,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
               totalRevenue={totalRevenue}
               totalOrders={totalOrders}
               totalAdsExpense={totalAdsExpense}
+              currency={currency}
             />
 
             {/* Charts */}
