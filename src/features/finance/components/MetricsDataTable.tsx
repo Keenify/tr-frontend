@@ -62,9 +62,7 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
 
   // Format the ID value for display
   const formatIdFieldValue = (value: string | number) => {
-    if (platform === 'lazada' && typeof value === 'string') {
-      return value.length > 10 ? value.substring(0, 10) + '...' : value;
-    }
+    // For Lazada, always show the full account id
     return value;
   };
 
