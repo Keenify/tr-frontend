@@ -271,12 +271,13 @@ td.col-submitted {
   display: block;
   text-align: center;
   padding: 15px;
-  background-color: #fff5eb;
-  border: 1px solid #ffd2b3;
+  /* Remove background and border to match zebra striping */
+  background: none !important;
+  border: none !important;
   border-radius: 8px;
   margin: 0 auto;
   width: 90%;
-  box-shadow: 0 3px 6px rgba(255, 114, 0, 0.1);
+  box-shadow: none;
   position: relative;
   font-size: 1rem;
   letter-spacing: 0.3px;
@@ -291,7 +292,7 @@ td.col-submitted {
 
 /* Style for cells of team members who are on leave */
 .on-leave-cell {
-  background-color: #fffaf5;
+  background: none !important;
   font-style: normal;
 }
 
@@ -299,7 +300,7 @@ td.col-submitted {
 .employee-on-leave-cell {
   text-align: center !important;
   vertical-align: middle !important;
-  background-color: #fffaf5 !important;
+  background: none !important;
   height: 100% !important;
   padding: 15px !important;
   border-color: #ffead1 !important;
@@ -434,22 +435,6 @@ td.on-leave-cell {
   font-size: 0.8rem;
   display: inline-block;
   vertical-align: middle;
-}
-
-/* Row highlighting for top performers */
-tr.top-performer-1 {
-  background: linear-gradient(to right, rgba(255, 215, 0, 0.05), rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05)) !important;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
-}
-
-tr.top-performer-2 {
-  background: linear-gradient(to right, rgba(192, 192, 192, 0.05), rgba(192, 192, 192, 0.1), rgba(192, 192, 192, 0.05)) !important;
-  box-shadow: 0 0 8px rgba(192, 192, 192, 0.2);
-}
-
-tr.top-performer-3 {
-  background: linear-gradient(to right, rgba(205, 127, 50, 0.05), rgba(205, 127, 50, 0.1), rgba(205, 127, 50, 0.05)) !important;
-  box-shadow: 0 0 6px rgba(205, 127, 50, 0.2);
 }
 
 /* Pulse animations for badges */
