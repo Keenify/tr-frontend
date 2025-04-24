@@ -727,7 +727,7 @@ const App: React.FC = () => {
                         <DashboardLayout
                           session={session}
                           signOut={signOut}
-                          activeTab="thePlan"
+                          activeTab="financeData"
                           activeSubTab="ccc"
                           onTabChange={() => {}}
                         >
