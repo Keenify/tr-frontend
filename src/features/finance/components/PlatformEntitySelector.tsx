@@ -1,5 +1,6 @@
 import React from 'react';
 import { Platform } from './PlatformSelector';
+import { SHOPEE_SHOP_NAMES } from '../constant/Shopee';
 
 interface Entity {
   id: string | number;
@@ -39,6 +40,10 @@ const PlatformEntitySelector: React.FC<PlatformEntitySelectorProps> = ({
 
   // Format the entity name for display
   const formatEntityName = (entity: Entity) => {
+    if (platform === 'shopee') {
+      const shopName = SHOPEE_SHOP_NAMES[entity.id] || entity.id;
+      return `${shopName} (${entity.id})`;
+    }
     if (platform === 'lazada') {
       // For Lazada accounts, add 'Account' prefix if it's just an ID
       return entity.name.includes('Account') ? entity.name : `Account ${entity.name}`;

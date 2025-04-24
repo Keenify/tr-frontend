@@ -1,5 +1,6 @@
 import React from 'react';
 import { Platform } from './PlatformSelector';
+import { SHOPEE_SHOP_NAMES } from '../constant/Shopee';
 
 interface PlatformInfoHeaderProps {
   platform: Platform;
@@ -12,7 +13,6 @@ interface PlatformInfoHeaderProps {
  */
 const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
   platform,
-  companyId,
   selectedEntityId
 }) => {
   // Get platform badge color
@@ -45,6 +45,9 @@ const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
     }
   };
 
+  // Shopee shop name mapping
+  const shopName = platform === 'shopee' && selectedEntityId ? SHOPEE_SHOP_NAMES[selectedEntityId as string] || selectedEntityId : undefined;
+
   return (
     <div className={`mb-4 p-3 rounded-lg shadow border-l-4 ${
       platform === 'shopee' ? 'border-l-orange-500 bg-white' :
@@ -58,10 +61,12 @@ const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
             {platform.charAt(0).toUpperCase() + platform.slice(1)} Metrics
           </h2>
           <p className="text-sm text-gray-600">
-            <span className="font-medium">Company ID:</span> {companyId || 'Not set'}
-            {selectedEntityId && 
-              <> | <span className="font-medium">{getEntityFieldName()}:</span> {selectedEntityId}</>
-            }
+            {platform === 'shopee' && shopName && (
+              <><span className="font-medium">Shopee Shop:</span> {shopName}</>
+            )}
+            {platform !== 'shopee' && selectedEntityId && (
+              <><span className="font-medium">{getEntityFieldName()}:</span> {selectedEntityId}</>
+            )}
           </p>
         </div>
         <span className={`px-3 py-1 text-xs rounded-full font-medium ${getPlatformBadgeClasses()}`}>

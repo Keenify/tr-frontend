@@ -7,17 +7,19 @@ import { ShopifyMetric } from '../services/useShopifyMetrics';
 interface MetricsDataTableProps {
   data: (ShopeeMetric | LazadaMetric | ShopifyMetric)[];
   platform: Platform;
+  currency?: string;
+  shopName?: string | number | null;
 }
 
 /**
  * Component to display detailed metrics data in a table format
  */
-const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform }) => {
+const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, currency = 'SGD', shopName }) => {
   // Helper to safely convert string/number to formatted currency
   const formatCurrency = (value: string | number | undefined) => {
-    if (value === undefined) return '$0.00';
+    if (value === undefined) return `${currency} 0.00`;
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    return `$${numValue.toFixed(2)}`;
+    return `${currency} ${numValue.toFixed(2)}`;
   };
 
   // Helper to safely convert string/number to number
@@ -160,6 +162,9 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform }) =
     <div className="bg-white rounded-lg shadow overflow-hidden flex flex-col">
       <h3 className={`text-lg font-medium p-4 border-b sticky top-0 z-20 ${getHeaderStyle()}`}>
         {platform.charAt(0).toUpperCase() + platform.slice(1)} Metrics Data
+        {shopName ? (
+          <span className="ml-2 text-sm text-gray-500">{shopName}</span>
+        ) : null}
       </h3>
       <div className="overflow-x-auto overflow-y-auto max-h-[70vh]">
         <table className="min-w-full divide-y divide-gray-200">

@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
 import { subDays, startOfMonth, startOfYear, startOfDay, endOfDay } from "date-fns";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
+import { SHOPEE_SHOP_NAMES } from '../constant/Shopee';
 
 // Import custom hook
 import { useMetricsData } from "../hooks/useMetricsData";
@@ -55,6 +56,24 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     endDate,
     selectedEntityId
   });
+
+  // After entities are loaded, set default Shopee shop if not set
+  useEffect(() => {
+    if (selectedPlatform === 'shopee' && !selectedEntityId && entities.length > 0) {
+      setSelectedEntityId(entities[0].id);
+    }
+    // eslint-disable-next-line
+  }, [selectedPlatform, entities]);
+
+  // Determine currency
+  let currency = 'SGD';
+  if (selectedPlatform === 'shopee') {
+    if (selectedEntityId === 976040827 || selectedEntityId === '976040827') {
+      currency = 'MYR';
+    } else if (selectedEntityId === 2421911 || selectedEntityId === '2421911') {
+      currency = 'SGD';
+    }
+  }
 
   // Handle date changes
   const handleStartDateChange = (date: Date) => {
@@ -122,6 +141,8 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
 
   // Determine enabled platforms
   const enabledPlatforms: Platform[] = ["shopee", "lazada", "shopify"];
+
+  const shopName = selectedPlatform === 'shopee' ? SHOPEE_SHOP_NAMES[selectedEntityId as string] || selectedEntityId : undefined;
 
   return (
     <div className="flex flex-col w-full p-4">
@@ -261,7 +282,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
             </div>
 
             {/* Data table */}
-            <MetricsDataTable data={filteredMetrics} platform={selectedPlatform} />
+            <MetricsDataTable data={filteredMetrics} platform={selectedPlatform} currency={currency} shopName={shopName} />
 
             {/* Refresh button */}
             <button 
