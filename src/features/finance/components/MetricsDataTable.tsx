@@ -66,55 +66,74 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
     return value;
   };
 
-  // Get revenue value based on platform
+  // Get revenue value based on row type
   const getRevenue = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
-    if (platform === 'shopify') {
-      const shopifyItem = item as ShopifyMetric;
-      return Number(shopifyItem.new_customer_sales) + Number(shopifyItem.existing_customer_sales);
+    if ('store_id' in item) {
+      return Number(item.new_customer_sales) + Number(item.existing_customer_sales);
     }
-    return platform === 'shopee' 
-      ? (item as ShopeeMetric).revenue 
-      : (item as LazadaMetric).revenue;
+    if ('shop_id' in item) {
+      return item.revenue;
+    }
+    if ('account_id' in item) {
+      return item.revenue;
+    }
+    return 0;
   };
 
-  // Get ad expense value based on platform
+  // Get ad expense value based on row type
   const getAdsExpense = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
-    if (platform === 'shopify') {
+    if ('store_id' in item) {
       return '0.00'; // Shopify doesn't have ads_expense in API
     }
-    return platform === 'shopee'
-      ? (item as ShopeeMetric).ads_expense
-      : (item as LazadaMetric).ads_expense;
+    if ('shop_id' in item) {
+      return item.ads_expense;
+    }
+    if ('account_id' in item) {
+      return item.ads_expense;
+    }
+    return '0.00';
   };
 
-  // Get orders count based on platform
+  // Get orders count based on row type
   const getOrdersCount = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
-    if (platform === 'shopify') {
-      return (item as ShopifyMetric).session_completed_checkout_count;
+    if ('store_id' in item) {
+      return item.session_completed_checkout_count;
     }
-    return platform === 'shopee'
-      ? (item as ShopeeMetric).total_orders
-      : (item as LazadaMetric).total_orders;
+    if ('shop_id' in item) {
+      return item.total_orders;
+    }
+    if ('account_id' in item) {
+      return item.total_orders;
+    }
+    return 0;
   };
 
-  // Get new buyer count based on platform
+  // Get new buyer count based on row type
   const getNewBuyerCount = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
-    if (platform === 'shopify') {
-      return (item as ShopifyMetric).new_customer_count;
+    if ('store_id' in item) {
+      return item.new_customer_count;
     }
-    return platform === 'shopee'
-      ? (item as ShopeeMetric).new_buyer_count
-      : (item as LazadaMetric).new_buyer_count;
+    if ('shop_id' in item) {
+      return item.new_buyer_count;
+    }
+    if ('account_id' in item) {
+      return item.new_buyer_count;
+    }
+    return 0;
   };
 
-  // Get existing buyer count based on platform
+  // Get existing buyer count based on row type
   const getExistingBuyerCount = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
-    if (platform === 'shopify') {
-      return (item as ShopifyMetric).existing_customer_count;
+    if ('store_id' in item) {
+      return item.existing_customer_count;
     }
-    return platform === 'shopee'
-      ? (item as ShopeeMetric).existing_buyer_count
-      : (item as LazadaMetric).existing_buyer_count;
+    if ('shop_id' in item) {
+      return item.existing_buyer_count;
+    }
+    if ('account_id' in item) {
+      return item.existing_buyer_count;
+    }
+    return 0;
   };
 
   // Calculate summary totals
@@ -156,11 +175,52 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
 
   const summaryTotals = calculateSummary();
 
+  // For all_sg/all_my, add a Store column and deduplicate rows
+  const isAllMode = platform === 'all_sg' || platform === 'all_my';
+
+  // Helper to get store label
+  const getStoreLabel = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
+    if ('shop_id' in item) return `Shopee: ${item.shop_id}`;
+    if ('account_id' in item) return `Lazada: ${item.account_id}`;
+    if ('store_id' in item) return `Shopify: ${item.store_id}`;
+    return '-';
+  };
+
+  // Deduplicate rows for all_sg/all_my by date+store+id, and sort by date descending
+  let dedupedData = data;
+  if (isAllMode) {
+    const seen = new Set();
+    dedupedData = data.filter(item => {
+      const key = `${item.date}|${getStoreLabel(item)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    dedupedData = dedupedData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+
+  // Helper to format platform name for display
+  const getPlatformDisplayName = () => {
+    if (platform === 'all_sg') return 'All (SG)';
+    if (platform === 'all_my') return 'All (MY)';
+    return platform.charAt(0).toUpperCase() + platform.slice(1);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden flex flex-col">
-      <h3 className={`text-lg font-medium p-4 border-b sticky top-0 z-20 ${getHeaderStyle()}`}>
-        {platform.charAt(0).toUpperCase() + platform.slice(1)} Metrics Data
-        {shopName ? (
+      <h3 className={`text-lg font-medium p-4 border-b sticky top-0 z-20 ${getHeaderStyle()}`}
+        style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {getPlatformDisplayName()} Metrics Data
+        {isAllMode && typeof shopName === 'string' && shopName ? (
+          <div className="mt-1 text-sm text-gray-500">
+            <span className="font-medium">Stores Included:</span>
+            <ul className="list-disc list-inside text-xs text-gray-700 mt-1">
+              {shopName.split(',').map((store: string, idx: number) => (
+                <li key={idx}>{store.trim()}</li>
+              ))}
+            </ul>
+          </div>
+        ) : shopName ? (
           <span className="ml-2 text-sm text-gray-500">{shopName}</span>
         ) : null}
       </h3>
@@ -171,9 +231,16 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
                 Date
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                {getIdFieldName()}
-              </th>
+              {isAllMode && (
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                  Store
+                </th>
+              )}
+              {!isAllMode && (
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                  {getIdFieldName()}
+                </th>
+              )}
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
                 Revenue
               </th>
@@ -214,14 +281,21 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {data.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50">
+            {dedupedData.map((item) => (
+              <tr key={item.id + '-' + item.date + '-' + getStoreLabel(item)} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {item.date}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {formatIdFieldValue(getIdFieldValue(item))}
-                </td>
+                {isAllMode && (
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {getStoreLabel(item)}
+                  </td>
+                )}
+                {!isAllMode && (
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {formatIdFieldValue(getIdFieldValue(item))}
+                  </td>
+                )}
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {formatCurrency(getRevenue(item))}
                 </td>

@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type Platform = "shopee" | "lazada" | "shopify";
+export type Platform = "shopee" | "lazada" | "shopify" | "all_sg" | "all_my";
 
 interface PlatformSelectorProps {
   selectedPlatform: Platform;
@@ -61,6 +61,26 @@ const PlatformSelector: React.FC<PlatformSelectorProps> = ({
           title={isEnabled("shopify") ? undefined : "Coming soon"}
         >
           Shopify
+        </button>
+        <button
+          className={`px-4 py-2 rounded-md ${
+            selectedPlatform === "all_sg"
+              ? "bg-gray-800 text-white"
+              : "bg-gray-200 text-gray-700"
+          }`}
+          onClick={() => onPlatformChange("all_sg")}
+        >
+          All (SG)
+        </button>
+        <button
+          className={`px-4 py-2 rounded-md ${
+            selectedPlatform === "all_my"
+              ? "bg-yellow-800 text-white"
+              : "bg-gray-200 text-gray-700"
+          }`}
+          onClick={() => onPlatformChange("all_my")}
+        >
+          All (MY)
         </button>
       </div>
     </div>

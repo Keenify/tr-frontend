@@ -55,7 +55,7 @@ export function useMetricsData({
     error: shopeeError,
     refetch: refetchShopee
   } = useShopeeMetrics(
-    platform === 'shopee' ? companyId : undefined,
+    platform === 'shopee' || platform === 'all_sg' || platform === 'all_my' ? companyId : undefined,
     formattedStartDate,
     formattedEndDate
   );
@@ -67,7 +67,7 @@ export function useMetricsData({
     error: lazadaError,
     refetch: refetchLazada
   } = useLazadaMetrics(
-    platform === 'lazada' ? companyId : undefined,
+    platform === 'lazada' || platform === 'all_sg' || platform === 'all_my' ? companyId : undefined,
     formattedStartDate,
     formattedEndDate
   );
@@ -79,13 +79,20 @@ export function useMetricsData({
     error: shopifyError,
     refetch: refetchShopify
   } = useShopifyMetrics(
-    platform === 'shopify' ? companyId : undefined,
+    platform === 'shopify' || platform === 'all_sg' || platform === 'all_my' ? companyId : undefined,
     formattedStartDate,
     formattedEndDate
   );
 
   // Get appropriate data, loading state, and error based on selected platform
   const metrics = useMemo((): MetricType[] => {
+    if (platform === 'all_sg' || platform === 'all_my') {
+      return [
+        ...(shopeeMetrics || []),
+        ...(lazadaMetrics || []),
+        ...(shopifyMetrics || [])
+      ];
+    }
     switch (platform) {
       case 'shopee': return shopeeMetrics || [];
       case 'lazada': return lazadaMetrics || [];
@@ -95,6 +102,9 @@ export function useMetricsData({
   }, [platform, shopeeMetrics, lazadaMetrics, shopifyMetrics]);
 
   const isLoading = useMemo(() => {
+    if (platform === 'all_sg' || platform === 'all_my') {
+      return shopeeLoading || lazadaLoading || shopifyLoading;
+    }
     switch (platform) {
       case 'shopee': return shopeeLoading;
       case 'lazada': return lazadaLoading;
@@ -104,6 +114,9 @@ export function useMetricsData({
   }, [platform, shopeeLoading, lazadaLoading, shopifyLoading]);
 
   const error = useMemo(() => {
+    if (platform === 'all_sg' || platform === 'all_my') {
+      return shopeeError || lazadaError || shopifyError || null;
+    }
     switch (platform) {
       case 'shopee': return shopeeError;
       case 'lazada': return lazadaError;

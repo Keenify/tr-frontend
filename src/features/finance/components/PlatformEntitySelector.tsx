@@ -23,6 +23,11 @@ const PlatformEntitySelector: React.FC<PlatformEntitySelectorProps> = ({
   selectedEntityId,
   onEntityChange
 }) => {
+  // Hide selector for All(SG) and All(MY)
+  if (platform === 'all_sg' || platform === 'all_my') {
+    return null;
+  }
+
   // Skip rendering if there are no entities to select
   if (entities.length === 0) {
     return null;

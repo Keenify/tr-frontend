@@ -6,6 +6,7 @@ interface PlatformInfoHeaderProps {
   platform: Platform;
   companyId?: string;
   selectedEntityId: string | number | null;
+  includedStores?: string[];
 }
 
 /**
@@ -13,7 +14,8 @@ interface PlatformInfoHeaderProps {
  */
 const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
   platform,
-  selectedEntityId
+  selectedEntityId,
+  includedStores
 }) => {
   // Get platform badge color
   const getPlatformBadgeClasses = () => {
@@ -21,6 +23,8 @@ const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
       case 'shopee': return 'bg-orange-100 text-orange-800';
       case 'lazada': return 'bg-blue-100 text-blue-800';
       case 'shopify': return 'bg-green-100 text-green-800';
+      case 'all_sg': return 'bg-gray-800 text-white';
+      case 'all_my': return 'bg-yellow-800 text-white';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -53,13 +57,16 @@ const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
     <div className={`mb-4 p-3 rounded-lg shadow border-l-4 ${
       platform === 'shopee' ? 'border-l-orange-500 bg-white' :
       platform === 'lazada' ? 'border-l-blue-500 bg-white' :
-      'border-l-green-500 bg-white'
+      platform === 'shopify' ? 'border-l-green-500 bg-white' :
+      platform === 'all_sg' ? 'border-l-gray-800 bg-white' :
+      platform === 'all_my' ? 'border-l-yellow-800 bg-white' :
+      'border-l-gray-500 bg-white'
     }`}>
       <div className="flex items-center gap-2">
         <span className="text-xl" aria-hidden="true">{getPlatformIcon()}</span>
         <div className="flex-grow">
           <h2 className="text-lg font-medium text-gray-800">
-            {platform.charAt(0).toUpperCase() + platform.slice(1)} Metrics
+            {platform === 'all_sg' ? 'All (SG) Metrics' : platform === 'all_my' ? 'All (MY) Metrics' : platform.charAt(0).toUpperCase() + platform.slice(1) + ' Metrics'}
           </h2>
           <p className="text-sm text-gray-600">
             {platform === 'shopee' && shopName && (
@@ -71,10 +78,20 @@ const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
             {platform !== 'shopee' && platform !== 'lazada' && selectedEntityId && (
               <><span className="font-medium">{getEntityFieldName()}:</span> {selectedEntityId}</>
             )}
+            {(platform === 'all_sg' || platform === 'all_my') && includedStores && includedStores.length > 0 && (
+              <div className="mt-2">
+                <span className="font-medium">Stores Included:</span>
+                <ul className="list-disc list-inside text-xs text-gray-700 mt-1">
+                  {includedStores.map((store, idx) => (
+                    <li key={idx}>{store}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </p>
         </div>
         <span className={`px-3 py-1 text-xs rounded-full font-medium ${getPlatformBadgeClasses()}`}>
-          {platform.charAt(0).toUpperCase() + platform.slice(1)}
+          {platform === 'all_sg' ? 'All (SG)' : platform === 'all_my' ? 'All (MY)' : platform.charAt(0).toUpperCase() + platform.slice(1)}
         </span>
       </div>
     </div>

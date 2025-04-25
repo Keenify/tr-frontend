@@ -18,6 +18,11 @@ import OrdersChart from "./charts/OrdersChart";
 import MetricsDataTable from "./MetricsDataTable";
 import EmptyStateMessage from "./EmptyStateMessage";
 
+// Import types
+import { ShopeeMetric } from '../services/useShopeeMetrics';
+import { LazadaMetric } from '../services/useLazadaMetrics';
+import { ShopifyMetric } from '../services/useShopifyMetrics';
+
 interface OnlineSalesProps {
   session: Session;
 }
@@ -146,7 +151,51 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   }
 
   // Determine enabled platforms
-  const enabledPlatforms: Platform[] = ["shopee", "lazada", "shopify"];
+  const enabledPlatforms: Platform[] = ["shopee", "lazada", "shopify", "all_sg", "all_my"];
+
+  // Determine if we're in all_sg or all_my mode
+  const isAllSG = selectedPlatform === 'all_sg';
+  const isAllMY = selectedPlatform === 'all_my';
+  const allCurrency = isAllSG ? 'SGD' : isAllMY ? 'MYR' : undefined;
+
+  // Filter metrics for all_sg/all_my
+  let filteredAllMetrics = filteredMetrics;
+  if (isAllSG || isAllMY) {
+    filteredAllMetrics = filteredMetrics.filter((item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
+      // Shopee, Lazada, Shopify all have currency field or can be inferred
+      if ('currency' in item) return item.currency === allCurrency;
+      // Fallback: Shopee/Lazada by shop/account id
+      if ('shop_id' in item) {
+        if (allCurrency === 'SGD') return item.shop_id === 2421911;
+        if (allCurrency === 'MYR') return item.shop_id === 976040827;
+      }
+      if ('account_id' in item) {
+        if (allCurrency === 'SGD') return item.account_id === 'flo@thekettlegourmet.com';
+        if (allCurrency === 'MYR') return item.account_id === 'leon@thekettlegourmet.com';
+      }
+      // Shopify: for all_sg, include all store_id; for all_my, exclude
+      if ('store_id' in item) {
+        return isAllSG;
+      }
+      return false;
+    });
+  }
+
+  // For PlatformInfoHeader, collect included stores
+  let includedStores: string[] = [];
+  if (isAllSG || isAllMY) {
+    const seen = new Set();
+    includedStores = filteredAllMetrics.map((item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
+      if ('shop_id' in item) return `Shopee: ${item.shop_id}`;
+      if ('account_id' in item) return `Lazada: ${item.account_id}`;
+      if ('store_id' in item) return `Shopify: ${item.store_id}`;
+      return '';
+    }).filter(store => {
+      if (!store || seen.has(store)) return false;
+      seen.add(store);
+      return true;
+    });
+  }
 
   let shopName: string | undefined = undefined;
   if (selectedPlatform === 'shopee') {
@@ -166,9 +215,12 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         <span className={`px-3 py-1 text-xs rounded-full font-medium ${
           selectedPlatform === "shopee" ? "bg-orange-100 text-orange-800" : 
           selectedPlatform === "lazada" ? "bg-blue-100 text-blue-800" : 
-          "bg-green-100 text-green-800"
+          selectedPlatform === "shopify" ? "bg-green-100 text-green-800" :
+          selectedPlatform === "all_sg" ? "bg-gray-800 text-white" :
+          selectedPlatform === "all_my" ? "bg-yellow-800 text-white" :
+          "bg-gray-100 text-gray-800"
         }`}>
-          {selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} Data
+          {isAllSG ? 'All (SG)' : isAllMY ? 'All (MY)' : selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} Data
         </span>
       </div>
 
@@ -245,7 +297,10 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
           <div className={`animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 ${
             selectedPlatform === "shopee" ? "border-orange-500" : 
             selectedPlatform === "lazada" ? "border-blue-500" : 
-            "border-green-500"
+            selectedPlatform === "shopify" ? "border-green-500" :
+            selectedPlatform === "all_sg" ? "border-gray-800" :
+            selectedPlatform === "all_my" ? "border-yellow-800" :
+            "border-gray-500"
           }`}></div>
         </div>
       )}
@@ -267,13 +322,14 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
 
       {/* Dashboard content */}
       {!isLoading && !error ? (
-        filteredMetrics && filteredMetrics.length > 0 ? (
+        filteredAllMetrics && filteredAllMetrics.length > 0 ? (
           <>
             {/* Platform info header */}
             <PlatformInfoHeader
               platform={selectedPlatform}
               companyId={companyInfo?.id}
               selectedEntityId={selectedEntityId}
+              includedStores={includedStores}
             />
           
             {/* Summary cards */}
@@ -281,7 +337,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
               totalRevenue={totalRevenue}
               totalOrders={totalOrders}
               totalAdsExpense={totalAdsExpense}
-              currency={currency}
+              currency={allCurrency || currency}
             />
 
             {/* Charts */}
@@ -294,7 +350,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
             </div>
 
             {/* Data table */}
-            <MetricsDataTable data={filteredMetrics} platform={selectedPlatform} currency={currency} shopName={shopName} />
+            <MetricsDataTable data={filteredAllMetrics} platform={selectedPlatform} currency={allCurrency || currency} shopName={isAllSG || isAllMY ? includedStores.join(', ') : shopName} />
 
             {/* Refresh button */}
             <button 
