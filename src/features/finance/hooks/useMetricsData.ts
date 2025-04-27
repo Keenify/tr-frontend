@@ -107,19 +107,34 @@ export function useMetricsData({
   let foodpandaMetrics: FoodpandaMetric[] | undefined = undefined;
   let foodpandaLoading = false;
   let foodpandaError: Error | null = null;
-  let refetchFoodpanda: () => Promise<unknown> = async () => {};
 
   if (platform === 'all_sg' || platform === 'all_my') {
     foodpandaMetrics = foodpandaQueries.flatMap(q => q.data || []);
     foodpandaLoading = foodpandaQueries.some(q => q.isLoading);
     foodpandaError = foodpandaQueries.find(q => q.error)?.error || null;
-    refetchFoodpanda = async () => { await Promise.all(foodpandaQueries.map(q => q.refetch())); };
   } else {
     foodpandaMetrics = singleFoodpanda.data;
     foodpandaLoading = singleFoodpanda.isLoading;
     foodpandaError = singleFoodpanda.error as Error | null;
-    refetchFoodpanda = singleFoodpanda.refetch;
   }
+
+  // --- FIX: Move refetchFoodpanda logic above refreshData ---
+  const refetchFoodpandaAll = useCallback(
+    async () => { await Promise.all(foodpandaQueries.map(q => q.refetch())); },
+    [foodpandaQueries]
+  );
+  const refetchFoodpandaSingle = useCallback(
+    () => singleFoodpanda.refetch(),
+    [singleFoodpanda]
+  );
+
+  let refetchFoodpanda: () => Promise<unknown>;
+  if (platform === 'all_sg' || platform === 'all_my') {
+    refetchFoodpanda = refetchFoodpandaAll;
+  } else {
+    refetchFoodpanda = refetchFoodpandaSingle;
+  }
+  // --- END FIX ---
 
   // Get appropriate data, loading state, and error based on selected platform
   const metrics = useMemo((): MetricType[] => {
