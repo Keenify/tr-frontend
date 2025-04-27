@@ -35,6 +35,7 @@ export interface ProductVariantExportDetails extends BaseProductExportDetails {
     product_barcode: string | null;
     carton_barcode: string | null;
     image_url: string;
+    cost_of_goods_sold: string;
 }
 
 export interface CompanyProductExportDetails {
@@ -56,6 +57,7 @@ export interface ProductExportVariantSelection {
     container_size: string;
     cartons_per_container: number;
     barcode: string | null;
+    cost_of_goods_sold: string;
 }
 
 export interface ProductExportSelection {

@@ -7,6 +7,8 @@ import { generateQuotationExportPDF } from '../services/useQuotationPDF';
 import { QuotationExportPDFData } from '../types/QuotationPDF';
 import { ExportPriceTierModal } from './ExportPriceTierModal';
 import { getProductExportPriceTiers, ProductExportPriceTier } from '../services/useProductsExportPriceTier';
+import { getProductVariants } from '../../../services/useProductVariants';
+import { ProductVariant } from '../../../shared/types/Product';
 
 interface QuotationExportProps {
     session: Session;
@@ -98,15 +100,36 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
             if (!companyInfo?.id) return;
             setFetchError(null); // Clear previous errors
             try {
-                const data = await getCompanyProductExportDetails(companyInfo.id);
-                const transformedData = transformToSelectableFormat(data);
+                // 1. Fetch base export details
+                const exportDetailsData = await getCompanyProductExportDetails(companyInfo.id);
+
+                // 2. Fetch detailed variant info for COGS
+                const productIds = exportDetailsData.map(p => p.product_id);
+                const variantPromises = productIds.map(id =>
+                    getProductVariants(id.toString())
+                        .catch(err => {
+                            console.error(`Failed to fetch variants for product ${id}:`, err);
+                            return []; // Return empty array on error for this product
+                        })
+                );
+                const variantsResults = await Promise.all(variantPromises);
+
+                // Create a map for easy lookup: Map<productId, ProductVariant[]>
+                const variantsMap = new Map<number, ProductVariant[]>();
+                productIds.forEach((id, index) => {
+                    variantsMap.set(id, variantsResults[index]);
+                });
+
+                // 3. Transform data, passing in the detailed variants map
+                const transformedData = transformToSelectableFormat(exportDetailsData, variantsMap);
                 setSelections(transformedData);
                 setCollapsedRows(new Set(transformedData.map(p => p.product_id)));
-                // Fetch tiers only after successfully getting products
+
+                // 4. Fetch tiers only after successfully getting products
                 await fetchAndSetTiers(transformedData);
+
             } catch (err: unknown) {
-                console.error('Failed to fetch initial export details:', err);
-                // Type check before accessing message
+                console.error('Failed to fetch initial export details or variants:', err);
                 const errorMessage = (err instanceof Error) ? err.message : 'Failed to load product export details.';
                 setFetchError(errorMessage);
                 setSelections([]); // Clear selections on error
@@ -115,7 +138,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
         if (companyInfo?.id) { // Only run if companyInfo is available
              fetchInitialData();
         }
-     }, [companyInfo?.id, fetchAndSetTiers]); // Depends on companyInfo and the fetch function
+     }, [companyInfo?.id, fetchAndSetTiers]); // Keep dependencies
 
     // Apply global tier pricing changes
     useEffect(() => {
@@ -433,7 +456,54 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                          {/* Manage Tiers Button Cell */} 
                                          <td className="border border-gray-300 dark:border-gray-600 p-1 text-center"><button onClick={() => openPriceTierModal(product.product_id, product.product_name)} className="bg-purple-500 hover:bg-purple-700 dark:bg-purple-600 dark:hover:bg-purple-800 text-white text-xs font-bold py-1 px-2 rounded" title={`Manage Price Tiers for ${product.product_name}`}> Manage </button></td>
                                      </tr>
-                                     {!collapsedRows.has(product.product_id) && ( <tr> <td colSpan={variantTableColSpan} className="border border-gray-300 dark:border-gray-600 p-2 bg-gray-50 dark:bg-gray-800"> <div className="ml-8"> {/* Variant Table */} <table className="w-full border-collapse text-black"><thead><tr className="bg-orange-100 dark:bg-gray-700 text-sm"><th className="border p-1 text-center">Select</th><th className="border p-1 text-left">Description</th>{showCartonBarcode && <th className="border p-1 text-center">Carton Barcode</th>}</tr></thead><tbody>{product.variants.map(variant => (<tr key={variant.variant_id} className="text-sm"><td className="border border-gray-200 dark:border-gray-700 p-1 text-center"><input type="checkbox" checked={variant.isSelected} onChange={e => handleVariantSelect(product.product_id, variant.variant_id, e.target.checked)} className="h-4 w-4 dark:bg-gray-600 dark:border-gray-500" aria-label={`Select variant ${variant.description} for ${product.product_name}`} /></td><td className="border border-gray-200 dark:border-gray-700 p-1 text-left text-black">{variant.description}</td>{showCartonBarcode && <td className="border border-gray-200 dark:border-gray-700 p-1 text-center text-black">{variant.barcode || '-'}</td>}</tr>))}</tbody></table></div> </td> </tr> )}
+                                     {!collapsedRows.has(product.product_id) && ( 
+                                         <tr> 
+                                             <td colSpan={variantTableColSpan} className="border border-gray-300 dark:border-gray-600 p-2 bg-white dark:bg-gray-900"> 
+                                                 <div className="ml-8"> 
+                                                     {/* Variant Table */} 
+                                                     <table className="w-full border-collapse">
+                                                         <thead>
+                                                             <tr className="bg-orange-100 dark:bg-gray-700 text-sm text-black dark:text-white">
+                                                                 <th className="border p-1 text-center">Select</th>
+                                                                 <th className="border p-1 text-left">Description</th>
+                                                                 {/* Update COGS Header Structure & Currency */}
+                                                                 <th className="border p-1 text-center align-middle" style={{ backgroundColor: "#E6B3CC" }}>
+                                                                     <div>COGS (SGD)</div> {/* Hardcode SGD here */}
+                                                                     <div style={{ fontSize: "0.7em", color: "#666", fontStyle: "italic" }}>
+                                                                         (Not in quotation)
+                                                                     </div>
+                                                                 </th> 
+                                                                 {showCartonBarcode && <th className="border p-1 text-center">Carton Barcode</th>}
+                                                             </tr>
+                                                         </thead>
+                                                         <tbody>
+                                                             {product.variants.map(variant => (
+                                                                 <tr key={variant.variant_id} className="text-sm text-black dark:text-gray-300">
+                                                                     <td className="border border-gray-200 dark:border-gray-700 p-1 text-center">
+                                                                         <input 
+                                                                             type="checkbox" 
+                                                                             checked={variant.isSelected} 
+                                                                             onChange={e => handleVariantSelect(product.product_id, variant.variant_id, e.target.checked)} 
+                                                                             className="h-4 w-4 dark:bg-gray-600 dark:border-gray-500 focus:ring-transparent"
+                                                                             aria-label={`Select variant ${variant.description} for ${product.product_name}`} 
+                                                                         />
+                                                                     </td>
+                                                                     <td className="border border-gray-200 dark:border-gray-700 p-1 text-left">{variant.description}</td>
+                                                                     <td 
+                                                                         className="border border-gray-200 dark:border-gray-700 p-1 text-center text-black" 
+                                                                         style={{ backgroundColor: "#F9E6F0" }}
+                                                                     >
+                                                                         ${Number(variant.cost_of_goods_sold ?? 0).toFixed(2)}
+                                                                     </td>
+                                                                     {showCartonBarcode && <td className="border border-gray-200 dark:border-gray-700 p-1 text-center">{variant.barcode || '-'}</td>}
+                                                                 </tr>
+                                                             ))}
+                                                         </tbody>
+                                                     </table>
+                                                 </div> 
+                                             </td> 
+                                         </tr> 
+                                     )}
                                  </React.Fragment>
                              ))}
                          </tbody>

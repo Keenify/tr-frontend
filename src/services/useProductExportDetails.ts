@@ -1,5 +1,6 @@
 import { BACKEND_API_DOMAIN } from '../config';
 import { ProductExportDetails, UpdateProductExportDetails, CreateProductExportDetailsRequest, CompanyProductExportDetails, ProductExportSelection } from '../shared/types/ProductExport';
+import { ProductVariant } from '../shared/types/Product';
 
 /**
  * Fetches export details for a specific product from the backend
@@ -124,11 +125,14 @@ export const getCompanyProductExportDetails = async (
 /**
  * Transforms company product export details into a selectable format for the Quotation Export UI.
  * Initializes applied prices based on the first variant.
- * @param data - The raw company product export details
+ * Incorporates detailed variant information (like COGS) from a separate map.
+ * @param data - The raw company product export details from getCompanyProductExportDetails
+ * @param variantsMap - A Map where the key is product_id and the value is an array of full ProductVariant details for that product
  * @returns Array of product export selections with computed values
  */
 export const transformToSelectableFormat = (
-    data: CompanyProductExportDetails[]
+    data: CompanyProductExportDetails[],
+    variantsMap: Map<number, ProductVariant[]>
 ): ProductExportSelection[] => {
     return data.map(product => {
         const defaultVariant = product.details.length > 0 ? product.details[0] : null;
@@ -137,22 +141,37 @@ export const transformToSelectableFormat = (
         const defaultFobUnit = defaultPackSize > 0 ? defaultFobCarton / defaultPackSize : 0;
         const defaultRrp = defaultVariant ? parseFloat(defaultVariant.recommended_retail_price_usd) : 0;
 
+        // Get the detailed variants for this product from the map
+        const detailedVariants = variantsMap.get(product.product_id) || [];
+
         return {
             product_id: product.product_id,
             product_name: product.product_name,
             isSelected: false,
-            variants: product.details.map(variant => ({
-                variant_id: variant.variant_id,
-                description: variant.product_description,
-                isSelected: false,
-                pack_size_per_carton: variant.pack_size_per_carton,
-                fob_price_per_carton: parseFloat(variant.fob_price_per_carton),
-                fob_price_per_unit: parseFloat(variant.fob_price_per_carton) / (variant.pack_size_per_carton || 1),
-                recommended_retail_price_usd: variant.recommended_retail_price_usd,
-                container_size: variant.container_size,
-                cartons_per_container: variant.cartons_per_container,
-                barcode: variant.carton_barcode ?? variant.product_barcode ?? null
-            })),
+            variants: product.details.map(variantExportInfo => {
+                // Find the corresponding full variant detail using variant_id
+                const fullVariantDetail = detailedVariants.find(v => v.id === variantExportInfo.variant_id);
+
+                // Calculate FOB per unit
+                const fobPerCarton = parseFloat(variantExportInfo.fob_price_per_carton);
+                const packSize = variantExportInfo.pack_size_per_carton || 1;
+                const fobPerUnit = isNaN(fobPerCarton) || packSize <= 0 ? 0 : fobPerCarton / packSize;
+
+                return {
+                    variant_id: variantExportInfo.variant_id,
+                    description: variantExportInfo.product_description,
+                    isSelected: false,
+                    pack_size_per_carton: packSize,
+                    fob_price_per_carton: isNaN(fobPerCarton) ? 0 : fobPerCarton, // Use parsed value, default to 0 if NaN
+                    fob_price_per_unit: fobPerUnit,
+                    recommended_retail_price_usd: variantExportInfo.recommended_retail_price_usd,
+                    container_size: variantExportInfo.container_size,
+                    cartons_per_container: variantExportInfo.cartons_per_container,
+                    barcode: variantExportInfo.carton_barcode ?? variantExportInfo.product_barcode ?? null,
+                    // Get COGS from the full variant detail, default to '0' if not found
+                    cost_of_goods_sold: fullVariantDetail?.cost_of_goods_sold ?? '0'
+                };
+            }),
             applied_fob_price_per_carton: defaultFobCarton,
             applied_fob_price_per_unit: defaultFobUnit,
             applied_recommended_rrp: defaultRrp,
