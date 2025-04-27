@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
 import { subDays, startOfMonth, startOfYear, startOfDay, endOfDay } from "date-fns";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
-import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES } from '../constant/Shopname';
+import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES } from '../constant/Shopname';
 
 // Import custom hook
 import { useMetricsData } from "../hooks/useMetricsData";
@@ -22,6 +22,7 @@ import EmptyStateMessage from "./EmptyStateMessage";
 import { ShopeeMetric } from '../services/useShopeeMetrics';
 import { LazadaMetric } from '../services/useLazadaMetrics';
 import { ShopifyMetric } from '../services/useShopifyMetrics';
+import { FoodpandaMetric } from '../services/useFoodpandaMetrics';
 
 interface OnlineSalesProps {
   session: Session;
@@ -64,11 +65,19 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
 
   // After entities are loaded, set default Shopee shop if not set
   useEffect(() => {
-    if ((selectedPlatform === 'shopee' || selectedPlatform === 'lazada') && !selectedEntityId && entities.length > 0) {
+    if ((selectedPlatform === 'shopee' || selectedPlatform === 'lazada' || selectedPlatform === 'foodpanda') && !selectedEntityId && entities.length > 0) {
       setSelectedEntityId(entities[0].id);
     }
     // eslint-disable-next-line
   }, [selectedPlatform, entities]);
+
+  // Set default Foodpanda shopId if not set
+  useEffect(() => {
+    if (selectedPlatform === 'foodpanda' && !selectedEntityId) {
+      const shopIds = Object.keys(FOODPANDA_SHOP_NAMES);
+      if (shopIds.length > 0) setSelectedEntityId(shopIds[0]);
+    }
+  }, [selectedPlatform, selectedEntityId]);
 
   // Determine currency
   let currency = 'SGD';
@@ -84,6 +93,8 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     } else if (selectedEntityId === 'flo@thekettlegourmet.com') {
       currency = 'SGD';
     }
+  } else if (selectedPlatform === 'foodpanda') {
+    currency = 'SGD'; // Or set per shop if needed
   }
 
   // Handle date changes
@@ -151,21 +162,23 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   }
 
   // Determine enabled platforms
-  const enabledPlatforms: Platform[] = ["shopee", "lazada", "shopify", "all_sg", "all_my"];
+  const enabledPlatforms: Platform[] = ["shopee", "lazada", "shopify", "foodpanda", "all_sg", "all_my"];
 
   // Determine if we're in all_sg or all_my mode
   const isAllSG = selectedPlatform === 'all_sg';
   const isAllMY = selectedPlatform === 'all_my';
   const allCurrency = isAllSG ? 'SGD' : isAllMY ? 'MYR' : undefined;
 
+  type AllMetric = ShopeeMetric | LazadaMetric | ShopifyMetric | FoodpandaMetric;
+
   // Filter metrics for all_sg/all_my
   let filteredAllMetrics = filteredMetrics;
   if (isAllSG || isAllMY) {
-    filteredAllMetrics = filteredMetrics.filter((item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
+    filteredAllMetrics = filteredMetrics.filter((item: AllMetric) => {
       // Shopee, Lazada, Shopify all have currency field or can be inferred
       if ('currency' in item) return item.currency === allCurrency;
       // Fallback: Shopee/Lazada by shop/account id
-      if ('shop_id' in item) {
+      if ('shop_id' in item && 'ads_expense' in item) {
         if (allCurrency === 'SGD') return item.shop_id === 2421911;
         if (allCurrency === 'MYR') return item.shop_id === 976040827;
       }
@@ -177,6 +190,11 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
       if ('store_id' in item) {
         return isAllSG;
       }
+      // Foodpanda: for all_sg, include all foodpanda with SGD; for all_my, include all foodpanda with MYR
+      if ('shop_id' in item && 'total_orders' in item && 'revenue' in item && !('ads_expense' in item)) {
+        if (isAllSG) return true; // include all Foodpanda for SG
+        if (isAllMY) return false; // adjust if you have MYR foodpanda
+      }
       return false;
     });
   }
@@ -185,9 +203,13 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   let includedStores: string[] = [];
   if (isAllSG || isAllMY) {
     const seen = new Set();
-    includedStores = filteredAllMetrics.map((item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
-      if ('shop_id' in item) return `Shopee: ${item.shop_id}`;
-      if ('account_id' in item) return `Lazada: ${item.account_id}`;
+    includedStores = filteredAllMetrics.map((item: AllMetric) => {
+      if ('shop_id' in item && 'total_orders' in item && 'revenue' in item && !('ads_expense' in item)) {
+        // Foodpanda
+        return `Foodpanda: ${FOODPANDA_SHOP_NAMES[item.shop_id] || item.shop_id}`;
+      }
+      if ('shop_id' in item) return `Shopee: ${SHOPEE_SHOP_NAMES[item.shop_id] || item.shop_id}`;
+      if ('account_id' in item) return `Lazada: ${LAZADA_ACCOUNT_NAMES[item.account_id] || item.account_id}`;
       if ('store_id' in item) return `Shopify: ${item.store_id}`;
       return '';
     }).filter(store => {
@@ -202,6 +224,8 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     shopName = SHOPEE_SHOP_NAMES[selectedEntityId as string] || selectedEntityId as string;
   } else if (selectedPlatform === 'lazada') {
     shopName = LAZADA_ACCOUNT_NAMES[selectedEntityId as string] || selectedEntityId as string;
+  } else if (selectedPlatform === 'foodpanda') {
+    shopName = FOODPANDA_SHOP_NAMES[selectedEntityId as string] || selectedEntityId as string;
   }
 
   return (
@@ -350,7 +374,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
             </div>
 
             {/* Data table */}
-            <MetricsDataTable data={filteredAllMetrics} platform={selectedPlatform} currency={allCurrency || currency} shopName={isAllSG || isAllMY ? includedStores.join(', ') : shopName} />
+            <MetricsDataTable data={filteredAllMetrics} platform={selectedPlatform} currency={allCurrency || currency} shopName={isAllSG || isAllMY ? includedStores.join(', ') : shopName} isFoodpanda={selectedPlatform === 'foodpanda' || isAllSG} />
 
             {/* Refresh button */}
             <button 

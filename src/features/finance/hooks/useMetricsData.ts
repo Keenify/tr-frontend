@@ -2,13 +2,17 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useShopeeMetrics, ShopeeMetric } from '../services/useShopeeMetrics';
 import { useLazadaMetrics, LazadaMetric } from '../services/useLazadaMetrics';
 import { useShopifyMetrics, ShopifyMetric } from '../services/useShopifyMetrics';
+import { useFoodpandaMetrics, FoodpandaMetric } from '../services/useFoodpandaMetrics';
 import { format } from 'date-fns';
 import { Platform } from '../components/PlatformSelector';
 import { Entity } from '../components/PlatformEntitySelector';
 import { ChartDataPoint } from '../components/charts/RevenueChart';
+import { FOODPANDA_SHOP_NAMES } from '../constant/Shopname';
+import { useQueries } from '@tanstack/react-query';
+import { getFoodpandaMetrics } from '../services/useFoodpandaMetrics';
 
 // Union type for all metric types
-type MetricType = ShopeeMetric | LazadaMetric | ShopifyMetric;
+type MetricType = ShopeeMetric | LazadaMetric | ShopifyMetric | FoodpandaMetric;
 
 interface UseMetricsDataProps {
   platform: Platform;
@@ -84,22 +88,57 @@ export function useMetricsData({
     formattedEndDate
   );
 
+  // Always call both hooks, but only use the results as needed
+  const foodpandaShopIds = Object.keys(FOODPANDA_SHOP_NAMES);
+  const foodpandaQueries = useQueries({
+    queries: foodpandaShopIds.map(shopId => ({
+      queryKey: ['foodpanda-metrics', companyId, shopId, formattedStartDate, formattedEndDate],
+      queryFn: () => companyId && shopId ? getFoodpandaMetrics(companyId, shopId, formattedStartDate, formattedEndDate) : Promise.resolve([]),
+      enabled: !!companyId && !!shopId && (platform === 'all_sg' || platform === 'all_my'),
+    }))
+  });
+  const singleFoodpanda = useFoodpandaMetrics(
+    platform === 'foodpanda' ? companyId : undefined,
+    platform === 'foodpanda' ? (selectedEntityId as string | undefined) : undefined,
+    formattedStartDate,
+    formattedEndDate
+  );
+
+  let foodpandaMetrics: FoodpandaMetric[] | undefined = undefined;
+  let foodpandaLoading = false;
+  let foodpandaError: Error | null = null;
+  let refetchFoodpanda: () => Promise<unknown> = async () => {};
+
+  if (platform === 'all_sg' || platform === 'all_my') {
+    foodpandaMetrics = foodpandaQueries.flatMap(q => q.data || []);
+    foodpandaLoading = foodpandaQueries.some(q => q.isLoading);
+    foodpandaError = foodpandaQueries.find(q => q.error)?.error || null;
+    refetchFoodpanda = async () => { await Promise.all(foodpandaQueries.map(q => q.refetch())); };
+  } else {
+    foodpandaMetrics = singleFoodpanda.data;
+    foodpandaLoading = singleFoodpanda.isLoading;
+    foodpandaError = singleFoodpanda.error as Error | null;
+    refetchFoodpanda = singleFoodpanda.refetch;
+  }
+
   // Get appropriate data, loading state, and error based on selected platform
   const metrics = useMemo((): MetricType[] => {
     if (platform === 'all_sg' || platform === 'all_my') {
       return [
         ...(shopeeMetrics || []),
         ...(lazadaMetrics || []),
-        ...(shopifyMetrics || [])
+        ...(shopifyMetrics || []),
+        ...(foodpandaMetrics || [])
       ];
     }
     switch (platform) {
       case 'shopee': return shopeeMetrics || [];
       case 'lazada': return lazadaMetrics || [];
       case 'shopify': return shopifyMetrics || [];
+      case 'foodpanda': return foodpandaMetrics || [];
       default: return [];
     }
-  }, [platform, shopeeMetrics, lazadaMetrics, shopifyMetrics]);
+  }, [platform, shopeeMetrics, lazadaMetrics, shopifyMetrics, foodpandaMetrics]);
 
   const isLoading = useMemo(() => {
     if (platform === 'all_sg' || platform === 'all_my') {
@@ -109,9 +148,10 @@ export function useMetricsData({
       case 'shopee': return shopeeLoading;
       case 'lazada': return lazadaLoading;
       case 'shopify': return shopifyLoading;
+      case 'foodpanda': return foodpandaLoading;
       default: return false;
     }
-  }, [platform, shopeeLoading, lazadaLoading, shopifyLoading]);
+  }, [platform, shopeeLoading, lazadaLoading, shopifyLoading, foodpandaLoading]);
 
   const error = useMemo(() => {
     if (platform === 'all_sg' || platform === 'all_my') {
@@ -121,9 +161,10 @@ export function useMetricsData({
       case 'shopee': return shopeeError;
       case 'lazada': return lazadaError;
       case 'shopify': return shopifyError;
+      case 'foodpanda': return foodpandaError;
       default: return null;
     }
-  }, [platform, shopeeError, lazadaError, shopifyError]);
+  }, [platform, shopeeError, lazadaError, shopifyError, foodpandaError]);
 
   // Extract entities (shops/accounts) from metrics data
   const entities = useMemo(() => {
@@ -145,9 +186,15 @@ export function useMetricsData({
           id: storeId,
           name: storeId
         }));
+    } else if (platform === 'foodpanda' && foodpandaMetrics) {
+      return [...new Set(foodpandaMetrics.map(item => item.shop_id))]
+        .map(shopId => ({
+          id: shopId,
+          name: shopId
+        }));
     }
     return [];
-  }, [platform, shopeeMetrics, lazadaMetrics, shopifyMetrics]);
+  }, [platform, shopeeMetrics, lazadaMetrics, shopifyMetrics, foodpandaMetrics]);
 
   // Filter metrics by selected entity
   const filteredMetrics = useMemo((): MetricType[] => {
@@ -165,6 +212,11 @@ export function useMetricsData({
       return metrics.filter(metric => {
         const shopifyMetric = metric as ShopifyMetric;
         return selectedEntityId ? shopifyMetric.store_id === selectedEntityId : true;
+      });
+    } else if (platform === 'foodpanda' && Array.isArray(metrics)) {
+      return metrics.filter(metric => {
+        const foodpandaMetric = metric as FoodpandaMetric;
+        return selectedEntityId ? foodpandaMetric.shop_id === selectedEntityId : true;
       });
     }
     return metrics;
@@ -210,6 +262,23 @@ export function useMetricsData({
         const dateB = new Date(b.date).getTime();
         return dateA - dateB;
       });
+    } else if (platform === 'foodpanda') {
+      const data = filteredMetrics.map(metric => {
+        const foodpandaMetric = metric as FoodpandaMetric;
+        return {
+          date: foodpandaMetric.date,
+          revenue: Number(foodpandaMetric.revenue) || 0,
+          adsExpense: 0, // Foodpanda doesn't provide ads_expense
+          totalOrders: Number(foodpandaMetric.total_orders) || 0,
+          newBuyers: 0,
+          existingBuyers: 0,
+        };
+      });
+      return data.sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return dateA - dateB;
+      });
     } else {
       // Lazada and any other platforms
       const data = filteredMetrics.map(metric => {
@@ -245,6 +314,11 @@ export function useMetricsData({
         const shopeeMetric = metric as ShopeeMetric;
         return sum + (Number(shopeeMetric.revenue) || 0);
       }, 0);
+    } else if (platform === 'foodpanda') {
+      return filteredMetrics.reduce((sum, metric) => {
+        const foodpandaMetric = metric as FoodpandaMetric;
+        return sum + (Number(foodpandaMetric.revenue) || 0);
+      }, 0);
     } else {
       return filteredMetrics.reduce((sum, metric) => {
         const lazadaMetric = metric as LazadaMetric;
@@ -264,6 +338,11 @@ export function useMetricsData({
         const shopeeMetric = metric as ShopeeMetric;
         return sum + (Number(shopeeMetric.total_orders) || 0);
       }, 0);
+    } else if (platform === 'foodpanda') {
+      return filteredMetrics.reduce((sum, metric) => {
+        const foodpandaMetric = metric as FoodpandaMetric;
+        return sum + (Number(foodpandaMetric.total_orders) || 0);
+      }, 0);
     } else {
       return filteredMetrics.reduce((sum, metric) => {
         const lazadaMetric = metric as LazadaMetric;
@@ -273,8 +352,8 @@ export function useMetricsData({
   }, [filteredMetrics, platform]);
   
   const totalAdsExpense = useMemo(() => {
-    if (platform === 'shopify') {
-      return 0; // Shopify doesn't provide ads expense in the API
+    if (platform === 'shopify' || platform === 'foodpanda') {
+      return 0; // Shopify and Foodpanda don't provide ads expense in the API
     } else if (platform === 'shopee') {
       return filteredMetrics.reduce((sum, metric) => {
         const shopeeMetric = metric as ShopeeMetric;
@@ -298,11 +377,13 @@ export function useMetricsData({
         await refetchLazada();
       } else if (platform === 'shopify') {
         await refetchShopify();
+      } else if (platform === 'foodpanda') {
+        await refetchFoodpanda();
       }
     } finally {
       setIsRefreshing(false);
     }
-  }, [platform, refetchShopee, refetchLazada, refetchShopify]);
+  }, [platform, refetchShopee, refetchLazada, refetchShopify, refetchFoodpanda]);
 
   // Reset refreshing state when data or error changes
   useEffect(() => {

@@ -58,18 +58,24 @@ The dashboard supports multiple e-commerce platforms with consistent interfaces:
 - Store selection via `PlatformEntitySelector`
 - Platform-specific green color scheme and styling
 
+### Foodpanda Integration
+
+- Data fetched through `useFoodpandaMetrics` service
+- Shop selection via `PlatformEntitySelector`
+- Platform-specific purple color scheme and styling
+
 ## Data Model
 
 Each platform has a slightly different data model, but they share common metrics:
 
-| Metric | Shopee | Lazada | Description |
-|--------|--------|--------|-------------|
-| Entity ID | `shop_id` | `account_id` | Identifier for the shop/account |
-| Revenue | `revenue` | `revenue` | Total sales revenue |
-| Ad Expense | `ads_expense` | `ads_expense` | Total advertising expense |
-| Orders | `total_orders` | `total_orders` | Number of orders |
-| New Buyers | `new_buyer_count` | `new_buyer_count` | Number of new customers |
-| Existing Buyers | `existing_buyer_count` | `existing_buyer_count` | Number of returning customers |
+| Metric | Shopee | Lazada | Shopify | Foodpanda | Description |
+|--------|--------|--------|---------|-----------|-------------|
+| Entity ID | `shop_id` | `account_id` | `store_id` | `shop_id` | Identifier for the shop/account/store |
+| Revenue | `revenue` | `revenue` | `new_customer_sales` + `existing_customer_sales` | `revenue` | Total sales revenue |
+| Ad Expense | `ads_expense` | `ads_expense` | N/A | N/A | Total advertising expense |
+| Orders | `total_orders` | `total_orders` | `session_completed_checkout_count` | `total_orders` | Number of orders |
+| New Buyers | `new_buyer_count` | `new_buyer_count` | `new_customer_count` | N/A | Number of new customers |
+| Existing Buyers | `existing_buyer_count` | `existing_buyer_count` | `existing_customer_count` | N/A | Number of returning customers |
 
 ## Data Flow
 
@@ -94,5 +100,6 @@ Each platform has a slightly different data model, but they share common metrics
   - Shopee: Orange
   - Lazada: Blue
   - Shopify: Green
+  - Foodpanda: Purple
 - Consistent card layouts with rounded corners and shadows
 - Responsive design for mobile and desktop views

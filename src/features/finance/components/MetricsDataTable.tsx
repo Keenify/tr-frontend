@@ -3,18 +3,23 @@ import { Platform } from './PlatformSelector';
 import { ShopeeMetric } from '../services/useShopeeMetrics';
 import { LazadaMetric } from '../services/useLazadaMetrics';
 import { ShopifyMetric } from '../services/useShopifyMetrics';
+import { FoodpandaMetric } from '../services/useFoodpandaMetrics';
+import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES } from '../constant/Shopname';
+
+type AllMetric = ShopeeMetric | LazadaMetric | ShopifyMetric | FoodpandaMetric;
 
 interface MetricsDataTableProps {
-  data: (ShopeeMetric | LazadaMetric | ShopifyMetric)[];
+  data: AllMetric[];
   platform: Platform;
   currency?: string;
   shopName?: string | number | null;
+  isFoodpanda?: boolean;
 }
 
 /**
  * Component to display detailed metrics data in a table format
  */
-const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, currency = 'SGD', shopName }) => {
+const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, currency = 'SGD', shopName, isFoodpanda }) => {
   // Helper to safely convert string/number to formatted currency
   const formatCurrency = (value: string | number | undefined) => {
     if (value === undefined) return `${currency} 0.00`;
@@ -48,14 +53,28 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
     }
   };
 
+  // Helper to get store label
+  const getStoreLabel = (item: AllMetric) => {
+    if ('shop_id' in item && 'total_orders' in item && 'revenue' in item && !('ads_expense' in item)) {
+      // Foodpanda
+      return `Foodpanda: ${FOODPANDA_SHOP_NAMES[item.shop_id] || item.shop_id}`;
+    }
+    if ('shop_id' in item) return `Shopee: ${SHOPEE_SHOP_NAMES[item.shop_id] || item.shop_id}`;
+    if ('account_id' in item) return `Lazada: ${LAZADA_ACCOUNT_NAMES[item.account_id] || item.account_id}`;
+    if ('store_id' in item) return `Shopify: ${item.store_id}`;
+    return '-';
+  };
+
   // Get the ID value from the data item
-  const getIdFieldValue = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
-    if (platform === 'shopee') {
-      return (item as ShopeeMetric).shop_id;
-    } else if (platform === 'lazada') {
-      return (item as LazadaMetric).account_id;
-    } else if (platform === 'shopify') {
-      return (item as ShopifyMetric).store_id;
+  const getIdFieldValue = (item: AllMetric) => {
+    if (platform === 'shopee' && 'shop_id' in item) {
+      return item.shop_id;
+    } else if (platform === 'lazada' && 'account_id' in item) {
+      return item.account_id;
+    } else if (platform === 'shopify' && 'store_id' in item) {
+      return item.store_id;
+    } else if (platform === 'foodpanda' && 'shop_id' in item) {
+      return item.shop_id;
     }
     return '-';
   };
@@ -67,7 +86,10 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
   };
 
   // Get revenue value based on row type
-  const getRevenue = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
+  const getRevenue = (item: AllMetric) => {
+    if ('shop_id' in item && 'total_orders' in item && 'revenue' in item && !('ads_expense' in item)) {
+      return Number(item.revenue);
+    }
     if ('store_id' in item) {
       return Number(item.new_customer_sales) + Number(item.existing_customer_sales);
     }
@@ -81,11 +103,14 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
   };
 
   // Get ad expense value based on row type
-  const getAdsExpense = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
+  const getAdsExpense = (item: AllMetric) => {
+    if ('shop_id' in item && 'total_orders' in item && 'revenue' in item && !('ads_expense' in item)) {
+      return '0.00'; // Foodpanda doesn't have ads_expense
+    }
     if ('store_id' in item) {
       return '0.00'; // Shopify doesn't have ads_expense in API
     }
-    if ('shop_id' in item) {
+    if ('shop_id' in item && 'ads_expense' in item) {
       return item.ads_expense;
     }
     if ('account_id' in item) {
@@ -95,11 +120,14 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
   };
 
   // Get orders count based on row type
-  const getOrdersCount = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
+  const getOrdersCount = (item: AllMetric) => {
+    if ('shop_id' in item && 'total_orders' in item && 'revenue' in item && !('ads_expense' in item)) {
+      return item.total_orders;
+    }
     if ('store_id' in item) {
       return item.session_completed_checkout_count;
     }
-    if ('shop_id' in item) {
+    if ('shop_id' in item && 'ads_expense' in item) {
       return item.total_orders;
     }
     if ('account_id' in item) {
@@ -109,11 +137,11 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
   };
 
   // Get new buyer count based on row type
-  const getNewBuyerCount = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
+  const getNewBuyerCount = (item: AllMetric) => {
     if ('store_id' in item) {
       return item.new_customer_count;
     }
-    if ('shop_id' in item) {
+    if ('shop_id' in item && 'ads_expense' in item) {
       return item.new_buyer_count;
     }
     if ('account_id' in item) {
@@ -123,11 +151,11 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
   };
 
   // Get existing buyer count based on row type
-  const getExistingBuyerCount = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
+  const getExistingBuyerCount = (item: AllMetric) => {
     if ('store_id' in item) {
       return item.existing_customer_count;
     }
-    if ('shop_id' in item) {
+    if ('shop_id' in item && 'ads_expense' in item) {
       return item.existing_buyer_count;
     }
     if ('account_id' in item) {
@@ -177,14 +205,6 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
 
   // For all_sg/all_my, add a Store column and deduplicate rows
   const isAllMode = platform === 'all_sg' || platform === 'all_my';
-
-  // Helper to get store label
-  const getStoreLabel = (item: ShopeeMetric | LazadaMetric | ShopifyMetric) => {
-    if ('shop_id' in item) return `Shopee: ${item.shop_id}`;
-    if ('account_id' in item) return `Lazada: ${item.account_id}`;
-    if ('store_id' in item) return `Shopify: ${item.store_id}`;
-    return '-';
-  };
 
   // Deduplicate rows for all_sg/all_my by date+store+id, and sort by date descending
   let dedupedData = data;
@@ -236,52 +256,65 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
                   Store
                 </th>
               )}
-              {!isAllMode && (
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                  {getIdFieldName()}
-                </th>
-              )}
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                Revenue
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                Ads Expense
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                Total Orders
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                New Buyers
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                Existing Buyers
-              </th>
-              {platform === 'shopify' && (
+              {isFoodpanda ? (
                 <>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                    Sessions
+                    Order Count
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                    Bounce Rate
+                    Revenue
+                  </th>
+                </>
+              ) : (
+                <>
+                  {!isAllMode && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                      {getIdFieldName()}
+                    </th>
+                  )}
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                    Revenue
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                    Add to Cart
+                    Ads Expense
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                    Completed Checkout
+                    Total Orders
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                    New Customer Sales
+                    New Buyers
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
-                    Existing Customer Sales
+                    Existing Buyers
                   </th>
+                  {platform === 'shopify' && (
+                    <>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                        Sessions
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                        Bounce Rate
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                        Add to Cart
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                        Completed Checkout
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                        New Customer Sales
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                        Existing Customer Sales
+                      </th>
+                    </>
+                  )}
                 </>
               )}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {dedupedData.map((item) => (
+            {dedupedData.map((item: AllMetric) => (
               <tr key={item.id + '-' + item.date + '-' + getStoreLabel(item)} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {item.date}
@@ -291,46 +324,59 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
                     {getStoreLabel(item)}
                   </td>
                 )}
-                {!isAllMode && (
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {formatIdFieldValue(getIdFieldValue(item))}
-                  </td>
-                )}
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {formatCurrency(getRevenue(item))}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {formatCurrency(getAdsExpense(item))}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {getOrdersCount(item)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {getNewBuyerCount(item)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {getExistingBuyerCount(item)}
-                </td>
-                {platform === 'shopify' && (
+                {isFoodpanda ? (
                   <>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {(item as ShopifyMetric).session}
+                      {'total_orders' in item ? item.total_orders : 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {(item as ShopifyMetric).bounce_rate}%
+                      {formatCurrency('revenue' in item ? item.revenue : 0)}
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    {!isAllMode && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatIdFieldValue(getIdFieldValue(item))}
+                      </td>
+                    )}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {formatCurrency(getRevenue(item))}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {(item as ShopifyMetric).add_to_cart_count}
+                      {formatCurrency(getAdsExpense(item))}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {(item as ShopifyMetric).session_completed_checkout_count}
+                      {getOrdersCount(item)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatCurrency((item as ShopifyMetric).new_customer_sales)}
+                      {getNewBuyerCount(item)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatCurrency((item as ShopifyMetric).existing_customer_sales)}
+                      {getExistingBuyerCount(item)}
                     </td>
+                    {platform === 'shopify' && (
+                      <>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {(item as ShopifyMetric).session}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {(item as ShopifyMetric).bounce_rate}%
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {(item as ShopifyMetric).add_to_cart_count}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {(item as ShopifyMetric).session_completed_checkout_count}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {formatCurrency((item as ShopifyMetric).new_customer_sales)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {formatCurrency((item as ShopifyMetric).existing_customer_sales)}
+                        </td>
+                      </>
+                    )}
                   </>
                 )}
               </tr>
