@@ -175,6 +175,8 @@ export const transformToSelectableFormat = (
             applied_fob_price_per_carton: defaultFobCarton,
             applied_fob_price_per_unit: defaultFobUnit,
             applied_recommended_rrp: defaultRrp,
+            applied_pack_per_carton: defaultPackSize,
+            has_selected_tier: false
         };
     });
 };

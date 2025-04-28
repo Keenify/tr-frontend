@@ -52,8 +52,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     const getDefaultPrices = useCallback((product: ProductExportSelection) => {
         const defaultVariant = product.variants.length > 0 ? product.variants[0] : null;
         const defaultFobCarton = defaultVariant ? defaultVariant.fob_price_per_carton : 0;
-        const defaultPackSize = defaultVariant ? defaultVariant.pack_size_per_carton : 1;
-        const defaultFobUnit = defaultPackSize > 0 ? defaultFobCarton / defaultPackSize : 0;
+        const defaultFobUnit = defaultVariant ? defaultVariant.fob_price_per_unit : 0;
         const defaultRrp = defaultVariant ? parseFloat(defaultVariant.recommended_retail_price_usd ?? '0') : 0;
         return { defaultFobCarton, defaultFobUnit, defaultRrp };
     }, []);
@@ -144,29 +143,64 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     useEffect(() => {
         setSelections(currentSelections =>
             currentSelections.map(product => {
+                // Always get defaults first
                 const { defaultFobCarton, defaultFobUnit, defaultRrp } = getDefaultPrices(product);
-                let appliedFobCarton = defaultFobCarton;
-                let appliedFobUnit = defaultFobUnit;
-                let appliedRrp = defaultRrp;
+                const defaultPackSize = product.variants.length > 0 ? product.variants[0].pack_size_per_carton : 1;
+
+                // Initialize applied values with defaults
+                let appliedFobCarton: number | null = defaultFobCarton;
+                let appliedFobUnit: number | null = defaultFobUnit;
+                let appliedRrp: number | null = defaultRrp;
+                let appliedPackSize: number | null = defaultPackSize;
+                let hasMatchedTier = false; // Initialize flag for this product/iteration
 
                 if (selectedGlobalTierName) {
+                    // If a global tier is selected, try to find it
                     const productTiers = allApplicableTiers.get(product.product_id) || [];
                     const matchedTier = productTiers.find(tier => tier.tier_name === selectedGlobalTierName && tier.is_active);
+
                     if (matchedTier) {
+                        // Tier found: Apply its values and set flag
+                        hasMatchedTier = true;
                         appliedFobCarton = matchedTier.fob_price_per_carton;
                         appliedFobUnit = matchedTier.fob_price_per_unit;
                         appliedRrp = matchedTier.recommended_rrp;
+                        // Use tier pack size if valid, otherwise fall back to default
+                        appliedPackSize = (matchedTier.pack_per_carton !== null && matchedTier.pack_per_carton > 0) 
+                                            ? matchedTier.pack_per_carton 
+                                            : defaultPackSize; // Fallback to default pack size
+                    } else {
+                        // Tier selected globally, but NOT found for this product: Apply zeros
+                        hasMatchedTier = false; // Ensure flag is false
+                        appliedFobCarton = 0;
+                        appliedFobUnit = 0;
+                        appliedRrp = 0;
+                        appliedPackSize = 0; 
                     }
-                }
+                } 
+                // If no global tier is selected, defaults apply and hasMatchedTier remains false.
+
+                // Check if any applied value changed OR the tier flag changed
                 if (product.applied_fob_price_per_carton === appliedFobCarton &&
                     product.applied_fob_price_per_unit === appliedFobUnit &&
-                    product.applied_recommended_rrp === appliedRrp) {
-                    return product;
+                    product.applied_recommended_rrp === appliedRrp &&
+                    product.applied_pack_per_carton === appliedPackSize &&
+                    product.has_selected_tier === hasMatchedTier) { // Check flag too
+                    return product; // No change needed
                 }
-                return { ...product, applied_fob_price_per_carton: appliedFobCarton, applied_fob_price_per_unit: appliedFobUnit, applied_recommended_rrp: appliedRrp };
+                
+                // Return updated product object including the flag
+                return {
+                    ...product,
+                    applied_fob_price_per_carton: appliedFobCarton,
+                    applied_fob_price_per_unit: appliedFobUnit,
+                    applied_recommended_rrp: appliedRrp,
+                    applied_pack_per_carton: appliedPackSize,
+                    has_selected_tier: hasMatchedTier // Set the flag on the product state
+                };
             })
         );
-     }, [selectedGlobalTierName, allApplicableTiers, getDefaultPrices]);
+     }, [selectedGlobalTierName, allApplicableTiers, getDefaultPrices]); 
 
     // --- Event Handlers ---
     const handleGlobalTierChange = (event: React.ChangeEvent<HTMLSelectElement>) => { setSelectedGlobalTierName(event.target.value); };
@@ -185,12 +219,25 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     };
     const handleCellEdit = (productId: number, field: string, value: string) => {
         setSelections(prev => prev.map(p => {
-            if (p.product_id === productId && !['fob_price_per_carton', 'fob_price_per_unit', 'recommended_retail_price_usd'].includes(field)) {
+            // Prevent editing price/pack fields directly in main table
+            if (p.product_id === productId && !['fob_price_per_carton', 'fob_price_per_unit', 'recommended_retail_price_usd', 'pack_size_per_carton'].includes(field)) {
                 const updatedVariants = p.variants.map((v, i) => i === 0 ? { ...v, [field]: value } : v);
+                // Recalculate defaults based on potentially edited underlying variant data (e.g., container size)
                 const { defaultFobCarton, defaultFobUnit, defaultRrp } = getDefaultPrices({ ...p, variants: updatedVariants });
-                const shouldUpdateApplied = !selectedGlobalTierName; // Update applied only if default pricing is active
-                return { ...p, variants: updatedVariants, applied_fob_price_per_carton: shouldUpdateApplied ? defaultFobCarton : p.applied_fob_price_per_carton, applied_fob_price_per_unit: shouldUpdateApplied ? defaultFobUnit : p.applied_fob_price_per_unit, applied_recommended_rrp: shouldUpdateApplied ? defaultRrp : p.applied_recommended_rrp };
-            } return p;
+                const defaultPackSize = updatedVariants.length > 0 ? updatedVariants[0].pack_size_per_carton : 1;
+
+                // Update applied only if default pricing is active (no global tier selected)
+                const shouldUpdateApplied = !selectedGlobalTierName;
+                return {
+                    ...p,
+                    variants: updatedVariants, 
+                    applied_fob_price_per_carton: shouldUpdateApplied ? defaultFobCarton : p.applied_fob_price_per_carton, 
+                    applied_fob_price_per_unit: shouldUpdateApplied ? defaultFobUnit : p.applied_fob_price_per_unit, 
+                    applied_recommended_rrp: shouldUpdateApplied ? defaultRrp : p.applied_recommended_rrp,
+                    applied_pack_per_carton: shouldUpdateApplied ? defaultPackSize : p.applied_pack_per_carton
+                };
+            } 
+            return p;
         }));
         setEditingCell(null);
     };
@@ -421,28 +468,50 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                          <tbody>
                              {selections.map((product) => (
                                 <React.Fragment key={product.product_id}>
-                                     <tr className="border-b border-gray-300 dark:border-gray-600 dark:text-gray-300">
-                                         {/* Select Cell */ } 
+                                     {/* Conditionally apply VERY light gray + lightest standard dark gray background based on tier match */}
+                                     <tr className={`border-b border-gray-300 dark:border-gray-600 
+                                                   ${selectedGlobalTierName && product.has_selected_tier ? 'bg-[#f8f9fa] dark:bg-gray-500' : 'dark:text-gray-300'}`}>
+                                         {/* Select Cell */} 
                                          <td className="border border-gray-300 dark:border-gray-600 p-2 text-center"> <div className="flex items-center justify-center gap-2"> <button onClick={() => toggleCollapse(product.product_id)} className="w-4 h-4 flex items-center justify-center text-xs text-black" aria-label={collapsedRows.has(product.product_id) ? `Expand variants for ${product.product_name}` : `Collapse variants for ${product.product_name}`}>{collapsedRows.has(product.product_id) ? '►' : '▼'}</button> <input type="checkbox" checked={product.isSelected} onChange={(e) => handleProductSelect(product.product_id, e.target.checked)} className="h-4 w-4 dark:bg-gray-600 dark:border-gray-500" aria-label={`Select product ${product.product_name}`} /> </div> </td>
                                          {/* Product Name Cell */} 
                                          <td className="border border-gray-300 dark:border-gray-600 p-2 font-medium text-center text-black">{product.product_name}</td>
                                          {/* Data Cells */} 
                                          {getTableColumns().map((field) => {
                                             let displayValue: string | number | undefined;
+                                            // Check if the field is price-related or pack_size
                                             const isPriceField = ['fob_price_per_carton', 'fob_price_per_unit', 'recommended_retail_price_usd'].includes(field);
+                                            const isPackSizeField = field === 'pack_size_per_carton';
+                                            const isEditable = !isPriceField && !isPackSizeField; // Basic editable check
+                                            const isTierActive = !!selectedGlobalTierName; // Check if a global tier is active
+                                            const allowDoubleClick = isEditable || (isPackSizeField && !isTierActive);
+                                            // Define which fields should *never* get the non-editable background override
+                                            const alwaysDefaultBgFields = ['pack_size_per_carton', 'fob_price_per_carton', 'fob_price_per_unit', 'recommended_retail_price_usd'];
+
                                             if (field === 'fob_price_per_carton') displayValue = `$${Number(product.applied_fob_price_per_carton ?? 0).toFixed(2)}`;
                                             else if (field === 'fob_price_per_unit') displayValue = showFOBPricePerUnit ? `$${Number(product.applied_fob_price_per_unit ?? 0).toFixed(2)}` : undefined;
                                             else if (field === 'recommended_retail_price_usd') displayValue = `$${Number(product.applied_recommended_rrp ?? 0).toFixed(2)}`;
-                                            else {
+                                            else if (field === 'pack_size_per_carton') displayValue = product.applied_pack_per_carton ?? '-'; // Display applied pack size
+                                            else { // Handle other fields like container_size, cartons_per_container
                                                 const rawValue = product.variants[0]?.[field as keyof typeof product.variants[0]];
                                                 displayValue = rawValue === null || rawValue === undefined ? '' : String(rawValue);
                                             }
+
                                             if (field === 'fob_price_per_unit' && !showFOBPricePerUnit) return null;
+
+                                            // Determine if the non-editable background should be applied
+                                            const applyNonEditableBg = !allowDoubleClick && !alwaysDefaultBgFields.includes(field);
+
                                             return (
-                                                <td key={field} className="border border-gray-300 dark:border-gray-600 p-2 text-center text-sm text-black" onDoubleClick={() => !isPriceField && setEditingCell({ id: product.product_id, field })}>
-                                                    {editingCell?.id === product.product_id && editingCell.field === field && !isPriceField ? 
+                                                <td 
+                                                    key={field} 
+                                                    // Apply dark background only if it's non-editable AND not one of the specified fields
+                                                    className={`border border-gray-300 dark:border-gray-600 p-2 text-center text-sm text-black 
+                                                               ${applyNonEditableBg ? 'dark:bg-gray-700' : ''}`} 
+                                                    onDoubleClick={() => allowDoubleClick && setEditingCell({ id: product.product_id, field })} // Only allow edit if permitted
+                                                >
+                                                    {editingCell?.id === product.product_id && editingCell.field === field && allowDoubleClick ? 
                                                         <input 
-                                                            type="text" 
+                                                            type={field === 'cartons_per_container' ? 'number' : 'text'} // Use number type where appropriate
                                                             defaultValue={String(displayValue ?? '')} 
                                                             onBlur={(e) => handleCellEdit(product.product_id, field, e.target.value)} 
                                                             autoFocus 

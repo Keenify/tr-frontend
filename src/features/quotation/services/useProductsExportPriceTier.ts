@@ -7,6 +7,7 @@ export interface ProductExportPriceTier {
     fob_price_per_carton: number;
     fob_price_per_unit: number;
     recommended_rrp: number;
+    pack_per_carton: number;
     is_active: boolean;
     product_id: number;
     created_at: string;
@@ -44,6 +45,7 @@ export const createExportPriceTier = async (
     fobPricePerCarton: number,
     fobPricePerUnit: number,
     recommendedRrp: number,
+    packPerCarton: number,
     isActive: boolean,
     productId: number,
 ): Promise<ProductExportPriceTier> => {
@@ -58,6 +60,7 @@ export const createExportPriceTier = async (
             fob_price_per_carton: fobPricePerCarton,
             fob_price_per_unit: fobPricePerUnit,
             recommended_rrp: recommendedRrp,
+            pack_per_carton: packPerCarton,
             is_active: isActive,
             product_id: productId,
         }),
@@ -80,6 +83,7 @@ export const updateExportPriceTier = async (
     fobPricePerCarton: number,
     fobPricePerUnit: number,
     recommendedRrp: number,
+    packPerCarton: number,
     isActive: boolean,
 ): Promise<ProductExportPriceTier> => {
     const response = await fetch(`${BACKEND_API_DOMAIN}/product-export-price-tiers/${priceTierId}`, {
@@ -93,6 +97,7 @@ export const updateExportPriceTier = async (
             fob_price_per_carton: fobPricePerCarton,
             fob_price_per_unit: fobPricePerUnit,
             recommended_rrp: recommendedRrp,
+            pack_per_carton: packPerCarton,
             is_active: isActive,
         }),
     });
