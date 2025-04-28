@@ -290,8 +290,9 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
             .filter(p => p.isSelected)
             .map(p => ({
                 product_name: p.product_name, product_id: p.product_id,
-                container_size: p.variants[0]?.container_size, cartons_per_container: p.variants[0]?.cartons_per_container,
-                pack_size_per_carton: p.variants[0]?.pack_size_per_carton,
+                container_size: p.variants[0]?.container_size, 
+                cartons_per_container: p.variants[0]?.cartons_per_container,
+                pack_size_per_carton: p.applied_pack_per_carton ?? 0,
                 fob_price_per_carton: p.applied_fob_price_per_carton ?? 0,
                 fob_price_per_unit: showFOBPricePerUnit ? (p.applied_fob_price_per_unit ?? 0) : undefined,
                 recommended_retail_price_usd: p.applied_recommended_rrp ?? 0,
