@@ -135,13 +135,15 @@ export const transformToSelectableFormat = (
     variantsMap: Map<number, ProductVariant[]>
 ): ProductExportSelection[] => {
     return data.map(product => {
-        const defaultVariant = product.details.length > 0 ? product.details[0] : null;
-        const defaultFobCarton = defaultVariant ? parseFloat(defaultVariant.fob_price_per_carton) : 0;
-        const defaultPackSize = defaultVariant ? defaultVariant.pack_size_per_carton : 1;
+        // Use the actual first detail object from the input data
+        const firstVariantDetails = product.details.length > 0 ? product.details[0] : undefined;
+        
+        const defaultFobCarton = firstVariantDetails ? parseFloat(firstVariantDetails.fob_price_per_carton) : 0;
+        const defaultPackSize = firstVariantDetails ? firstVariantDetails.pack_size_per_carton : 1;
         const defaultFobUnit = defaultPackSize > 0 ? defaultFobCarton / defaultPackSize : 0;
-        const defaultRrp = defaultVariant ? parseFloat(defaultVariant.recommended_retail_price_usd) : 0;
+        const defaultRrp = firstVariantDetails ? parseFloat(firstVariantDetails.recommended_retail_price_usd) : 0;
 
-        // Get the detailed variants for this product from the map
+        // Get the detailed variants for COGS lookup
         const detailedVariants = variantsMap.get(product.product_id) || [];
 
         return {
@@ -172,6 +174,7 @@ export const transformToSelectableFormat = (
                     cost_of_goods_sold: fullVariantDetail?.cost_of_goods_sold ?? '0'
                 };
             }),
+            firstVariantDetails: firstVariantDetails, // Store the first variant details object
             applied_fob_price_per_carton: defaultFobCarton,
             applied_fob_price_per_unit: defaultFobUnit,
             applied_recommended_rrp: defaultRrp,

@@ -36,6 +36,15 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     const [selectedProductNameForModal, setSelectedProductNameForModal] = useState<string | null>(null);
     const [selectAllStatus, setSelectAllStatus] = useState<'none' | 'some' | 'all'>('none'); // State for Select All checkbox
 
+    // --- UI Toggles State ---
+    const [showProductBarcode, setShowProductBarcode] = useState<boolean>(true);
+    const [showShelfLife, setShowShelfLife] = useState<boolean>(true);
+    const [showHsCode, setShowHsCode] = useState<boolean>(true);
+    const [showCartonDimensions, setShowCartonDimensions] = useState<boolean>(true);
+    const [showNetWeight, setShowNetWeight] = useState<boolean>(true);
+    const [showGrossWeight, setShowGrossWeight] = useState<boolean>(true);
+    const [showCountryOfOrigin, setShowCountryOfOrigin] = useState<boolean>(true);
+
     // --- Input Validation State & Refs ---
     const [customerNameError, setCustomerNameError] = useState<boolean>(false);
     const [salesManagerError, setSalesManagerError] = useState<boolean>(false);
@@ -221,7 +230,22 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
         setSelections(prev => prev.map(p => {
             // Prevent editing price/pack fields directly in main table
             if (p.product_id === productId && !['fob_price_per_carton', 'fob_price_per_unit', 'recommended_retail_price_usd', 'pack_size_per_carton'].includes(field)) {
+                
+                // Update the first variant in the variants array (for UI consistency if needed)
                 const updatedVariants = p.variants.map((v, i) => i === 0 ? { ...v, [field]: value } : v);
+                
+                // *** ALSO Update the firstVariantDetails object ***
+                let updatedFirstVariantDetails = p.firstVariantDetails;
+                if (updatedFirstVariantDetails) {
+                    // Create a new object to avoid direct state mutation
+                    updatedFirstVariantDetails = {
+                        ...updatedFirstVariantDetails,
+                        [field]: value // Update the specific field
+                        // Note: Consider type conversion if necessary (e.g., for cartons_per_container)
+                        // [field]: field === 'cartons_per_container' ? parseInt(value, 10) || 0 : value 
+                    };
+                }
+
                 // Recalculate defaults based on potentially edited underlying variant data (e.g., container size)
                 const { defaultFobCarton, defaultFobUnit, defaultRrp } = getDefaultPrices({ ...p, variants: updatedVariants });
                 const defaultPackSize = updatedVariants.length > 0 ? updatedVariants[0].pack_size_per_carton : 1;
@@ -231,6 +255,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                 return {
                     ...p,
                     variants: updatedVariants, 
+                    firstVariantDetails: updatedFirstVariantDetails, // Assign the updated details
                     applied_fob_price_per_carton: shouldUpdateApplied ? defaultFobCarton : p.applied_fob_price_per_carton, 
                     applied_fob_price_per_unit: shouldUpdateApplied ? defaultFobUnit : p.applied_fob_price_per_unit, 
                     applied_recommended_rrp: shouldUpdateApplied ? defaultRrp : p.applied_recommended_rrp,
@@ -288,23 +313,53 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
         setIsGeneratingPDF(true);
         const selectedProducts = selections
             .filter(p => p.isSelected)
-            .map(p => ({
-                product_name: p.product_name, product_id: p.product_id,
-                container_size: p.variants[0]?.container_size, 
-                cartons_per_container: p.variants[0]?.cartons_per_container,
-                pack_size_per_carton: p.applied_pack_per_carton ?? 0,
-                fob_price_per_carton: p.applied_fob_price_per_carton ?? 0,
-                fob_price_per_unit: showFOBPricePerUnit ? (p.applied_fob_price_per_unit ?? 0) : undefined,
-                recommended_retail_price_usd: p.applied_recommended_rrp ?? 0,
-                variants: p.variants.filter(v => v.isSelected).map(v => ({ description: v.description, variant_id: v.variant_id }))
-            }))
+            .map(p => {
+                 const firstVariantDetails = p.firstVariantDetails; 
+                 return {
+                    product_name: p.product_name,
+                    product_id: p.product_id,
+                    // Use applied values where applicable
+                    pack_size_per_carton: p.applied_pack_per_carton ?? 0,
+                    fob_price_per_carton: p.applied_fob_price_per_carton ?? 0,
+                    fob_price_per_unit: showFOBPricePerUnit ? (p.applied_fob_price_per_unit ?? 0) : undefined,
+                    recommended_retail_price_usd: p.applied_recommended_rrp ?? 0,
+                    // Get other details from the preserved first variant details, providing defaults
+                    container_size: firstVariantDetails?.container_size ?? '', // Default to empty string
+                    cartons_per_container: firstVariantDetails?.cartons_per_container ?? 0, // Default to 0
+                    product_barcode: firstVariantDetails?.product_barcode ?? firstVariantDetails?.barcode ?? null,
+                    shelf_life: firstVariantDetails?.shelf_life ?? '', // Default to empty string
+                    hs_code: firstVariantDetails?.hs_code ?? '', // Default to empty string
+                    carton_width: firstVariantDetails?.carton_width ?? '', // Default to empty string
+                    carton_length: firstVariantDetails?.carton_length ?? '', // Default to empty string
+                    carton_height: firstVariantDetails?.carton_height ?? '', // Default to empty string
+                    net_weight: firstVariantDetails?.net_weight ?? '', // Default to empty string
+                    gross_weight: firstVariantDetails?.gross_weight ?? '', // Default to empty string
+                    country_of_origin: firstVariantDetails?.country_of_origin ?? '', // Default to empty string
+                    // Map selected variants as before
+                    variants: p.variants.filter(v => v.isSelected).map(v => ({
+                        description: v.description,
+                        variant_id: v.variant_id
+                    }))
+                };
+            })
             .filter(p => p.variants.length > 0);
 
         const pdfData: QuotationExportPDFData = {
             selectedProducts,
             companyInfo: { name: companyInfo?.name || '', address: companyInfo?.address || '', website_url: companyInfo?.website_url || '', phone: companyInfo?.phone || '', logo_url: companyInfo?.logo_url || '', id: companyInfo?.id || '', created_at: companyInfo?.created_at || '', completed_sign_up_sequence: companyInfo?.completed_sign_up_sequence || false, company_brand_color: companyInfo?.company_brand_color || null },
             customerCompanyName, currentDate, sales_account_manager: salesAccountManager,
-            tableSettings: { showFOBPricePerUnit, showCartonBarcode, currency: selectedCurrency }
+            tableSettings: {
+                showFOBPricePerUnit,
+                showCartonBarcode,
+                currency: selectedCurrency,
+                showProductBarcode,
+                showShelfLife,
+                showHsCode,
+                showCartonDimensions,
+                showNetWeight,
+                showGrossWeight,
+                showCountryOfOrigin
+            }
         };
         console.log('Quotation Export Payload:', JSON.stringify(pdfData, null, 2));
         try {
@@ -339,6 +394,13 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     const closePriceTierModal = () => { setIsPriceTierModalOpen(false); setSelectedProductIdForModal(null); setSelectedProductNameForModal(null); };
     const toggleFOBPricePerUnit = () => { setShowFOBPricePerUnit(prev => !prev); };
     const toggleCartonBarcode = () => { setShowCartonBarcode(prev => !prev); };
+    const toggleProductBarcode = () => { setShowProductBarcode(prev => !prev); };
+    const toggleShelfLife = () => { setShowShelfLife(prev => !prev); };
+    const toggleHsCode = () => { setShowHsCode(prev => !prev); };
+    const toggleCartonDimensions = () => { setShowCartonDimensions(prev => !prev); };
+    const toggleNetWeight = () => { setShowNetWeight(prev => !prev); };
+    const toggleGrossWeight = () => { setShowGrossWeight(prev => !prev); };
+    const toggleCountryOfOrigin = () => { setShowCountryOfOrigin(prev => !prev); };
     const getTableColumns = () => {
          const base = ['container_size', 'cartons_per_container', 'pack_size_per_carton', 'fob_price_per_carton', 'recommended_retail_price_usd'];
         if (showFOBPricePerUnit) { const i = base.indexOf('fob_price_per_carton'); if (i !== -1) base.splice(i + 1, 0, 'fob_price_per_unit'); }
@@ -403,39 +465,65 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                         <div className="mt-2 text-sm text-gray-600">Updated At: {currentDate}</div>
                     </div>
 
-                    <div className="flex flex-wrap items-center mb-4 gap-x-4 gap-y-2">
-                        {/* ... Toggles and Currency Selector ... */}
-                        <label className="inline-flex items-center cursor-pointer"> {/* FOB Price */}
-                            <input type="checkbox" checked={showFOBPricePerUnit} onChange={toggleFOBPricePerUnit} className="sr-only peer" />
-                            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                            <span className="ms-3 text-sm font-medium text-gray-900">Show FOB Price/Unit</span>
-                        </label>
-                         <label className="inline-flex items-center cursor-pointer"> {/* Barcode */}
-                             <input type="checkbox" checked={showCartonBarcode} onChange={toggleCartonBarcode} className="sr-only peer" />
-                            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                            <span className="ms-3 text-sm font-medium text-gray-900">Show Carton Barcode</span>
-                        </label>
-                         <div className="inline-flex items-center"> {/* Currency */}
-                            <label htmlFor="currency-select" className="text-sm font-medium text-gray-900 mr-2">Currency:</label>
-                            <select id="currency-select" value={selectedCurrency} onChange={(e) => setSelectedCurrency(e.target.value as 'USD' | 'SGD')} className="border p-1 rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                <option value="USD">USD</option><option value="SGD">SGD</option>
-                            </select>
+                    {/* Settings Section */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        {/* --- Column Display Toggles --- */}
+                        <div className="border p-4 rounded-md shadow-sm">
+                            <h3 className="text-lg font-semibold mb-3 border-b pb-2">PDF Column Visibility</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
+                                <label className="inline-flex items-center cursor-pointer"> <input type="checkbox" checked={showFOBPricePerUnit} onChange={toggleFOBPricePerUnit} className="sr-only peer" /> <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div> <span className="ms-3 text-sm font-medium text-black dark:text-gray-300">Show FOB Price/Unit</span> </label>
+                                <label className="inline-flex items-center cursor-pointer"> <input type="checkbox" checked={showProductBarcode} onChange={toggleProductBarcode} className="sr-only peer" /> <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div> <span className="ms-3 text-sm font-medium text-black dark:text-gray-300">Show Product Barcode</span> </label>
+                                <label className="inline-flex items-center cursor-pointer"> <input type="checkbox" checked={showShelfLife} onChange={toggleShelfLife} className="sr-only peer" /> <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div> <span className="ms-3 text-sm font-medium text-black dark:text-gray-300">Show Shelf Life</span> </label>
+                                <label className="inline-flex items-center cursor-pointer"> <input type="checkbox" checked={showHsCode} onChange={toggleHsCode} className="sr-only peer" /> <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div> <span className="ms-3 text-sm font-medium text-black dark:text-gray-300">Show HS Code</span> </label>
+                                <label className="inline-flex items-center cursor-pointer"> <input type="checkbox" checked={showCartonDimensions} onChange={toggleCartonDimensions} className="sr-only peer" /> <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div> <span className="ms-3 text-sm font-medium text-black dark:text-gray-300">Show Carton Dimensions</span> </label>
+                                <label className="inline-flex items-center cursor-pointer"> <input type="checkbox" checked={showNetWeight} onChange={toggleNetWeight} className="sr-only peer" /> <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div> <span className="ms-3 text-sm font-medium text-black dark:text-gray-300">Show Net Weight</span> </label>
+                                <label className="inline-flex items-center cursor-pointer"> <input type="checkbox" checked={showGrossWeight} onChange={toggleGrossWeight} className="sr-only peer" /> <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div> <span className="ms-3 text-sm font-medium text-black dark:text-gray-300">Show Gross Weight</span> </label>
+                                <label className="inline-flex items-center cursor-pointer"> <input type="checkbox" checked={showCountryOfOrigin} onChange={toggleCountryOfOrigin} className="sr-only peer" /> <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div> <span className="ms-3 text-sm font-medium text-black dark:text-gray-300">Show Country of Origin</span> </label>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-4">(Controls columns in the generated PDF)</p>
                         </div>
-                         {/* --- Global Price Tier Selector --- */}
-                         <div className="inline-flex items-center">
-                             <label htmlFor="global-tier-select" className="text-sm font-medium text-gray-900 mr-2">Price Tier:</label>
-                            <select id="global-tier-select" value={selectedGlobalTierName} onChange={handleGlobalTierChange} disabled={isFetchingTiers || uniqueTierNames.length === 0} className="border p-1 rounded text-sm min-w-[150px] disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white" title="Apply a price tier">
-                                <option value="">-- Default Pricing --</option>
-                                {isFetchingTiers ? ( <option disabled>Loading...</option> ) : ( uniqueTierNames.map(name => (<option key={name} value={name}>{name}</option>)) )
-                                // Add explicit check for fetchError affecting tiers
-                                || fetchError && <option disabled>Error loading tiers</option> }
-                            </select>
-                            {uniqueTierNames.length === 0 && !isFetchingTiers && !fetchError && (
-                                // Added !fetchError condition here too
-                                <span className="ms-2 text-xs text-black italic">(No active tiers)</span>
-                            )}
-                         </div>
-                     </div>
+
+                        {/* --- Pricing & Variant Toggles --- */}
+                        <div className="border p-4 rounded-md shadow-sm space-y-4">
+                            <div> 
+                                <h3 className="text-lg font-semibold mb-3 border-b pb-2">Pricing Options</h3>
+                                <div className="space-y-2">
+                                    {/* Currency */}
+                                    <div className="flex items-center"> 
+                                        <label htmlFor="currency-select" className="text-sm font-medium text-gray-900 mr-2 w-20">Currency:</label>
+                                        <select id="currency-select" value={selectedCurrency} onChange={(e) => setSelectedCurrency(e.target.value as 'USD' | 'SGD')} className="border p-1 rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white flex-grow">
+                                            <option value="USD">USD</option><option value="SGD">SGD</option>
+                                        </select>
+                                    </div>
+                                    {/* Global Tier */}
+                                    <div className="flex items-center"> 
+                                        <label htmlFor="global-tier-select" className="text-sm font-medium text-gray-900 mr-2 w-20">Price Tier:</label>
+                                        <select id="global-tier-select" value={selectedGlobalTierName} onChange={handleGlobalTierChange} disabled={isFetchingTiers || uniqueTierNames.length === 0} className="border p-1 rounded text-sm min-w-[150px] disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white flex-grow" title="Apply a price tier">
+                                            <option value="">-- Default Pricing --</option>
+                                            {isFetchingTiers ? ( <option disabled>Loading...</option> ) : ( uniqueTierNames.map(name => (<option key={name} value={name}>{name}</option>)) ) || fetchError && <option disabled>Error loading tiers</option> }
+                                        </select>
+                                        {uniqueTierNames.length === 0 && !isFetchingTiers && !fetchError && (
+                                            <span className="ms-2 text-xs text-black italic">(No active tiers)</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 className="text-lg font-semibold mb-3 border-b pb-2">Variant Table Options</h3>
+                                <div className="space-y-2">
+                                    {/* Use styled toggle for Variant Table Carton Barcode */} 
+                                    <label className="inline-flex items-center cursor-pointer"> 
+                                        <input type="checkbox" checked={showCartonBarcode} onChange={toggleCartonBarcode} className="sr-only peer" /> 
+                                        <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div> 
+                                        <span className="ms-3 text-sm font-medium text-black dark:text-gray-300">Show Carton Barcode</span> 
+                                    </label>
+                                    <p className="text-xs text-gray-500 mt-1">(Controls barcode column in the expanded variant view below)</p>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
 
                     <table className="min-w-full border-collapse border border-gray-300 dark:border-gray-600">
                          <thead>

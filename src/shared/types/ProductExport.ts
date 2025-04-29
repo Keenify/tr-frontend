@@ -64,10 +64,11 @@ export interface ProductExportSelection {
     product_id: number;
     product_name: string;
     isSelected: boolean;
-    variants: ProductExportVariantSelection[]; // Use the defined type
+    variants: ProductExportVariantSelection[];
+    firstVariantDetails?: ProductVariantExportDetails;
     applied_fob_price_per_carton: number | null;
     applied_fob_price_per_unit: number | null;
     applied_recommended_rrp: number | null;
     applied_pack_per_carton: number | null;
-    has_selected_tier: boolean; // Flag to indicate if the selected global tier applies to this product
+    has_selected_tier: boolean;
 }

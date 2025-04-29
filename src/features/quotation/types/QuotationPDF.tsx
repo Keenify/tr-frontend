@@ -57,6 +57,15 @@ export interface QuotationExportPDFData {
         pack_size_per_carton: number | string;
         fob_price_per_carton: number | string;
         recommended_retail_price_usd: number | string;
+        product_barcode?: string | null;
+        shelf_life?: string;
+        hs_code?: string;
+        carton_width?: string;
+        carton_length?: string;
+        carton_height?: string;
+        net_weight?: string;
+        gross_weight?: string;
+        country_of_origin?: string;
         variants: {
             description: string;
             variant_id: number;
@@ -70,5 +79,12 @@ export interface QuotationExportPDFData {
         showFOBPricePerUnit: boolean;
         showCartonBarcode?: boolean;
         currency?: 'USD' | 'SGD';
+        showProductBarcode?: boolean;
+        showShelfLife?: boolean;
+        showHsCode?: boolean;
+        showCartonDimensions?: boolean;
+        showNetWeight?: boolean;
+        showGrossWeight?: boolean;
+        showCountryOfOrigin?: boolean;
     };
 }
