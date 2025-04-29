@@ -6,12 +6,21 @@ interface EmployeeCardProps {
 }
 
 export const EmployeeCard = ({ employee, onClick }: EmployeeCardProps) => {
+  const isPastEmployee = !employee.Is_Employed;
+
   return (
     <div 
       onClick={onClick}
-      className="cursor-pointer hover:shadow-lg transition-shadow duration-200 bg-white rounded-lg shadow-sm overflow-hidden"
+      className={`relative cursor-pointer hover:shadow-lg transition-all duration-200 bg-white rounded-lg shadow-sm overflow-hidden 
+                 ${isPastEmployee ? 'opacity-60 hover:opacity-80' : ''}`}
     >
-      <div className="aspect-square relative">
+      {isPastEmployee && (
+        <div className="absolute top-2 right-2 bg-gray-500 text-white text-xs font-semibold px-2 py-0.5 rounded">
+          Past
+        </div>
+      )}
+
+      <div className={`aspect-square relative ${isPastEmployee ? 'grayscale' : ''}`}>
         {employee.profile_pic_url ? (
           <img
             src={employee.profile_pic_url}

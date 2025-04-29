@@ -11,6 +11,7 @@ export interface Employee {
   company_id: string; // This is a UUID
   reports_to: string | null;
   highest_rank: boolean;
+  Is_Employed: boolean;
   created_at: string;
 }
 
