@@ -14,6 +14,7 @@ export interface UserData {
     company_id: string;
     reports_to: string | null;
     highest_rank: boolean;
+    Is_Employed: boolean;
     id: string;
     created_at: string;
 }

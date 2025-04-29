@@ -9,6 +9,7 @@ interface EmployeeResponse {
   profile_pic_url: string | null;
   response: ResponseData | null;
   submittedTime?: string;
+  Is_Employed?: boolean;
 }
 
 export function useEmployeeResponses(companyId: string | undefined, selectedDate: string) {
@@ -19,9 +20,11 @@ export function useEmployeeResponses(companyId: string | undefined, selectedDate
     if (!companyId) return;
     
     try {
-      const employeeData = await getAllEmployees(companyId);
+      const allEmployeeData = await getAllEmployees(companyId);
       
-      const responses = await Promise.all(employeeData.map(async (employee) => {
+      const employedEmployeeData = allEmployeeData.filter(employee => employee.Is_Employed === true);
+
+      const responses = await Promise.all(employedEmployeeData.map(async (employee) => {
         const response = await fetchResponse(selectedDate, employee.id);
         return {
           id: employee.id,
@@ -29,6 +32,7 @@ export function useEmployeeResponses(companyId: string | undefined, selectedDate
           profile_pic_url: employee.profile_pic_url || null,
           response,
           submittedTime: response?.submitted_at || response?.submitted_date || '',
+          Is_Employed: employee.Is_Employed
         };
       }));
 
