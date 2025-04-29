@@ -11,6 +11,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Hooks for session
 import { useSession } from "./shared/hooks/useSession";
+import FloatingMusicPlayer from "./shared/components/FloatingMusicPlayer";
 
 // Not Found
 const NotFound = lazy(() => import("./shared/components/NotFound"));
@@ -75,6 +76,8 @@ const App: React.FC = () => {
         }}
       >
         <Suspense fallback={<ClipLoader color="#36d7b7" />}>
+          {session && <FloatingMusicPlayer />}
+          
           <Routes>
             {/* Default Redirect to User-Specific Route */}
             <Route
