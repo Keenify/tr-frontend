@@ -11,8 +11,7 @@ export const EmployeeCard = ({ employee, onClick }: EmployeeCardProps) => {
   return (
     <div 
       onClick={onClick}
-      className={`relative cursor-pointer hover:shadow-lg transition-all duration-200 bg-white rounded-lg shadow-sm overflow-hidden 
-                 ${isPastEmployee ? 'opacity-60 hover:opacity-80' : ''}`}
+      className="relative cursor-pointer hover:shadow-lg transition-all duration-200 bg-white rounded-lg shadow-sm overflow-hidden"
     >
       {isPastEmployee && (
         <div className="absolute top-2 right-2 bg-gray-500 text-white text-xs font-semibold px-2 py-0.5 rounded">
@@ -20,7 +19,7 @@ export const EmployeeCard = ({ employee, onClick }: EmployeeCardProps) => {
         </div>
       )}
 
-      <div className={`aspect-square relative ${isPastEmployee ? 'grayscale' : ''}`}>
+      <div className="aspect-square relative">
         {employee.profile_pic_url ? (
           <img
             src={employee.profile_pic_url}
