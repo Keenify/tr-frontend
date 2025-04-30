@@ -128,7 +128,7 @@ export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
         }
     }, [editFormData.fob_price_per_carton, editFormData.pack_per_carton, editFormData.fob_price_per_unit]);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>, id: number | null = null) => {
+     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>, id: number | null = null) => {
         const { name, value, type } = e.target;
         let processedValue: string | boolean = value;
         const isPriceField = ['fob_price_per_carton', 'recommended_rrp'].includes(name); // Removed fob_price_per_unit

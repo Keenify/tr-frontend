@@ -162,7 +162,7 @@ export const transformToSelectableFormat = (
                 return {
                     variant_id: variantExportInfo.variant_id,
                     description: variantExportInfo.product_description,
-                    isSelected: false,
+                isSelected: false,
                     pack_size_per_carton: packSize,
                     fob_price_per_carton: isNaN(fobPerCarton) ? 0 : fobPerCarton, // Use parsed value, default to 0 if NaN
                     fob_price_per_unit: fobPerUnit,
