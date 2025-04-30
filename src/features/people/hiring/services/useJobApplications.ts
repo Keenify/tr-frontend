@@ -193,7 +193,7 @@ export const useJobApplications = () => {
         status?: APIApplicationStage;
       }
       
-      const apiData: ApiDataType = { ...restData };
+      const apiData = { ...restData } as unknown as ApiDataType;
       
       // Only include cv_file_path if we have a new one
       if (cv_file_path) {
