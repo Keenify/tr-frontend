@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { AlertTriangle, PlusCircle } from 'react-feather';
 import ApplicantFormModal from './ApplicantFormModal';
 import useJobApplications from '../services/useJobApplications';
@@ -13,11 +13,11 @@ const PreHireTab: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | undefined>(undefined);
   
-  const { getJobApplicationsByStatus } = useJobApplications();
+  const { getJobApplicationsByStatus, deleteJobApplication } = useJobApplications();
   const { updateCount } = useContext(ApplicationCountContext);
 
-  // Fetch pre-hire applications
-  const fetchApplications = async () => {
+  // Fetch pre-hire applications - wrapped in useCallback to make it reusable
+  const fetchApplications = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -31,14 +31,29 @@ const PreHireTab: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [getJobApplicationsByStatus, updateCount]);
 
   // Load applications on component mount
   useEffect(() => {
     fetchApplications();
-    // Intentionally not including fetchApplications as a dependency
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Handle card deletion with immediate count update
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteJobApplication(id);
+      // Update local list immediately without refetching
+      const updatedApplications = applications.filter(app => app.id !== id);
+      setApplications(updatedApplications);
+      // Update count immediately
+      updateCount('preHire', updatedApplications.length);
+    } catch (err) {
+      console.error('Failed to delete application:', err);
+      // Refresh the list to ensure consistency
+      fetchApplications();
+    }
+  };
 
   const handleOpenModal = (applicationId?: string) => {
     setSelectedApplicationId(applicationId);
@@ -94,6 +109,7 @@ const PreHireTab: React.FC = () => {
                 key={application.id}
                 application={application}
                 onEdit={() => handleOpenModal(application.id)}
+                onDelete={() => handleDelete(application.id)}
               />
             ))
           ) : (

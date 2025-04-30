@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import useJobApplications from '../services/useJobApplications';
 import { JobApplication } from '../types/hiring.types';
 import ApplicationCard from './ApplicationCard';
@@ -12,11 +12,11 @@ const PostInterviewTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | undefined>(undefined);
   
-  const { getJobApplicationsByStatus } = useJobApplications();
+  const { getJobApplicationsByStatus, deleteJobApplication } = useJobApplications();
   const { updateCount } = useContext(ApplicationCountContext);
 
-  // Fetch post-hired applications
-  const fetchApplications = async () => {
+  // Fetch post-hired applications with useCallback for reuse
+  const fetchApplications = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -30,14 +30,29 @@ const PostInterviewTab: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [getJobApplicationsByStatus, updateCount]);
 
   // Load applications on component mount
   useEffect(() => {
     fetchApplications();
-    // Intentionally not including fetchApplications as a dependency
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Handle card deletion with immediate count update
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteJobApplication(id);
+      // Update local list immediately without refetching
+      const updatedApplications = applications.filter(app => app.id !== id);
+      setApplications(updatedApplications);
+      // Update count immediately
+      updateCount('postInterview', updatedApplications.length);
+    } catch (err) {
+      console.error('Failed to delete application:', err);
+      // Refresh the list to ensure consistency
+      fetchApplications();
+    }
+  };
 
   const handleOpenModal = (applicationId?: string) => {
     setSelectedApplicationId(applicationId);
@@ -71,6 +86,7 @@ const PostInterviewTab: React.FC = () => {
                 key={application.id}
                 application={application}
                 onEdit={() => handleOpenModal(application.id)}
+                onDelete={() => handleDelete(application.id)}
               />
             ))
           ) : (

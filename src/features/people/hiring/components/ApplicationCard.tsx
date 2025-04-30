@@ -6,10 +6,11 @@ import useJobApplications from '../services/useJobApplications';
 interface ApplicationCardProps {
   application: JobApplication;
   onEdit: () => void;
+  onDelete?: () => void;
 }
 
-const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit }) => {
-  const { deleteJobApplication, getCVSignedUrl } = useJobApplications();
+const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit, onDelete }) => {
+  const { getCVSignedUrl } = useJobApplications();
   const [isDeleting, setIsDeleting] = React.useState(false);
   
   const handleDelete = async (e: React.MouseEvent) => {
@@ -18,8 +19,9 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ application, onEdit }
     if (window.confirm(`Are you sure you want to delete ${application.full_name}'s application?`)) {
       setIsDeleting(true);
       try {
-        await deleteJobApplication(application.id);
-        // The parent component will refresh the list after deletion
+        if (onDelete) {
+          await onDelete();
+        }
       } catch (err) {
         console.error('Failed to delete application:', err);
         alert('Failed to delete application');
