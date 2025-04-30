@@ -7,10 +7,15 @@ import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
 
-// Remove PDF-related imports and add image imports
+// Import existing images
 import interviewQuestion1Image from '../../../../assets/people/hiring/interview-question-1.jpg';
 import interviewQuestion2Image from '../../../../assets/people/hiring/interview-question-2.jpg';
 import interviewQuestion3Image from '../../../../assets/people/hiring/interview-question-3.jpg';
+
+// Import the new tab components
+import PreHireTab from './PreHireTab';
+import InterviewTab from './InterviewTab';
+import PostInterviewTab from './PostInterviewTab';
 
 interface HiringProps {
   session: Session;
@@ -41,7 +46,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const Hiring: React.FC<HiringProps> = ({ session }) => {
-  const [tabValue, setTabValue] = useState(0);
+  const [tabValue, setTabValue] = useState(0); // Default to the first tab (Pre-Hire)
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
@@ -112,13 +117,30 @@ const Hiring: React.FC<HiringProps> = ({ session }) => {
   return (
     <div className="hiring-container">
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={tabValue} onChange={handleTabChange}>
-          <Tab label="Interview Guide" />
-          <Tab label="Finding Talent" />
+        {/* Add new tabs first */}
+        <Tabs value={tabValue} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
+          <Tab label="Pre-Hire" />        {/* Index 0 */}
+          <Tab label="Interview" />       {/* Index 1 */}
+          <Tab label="Post-Interview" />  {/* Index 2 */}
+          <Tab label="Interview Guide" /> {/* Index 3 */}
+          <Tab label="Finding Talent" />  {/* Index 4 */}
         </Tabs>
       </Box>
 
+      {/* New Tab Panels */}
       <TabPanel value={tabValue} index={0}>
+        <PreHireTab />
+      </TabPanel>
+      <TabPanel value={tabValue} index={1}>
+        <InterviewTab />
+      </TabPanel>
+      <TabPanel value={tabValue} index={2}>
+        <PostInterviewTab />
+      </TabPanel>
+
+      {/* Existing Tab Panels - Adjust indices */}
+      <TabPanel value={tabValue} index={3}> {/* Was index 0 */} 
+        {/* Interview Guide Content */}
         <div style={{ marginBottom: '20px' }}>
           <button
             onClick={handlePrint}
@@ -169,7 +191,8 @@ const Hiring: React.FC<HiringProps> = ({ session }) => {
         </div>
       </TabPanel>
 
-      <TabPanel value={tabValue} index={1}>
+      <TabPanel value={tabValue} index={4}> {/* Was index 1 */} 
+        {/* Finding Talent Content */}
         <div style={{ 
           padding: '20px 40px',
           maxWidth: '900px',
@@ -229,6 +252,7 @@ const Hiring: React.FC<HiringProps> = ({ session }) => {
         </div>
       </TabPanel>
 
+      {/* Keep Modal */}
       <Modal
         open={!!selectedImage}
         onClose={handleCloseModal}
