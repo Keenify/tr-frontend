@@ -19,7 +19,7 @@ import {
   SelectChangeEvent,
   CircularProgress
 } from '@mui/material';
-import { Paperclip, X, Upload } from 'react-feather';
+import { Paperclip, X, Upload, ExternalLink } from 'react-feather';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { ApplicantFormData, ApplicationStage, EmploymentType } from '../types/hiring.types';
@@ -59,7 +59,8 @@ const ApplicantFormModal: React.FC<ApplicantFormModalProps> = ({
     loading, 
     createJobApplication, 
     updateJobApplication, 
-    getJobApplicationById 
+    getJobApplicationById,
+    getCVSignedUrl 
   } = useJobApplications();
   
   // Initialize form with default values - no useEffect!
@@ -70,6 +71,7 @@ const ApplicantFormModal: React.FC<ApplicantFormModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
+  const [cvUrl, setCvUrl] = useState<string | null>(null);
 
   // Load data for edit mode only when needed
   const loadApplicationData = async () => {
@@ -78,6 +80,11 @@ const ApplicantFormModal: React.FC<ApplicantFormModalProps> = ({
     setIsLoading(true);
     try {
       const application = await getJobApplicationById(applicationId);
+      
+      // Map API employment type to internal type if needed
+      let employmentType = application.employment_type;
+      if (employmentType === 'Full Time') employmentType = 'full-time';
+      else if (employmentType === 'Part Time') employmentType = 'part-time';
       
       setFormData({
         full_name: application.full_name,
@@ -89,11 +96,21 @@ const ApplicantFormModal: React.FC<ApplicantFormModalProps> = ({
         job_applied_for: application.job_applied_for,
         expected_salary: application.expected_salary,
         available_start_date: application.available_start_date,
-        employment_type: application.employment_type as EmploymentType,
+        employment_type: employmentType as EmploymentType,
         cv_file: null,
         notes: application.notes || '',
         status: application.status as ApplicationStage
       });
+      
+      // Fetch CV URL if file path exists
+      if (application.cv_file_path) {
+        try {
+          const url = await getCVSignedUrl(application.cv_file_path);
+          setCvUrl(url);
+        } catch (err) {
+          console.error('Failed to get CV URL:', err);
+        }
+      }
       
       setIsEditMode(true);
       setDataFetched(true);
@@ -109,6 +126,7 @@ const ApplicantFormModal: React.FC<ApplicantFormModalProps> = ({
     setFormData(getDefaultFormData(defaultStatus));
     setFormErrors({});
     setCvFile(null);
+    setCvUrl(null);
     setIsEditMode(false);
     setDataFetched(false);
     onClose();
@@ -244,6 +262,13 @@ const ApplicantFormModal: React.FC<ApplicantFormModalProps> = ({
       }));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Handle viewing CV in browser
+  const handleViewCV = () => {
+    if (cvUrl) {
+      window.open(cvUrl, '_blank');
     }
   };
 
@@ -484,6 +509,34 @@ const ApplicantFormModal: React.FC<ApplicantFormModalProps> = ({
                         onDelete={handleClearFile}
                         deleteIcon={<X size={16} />}
                       />
+                    </Stack>
+                  ) : cvUrl ? (
+                    <Stack 
+                      direction="row" 
+                      alignItems="center" 
+                      justifyContent="space-between"
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Paperclip size={18} />
+                        <Typography variant="body2" sx={{ ml: 1 }}>
+                          Current CV uploaded
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Button
+                          size="small"
+                          startIcon={<ExternalLink size={16} />}
+                          onClick={handleViewCV}
+                          sx={{ mr: 1 }}
+                        >
+                          View
+                        </Button>
+                        <Chip 
+                          label="Replace"
+                          size="small" 
+                          onClick={() => document.getElementById('cv-upload')?.click()}
+                        />
+                      </Box>
                     </Stack>
                   ) : (
                     <Stack 

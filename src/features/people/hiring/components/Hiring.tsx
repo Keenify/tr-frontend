@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
@@ -17,92 +17,88 @@ import PostInterviewTab from './PostInterviewTab';
 // Custom CSS for react-tabs
 import '../styles/Tabs.css';
 
+// Import context from separate file
+import { ApplicationCountContext } from '../context/ApplicationCountContext';
+
 interface HiringProps {
   session: Session;
 }
 
-const Hiring: React.FC<HiringProps> = ({ session }) => {
+const Hiring: React.FC<HiringProps> = () => {
   const [tabIndex, setTabIndex] = useState(0);
   const [counts, setCounts] = useState({
-    preHire: 3,
-    interview: 5,
-    postInterview: 2
+    preHire: 0,
+    interview: 0,
+    postInterview: 0
   });
 
-  // Mock data for demonstration - in a real app this would come from API
-  useEffect(() => {
-    // Simulate fetching counts from API
-    const timer = setTimeout(() => {
-      setCounts({
-        preHire: 3,
-        interview: 5,
-        postInterview: 2
-      });
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, []);
+  // Function to update a specific count
+  const updateCount = (key: 'preHire' | 'interview' | 'postInterview', count: number) => {
+    setCounts(prev => ({
+      ...prev,
+      [key]: count
+    }));
+  };
 
-  console.log(session);
   return (
     <div className="hiring-container p-4">
       <h1 className="text-2xl font-bold mb-4">Hiring Pipeline</h1>
       
-      <Tabs 
-        selectedIndex={tabIndex} 
-        onSelect={index => setTabIndex(index)}
-        className="hiring-tabs"
-        selectedTabClassName="selected-tab"
-      >
-        <TabList className="react-tabs__tab-list">
-          <Tab className="tab-item">Finding Talent</Tab>
-          <Tab className="tab-item">Interview Guide</Tab>
-          <Tab className="tab-item">
-            Pre-Hire
-            <span className="count-badge">{counts.preHire}</span>
-          </Tab>
-          <Tab className="tab-item">
-            Interview
-            <span className="count-badge">{counts.interview}</span>
-          </Tab>
-          <Tab className="tab-item">
-            Post-Interview
-            <span className="count-badge">{counts.postInterview}</span>
-          </Tab>
-        </TabList>
+      <ApplicationCountContext.Provider value={{ counts, updateCount }}>
+        <Tabs 
+          selectedIndex={tabIndex} 
+          onSelect={index => setTabIndex(index)}
+          className="hiring-tabs"
+          selectedTabClassName="selected-tab"
+        >
+          <TabList className="react-tabs__tab-list">
+            <Tab className="tab-item">Finding Talent</Tab>
+            <Tab className="tab-item">Interview Guide</Tab>
+            <Tab className="tab-item">
+              Pre-Hire
+              {counts.preHire > 0 && <span className="count-badge">{counts.preHire}</span>}
+            </Tab>
+            <Tab className="tab-item">
+              Interview
+              {counts.interview > 0 && <span className="count-badge">{counts.interview}</span>}
+            </Tab>
+            <Tab className="tab-item">
+              Post-Interview
+              {counts.postInterview > 0 && <span className="count-badge">{counts.postInterview}</span>}
+            </Tab>
+          </TabList>
 
-        <TabPanel>
-          <div className="tab-content">
-            <FindingTalent />
-          </div>
-        </TabPanel>
-        
-        <TabPanel>
-          <div className="tab-content">
-            <InterviewGuide />
-          </div>
-        </TabPanel>
-        
-        <TabPanel>
-          <div className="tab-content">
-            <PreHireTab />
-          </div>
-        </TabPanel>
-        
-        <TabPanel>
-          <div className="tab-content">
-            <InterviewTab />
-          </div>
-        </TabPanel>
-        
-        <TabPanel>
-          <div className="tab-content">
-            <PostInterviewTab />
-          </div>
-        </TabPanel>
-      </Tabs>
-
-      {/* Note: You'll need to install react-tabs: npm install react-tabs */}
+          <TabPanel>
+            <div className="tab-content">
+              <FindingTalent />
+            </div>
+          </TabPanel>
+          
+          <TabPanel>
+            <div className="tab-content">
+              <InterviewGuide />
+            </div>
+          </TabPanel>
+          
+          <TabPanel>
+            <div className="tab-content">
+              <PreHireTab />
+            </div>
+          </TabPanel>
+          
+          <TabPanel>
+            <div className="tab-content">
+              <InterviewTab />
+            </div>
+          </TabPanel>
+          
+          <TabPanel>
+            <div className="tab-content">
+              <PostInterviewTab />
+            </div>
+          </TabPanel>
+        </Tabs>
+      </ApplicationCountContext.Provider>
     </div>
   );
 };
