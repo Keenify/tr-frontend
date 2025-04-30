@@ -69,6 +69,47 @@ const PreHireTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* 6 Buyback Rules Section */}
+      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md shadow-sm">
+        <h2 className="text-lg font-bold text-yellow-800 mb-2">6 Buyback Rules</h2>
+        <ol className="list-decimal pl-6 space-y-1 text-yellow-900">
+          <li><strong>Be clear:</strong> Be certain about what you are looking for in a candidate.</li>
+          <li><strong>Cast a wide net:</strong> Hiring ultimately comes down to numbers.</li>
+          <li><strong>Require a video:</strong> Ask all candidates to upload a 3-minute video right here. Many people who didn't read the instructions will self-eliminate.</li>
+          <li><strong>Personality assessment:</strong> Include a personality assessment in your process.</li>
+          <li><strong>The "test first" hiring method:</strong> See the section below for details.</li>
+          <li><strong>Sell the future:</strong> See the section below for details.</li>
+        </ol>
+      </div>
+
+      {/* Test-First Hiring Method Section */}
+      <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-md shadow-sm">
+        <h2 className="text-lg font-bold text-green-800 mb-2">Test-First Hiring Method</h2>
+        <p className="text-green-900 mb-2">
+          Give candidates a project that closely represents the actual work you will do together. Pay them for their time, and avoid giving too many instructions.
+        </p>
+        <p className="text-green-900">
+          The goal is to predict what working together will be like: Will you collaborate well? Will you enjoy working together? Will they save you time? Will they enjoy the work? Do they truly understand what the role requires?
+        </p>
+      </div>
+
+      {/* Sell the Future Section */}
+      <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md shadow-sm">
+        <h2 className="text-lg font-bold text-blue-800 mb-2">Sell the Future</h2>
+        <p className="text-blue-900 mb-2">
+          Once you know who you want to hire after the test project, find out what the candidate really wants. Your company has a lot to offer: promotional opportunities, a great paycheck, friends, community, personal and professional growth, network enhancement, resume building, and the potential for a lifelong career.
+        </p>
+      </div>
+
+      {/* Hire Right, Save Time Section */}
+      <div className="bg-purple-50 border-l-4 border-purple-400 p-4 rounded-md shadow-sm">
+        <h2 className="text-lg font-bold text-purple-800 mb-2">Hire Right, Save Time</h2>
+        <p className="text-purple-900">
+          The goal isn't just to fill a role—it's to move tasks off your plate and onto someone else. Sell and sell hard, because top talent is a game changer.
+        </p>
+      </div>
+
+      {/* Existing Section: For every hire, we always ask */}
       <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md shadow-sm">
         <div className="flex items-center">
           <AlertTriangle className="h-5 w-5 text-blue-600 mr-3" />
