@@ -155,7 +155,7 @@ const navigationConfig = [
       },
       { id: "milestone", label: "Milestone", shortForm: "Mi", icon: ThumbsUp },
       { id: "feedback", label: "Feedback", shortForm: "Fe", icon: ThumbsUp },
-      { id: "issue_statement", label: "Issue Statement", shortForm: "Is", icon: ThumbsUp }
+      { id: "issue_statement", label: "Parking Lots", shortForm: "Pl", icon: ThumbsUp }
     ],
   },
   {
