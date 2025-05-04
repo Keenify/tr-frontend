@@ -372,12 +372,12 @@ function Flow({ session, mindmapId }: MindMapProps) {
             </button>
             <h2 style={{ fontSize: '1.35rem', fontWeight: 700, marginBottom: 14, color: '#1e293b' }}>How to Use the Mind Map</h2>
             <ol style={{ paddingLeft: 24, margin: 0, color: '#334155', fontSize: '1rem' }}>
-              <li style={{ marginBottom: 8 }}><b>Create or Edit a Mind Map:</b> If you’re starting fresh, a root node will appear. If you’re editing, your existing mind map will load automatically.</li>
+              <li style={{ marginBottom: 8 }}><b>Create or Edit a Mind Map:</b> If you're starting fresh, a root node will appear. If you're editing, your existing mind map will load automatically.</li>
               <li style={{ marginBottom: 8 }}><b>Edit Title and Description:</b> Double-click the title or description at the top-left to edit them. Click outside or press enter to save your changes.</li>
               <li style={{ marginBottom: 8 }}><b>Add Nodes:</b> To add a node, point to an existing node until you see the <b>+</b> icon, then drag to empty space.</li>
-              <li style={{ marginBottom: 8 }}><b>Connect Nodes:</b> Drag from a node’s handle to another node to create a connection (edge) between them.</li>
+              <li style={{ marginBottom: 8 }}><b>Connect Nodes:</b> Drag from a node's handle to another node to create a connection (edge) between them.</li>
               <li style={{ marginBottom: 8 }}><b>Edit Node Content:</b> Double-click any node to edit its label or description.</li>
-              <li style={{ marginBottom: 8 }}><b>Save Your Work:</b> Click the “Save Changes” or “Update Mind Map” button at the top-right to save your progress. Unsaved changes will be indicated.</li>
+              <li style={{ marginBottom: 8 }}><b>Save Your Work:</b> Click the "Save Changes" or "Update Mind Map" button at the top-right to save your progress. Unsaved changes will be indicated.</li>
               <li style={{ marginBottom: 8 }}><b>Auto-Save & Warnings:</b> The tool auto-detects unsaved changes and warns you if you try to leave before saving.</li>
             </ol>
           </div>
@@ -410,23 +410,24 @@ function Flow({ session, mindmapId }: MindMapProps) {
           fitView
         >
           <Controls showInteractive={false} />
-          <Panel position="top-left" className="header z-50 mt-16">
-            <div className="flex flex-col gap-2">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <Panel position="top-left" className="header z-50 mt-16 w-full px-4">
+            <div className="flex justify-between items-start gap-4">
+              {/* Left side: Title and Description */}
+              <div className="flex flex-col gap-2 w-[600px]">
                 <input
                   type="text"
-                  className={`text-xl font-semibold transition-all duration-150 ${
+                  className={`font-semibold transition-all duration-150 ${
                     isTitleEditing
-                      ? 'bg-white border-blue-500 border-2 shadow-lg'
-                      : 'bg-gray-50 border border-gray-300 shadow-sm text-black'
+                      ? 'text-2xl bg-white border-blue-500 border-2 shadow-lg text-black'
+                      : 'text-xl bg-gray-50 border border-gray-300 shadow-sm text-black'
                   }`}
                   style={{
                     minWidth: 220,
-                    maxWidth: 340,
+                    maxWidth: 600,
                     borderRadius: 8,
                     padding: '10px 16px',
                     outline: 'none',
-                    marginBottom: 2,
+                    marginBottom: 4, // Increased space below title
                   }}
                   value={title}
                   placeholder="Double click to edit title"
@@ -435,10 +436,52 @@ function Flow({ session, mindmapId }: MindMapProps) {
                   onChange={handleTitleChange}
                   onBlur={() => setIsTitleEditing(false)}
                 />
-                <button 
+                <textarea
+                  className={`transition-all duration-150 resize-none ${
+                    isDescriptionEditing
+                      ? 'text-base bg-white border-blue-500 border-2 shadow-lg text-black'
+                      : 'text-sm bg-gray-50 border border-gray-300 shadow-sm text-black'
+                  }`}
+                  style={{
+                    minWidth: 220,
+                    maxWidth: 600,
+                    borderRadius: 8,
+                    padding: '10px 16px',
+                    outline: 'none',
+                    overflowY: 'hidden', // Hide scrollbar initially
+                    minHeight: '40px', // Minimum height for one line
+                  }}
+                  value={description}
+                  placeholder="Double click to edit description"
+                  readOnly={!isDescriptionEditing}
+                  onDoubleClick={() => setIsDescriptionEditing(true)}
+                  onChange={(e) => {
+                    handleDescriptionChange(e);
+                    // Auto-resize height
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${e.target.scrollHeight}px`;
+                  }}
+                  onBlur={(e) => {
+                    setIsDescriptionEditing(false);
+                    // Ensure height is reset on blur if empty or matches content
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${e.target.scrollHeight}px`;
+                  }}
+                  // Set initial height on load
+                  ref={(textarea) => {
+                    if (textarea) {
+                      textarea.style.height = 'auto';
+                      textarea.style.height = `${textarea.scrollHeight}px`;
+                    }
+                  }}
+                />
+              </div>
+
+              {/* Right side: Buttons */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
                   onClick={handleSave}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow-sm font-semibold transition-all"
-                  style={{ marginLeft: 4 }}
                 >
                   {hasUnsavedChanges ? '* Save Changes' : (currentMindMapId ? 'Update Mind Map' : 'Create Mind Map')}
                 </button>
@@ -447,7 +490,6 @@ function Flow({ session, mindmapId }: MindMapProps) {
                   aria-label="Show Mind Map Instructions"
                   title="Show Mind Map Instructions"
                   style={{
-                    marginLeft: 6,
                     background: 'none',
                     border: 'none',
                     padding: 0,
@@ -464,28 +506,6 @@ function Flow({ session, mindmapId }: MindMapProps) {
                   </svg>
                 </button>
               </div>
-              <textarea
-                className={`text-sm transition-all duration-150 resize-none ${
-                  isDescriptionEditing
-                    ? 'bg-white border-blue-500 border-2 shadow-lg'
-                    : 'bg-gray-50 border border-gray-300 shadow-sm text-black'
-                }`}
-                style={{
-                  minWidth: 220,
-                  maxWidth: 340,
-                  borderRadius: 8,
-                  padding: '10px 16px',
-                  outline: 'none',
-                  marginTop: 2,
-                }}
-                rows={2}
-                value={description}
-                placeholder="Double click to edit description"
-                readOnly={!isDescriptionEditing}
-                onDoubleClick={() => setIsDescriptionEditing(true)}
-                onChange={handleDescriptionChange}
-                onBlur={() => setIsDescriptionEditing(false)}
-              />
             </div>
           </Panel>
         </ReactFlow>
