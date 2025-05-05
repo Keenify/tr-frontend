@@ -33,10 +33,10 @@ interface ExportPriceTierModalProps {
 
 // Define type for error states
 type TierFormErrors = {
-    fob_price_per_carton?: boolean;
-    fob_price_per_unit?: boolean;
+    fob_price_per_carton?: boolean; // Keep for potential future use if needed, but primarily for display
+    fob_price_per_unit?: boolean; // Now tracks manual input error
     recommended_rrp?: boolean;
-    pack_per_carton?: boolean; // Added error state for new field
+    pack_per_carton?: boolean;
     tier_name?: boolean; // Added for completeness if needed later
 };
 
@@ -56,8 +56,8 @@ export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
     const [editFormErrors, setEditFormErrors] = useState<TierFormErrors>({});
     const [newTierData, setNewTierData] = useState<Omit<CreateProductExportPriceTierRequest, 'product_id' | 'fob_price_per_carton' | 'fob_price_per_unit' | 'recommended_rrp'> & { fob_price_per_carton: string, fob_price_per_unit: string, recommended_rrp: string, pack_per_carton: string }>({
         tier_name: '',
-        fob_price_per_carton: '',
-        fob_price_per_unit: '',
+        fob_price_per_carton: '', // Starts empty, will be calculated
+        fob_price_per_unit: '', // Manual input
         recommended_rrp: '',
         pack_per_carton: '',
         is_active: true,
@@ -90,48 +90,49 @@ export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
         }
     }, [isOpen, productId, fetchPriceTiers]);
 
-    // Effect to auto-calculate FOB/Unit for the NEW tier form
+    // Effect to auto-calculate FOB/Carton for the NEW tier form
     useEffect(() => {
-        const cartonPrice = parseFloat(newTierData.fob_price_per_carton);
+        const unitPrice = parseFloat(newTierData.fob_price_per_unit);
         const packSize = parseInt(newTierData.pack_per_carton, 10);
 
-        if (!isNaN(cartonPrice) && !isNaN(packSize) && packSize > 0) {
-            const unitPrice = (cartonPrice / packSize).toFixed(2);
+        if (!isNaN(unitPrice) && !isNaN(packSize) && packSize > 0) {
+            const cartonPrice = (unitPrice * packSize).toFixed(2);
             // Only update if the calculated value is different to avoid infinite loops
-            if (unitPrice !== newTierData.fob_price_per_unit) {
-                 setNewTierData(prev => ({ ...prev, fob_price_per_unit: unitPrice }));
-                 // Clear potential error for fob_price_per_unit as it's now calculated
-                 setNewTierErrors(prev => ({ ...prev, fob_price_per_unit: false }));
+            if (cartonPrice !== newTierData.fob_price_per_carton) {
+                 setNewTierData(prev => ({ ...prev, fob_price_per_carton: cartonPrice }));
+                 // Clear potential error for fob_price_per_carton as it's now calculated
+                 setNewTierErrors(prev => ({ ...prev, fob_price_per_carton: false }));
             }
-        } else if (newTierData.fob_price_per_unit !== '') {
-             // Clear the unit price if inputs are invalid/incomplete, unless already empty
-             setNewTierData(prev => ({ ...prev, fob_price_per_unit: '' }));
+        } else if (newTierData.fob_price_per_carton !== '') {
+             // Clear the carton price if inputs are invalid/incomplete, unless already empty
+             setNewTierData(prev => ({ ...prev, fob_price_per_carton: '' }));
         }
-    }, [newTierData.fob_price_per_carton, newTierData.pack_per_carton, newTierData.fob_price_per_unit]);
+    }, [newTierData.fob_price_per_unit, newTierData.pack_per_carton, newTierData.fob_price_per_carton]);
 
-    // Effect to auto-calculate FOB/Unit for the EDIT tier form
+    // Effect to auto-calculate FOB/Carton for the EDIT tier form
     useEffect(() => {
-        const cartonPrice = parseFloat(editFormData.fob_price_per_carton ?? '');
+        const unitPrice = parseFloat(editFormData.fob_price_per_unit ?? '');
         const packSize = parseInt(editFormData.pack_per_carton ?? '', 10);
 
-        if (!isNaN(cartonPrice) && !isNaN(packSize) && packSize > 0) {
-            const unitPrice = (cartonPrice / packSize).toFixed(2);
+        if (!isNaN(unitPrice) && !isNaN(packSize) && packSize > 0) {
+            const cartonPrice = (unitPrice * packSize).toFixed(2);
              // Only update if the calculated value is different
-             if (unitPrice !== editFormData.fob_price_per_unit) {
-                setEditFormData(prev => ({ ...prev, fob_price_per_unit: unitPrice }));
-                 // Clear potential error for fob_price_per_unit
-                 setEditFormErrors(prev => ({ ...prev, fob_price_per_unit: false }));
+             if (cartonPrice !== editFormData.fob_price_per_carton) {
+                setEditFormData(prev => ({ ...prev, fob_price_per_carton: cartonPrice }));
+                 // Clear potential error for fob_price_per_carton
+                 setEditFormErrors(prev => ({ ...prev, fob_price_per_carton: false }));
             }
-        } else if (editFormData.fob_price_per_unit !== ''){
-            // Clear the unit price if inputs are invalid/incomplete, unless already empty
-            setEditFormData(prev => ({ ...prev, fob_price_per_unit: '' }));
+        } else if (editFormData.fob_price_per_carton !== ''){
+            // Clear the carton price if inputs are invalid/incomplete, unless already empty
+            setEditFormData(prev => ({ ...prev, fob_price_per_carton: '' }));
         }
-    }, [editFormData.fob_price_per_carton, editFormData.pack_per_carton, editFormData.fob_price_per_unit]);
+    }, [editFormData.fob_price_per_unit, editFormData.pack_per_carton, editFormData.fob_price_per_carton]);
 
      const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>, id: number | null = null) => {
         const { name, value, type } = e.target;
         let processedValue: string | boolean = value;
-        const isPriceField = ['fob_price_per_carton', 'recommended_rrp'].includes(name); // Removed fob_price_per_unit
+        // Check for manual price fields: FOB/Unit and RRP
+        const isPriceField = ['fob_price_per_unit', 'recommended_rrp'].includes(name);
         const isPackField = name === 'pack_per_carton';
         let isNumericValid = true;
 
@@ -167,16 +168,16 @@ export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
         const targetData = isNewTier ? newTierData : editFormData;
         const targetErrors = isNewTier ? newTierErrors : editFormErrors;
 
-        const allFieldsFilled = 
+        const allFieldsFilled =
             targetData.tier_name?.trim() !== '' &&
-            targetData.fob_price_per_carton !== '' &&
-            targetData.fob_price_per_unit !== '' && // Still check calculated field isn't empty
+            targetData.fob_price_per_carton !== '' && // Check calculated field isn't empty
+            targetData.fob_price_per_unit !== '' &&   // Check manual field isn't empty
             targetData.recommended_rrp !== '' &&
             targetData.pack_per_carton !== '';
 
-        const allNumericValid = 
-            !targetErrors.fob_price_per_carton &&
-            // !targetErrors.fob_price_per_unit && // No longer check error state for calculated field
+        const allNumericValid =
+            // !targetErrors.fob_price_per_carton && // No need to check error state for calculated field
+            !targetErrors.fob_price_per_unit &&     // Check manual unit price error
             !targetErrors.recommended_rrp &&
             !targetErrors.pack_per_carton;
 
@@ -185,7 +186,8 @@ export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
 
     const handleAddTier = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!productId || newTierErrors.fob_price_per_carton || newTierErrors.recommended_rrp || newTierErrors.pack_per_carton) {
+        // Validate manual inputs
+        if (!productId || newTierErrors.fob_price_per_unit || newTierErrors.recommended_rrp || newTierErrors.pack_per_carton) {
             setError("Please fix the errors in the form.");
             return;
         }
@@ -196,34 +198,38 @@ export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
             if (!newTierData.tier_name.trim()) {
                 throw new Error("Tier Name cannot be empty.");
             }
+            // Use calculated carton price, validate manual unit price
             const fobCarton = parseFloat(newTierData.fob_price_per_carton) || 0;
             const fobUnit = parseFloat(newTierData.fob_price_per_unit) || 0;
             const rrp = parseFloat(newTierData.recommended_rrp) || 0;
             const packPerCarton = parseInt(newTierData.pack_per_carton, 10);
 
-            if (fobCarton < 0 || fobUnit < 0 || rrp < 0 || packPerCarton < 0) { 
+            if (fobCarton < 0 || fobUnit < 0 || rrp < 0 || packPerCarton < 0) {
                  throw new Error("Prices, RRP, and Pack Size cannot be negative.");
             }
              if (isNaN(packPerCarton)) {
                  throw new Error("Pack Size must be a valid integer.");
              }
+             if (isNaN(fobUnit)) { // Check manual unit price
+                 throw new Error("FOB/Unit must be a valid number.");
+             }
 
             // Pass packPerCarton to createExportPriceTier
             await createExportPriceTier(
                 newTierData.tier_name,
-                fobCarton,
-                fobUnit,
+                fobCarton, // Use calculated
+                fobUnit, // Use manual
                 rrp,
-                packPerCarton, // Pass the value here
+                packPerCarton,
                 newTierData.is_active,
                 productId
             );
-            setNewTierData({ 
+            setNewTierData({
                 tier_name: '',
                 fob_price_per_carton: '',
                 fob_price_per_unit: '',
                 recommended_rrp: '',
-                pack_per_carton: '', 
+                pack_per_carton: '',
                 is_active: true,
             });
              setNewTierErrors({});
@@ -240,7 +246,8 @@ export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
     };
 
     const handleUpdateTier = async (id: number) => {
-        if (!editFormData || editFormErrors.fob_price_per_carton || editFormErrors.recommended_rrp || editFormErrors.pack_per_carton) {
+        // Validate manual inputs
+        if (!editFormData || editFormErrors.fob_price_per_unit || editFormErrors.recommended_rrp || editFormErrors.pack_per_carton) {
             setError("Please fix the errors in the form.");
             return;
         }
@@ -251,26 +258,30 @@ export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
             if (!editFormData.tier_name?.trim()) {
                 throw new Error("Tier Name cannot be empty.");
             }
+             // Use calculated carton price, validate manual unit price
             const fobCarton = parseFloat(editFormData.fob_price_per_carton ?? '') || 0;
             const fobUnit = parseFloat(editFormData.fob_price_per_unit ?? '') || 0;
             const rrp = parseFloat(editFormData.recommended_rrp ?? '') || 0;
             const packPerCarton = parseInt(editFormData.pack_per_carton ?? '', 10);
 
-             if (fobCarton < 0 || fobUnit < 0 || rrp < 0 || packPerCarton < 0) { 
+             if (fobCarton < 0 || fobUnit < 0 || rrp < 0 || packPerCarton < 0) {
                  throw new Error("Prices, RRP, and Pack Size cannot be negative.");
             }
             if (isNaN(packPerCarton)) {
                  throw new Error("Pack Size must be a valid integer.");
+             }
+             if (isNaN(fobUnit)) { // Check manual unit price
+                 throw new Error("FOB/Unit must be a valid number.");
              }
 
             // Pass packPerCarton to updateExportPriceTier
             await updateExportPriceTier(
                 id,
                 editFormData.tier_name ?? '',
-                fobCarton,
-                fobUnit,
+                fobCarton, // Use calculated
+                fobUnit, // Use manual
                 rrp,
-                packPerCarton, // Pass the value here
+                packPerCarton,
                 editFormData.is_active ?? true
             );
             setIsEditing(null);
@@ -396,8 +407,10 @@ export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
                                             <>
                                                 {/* Editing Row */}
                                                 <td className="border p-1"><input type="text" name="tier_name" value={editFormData.tier_name ?? ''} onChange={(e) => handleInputChange(e, tier.id)} className={`w-full ${inputBaseClass}`} aria-label="Edit Tier Name"/></td>
-                                                <td className="border p-1"><input type="text" inputMode="decimal" name="fob_price_per_carton" value={editFormData.fob_price_per_carton ?? ''} onChange={(e) => handleInputChange(e, tier.id)} className={`w-24 text-right ${inputBaseClass} ${editFormErrors.fob_price_per_carton ? inputErrorClass : ''}`} aria-label="Edit FOB Price Per Carton"/></td>
-                                                <td className="border p-1"><input type="text" inputMode="decimal" name="fob_price_per_unit" value={editFormData.fob_price_per_unit ?? ''} readOnly className={`w-24 text-right bg-gray-100 ${inputBaseClass}`} aria-label="Calculated FOB Price Per Unit"/></td>
+                                                {/* FOB/Carton (Calculated) */}
+                                                <td className="border p-1"><input type="text" inputMode="decimal" name="fob_price_per_carton" value={editFormData.fob_price_per_carton ?? ''} readOnly className={`w-24 text-right bg-gray-100 text-gray-500 ${inputBaseClass}`} aria-label="Calculated FOB Price Per Carton"/></td>
+                                                {/* FOB/Unit (Manual Input) */}
+                                                <td className="border p-1"><input type="text" inputMode="decimal" name="fob_price_per_unit" value={editFormData.fob_price_per_unit ?? ''} onChange={(e) => handleInputChange(e, tier.id)} className={`w-24 text-right ${inputBaseClass} ${editFormErrors.fob_price_per_unit ? inputErrorClass : ''}`} aria-label="Edit FOB Price Per Unit"/></td>
                                                 <td className="border p-1"><input type="text" inputMode="decimal" name="recommended_rrp" value={editFormData.recommended_rrp ?? ''} onChange={(e) => handleInputChange(e, tier.id)} className={`w-24 text-right ${inputBaseClass} ${editFormErrors.recommended_rrp ? inputErrorClass : ''}`} aria-label="Edit Recommended RRP"/></td>
                                                 <td className="border p-1"><input type="text" inputMode="numeric" pattern="[0-9]*" name="pack_per_carton" value={editFormData.pack_per_carton ?? ''} onChange={(e) => handleInputChange(e, tier.id)} className={`w-20 text-right ${inputBaseClass} ${editFormErrors.pack_per_carton ? inputErrorClass : ''}`} aria-label="Edit Pack Per Carton"/></td>
                                                 <td className="border p-1 text-center"><input type="checkbox" name="is_active" checked={editFormData.is_active ?? false} onChange={(e) => handleInputChange(e, tier.id)} className="h-4 w-4" aria-label="Edit Active Status"/></td>
@@ -444,19 +457,21 @@ export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
                                              <label className="block text-sm font-medium text-gray-700 mb-1">Tier Name*</label>
                                              <input type="text" name="tier_name" placeholder="e.g., Wholesale" value={newTierData.tier_name} onChange={(e) => handleInputChange(e)} required className={`w-full ${inputBaseClass}`}/>
                                          </div>
+                                         {/* FOB/Carton (Calculated) */}
                                          <div>
                                               <label className="block text-sm font-medium text-gray-700 mb-1">FOB/Carton*</label>
                                               <div className="relative">
-                                                  <input type="text" inputMode="decimal" name="fob_price_per_carton" placeholder="0.00" value={newTierData.fob_price_per_carton} onChange={(e) => handleInputChange(e)} required className={`w-full ${inputBaseClass} ${newTierErrors.fob_price_per_carton ? inputErrorClass : ''}`}/>
-                                                  {newTierErrors.fob_price_per_carton && (
-                                                      <p className="text-red-500 text-xs mt-1">Please enter a valid number</p>
-                                                  )}
+                                                  <input type="text" inputMode="decimal" name="fob_price_per_carton" placeholder="Auto-calculated" value={newTierData.fob_price_per_carton} readOnly required className={`w-full bg-gray-100 text-gray-500 ${inputBaseClass}`}/>
                                               </div>
                                          </div>
+                                         {/* FOB/Unit (Manual) */}
                                           <div>
                                              <label className="block text-sm font-medium text-gray-700 mb-1">FOB/Unit*</label>
                                              <div className="relative">
-                                                 <input type="text" inputMode="decimal" name="fob_price_per_unit" placeholder="Auto-calculated" value={newTierData.fob_price_per_unit} readOnly required className={`w-full bg-gray-100 ${inputBaseClass}`}/>
+                                                 <input type="text" inputMode="decimal" name="fob_price_per_unit" placeholder="0.00" value={newTierData.fob_price_per_unit} onChange={(e) => handleInputChange(e)} required className={`w-full ${inputBaseClass} ${newTierErrors.fob_price_per_unit ? inputErrorClass : ''}`}/>
+                                                 {newTierErrors.fob_price_per_unit && (
+                                                     <p className="text-red-500 text-xs mt-1">Please enter a valid number</p>
+                                                 )}
                                              </div>
                                          </div>
                                          <div>
@@ -485,13 +500,13 @@ export const ExportPriceTierModal: React.FC<ExportPriceTierModalProps> = ({
                                          </div>
                                     </div>
                                      <div className="flex justify-end space-x-2 mt-1">
-                                        <button 
-                                            type="submit" 
+                                        <button
+                                            type="submit"
                                             className={`font-bold py-2 px-4 rounded text-sm ${
-                                                isFormValid() 
-                                                    ? 'bg-green-500 hover:bg-green-700 text-white' 
+                                                isFormValid()
+                                                    ? 'bg-green-500 hover:bg-green-700 text-white'
                                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                            }`} 
+                                            }`}
                                             disabled={isLoading || !isFormValid()}
                                         >
                                             {isLoading ? 'Adding...' : 'Add Tier'}
