@@ -10,7 +10,7 @@ import {
   APIEmploymentType
 } from '../types/hiring.types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_BACKEND_API_DOMAIN || 'http://localhost:8000';
 const STORAGE_BUCKET = import.meta.env.VITE_SUPABASE_STORAGE_BUCKET_ATTACHMENTS || 'attachments';
 
 // Map internal employment type values to API expected values
