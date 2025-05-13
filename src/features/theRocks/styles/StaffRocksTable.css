@@ -35,7 +35,28 @@
   margin-bottom: 0;
 }
 
-/* If you add a custom scrollbar to the modal like .custom-scrollbar */
+/* Staff Rocks action buttons */
+.rock-actions {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  background-color: rgba(255, 255, 255, 0.95);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.group:hover .rock-actions {
+  opacity: 1;
+}
+
+/* Custom scrollbar styling */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -50,24 +71,4 @@
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #555;
-}
-
-.rock-actions {
-  position: absolute;
-  top: 50%;
-  right: 1rem;
-  transform: translateY(-50%);
-  display: flex;
-  gap: 0.5rem;
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out;
-  background-color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-}
-
-.group:hover .rock-actions {
-  opacity: 1;
 } 
