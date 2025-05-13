@@ -1,0 +1,53 @@
+.hint-popup-tooltip {
+  position: fixed;
+  z-index: 100; /* Ensure it's above other content */
+  width: 18rem; /* w-72 */
+  padding: 0.75rem; /* p-3 */
+  background-color: #1f2937; /* bg-gray-800 or bg-gray-900 - using a dark gray */
+  color: white;
+  font-size: 0.75rem; /* text-xs */
+  line-height: 1rem;
+  border-radius: 0.5rem; /* rounded-lg */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+  border: 1px solid #374151; /* border-gray-700 */
+  /* For ring effect, box-shadow can be used or an ::after pseudo-element if needed */
+  /* The following approximates Tailwind's ring-1 ring-black ring-opacity-5 */
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* Dynamic positioning will be applied via CSS variables */
+  top: var(--hint-top);
+  left: var(--hint-left);
+}
+
+.hint-popup-tooltip h4 {
+  font-weight: 600; /* font-semibold */
+  margin-bottom: 0.375rem; /* mb-1.5 */
+  font-size: 0.875rem; /* text-sm */
+  color: #818cf8; /* text-indigo-300, adjust as needed */
+}
+
+.hint-popup-tooltip p {
+  margin-bottom: 0.25rem; /* mb-1 */
+  line-height: 1.625; /* leading-relaxed */
+}
+
+.hint-popup-tooltip p:last-child {
+  margin-bottom: 0;
+}
+
+/* If you add a custom scrollbar to the modal like .custom-scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #555;
+} 
