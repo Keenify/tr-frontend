@@ -6,7 +6,7 @@ export interface StaffRockData {
   manager_user_id?: string | null; // UUID
   go_to_for?: string | null;
   title: string;
-  rock_description: string;
+  rock_description: string | null;
   link_to_higher_level_priorities: string;
   success_criteria: string;
   results_achieved?: string | null;
@@ -22,7 +22,7 @@ export interface CreateStaffRockPayload {
   manager_user_id?: string | null;
   go_to_for?: string | null;
   title: string;
-  rock_description: string;
+  rock_description: string | null;
   link_to_higher_level_priorities: string;
   success_criteria: string;
   results_achieved?: string | null;
@@ -35,7 +35,7 @@ export interface UpdateStaffRockPayload {
   manager_user_id?: string | null;
   go_to_for?: string | null;
   title?: string;
-  rock_description?: string;
+  rock_description?: string | null;
   link_to_higher_level_priorities?: string;
   success_criteria?: string;
   results_achieved?: string | null;

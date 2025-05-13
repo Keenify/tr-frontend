@@ -91,6 +91,7 @@ interface StaffRocksModalProps {
   defaultManagerId: string | null;
   currentUserId?: string;
   onSaveSuccess: () => void;
+  staffRocks?: StaffRockData[];
 }
 
 const StaffRocksModal: React.FC<StaffRocksModalProps> = ({
@@ -104,7 +105,8 @@ const StaffRocksModal: React.FC<StaffRocksModalProps> = ({
   isLoadingParentRocks,
   defaultManagerId,
   currentUserId,
-  onSaveSuccess
+  onSaveSuccess,
+  staffRocks
 }) => {
   const [isFormLoading, setIsFormLoading] = useState(false);
   const [activeHint, setActiveHint] = useState<string | null>(null);
@@ -112,19 +114,33 @@ const StaffRocksModal: React.FC<StaffRocksModalProps> = ({
   const hintContainerRef = useRef<HTMLDivElement>(null);
 
   // Initialize form data with useCallback
-  const initialFormState = useCallback((): CreateStaffRockPayload => ({
-    the_rock_id: '',
-    title: '',
-    rock_description: '',
-    link_to_higher_level_priorities: '',
-    success_criteria: '',
-    employee_user_id: (currentUserId && employedEmployees.find((e: Employee) => e.id === currentUserId)) ? currentUserId : '', 
-    manager_user_id: defaultManagerId,
-    go_to_for: null,
-    results_achieved: null,
-    manager_perspective: null,
-    success_status: null,
-  }), [currentUserId, employedEmployees, defaultManagerId]);
+  const initialFormState = useCallback((): CreateStaffRockPayload => {
+    // If currentUserId is set, look for existing rocks to copy go_to_for
+    let goToForValue = null;
+    if (currentUserId) {
+      // Find any existing rock for this user to grab go_to_for
+      const existingRock = staffRocks?.find(rock => 
+        rock.employee_user_id === currentUserId && rock.go_to_for
+      );
+      if (existingRock && existingRock.go_to_for) {
+        goToForValue = existingRock.go_to_for;
+      }
+    }
+
+    return {
+      the_rock_id: '',
+      title: '',
+      rock_description: null,
+      link_to_higher_level_priorities: '',
+      success_criteria: '',
+      employee_user_id: (currentUserId && employedEmployees.find((e: Employee) => e.id === currentUserId)) ? currentUserId : '', 
+      manager_user_id: defaultManagerId,
+      go_to_for: goToForValue,
+      results_achieved: null,
+      manager_perspective: null,
+      success_status: null,
+    };
+  }, [currentUserId, employedEmployees, defaultManagerId, staffRocks]);
   
   const [formData, setFormData] = useState<CreateStaffRockPayload | StaffRockData>(
     editingStaffRock || initialFormState()
@@ -158,11 +174,30 @@ const StaffRocksModal: React.FC<StaffRocksModalProps> = ({
       valueToSet = null;
     } else if (fieldName === 'success_status') {
       valueToSet = fieldValue as ('red' | 'orange' | 'green' | null);
+    } else if (fieldName === 'rock_description' && fieldValue === '') {
+      valueToSet = null;
     } else {
       valueToSet = fieldValue as string;
     }
 
-    setFormData(prevData => ({ ...prevData, [fieldName]: valueToSet }));
+    // If employee changed, also update go_to_for based on existing data
+    if (fieldName === 'employee_user_id' && valueToSet) {
+      setFormData(prevData => {
+        // Look for existing rocks with this employee to get go_to_for
+        const existingRock = staffRocks?.find(rock => 
+          rock.employee_user_id === valueToSet && rock.go_to_for
+        );
+        
+        return { 
+          ...prevData, 
+          [fieldName]: valueToSet,
+          // Update go_to_for if found in existing rock
+          go_to_for: existingRock?.go_to_for || prevData.go_to_for
+        };
+      });
+    } else {
+      setFormData(prevData => ({ ...prevData, [fieldName]: valueToSet }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -185,7 +220,7 @@ const StaffRocksModal: React.FC<StaffRocksModalProps> = ({
             manager_user_id: formData.manager_user_id as string | null,
             go_to_for: formData.go_to_for,
             title: formData.title,
-            rock_description: formData.rock_description as string,
+            rock_description: formData.rock_description,
             link_to_higher_level_priorities: formData.link_to_higher_level_priorities,
             success_criteria: formData.success_criteria,
             results_achieved: formData.results_achieved,
@@ -375,7 +410,7 @@ const StaffRocksModal: React.FC<StaffRocksModalProps> = ({
                 <form onSubmit={handleSubmit} className="space-y-6 p-1">
                   <fieldset className="border p-4 rounded-md shadow-sm">
                     <legend className="text-md font-semibold px-2 text-gray-700">Assignment</legend>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 mt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mt-2">
                       {renderFieldWithHint('employee_user_id', 'Employee', undefined, 'select', 
                         employedEmployees.map(emp => ({value: emp.id, label: `${emp.first_name} ${emp.last_name}`})), 
                         true 
@@ -383,22 +418,26 @@ const StaffRocksModal: React.FC<StaffRocksModalProps> = ({
                       {renderFieldWithHint('manager_user_id', 'Manager', undefined, 'select', 
                         [{value: null, label: 'Not Set / No Manager'}, ...managerEmployees.map(emp => ({value: emp.id, label: `${emp.first_name} ${emp.last_name}`}))] 
                       )}
-                      {renderFieldWithHint('go_to_for', 'Go To For', 'e.g., Guidance on Project X', 'input')}
+                      <div className="md:col-span-2">
+                        {renderFieldWithHint('go_to_for', 'Go To For', 'e.g., Guidance on Project X', 'input')}
+                      </div>
                     </div>
                   </fieldset>
 
                   <fieldset className="border p-4 rounded-md shadow-sm">
                     <legend className="text-md font-semibold px-2 text-gray-700">The Rock - Planning (Start of FY)</legend>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mt-2">
+                      <div className="md:col-span-2">
+                        {renderFieldWithHint('title', 'Rock Title', 'e.g., Improve Q3 Sales Process', 'input', undefined, true)}
+                      </div>
+                      <div className="md:col-span-2">
+                        {renderFieldWithHint('rock_description', 'Rock Description', 'Detailed description of this staff rock', 'textarea', undefined, false, 2)}
+                      </div>
+                      {renderFieldWithHint('link_to_higher_level_priorities', 'Link to Higher-Level Priorities', 'e.g., Company Goal: Increase Revenue', 'input', undefined, true)}
                       {renderFieldWithHint('the_rock_id', 'Link to Company Rock', undefined, 'select', 
                         parentCompanyRocks.map(pr => ({value: pr.id, label: pr.title})),
                         true
                       )}
-                      {renderFieldWithHint('title', 'Rock Title', 'e.g., Improve Q3 Sales Process', 'input', undefined, true)}
-                      <div className="md:col-span-2">
-                        {renderFieldWithHint('rock_description', 'Rock Description', 'Detailed description of this staff rock', 'textarea', undefined, true, 3)}
-                      </div>
-                      {renderFieldWithHint('link_to_higher_level_priorities', 'Link to Higher-Level Priorities', 'e.g., Company Goal: Increase Revenue', 'input', undefined, true)}
                       <div className="md:col-span-2">
                         {renderFieldWithHint('success_criteria', 'Success Criteria', 'Specific, measurable outcomes for this rock', 'textarea', undefined, true, 3)}
                       </div>

@@ -28,7 +28,12 @@ const CompanyRocksTable: React.FC<CompanyRocksTableProps> = ({ companyId }) => {
     setError(null);
     try {
       const data = await getCompanyTheRocks(companyId);
-      setRocks(data);
+      const sortedData = [...data].sort((a, b) => {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return dateA - dateB;
+      });
+      setRocks(sortedData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch company rocks');
       toast.error(err instanceof Error ? err.message : 'Failed to fetch company rocks');
@@ -192,8 +197,9 @@ const CompanyRocksTable: React.FC<CompanyRocksTableProps> = ({ companyId }) => {
         <table className="min-w-full divide-y divide-gray-200 table-fixed">
           <thead className="bg-gray-50">
             <tr>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[5%]">#</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[15%]">Title</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[30%]">Description</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[25%]">Description</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[15%]">Link to Higher Priorities</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[25%]">Success Criteria</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">Status</th>
@@ -201,8 +207,9 @@ const CompanyRocksTable: React.FC<CompanyRocksTableProps> = ({ companyId }) => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {rocks.map((rock) => (
+            {rocks.map((rock, index) => (
               <tr key={rock.id}>
+                <td className="px-6 py-4 text-sm font-medium text-gray-500 text-center">{index + 1}</td>
                 <td className="px-6 py-4 text-sm font-medium text-gray-900 break-words">{renderTextWithNewlines(rock.title)}</td>
                 <td className="px-6 py-4 text-sm text-gray-500 whitespace-pre-wrap break-words">{renderTextWithNewlines(rock.rock_description)}</td>
                 <td className="px-6 py-4 text-sm text-gray-500 whitespace-pre-wrap break-words">{renderTextWithNewlines(rock.link_to_higher_level_priorities)}</td>

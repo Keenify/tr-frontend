@@ -6,12 +6,19 @@ import { getCompanyTheRocks as fetchAllCompanyRocks } from '../services/useTheRo
 import { useDirectory } from '../../directory/hooks/useDirectory';
 import toast from 'react-hot-toast';
 import { ClipLoader } from 'react-spinners';
+import { Edit2, Trash2, User } from 'react-feather';
 import StaffRocksModal from './StaffRocksModal';
 import '../styles/StaffRocksTable.css';
 
 interface StaffRocksTableProps {
   companyId: string;
   currentUserId?: string;
+}
+
+// Group type to organize rocks by employee
+interface GroupedRocks {
+  employeeId: string;
+  rocks: StaffRockData[];
 }
 
 const StaffRocksTable: React.FC<StaffRocksTableProps> = ({ companyId, currentUserId }) => {
@@ -29,6 +36,36 @@ const StaffRocksTable: React.FC<StaffRocksTableProps> = ({ companyId, currentUse
   const employedEmployees = useMemo(() => {
     return allCompanyEmployees.filter(emp => emp.Is_Employed === true);
   }, [allCompanyEmployees]);
+
+  // Group rocks by employee
+  const groupedStaffRocks = useMemo(() => {
+    const grouped: Record<string, GroupedRocks> = {};
+    
+    staffRocks.forEach(rock => {
+      if (!rock.employee_user_id) return;
+      
+      if (!grouped[rock.employee_user_id]) {
+        grouped[rock.employee_user_id] = {
+          employeeId: rock.employee_user_id,
+          rocks: []
+        };
+      }
+      
+      grouped[rock.employee_user_id].rocks.push(rock);
+    });
+    
+    // Sort rocks by created_at within each group
+    Object.values(grouped).forEach(group => {
+      group.rocks.sort((a, b) => {
+        // Sort by created_at in ascending order (oldest first)
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return dateA - dateB;
+      });
+    });
+    
+    return Object.values(grouped);
+  }, [staffRocks]);
 
   const defaultManagerId = useMemo(() => {
     if (!currentUserId || !employedEmployees.length) return null;
@@ -170,6 +207,7 @@ const StaffRocksTable: React.FC<StaffRocksTableProps> = ({ companyId, currentUse
         defaultManagerId={defaultManagerId}
         currentUserId={currentUserId}
         onSaveSuccess={handleSaveSuccess}
+        staffRocks={staffRocks}
       />
 
       {(isLoading || isLoadingEmployees || isLoadingParentRocks) && !isModalOpen && 
@@ -179,31 +217,58 @@ const StaffRocksTable: React.FC<StaffRocksTableProps> = ({ companyId, currentUse
         </div>
       }
 
-      {staffRocks.length > 0 && !isLoading && staffRocks.map((rock) => {
-        const employee = allCompanyEmployees.find(emp => emp.id === rock.employee_user_id);
-        const manager = allCompanyEmployees.find(emp => emp.id === rock.manager_user_id);
-        const parentRock = parentCompanyRocks.find(pr => pr.id === rock.the_rock_id);
+      {groupedStaffRocks.length > 0 && !isLoading && groupedStaffRocks.map((group) => {
+        // Get the first rock to extract employee and manager info (all rocks in group have same employee)
+        const firstRock = group.rocks[0];
+        const employee = allCompanyEmployees.find(emp => emp.id === firstRock.employee_user_id);
+        const manager = allCompanyEmployees.find(emp => emp.id === firstRock.manager_user_id);
         
         return (
-          <div key={rock.id} className="mb-8 bg-white rounded-lg shadow-md overflow-hidden">
+          <div key={group.employeeId} className="mb-8 bg-white rounded-lg shadow-md overflow-hidden">
             {/* Information Panel */}
             <div className="bg-gray-50 p-4 border-b grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Individual:</h3>
-                <p className="font-semibold text-gray-900">
-                  {employee ? `${employee.first_name} ${employee.last_name}` : 'N/A'}
-                </p>
+              <div className="flex items-center">
+                <h3 className="text-sm font-medium text-gray-500 mr-2">Individual:</h3>
+                <div className="flex items-center">
+                  {employee?.profile_pic_url ? (
+                    <img 
+                      src={employee.profile_pic_url} 
+                      alt={`${employee.first_name} ${employee.last_name}`} 
+                      className="w-8 h-8 rounded-full object-cover mr-2 border border-gray-200"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-2 text-gray-500">
+                      <User size={16} />
+                    </div>
+                  )}
+                  <p className="font-semibold text-gray-900">
+                    {employee ? `${employee.first_name} ${employee.last_name}` : 'N/A'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Manager:</h3>
-                <p className="font-semibold text-gray-900">
-                  {manager ? `${manager.first_name} ${manager.last_name}` : 'N/A'}
-                </p>
+              <div className="flex items-center">
+                <h3 className="text-sm font-medium text-gray-500 mr-2">Manager:</h3>
+                <div className="flex items-center">
+                  {manager?.profile_pic_url ? (
+                    <img 
+                      src={manager.profile_pic_url} 
+                      alt={`${manager.first_name} ${manager.last_name}`} 
+                      className="w-8 h-8 rounded-full object-cover mr-2 border border-gray-200"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-2 text-gray-500">
+                      <User size={16} />
+                    </div>
+                  )}
+                  <p className="font-semibold text-gray-900">
+                    {manager ? `${manager.first_name} ${manager.last_name}` : 'N/A'}
+                  </p>
+                </div>
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Go To For:</h3>
                 <p className="font-semibold text-gray-900">
-                  {rock.go_to_for || 'N/A'}
+                  {firstRock.go_to_for || 'N/A'}
                 </p>
               </div>
             </div>
@@ -213,6 +278,7 @@ const StaffRocksTable: React.FC<StaffRocksTableProps> = ({ companyId, currentUse
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-100">
                   <tr>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-[5%]">#</th>
                     <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-[25%]">Rock</th>
                     <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-[15%]">Linked To</th>
                     <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-[20%]">Success Criteria</th>
@@ -221,40 +287,57 @@ const StaffRocksTable: React.FC<StaffRocksTableProps> = ({ companyId, currentUse
                     <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-[16%]">Manager Perspective</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white">
-                  <tr>
-                    <td className="px-4 py-3 text-sm">
-                      <div className="font-medium text-gray-800">{renderTextWithNewlines(rock.title)}</div>
-                      <div className="text-gray-600 mt-1">{renderTextWithNewlines(rock.rock_description)}</div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {parentRock ? renderTextWithNewlines(parentRock.title) : renderTextWithNewlines(rock.link_to_higher_level_priorities)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {renderTextWithNewlines(rock.success_criteria)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-center">
-                      <div className="flex items-center justify-center">
-                        <div className={`w-6 h-6 rounded-full ${getStatusColor(rock.success_status)}`} 
-                             title={rock.success_status ? rock.success_status.charAt(0).toUpperCase() + rock.success_status.slice(1) : 'Not Set'}>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {group.rocks.map((rock, index) => {
+                    const parentRock = parentCompanyRocks.find(pr => pr.id === rock.the_rock_id);
+                    
+                    return (
+                      <tr key={rock.id} className="group hover:bg-gray-50 transition-colors duration-150 relative">
+                        <td className="px-4 py-3 text-sm font-medium text-gray-500 text-center">{index + 1}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="font-medium text-gray-800">{renderTextWithNewlines(rock.title)}</div>
+                          <div className="text-gray-600 mt-1">{renderTextWithNewlines(rock.rock_description)}</div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {parentRock ? renderTextWithNewlines(parentRock.title) : renderTextWithNewlines(rock.link_to_higher_level_priorities)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {renderTextWithNewlines(rock.success_criteria)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-center">
+                          <div className="flex items-center justify-center">
+                            <div className={`w-6 h-6 rounded-full ${getStatusColor(rock.success_status)}`} 
+                                title={rock.success_status ? rock.success_status.charAt(0).toUpperCase() + rock.success_status.slice(1) : 'Not Set'}>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {renderTextWithNewlines(rock.results_achieved)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {renderTextWithNewlines(rock.manager_perspective)}
+                        </td>
+                        <div className="rock-actions z-10">
+                          <button 
+                            onClick={() => handleEdit(rock)} 
+                            className="p-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-full"
+                            title="Edit Rock"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(rock.id)} 
+                            className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full"
+                            title="Delete Rock"
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {renderTextWithNewlines(rock.results_achieved)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {renderTextWithNewlines(rock.manager_perspective)}
-                    </td>
-                  </tr>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
-            </div>
-            
-            {/* Actions */}
-            <div className="bg-gray-50 px-4 py-2 text-right">
-              <button onClick={() => handleEdit(rock)} className="text-indigo-600 hover:text-indigo-800 transition-colors duration-150 mr-4">Edit</button>
-              <button onClick={() => handleDelete(rock.id)} className="text-red-500 hover:text-red-700 transition-colors duration-150">Delete</button>
             </div>
           </div>
         );
