@@ -56,6 +56,7 @@ import Integration from "./features/integration/components/Integration";
 import GoogleOAuthCallback from "./features/integration/components/GoogleOAuthCallback";
 import BusinessQuadrant from "./features/company/components/BusinessQuadrant";
 import CashAccelerationStrategies from "./features/cash/components/CashAccelerationStrategies";
+import TheRocksMain from "./features/theRocks/components/main";
 
 // Import the public daily huddle component
 import PublicDailyHuddle from "./features/dailyHuddle/components/PublicDailyHuddle";
@@ -735,6 +736,25 @@ const App: React.FC = () => {
                           onTabChange={() => {}}
                         >
                           <CashAccelerationStrategies session={session} />
+                        </DashboardLayout>
+                      }
+                    />
+                  }
+                />
+                <Route
+                  path="/:userId/theRocks"
+                  element={
+                    <ProtectedRoute
+                      session={session}
+                      element={
+                        <DashboardLayout
+                          session={session}
+                          signOut={signOut}
+                          activeTab="thePlan"
+                          activeSubTab="theRocks"
+                          onTabChange={() => {}}
+                        >
+                          <TheRocksMain />
                         </DashboardLayout>
                       }
                     />

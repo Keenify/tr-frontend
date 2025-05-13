@@ -165,6 +165,7 @@ const navigationConfig = [
     icon: IconFlagStar,
     isExpandable: true,
     subTabs: [
+      { id: "theRocks", label: "The Rocks", shortForm: "TR", icon: ThumbsUp },
       { id: "peak", label: "Peak", shortForm: "Pe", icon: ThumbsUp },
       { id: "vivid_vision", label: "Vivid Vision", shortForm: "Vv", icon: ThumbsUp },
       { id: "businessQuadrant", label: "Business Quadrant", shortForm: "Bq", icon: ThumbsUp }
@@ -211,7 +212,8 @@ type SubTabType =
   | "vivid_vision"
   | "businessQuadrant"
   | "ccc"
-  | "issue_statement";
+  | "issue_statement"
+  | "theRocks";
 
 interface LayoutProps {
   children: React.ReactNode;
