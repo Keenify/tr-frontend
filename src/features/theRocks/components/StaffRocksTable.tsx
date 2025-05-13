@@ -121,6 +121,13 @@ const StaffRocksTable: React.FC<StaffRocksTableProps> = ({ companyId, currentUse
     ));
   };
 
+  const getStatusColor = (status: 'red' | 'orange' | 'green' | null) => {
+    if (status === 'green') return 'bg-green-500';
+    if (status === 'orange') return 'bg-yellow-500';
+    if (status === 'red') return 'bg-red-500';
+    return 'bg-gray-300';
+  };
+
   if (error) return <p className="text-red-500 bg-red-50 p-3 rounded-md">Error: {error}</p>;
   if (employeesError && !isLoadingEmployees) return <p className="text-red-500 bg-red-50 p-3 rounded-md">Error loading employees: {employeesError}</p>;
 
@@ -172,53 +179,92 @@ const StaffRocksTable: React.FC<StaffRocksTableProps> = ({ companyId, currentUse
         </div>
       }
 
-      <div className="shadow-md overflow-x-auto border border-gray-200 rounded-lg">
-        <table className="min-w-full divide-y divide-gray-200 table-fixed">
-          <thead className="bg-gray-100">
-            <tr>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-[18%]">Rock Title</th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-[12%]">Employee</th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-[12%]">Manager</th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-[28%]">Description</th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-[15%]">Linked To</th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-[10%]">Status</th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-[5%]">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {staffRocks.map((rock) => {
-              const employee = allCompanyEmployees.find(emp => emp.id === rock.employee_user_id);
-              const manager = allCompanyEmployees.find(emp => emp.id === rock.manager_user_id);
-              const parentRock = parentCompanyRocks.find(pr => pr.id === rock.the_rock_id);
-              return (
-                <tr key={rock.id} className="hover:bg-gray-50 transition-colors duration-150">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-800 break-words">{renderTextWithNewlines(rock.title)}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{employee ? `${employee.first_name} ${employee.last_name}` : (rock.employee_user_id || 'N/A')}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{manager ? `${manager.first_name} ${manager.last_name}` : (rock.manager_user_id || 'N/A')}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600 whitespace-pre-wrap break-words">{renderTextWithNewlines(rock.rock_description)}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600 whitespace-pre-wrap break-words">{parentRock ? renderTextWithNewlines(parentRock.title) : renderTextWithNewlines(rock.link_to_higher_level_priorities)}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${rock.success_status === 'green' ? 'bg-green-100 text-green-800' : rock.success_status === 'orange' ? 'bg-yellow-100 text-yellow-800' : rock.success_status === 'red' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-700'}`}>
-                      {rock.success_status ? rock.success_status.charAt(0).toUpperCase() + rock.success_status.slice(1) : 'Not Set'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-center text-sm font-medium">
-                    <button onClick={() => handleEdit(rock)} className="text-indigo-600 hover:text-indigo-800 transition-colors duration-150 mr-2">Edit</button>
-                    <button onClick={() => handleDelete(rock.id)} className="text-red-500 hover:text-red-700 transition-colors duration-150">Delete</button>
-                  </td>
-                </tr>
-              )}
-            )}
-             {staffRocks.length === 0 && !isLoading && (
-              <tr>
-                <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
-                  No staff rocks found{selectedEmployeeFilter !== 'all' ? ' for the selected employee' : ''}.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {staffRocks.length > 0 && !isLoading && staffRocks.map((rock) => {
+        const employee = allCompanyEmployees.find(emp => emp.id === rock.employee_user_id);
+        const manager = allCompanyEmployees.find(emp => emp.id === rock.manager_user_id);
+        const parentRock = parentCompanyRocks.find(pr => pr.id === rock.the_rock_id);
+        
+        return (
+          <div key={rock.id} className="mb-8 bg-white rounded-lg shadow-md overflow-hidden">
+            {/* Information Panel */}
+            <div className="bg-gray-50 p-4 border-b grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Individual:</h3>
+                <p className="font-semibold text-gray-900">
+                  {employee ? `${employee.first_name} ${employee.last_name}` : 'N/A'}
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Manager:</h3>
+                <p className="font-semibold text-gray-900">
+                  {manager ? `${manager.first_name} ${manager.last_name}` : 'N/A'}
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Go To For:</h3>
+                <p className="font-semibold text-gray-900">
+                  {rock.go_to_for || 'N/A'}
+                </p>
+              </div>
+            </div>
+            
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-[25%]">Rock</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-[15%]">Linked To</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-[20%]">Success Criteria</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-[8%]">Status</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-[16%]">Results Achieved</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-[16%]">Manager Perspective</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white">
+                  <tr>
+                    <td className="px-4 py-3 text-sm">
+                      <div className="font-medium text-gray-800">{renderTextWithNewlines(rock.title)}</div>
+                      <div className="text-gray-600 mt-1">{renderTextWithNewlines(rock.rock_description)}</div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {parentRock ? renderTextWithNewlines(parentRock.title) : renderTextWithNewlines(rock.link_to_higher_level_priorities)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {renderTextWithNewlines(rock.success_criteria)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-center">
+                      <div className="flex items-center justify-center">
+                        <div className={`w-6 h-6 rounded-full ${getStatusColor(rock.success_status)}`} 
+                             title={rock.success_status ? rock.success_status.charAt(0).toUpperCase() + rock.success_status.slice(1) : 'Not Set'}>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {renderTextWithNewlines(rock.results_achieved)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {renderTextWithNewlines(rock.manager_perspective)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Actions */}
+            <div className="bg-gray-50 px-4 py-2 text-right">
+              <button onClick={() => handleEdit(rock)} className="text-indigo-600 hover:text-indigo-800 transition-colors duration-150 mr-4">Edit</button>
+              <button onClick={() => handleDelete(rock.id)} className="text-red-500 hover:text-red-700 transition-colors duration-150">Delete</button>
+            </div>
+          </div>
+        );
+      })}
+
+      {staffRocks.length === 0 && !isLoading && (
+        <div className="bg-white rounded-lg shadow-md p-6 text-center text-gray-500">
+          No staff rocks found{selectedEmployeeFilter !== 'all' ? ' for the selected employee' : ''}.
+        </div>
+      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { StaffRockData, CreateStaffRockPayload, UpdateStaffRockPayload } from '../types/staffRocks';
 import { TheRockData } from '../types/theRocks';
 import { createStaffRock, updateStaffRock } from '../services/useStaffRocks';
@@ -254,6 +254,13 @@ const StaffRocksModal: React.FC<StaffRocksModalProps> = ({
     };
   }, [activeHint]);
 
+  // Add a useMemo to filter managers
+  const managerEmployees = useMemo(() => {
+    return employedEmployees.filter(emp => 
+      emp.role.toLowerCase().includes('manager')
+    );
+  }, [employedEmployees]);
+
   const renderFieldWithHint = (
     fieldName: keyof CreateStaffRockPayload | keyof UpdateStaffRockPayload | 'parent_rock_title' | 'success_status_picker',
     label: string, 
@@ -374,7 +381,7 @@ const StaffRocksModal: React.FC<StaffRocksModalProps> = ({
                         true 
                       )}
                       {renderFieldWithHint('manager_user_id', 'Manager', undefined, 'select', 
-                        [{value: null, label: 'Not Set / No Manager'}, ...employedEmployees.map(emp => ({value: emp.id, label: `${emp.first_name} ${emp.last_name}`}))] 
+                        [{value: null, label: 'Not Set / No Manager'}, ...managerEmployees.map(emp => ({value: emp.id, label: `${emp.first_name} ${emp.last_name}`}))] 
                       )}
                       {renderFieldWithHint('go_to_for', 'Go To For', 'e.g., Guidance on Project X', 'input')}
                     </div>
