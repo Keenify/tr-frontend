@@ -754,7 +754,7 @@ const App: React.FC = () => {
                           activeSubTab="theRocks"
                           onTabChange={() => {}}
                         >
-                          <TheRocksMain />
+                          <TheRocksMain session={session} />
                         </DashboardLayout>
                       }
                     />
