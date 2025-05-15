@@ -11,6 +11,13 @@ export const directoryService = {
    * @throws Will throw an error if the fetch operation fails.
    */
   async fetchEmployees(companyId: string): Promise<Employee[]> {
+    // Safety check: don't make API call with empty company ID
+    if (!companyId) {
+      console.error("Company ID is missing - cannot fetch employees");
+      return []; // Return empty array instead of making a bad API call
+    }
+    
+    console.log(`Fetching employees for company ID: ${companyId}`);
     const response = await fetch(
       `${API_BASE_URL}/employees/company/${companyId}`
     );

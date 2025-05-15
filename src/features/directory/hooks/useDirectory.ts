@@ -13,6 +13,14 @@ export const useDirectory = (companyId: string) => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchEmployees = useCallback(async () => {
+    // Skip fetch if company ID is not available
+    if (!companyId) {
+      console.log("Not fetching employees - company ID is missing");
+      setError("Company ID is required to fetch employees");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -26,8 +34,11 @@ export const useDirectory = (companyId: string) => {
   }, [companyId]);
 
   useEffect(() => {
-    fetchEmployees();
-  }, [fetchEmployees]);
+    // Only fetch if we have a company ID
+    if (companyId) {
+      fetchEmployees();
+    }
+  }, [fetchEmployees, companyId]);
 
   const filteredEmployees = employees
     .filter(employee => {
