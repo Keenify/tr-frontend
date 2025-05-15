@@ -1,5 +1,5 @@
 import { Session } from "@supabase/supabase-js";
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 import { useDirectory } from "../../../features/directory/hooks/useDirectory";
 import { Employee } from "../../../shared/types/directory.types";
@@ -56,22 +56,22 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ session, isManager: propIsMan
   const [editMode, setEditMode] = useState<{[key: string]: boolean}>({});
   const [editValues, setEditValues] = useState<{[key: string]: number}>({});
   const [updateError, setUpdateError] = useState<string | null>(null);
-  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
-  
-  // Fetch scoreboards when company ID is available, but avoid excessive API calls
-  const fetchScoreboards = useCallback(async (force = false) => {
+  const lastFetchTimeRef = useRef<number>(0);
+
+  // Fetch scoreboards function stored in a ref to avoid dependency issues
+  const fetchScoreboardsRef = useRef(async (force = false) => {
     if (!companyId) return;
     
     // Prevent excessive calls by implementing a cooldown period
     const now = Date.now();
-    if (!force && now - lastFetchTime < 5000) {
+    if (!force && now - lastFetchTimeRef.current < 5000) {
       console.log("Skipping fetch, last fetch was less than 5 seconds ago");
       return;
     }
     
     try {
       console.log("Fetching scoreboards for company:", companyId);
-      setLastFetchTime(now);
+      lastFetchTimeRef.current = now;
       
       const scoreboards = await getCompanyScoreboards(companyId);
       console.log("Scoreboards data:", scoreboards);
@@ -109,12 +109,67 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ session, isManager: propIsMan
     } catch (error) {
       console.error("Error fetching scoreboards:", error);
     }
-  }, [companyId, directoryEmployees, lastFetchTime]);
+  });
+
+  // Update the ref when dependencies change
+  useEffect(() => {
+    fetchScoreboardsRef.current = async (force = false) => {
+      if (!companyId) return;
+      
+      // Prevent excessive calls by implementing a cooldown period
+      const now = Date.now();
+      if (!force && now - lastFetchTimeRef.current < 5000) {
+        console.log("Skipping fetch, last fetch was less than 5 seconds ago");
+        return;
+      }
+      
+      try {
+        console.log("Fetching scoreboards for company:", companyId);
+        lastFetchTimeRef.current = now;
+        
+        const scoreboards = await getCompanyScoreboards(companyId);
+        console.log("Scoreboards data:", scoreboards);
+        
+        // Create a map of employee_id to scoreboard
+        const scoreboardMap = scoreboards.reduce<Record<string, ScoreboardData>>((acc, sb) => {
+          acc[sb.employee_id] = sb;
+          return acc;
+        }, {});
+        
+        // Merge employee data with scoreboards
+        // Only include employees that are currently employed
+        const withScores = directoryEmployees
+          .filter(emp => emp.Is_Employed) // Only show active employees
+          .map(emp => {
+            const scoreboard = scoreboardMap[emp.id];
+            return {
+              ...emp,
+              score: scoreboard?.score || 0,
+              scoreboardId: scoreboard?.id || null
+            };
+          });
+        
+        // Sort by score (highest first)
+        const sortedEmployees = withScores.sort((a, b) => b.score - a.score);
+        setEmployeesWithScores(sortedEmployees);
+        
+        // Initialize edit values
+        const newEditValues: {[key: string]: number} = {};
+        sortedEmployees.forEach(emp => {
+          newEditValues[emp.id] = emp.score;
+        });
+        setEditValues(newEditValues);
+        
+      } catch (error) {
+        console.error("Error fetching scoreboards:", error);
+      }
+    };
+  }, [companyId, directoryEmployees]);
   
   // Initial data load - only run when directoryEmployees changes or when companyId becomes available
   useEffect(() => {
     if (directoryEmployees.length > 0 && companyId && !employeesLoading) {
-      fetchScoreboards(true); // Force fetch on initial load
+      fetchScoreboardsRef.current(true); // Force fetch on initial load
     }
   }, [directoryEmployees.length, companyId, employeesLoading]);
   
@@ -205,7 +260,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ session, isManager: propIsMan
       }));
       
       // Force a refresh of the data to ensure consistency
-      fetchScoreboards(true);
+      fetchScoreboardsRef.current(true);
       
     } catch (error) {
       console.error("Error updating score:", error);
@@ -227,7 +282,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ session, isManager: propIsMan
   const closeScoreboardManager = () => {
     setIsModalOpen(false);
     // Refresh the leaderboard data when modal is closed
-    fetchScoreboards(true);
+    fetchScoreboardsRef.current(true);
   };
 
   const isLoading = userDataLoading || employeesLoading;
