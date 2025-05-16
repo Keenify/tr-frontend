@@ -1,0 +1,59 @@
+/* Custom styles for react-contexify menus */
+
+.react-contexify {
+  --contexify-menu-bgColor: #ffffff;
+  --contexify-separator-color: #eaeaea;
+  --contexify-item-color: #333333;
+  --contexify-activeItem-color: #ffffff;
+  --contexify-activeItem-bgColor: #4f46e5; /* Indigo-600 */
+  --contexify-rightSlot-color: #878787;
+  --contexify-activeRightSlot-color: #ffffff;
+  --contexify-arrow-color: #858585;
+  --contexify-activeArrow-color: #ffffff;
+  min-width: 180px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-radius: 0.375rem;
+  border: 1px solid rgba(229, 231, 235, 1);
+  z-index: 9999; /* Make sure it's on top of everything */
+}
+
+.react-contexify .react-contexify__item {
+  padding: 0;
+}
+
+.react-contexify .react-contexify__item:not(.react-contexify__item--disabled):hover > .react-contexify__item__content,
+.react-contexify .react-contexify__item:not(.react-contexify__item--disabled):focus > .react-contexify__item__content {
+  background-color: var(--contexify-activeItem-bgColor);
+  color: var(--contexify-activeItem-color);
+}
+
+.react-contexify .react-contexify__item__content {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+/* Add a subtle fade-in animation */
+.react-contexify__will-enter--fade {
+  animation: contexify-fade-in 0.15s ease;
+}
+
+@keyframes contexify-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Animation for the fallback implementation */
+@keyframes context-menu-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 

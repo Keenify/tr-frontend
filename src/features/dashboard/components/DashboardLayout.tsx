@@ -16,6 +16,11 @@ import toast from "react-hot-toast"; // Import toast directly
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 import { IconUsers, IconTargetArrow, IconDeviceComputerCamera, IconChartArrowsVertical, IconProgressCheck, IconSitemap, IconUserHeart, IconFlagStar, IconClipboardList } from '@tabler/icons-react'; // Changed from Users to IconUsers and added IconChartArrowsVertical and IconProgressCheck
 import { uploadUserAvatar } from "../services/avatarService"; // Import avatar service functions
+import NavLinkWithContextMenu from '../../../shared/components/NavLinkWithContextMenu';
+// Import react-contexify styles
+import 'react-contexify/dist/ReactContexify.css';
+// Our components handle context menu functionality with proper styling
+// and will work with or without the react-contexify library
 
 /**
  * Props for the Layout component.
@@ -599,15 +604,14 @@ export function DashboardLayout({
 
         {/* User Profile Section - Updated colors */}
         <div className="flex items-center space-x-4">
-          {/* Todo Shortcut Button - High contrast design that stands out from navbar */}
-          <button
+          {/* Todo Shortcut Button */}
+          <NavLinkWithContextMenu
+            to={`/${userId}/todo`}
             onClick={() => {
-              // First set the parent tab to "process"
               handleTabChange("process");
-              // Then navigate to the todo subtab
               handleSubTabClick("todo");
             }}
-            className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl border border-indigo-500 mr-2 animate-pulse-subtle"
+            className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl border border-indigo-500 mr-2 animate-pulse-subtle cursor-pointer"
           >
             <span className="text-sm font-bold text-white flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -615,17 +619,16 @@ export function DashboardLayout({
               </svg>
               <span className="tracking-wide">Todo</span>
             </span>
-          </button>
+          </NavLinkWithContextMenu>
 
           {/* Daily Huddle Shortcut Button */}
-          <button
+          <NavLinkWithContextMenu
+            to={`/${userId}/dailyHuddle`}
             onClick={() => {
-              // First set the parent tab to "meeting"
               handleTabChange("meeting");
-              // Then navigate to the dailyHuddle subtab
               handleSubTabClick("dailyHuddle");
             }}
-            className="flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl border border-emerald-500 mr-2"
+            className="flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl border border-emerald-500 mr-2 cursor-pointer"
           >
             <span className="text-sm font-bold text-white flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -633,7 +636,7 @@ export function DashboardLayout({
               </svg>
               <span className="tracking-wide">Daily Huddle</span>
             </span>
-          </button>
+          </NavLinkWithContextMenu>
           
           <div className="flex items-center space-x-3">
             <div 
@@ -860,9 +863,11 @@ export function DashboardLayout({
               {filteredNavigation.map((item) => (
                 <div key={item.id} className="py-1">
                   <div className="relative">
-                    <button
+                    <NavLinkWithContextMenu
+                      to={`/${userId}/${item.id}`}
                       onClick={() => handleTabChange(item.id as TabType)}
-                      className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                      isActive={activeTabState === item.id}
+                      className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer ${
                         activeTabState === item.id
                           ? "bg-indigo-600 text-white shadow-lg"
                           : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
@@ -889,7 +894,7 @@ export function DashboardLayout({
                             : ""
                         }`} />
                       )}
-                    </button>
+                    </NavLinkWithContextMenu>
 
                     {/* Show submenu if parent matches search or any child matches */}
                     {item.subTabs && !isSidebarCollapsed && (
@@ -913,10 +918,12 @@ export function DashboardLayout({
                             subTab.label.toLowerCase().includes(searchTerm.toLowerCase())
                           )
                           .map((subTab) => (
-                            <button
+                            <NavLinkWithContextMenu
                               key={subTab.id}
+                              to={`/${userId}/${subTab.id}`}
                               onClick={() => handleSubTabClick(subTab.id as SubTabType)}
-                              className={`w-full flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-colors ${
+                              isActive={localActiveSubTab === subTab.id}
+                              className={`w-full flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-colors cursor-pointer ${
                                 localActiveSubTab === subTab.id
                                   ? "bg-indigo-500/30 text-white"
                                   : "text-gray-400 hover:bg-gray-700/30 hover:text-white"
@@ -924,7 +931,7 @@ export function DashboardLayout({
                             >
                               <subTab.icon size={16} className={localActiveSubTab === subTab.id ? "text-indigo-400" : "text-gray-500"} />
                               <span className="truncate">{subTab.label}</span>
-                            </button>
+                            </NavLinkWithContextMenu>
                           ))}
                       </div>
                     )}
