@@ -10,7 +10,7 @@ import {
 } from "react-feather"; // Import Power, ThumbsUp, and Clock icons from react-feather
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "../../../lib/supabase"; // Import supabase client
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom"; // Removed NavLink as NavLinkWithContextMenu is used
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast"; // Import toast directly
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
@@ -109,9 +109,9 @@ const navigationConfig = [
     label: "Projects",
     shortForm: "Pj",
     icon: IconClipboardList,
-    isExpandable: true,
+    isExpandable: true, // Assuming projects might become expandable
     subTabs: [
-      { id: "projects", label: "Projects", shortForm: "Pj", icon: ThumbsUp },
+      { id: "projects", label: "Projects", shortForm: "Pj", icon: ThumbsUp }, // If this is the only one, isExpandable could be false for the parent
     ],
   },
   {
@@ -186,44 +186,14 @@ type TabType = (typeof navigationConfig)[number]["id"];
 /**
  * Type representing all possible subtab values.
  */
-type SubTabType =
-  | "directory"
-  | "orgChart"
-  | "supplier"
-  | "client"
-  | "hiring"
-  | "calendar"
-  | "accountability"
-  | "leaves"
-  | "feedback"
-  | "salesTab"
-  | "product"
-  | "quotation"
-  | "dailyHuddle"
-  | "financeTab"
-  | "onlineSales"
-  | "playbook"
-  | "projects"
-  | "password"
-  | "resources"
-  | "sandbox"
-  | "todo"
-  | "admin"
-  | "award"
-  | "leaderboard"
-  | "milestone"
-  | "peak"
-  | "integration"
-  | "vivid_vision"
-  | "businessQuadrant"
-  | "ccc"
-  | "issue_statement"
-  | "theRocks";
+type ExtractSubTabIds<T extends typeof navigationConfig> = T[number] extends infer Item ? 
+    Item extends { subTabs: Array<{ id: infer SubId }> } ? SubId : never 
+    : never;
+type SubTabType = ExtractSubTabIds<typeof navigationConfig>;
 
 interface LayoutProps {
   children: React.ReactNode;
   activeTab: TabType;
-  onTabChange: (tab: TabType) => void;
   session: Session;
   signOut: () => void;
   activeSubTab?: SubTabType;
@@ -384,83 +354,63 @@ export function DashboardLayout({
   /**
    * Handles tab changes in the navigation.
    */
-  const handleTabChange = (tab: TabType) => {
-    setActiveTabState(tab);
-
-    // Handle expandable sections
-    switch (tab) {
-      case "people":
-        setIsPeopleSubmenuOpen(!isPeopleSubmenuOpen);
-        return;
-      case "sales":
-        setIsSalesSubmenuOpen(!isSalesSubmenuOpen);
-        return;
-      case "meeting":
-        setIsMeetingSubmenuOpen(!isMeetingSubmenuOpen);
-        return;
-      case "financeData":
-        setIsFinanceDataSubmenuOpen(!isFinanceDataSubmenuOpen);
-        return;
-      case "projects":
-        setIsProjectsSubmenuOpen(!isProjectsSubmenuOpen);
-        return;
-      case "process":
-        setIsProcessSubmenuOpen(!isProcessSubmenuOpen);
-        return;
-      case "technology":
-        setIsTechnologySubmenuOpen(!isTechnologySubmenuOpen);
-        return;
-      case "teamHealth":
-        setIsTeamHealthSubmenuOpen(!isTeamHealthSubmenuOpen);
-        return;
-      case "thePlan":
-        setIsThePlanSubmenuOpen(!isThePlanSubmenuOpen);
-        return;
+  const handleTabToggle = (tabId: TabType) => {
+    // If this tab is already the active one, just toggle its submenu
+    if (activeTabState === tabId) {
+      if (navigationConfig.find(t => t.id === tabId)?.isExpandable) {
+        switch (tabId) {
+          case "people": setIsPeopleSubmenuOpen(prev => !prev); break;
+          case "sales": setIsSalesSubmenuOpen(prev => !prev); break;
+          case "meeting": setIsMeetingSubmenuOpen(prev => !prev); break;
+          case "financeData": setIsFinanceDataSubmenuOpen(prev => !prev); break;
+          case "projects": setIsProjectsSubmenuOpen(prev => !prev); break;
+          case "process": setIsProcessSubmenuOpen(prev => !prev); break;
+          case "technology": setIsTechnologySubmenuOpen(prev => !prev); break;
+          case "teamHealth": setIsTeamHealthSubmenuOpen(prev => !prev); break;
+          case "thePlan": setIsThePlanSubmenuOpen(prev => !prev); break;
+        }
+      }
+    } else {
+      // If a new tab is clicked, set it as active. The useEffect for activeTab will handle opening it.
+      // Also, close all other submenus for a cleaner UI when switching main tabs.
+      setActiveTabState(tabId);
+      setIsPeopleSubmenuOpen(tabId === "people");
+      setIsSalesSubmenuOpen(tabId === "sales");
+      setIsMeetingSubmenuOpen(tabId === "meeting");
+      setIsFinanceDataSubmenuOpen(tabId === "financeData");
+      setIsProjectsSubmenuOpen(tabId === "projects");
+      setIsProcessSubmenuOpen(tabId === "process");
+      setIsTechnologySubmenuOpen(tabId === "technology");
+      setIsTeamHealthSubmenuOpen(tabId === "teamHealth");
+      setIsThePlanSubmenuOpen(tabId === "thePlan");
+      // Note: We don't navigate here. Navigation is handled by sub-tab clicks.
     }
   };
 
   /**
    * Handles subtab selection and navigation
    */
-  const handleSubTabClick = (subTab: SubTabType) => {
-    setLocalActiveSubTab(subTab);
+  const handleSubTabClick = (subTabId: SubTabType, parentTabId: TabType) => {
+    setLocalActiveSubTab(subTabId);
+    // setActiveTabState(parentTabId); // Not strictly needed if activeTab prop handles it
+
+    // Ensure parent submenu is open
+    switch (parentTabId) {
+        case "people": setIsPeopleSubmenuOpen(true); break;
+        case "sales": setIsSalesSubmenuOpen(true); break;
+        case "meeting": setIsMeetingSubmenuOpen(true); break;
+        case "financeData": setIsFinanceDataSubmenuOpen(true); break;
+        case "projects": setIsProjectsSubmenuOpen(true); break;
+        case "process": setIsProcessSubmenuOpen(true); break;
+        case "technology": setIsTechnologySubmenuOpen(true); break;
+        case "teamHealth": setIsTeamHealthSubmenuOpen(true); break;
+        case "thePlan": setIsThePlanSubmenuOpen(true); break;
+    }
+
     if (onSubTabChange) {
-      onSubTabChange(subTab);
+      onSubTabChange(subTabId);
     }
-
-    // Keep submenus open
-    switch (activeTabState) {
-      case "people":
-        setIsPeopleSubmenuOpen(true);
-        break;
-      case "sales":
-        setIsSalesSubmenuOpen(true);
-        break;
-      case "meeting":
-        setIsMeetingSubmenuOpen(true);
-        break;
-      case "financeData":
-        setIsFinanceDataSubmenuOpen(true);
-        break;
-      case "projects":
-        setIsProjectsSubmenuOpen(true);
-        break;
-      case "process":
-        setIsProcessSubmenuOpen(true);
-        break;
-      case "technology":
-        setIsTechnologySubmenuOpen(true);
-        break;
-      case "teamHealth":
-        setIsTeamHealthSubmenuOpen(true);
-        break;
-      case "thePlan":
-        setIsThePlanSubmenuOpen(true);
-        break;
-    }
-
-    // Navigate to the subTab route
-    navigate(`/${userId}/${subTab}`);
+    navigate(`/${userId}/${subTabId}`);
   };
 
   /**
@@ -547,6 +497,25 @@ export function DashboardLayout({
     }
   };
 
+  const getSubmenuOpenState = (tabId: TabType): boolean => {
+    const navItem = filteredNavigation.find(item => item.id === tabId);
+    if (searchTerm.trim() && navItem && (navItem as typeof navigationConfig[number] & { _forceOpenDuringSearch?: boolean })._forceOpenDuringSearch) {
+        return true;
+    }
+    switch (tabId) {
+      case "people": return isPeopleSubmenuOpen;
+      case "sales": return isSalesSubmenuOpen;
+      case "meeting": return isMeetingSubmenuOpen;
+      case "financeData": return isFinanceDataSubmenuOpen;
+      case "projects": return isProjectsSubmenuOpen;
+      case "process": return isProcessSubmenuOpen;
+      case "technology": return isTechnologySubmenuOpen;
+      case "teamHealth": return isTeamHealthSubmenuOpen;
+      case "thePlan": return isThePlanSubmenuOpen;
+      default: return false;
+    }
+  };
+
   /**
    * Main layout structure:
    * 1. Top Bar - Contains company logo and user profile
@@ -608,8 +577,9 @@ export function DashboardLayout({
           <NavLinkWithContextMenu
             to={`/${userId}/todo`}
             onClick={() => {
-              handleTabChange("process");
-              handleSubTabClick("todo");
+              setActiveTabState("process");
+              setIsProcessSubmenuOpen(true);
+              handleSubTabClick("todo" as SubTabType, "process" as TabType);
             }}
             className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl border border-indigo-500 mr-2 animate-pulse-subtle cursor-pointer"
           >
@@ -625,8 +595,9 @@ export function DashboardLayout({
           <NavLinkWithContextMenu
             to={`/${userId}/dailyHuddle`}
             onClick={() => {
-              handleTabChange("meeting");
-              handleSubTabClick("dailyHuddle");
+              setActiveTabState("meeting");
+              setIsMeetingSubmenuOpen(true);
+              handleSubTabClick("dailyHuddle" as SubTabType, "meeting" as TabType);
             }}
             className="flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl border border-emerald-500 mr-2 cursor-pointer"
           >
@@ -863,65 +834,65 @@ export function DashboardLayout({
               {filteredNavigation.map((item) => (
                 <div key={item.id} className="py-1">
                   <div className="relative">
-                    <NavLinkWithContextMenu
-                      to={`/${userId}/${item.id}`}
-                      onClick={() => handleTabChange(item.id as TabType)}
-                      isActive={activeTabState === item.id}
-                      className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer ${
-                        activeTabState === item.id
-                          ? "bg-indigo-600 text-white shadow-lg"
-                          : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
-                      }`}
-                    >
-                      <span className="flex items-center gap-3">
-                        <item.icon size={18} className={activeTabState === item.id ? "text-white" : "text-gray-400"} />
+                    {item.isExpandable ? (
+                      <div // Use a simple div for expandable headers
+                        onClick={() => handleTabToggle(item.id as TabType)}
+                        className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer ${
+                          activeTabState === item.id && getSubmenuOpenState(item.id as TabType)
+                            ? "bg-indigo-700 text-white shadow-md" // Slightly different style for active and open parent
+                            : activeTabState === item.id 
+                            ? "bg-indigo-600 text-white shadow-lg" 
+                            : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
+                        }`}
+                      >
+                        <span className="flex items-center gap-3">
+                          <item.icon size={18} className={activeTabState === item.id ? "text-white" : "text-gray-400"} />
+                          {!isSidebarCollapsed && (
+                            <span className="truncate">{item.label}</span>
+                          )}
+                        </span>
                         {!isSidebarCollapsed && (
-                          <span className="truncate">{item.label}</span>
+                          <ChevronDown size={16} className={`transition-transform duration-200 ${
+                            getSubmenuOpenState(item.id as TabType) ? "rotate-180" : ""
+                          }`} />
                         )}
-                      </span>
-                      {!isSidebarCollapsed && item.isExpandable && (
-                        <ChevronDown size={16} className={`transition-transform duration-200 ${
-                          (item.id === "people" && isPeopleSubmenuOpen) ||
-                          (item.id === "sales" && isSalesSubmenuOpen) ||
-                          (item.id === "meeting" && isMeetingSubmenuOpen) ||
-                          (item.id === "financeData" && isFinanceDataSubmenuOpen) ||
-                          (item.id === "projects" && isProjectsSubmenuOpen) ||
-                          (item.id === "process" && isProcessSubmenuOpen) ||
-                          (item.id === "technology" && isTechnologySubmenuOpen) ||
-                          (item.id === "teamHealth" && isTeamHealthSubmenuOpen) ||
-                          (item.id === "thePlan" && isThePlanSubmenuOpen)
-                            ? "rotate-180"
-                            : ""
-                        }`} />
-                      )}
-                    </NavLinkWithContextMenu>
+                      </div>
+                    ) : (
+                      // For non-expandable items that are direct links (if any in your future config)
+                      <NavLinkWithContextMenu
+                        to={`/${userId}/${item.id}`}
+                        onClick={() => {
+                          setActiveTabState(item.id as TabType); 
+                          // Close all submenus when a non-expandable main tab is clicked
+                          setIsPeopleSubmenuOpen(false);setIsSalesSubmenuOpen(false);setIsMeetingSubmenuOpen(false);setIsFinanceDataSubmenuOpen(false);setIsProjectsSubmenuOpen(false);setIsProcessSubmenuOpen(false);setIsTechnologySubmenuOpen(false);setIsTeamHealthSubmenuOpen(false);setIsThePlanSubmenuOpen(false);
+                        }}
+                        isActive={activeTabState === item.id}
+                        className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer ${
+                          activeTabState === item.id
+                            ? "bg-indigo-600 text-white shadow-lg"
+                            : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
+                        }`}
+                      >
+                         <span className="flex items-center gap-3">
+                          <item.icon size={18} className={activeTabState === item.id ? "text-white" : "text-gray-400"} />
+                          {!isSidebarCollapsed && (
+                            <span className="truncate">{item.label}</span>
+                          )}
+                        </span>
+                      </NavLinkWithContextMenu>
+                    )}
 
-                    {/* Show submenu if parent matches search or any child matches */}
-                    {item.subTabs && !isSidebarCollapsed && (
-                      <div className={`mt-1 ml-4 space-y-1 transition-all duration-200 ${
-                        ((item.id === "people" && isPeopleSubmenuOpen) ||
-                         (item.id === "sales" && isSalesSubmenuOpen) ||
-                         (item.id === "meeting" && isMeetingSubmenuOpen) ||
-                         (item.id === "financeData" && isFinanceDataSubmenuOpen) ||
-                         (item.id === "projects" && isProjectsSubmenuOpen) ||
-                         (item.id === "process" && isProcessSubmenuOpen) ||
-                         (item.id === "technology" && isTechnologySubmenuOpen) ||
-                         (item.id === "teamHealth" && isTeamHealthSubmenuOpen) ||
-                         (item.id === "thePlan" && isThePlanSubmenuOpen) ||
-                         searchTerm.trim() !== "") // Always show if searching
-                          ? "opacity-100 max-h-screen"
-                          : "opacity-0 max-h-0 overflow-hidden"
+                    {item.isExpandable && !isSidebarCollapsed && (
+                       <div className={`mt-1 ml-4 space-y-1 transition-all duration-300 ease-in-out overflow-hidden ${
+                        getSubmenuOpenState(item.id as TabType) || (searchTerm.trim() && item.subTabs.some(sub => sub.label.toLowerCase().includes(searchTerm.toLowerCase())))
+                          ? "max-h-screen opacity-100 visible"
+                          : "max-h-0 opacity-0 invisible"
                       }`}>
-                        {item.subTabs
-                          .filter(subTab => 
-                            !searchTerm.trim() || 
-                            subTab.label.toLowerCase().includes(searchTerm.toLowerCase())
-                          )
-                          .map((subTab) => (
+                        {item.subTabs.map((subTab) => (
                             <NavLinkWithContextMenu
                               key={subTab.id}
                               to={`/${userId}/${subTab.id}`}
-                              onClick={() => handleSubTabClick(subTab.id as SubTabType)}
+                              onClick={() => handleSubTabClick(subTab.id as SubTabType, item.id as TabType)}
                               isActive={localActiveSubTab === subTab.id}
                               className={`w-full flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-colors cursor-pointer ${
                                 localActiveSubTab === subTab.id
