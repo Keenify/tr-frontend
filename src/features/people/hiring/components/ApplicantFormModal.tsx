@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   Dialog, 
   DialogTitle, 
@@ -24,6 +24,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { ApplicantFormData, ApplicationStage, EmploymentType } from '../types/hiring.types';
 import useJobApplications from '../services/useJobApplications';
+import { ApplicationCountContext } from '../context/ApplicationCountContext';
 
 // Default form data
 const getDefaultFormData = (status: ApplicationStage): ApplicantFormData => ({
@@ -62,6 +63,8 @@ const ApplicantFormModal: React.FC<ApplicantFormModalProps> = ({
     getJobApplicationById,
     getCVSignedUrl 
   } = useJobApplications();
+
+  const { refreshAllCounts } = useContext(ApplicationCountContext);
   
   // Initialize form with default values - no useEffect!
   const [formData, setFormData] = useState<ApplicantFormData>(getDefaultFormData(defaultStatus));
@@ -131,6 +134,16 @@ const ApplicantFormModal: React.FC<ApplicantFormModalProps> = ({
     setDataFetched(false);
     onClose();
   };
+
+  // Update the form data when defaultStatus prop changes (for new applications)
+  useEffect(() => {
+    if (!isEditMode) {
+      setFormData(prev => ({
+        ...prev,
+        status: defaultStatus
+      }));
+    }
+  }, [defaultStatus, isEditMode]);
 
   // Handle text input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -251,6 +264,9 @@ const ApplicantFormModal: React.FC<ApplicantFormModalProps> = ({
       } else {
         await createJobApplication(formData);
       }
+      
+      // Refresh all counts to ensure they're up-to-date
+      refreshAllCounts();
       
       handleModalClose();
     } catch (err) {

@@ -6,13 +6,13 @@ import ApplicantFormModal from './ApplicantFormModal';
 import { ApplicationCountContext } from '../context/ApplicationCountContext';
 
 // Define ref type
-export interface PostInterviewTabRef {
+export interface RejectedTabRef {
   refreshApplications: () => void;
 }
 
-type PostInterviewTabProps = Record<string, never>;
+type RejectedTabProps = Record<string, never>;
 
-const PostInterviewTab = forwardRef<PostInterviewTabRef, PostInterviewTabProps>((_props, ref) => {
+const RejectedTab = forwardRef<RejectedTabRef, RejectedTabProps>((_props, ref) => {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,17 +22,17 @@ const PostInterviewTab = forwardRef<PostInterviewTabRef, PostInterviewTabProps>(
   const { getJobApplicationsByStatus, deleteJobApplication } = useJobApplications();
   const { updateCount, refreshAllCounts } = useContext(ApplicationCountContext);
 
-  // Fetch post-hired applications with useCallback for reuse
+  // Fetch rejected applications with useCallback for reuse
   const fetchApplications = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getJobApplicationsByStatus('post-hired');
+      const data = await getJobApplicationsByStatus('rejected');
       setApplications(data);
       // Update count in parent component
-      updateCount('postInterview', data.length);
+      updateCount('rejected', data.length);
     } catch (err) {
-      console.error('Failed to fetch post-hired applications:', err);
+      console.error('Failed to fetch rejected applications:', err);
       setError('Failed to load applications. Please try again.');
     } finally {
       setIsLoading(false);
@@ -58,7 +58,7 @@ const PostInterviewTab = forwardRef<PostInterviewTabRef, PostInterviewTabProps>(
       const updatedApplications = applications.filter(app => app.id !== id);
       setApplications(updatedApplications);
       // Update count immediately
-      updateCount('postInterview', updatedApplications.length);
+      updateCount('rejected', updatedApplications.length);
     } catch (err) {
       console.error('Failed to delete application:', err);
       // Refresh the list to ensure consistency
@@ -88,7 +88,7 @@ const PostInterviewTab = forwardRef<PostInterviewTabRef, PostInterviewTabProps>(
 
       {isLoading ? (
         <div className="flex justify-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -103,7 +103,7 @@ const PostInterviewTab = forwardRef<PostInterviewTabRef, PostInterviewTabProps>(
             ))
           ) : (
             <div className="bg-white p-5 rounded-md shadow border border-gray-100">
-              <p className="text-gray-400 text-sm">No applicants in post-hire stage yet.</p>
+              <p className="text-gray-400 text-sm">No rejected applicants yet.</p>
             </div>
           )}
         </div>
@@ -113,13 +113,13 @@ const PostInterviewTab = forwardRef<PostInterviewTabRef, PostInterviewTabProps>(
       <ApplicantFormModal 
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
-        defaultStatus="post-hired"
+        defaultStatus="rejected"
         applicationId={selectedApplicationId}
       />
     </div>
   );
 });
 
-PostInterviewTab.displayName = 'PostInterviewTab';
+RejectedTab.displayName = 'RejectedTab';
 
-export default PostInterviewTab; 
+export default RejectedTab;

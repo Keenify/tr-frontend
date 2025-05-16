@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
@@ -13,6 +13,10 @@ import InterviewGuide from './InterviewGuide';
 import PreHireTab from './PreHireTab';
 import InterviewTab from './InterviewTab';
 import PostInterviewTab from './PostInterviewTab';
+import RejectedTab from './RejectedTab';
+
+// Import services
+import useJobApplications from '../services/useJobApplications';
 
 // Custom CSS for react-tabs
 import '../styles/Tabs.css';
@@ -29,22 +33,47 @@ const Hiring: React.FC<HiringProps> = () => {
   const [counts, setCounts] = useState({
     preHire: 0,
     interview: 0,
-    postInterview: 0
+    postInterview: 0,
+    rejected: 0
   });
+  
+  const { getJobApplicationsByStatus } = useJobApplications();
 
   // Function to update a specific count
-  const updateCount = (key: 'preHire' | 'interview' | 'postInterview', count: number) => {
+  const updateCount = (key: 'preHire' | 'interview' | 'postInterview' | 'rejected', count: number) => {
     setCounts(prev => ({
       ...prev,
       [key]: count
     }));
   };
+  
+  // Refresh all application counts
+  const refreshAllCounts = useCallback(async () => {
+    try {
+      // Fetch counts for each status
+      const preHireData = await getJobApplicationsByStatus('pre-hire');
+      const interviewData = await getJobApplicationsByStatus('interview');
+      const postHiredData = await getJobApplicationsByStatus('post-hired');
+      const rejectedData = await getJobApplicationsByStatus('rejected');
+      
+      // Update all counts at once
+      setCounts({
+        preHire: preHireData.length,
+        interview: interviewData.length,
+        postInterview: postHiredData.length,
+        rejected: rejectedData.length
+      });
+      
+    } catch (err) {
+      console.error('Failed to refresh application counts:', err);
+    }
+  }, [getJobApplicationsByStatus]);
 
   return (
     <div className="hiring-container p-4">
       <h1 className="text-2xl font-bold mb-4">Hiring Pipeline</h1>
       
-      <ApplicationCountContext.Provider value={{ counts, updateCount }}>
+      <ApplicationCountContext.Provider value={{ counts, updateCount, refreshAllCounts }}>
         <Tabs 
           selectedIndex={tabIndex} 
           onSelect={index => setTabIndex(index)}
@@ -65,6 +94,10 @@ const Hiring: React.FC<HiringProps> = () => {
             <Tab className="tab-item">
               Post-Interview
               {counts.postInterview > 0 && <span className="count-badge">{counts.postInterview}</span>}
+            </Tab>
+            <Tab className="tab-item">
+              Rejected
+              {counts.rejected > 0 && <span className="count-badge">{counts.rejected}</span>}
             </Tab>
           </TabList>
 
@@ -95,6 +128,12 @@ const Hiring: React.FC<HiringProps> = () => {
           <TabPanel>
             <div className="tab-content">
               <PostInterviewTab />
+            </div>
+          </TabPanel>
+          
+          <TabPanel>
+            <div className="tab-content">
+              <RejectedTab />
             </div>
           </TabPanel>
         </Tabs>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react';
+import { useState, useEffect, useContext, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { AlertTriangle, PlusCircle } from 'react-feather';
 import ApplicantFormModal from './ApplicantFormModal';
 import useJobApplications from '../services/useJobApplications';
@@ -6,7 +6,15 @@ import { JobApplication } from '../types/hiring.types';
 import ApplicationCard from './ApplicationCard';
 import { ApplicationCountContext } from '../context/ApplicationCountContext';
 
-const PreHireTab: React.FC = () => {
+// Define ref type
+export interface PreHireTabRef {
+  refreshApplications: () => void;
+}
+
+// Define props type
+type PreHireTabProps = Record<string, never>;
+
+const PreHireTab = forwardRef<PreHireTabRef, PreHireTabProps>((_props, ref) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -14,7 +22,7 @@ const PreHireTab: React.FC = () => {
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | undefined>(undefined);
   
   const { getJobApplicationsByStatus, deleteJobApplication } = useJobApplications();
-  const { updateCount } = useContext(ApplicationCountContext);
+  const { updateCount, refreshAllCounts } = useContext(ApplicationCountContext);
 
   // Fetch pre-hire applications - wrapped in useCallback to make it reusable
   const fetchApplications = useCallback(async () => {
@@ -32,6 +40,11 @@ const PreHireTab: React.FC = () => {
       setIsLoading(false);
     }
   }, [getJobApplicationsByStatus, updateCount]);
+
+  // Expose the refresh method to parent components
+  useImperativeHandle(ref, () => ({
+    refreshApplications: fetchApplications
+  }));
 
   // Load applications on component mount
   useEffect(() => {
@@ -63,8 +76,8 @@ const PreHireTab: React.FC = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedApplicationId(undefined);
-    // Refresh applications after modal closes
-    fetchApplications();
+    // Refresh all counts to reflect any status changes
+    refreshAllCounts();
   };
 
   return (
@@ -170,6 +183,8 @@ const PreHireTab: React.FC = () => {
       />
     </div>
   );
-};
+});
+
+PreHireTab.displayName = 'PreHireTab';
 
 export default PreHireTab; 

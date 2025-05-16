@@ -1,11 +1,18 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react';
+import { useState, useEffect, useContext, useCallback, forwardRef, useImperativeHandle } from 'react';
 import useJobApplications from '../services/useJobApplications';
 import { JobApplication } from '../types/hiring.types';
 import ApplicationCard from './ApplicationCard';
 import ApplicantFormModal from './ApplicantFormModal';
 import { ApplicationCountContext } from '../context/ApplicationCountContext';
 
-const InterviewTab: React.FC = () => {
+// Define ref type
+export interface InterviewTabRef {
+  refreshApplications: () => void;
+}
+
+type InterviewTabProps = Record<string, never>;
+
+const InterviewTab = forwardRef<InterviewTabRef, InterviewTabProps>((_props, ref) => {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -13,7 +20,7 @@ const InterviewTab: React.FC = () => {
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | undefined>(undefined);
   
   const { getJobApplicationsByStatus, deleteJobApplication } = useJobApplications();
-  const { updateCount } = useContext(ApplicationCountContext);
+  const { updateCount, refreshAllCounts } = useContext(ApplicationCountContext);
 
   // Fetch interview applications with useCallback for reuse
   const fetchApplications = useCallback(async () => {
@@ -31,6 +38,11 @@ const InterviewTab: React.FC = () => {
       setIsLoading(false);
     }
   }, [getJobApplicationsByStatus, updateCount]);
+
+  // Expose the refresh method to parent components
+  useImperativeHandle(ref, () => ({
+    refreshApplications: fetchApplications
+  }));
 
   // Load applications on component mount
   useEffect(() => {
@@ -62,8 +74,8 @@ const InterviewTab: React.FC = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedApplicationId(undefined);
-    // Refresh applications after modal closes
-    fetchApplications();
+    // Refresh all counts to reflect any status changes
+    refreshAllCounts();
   };
 
   return (
@@ -106,6 +118,8 @@ const InterviewTab: React.FC = () => {
       />
     </div>
   );
-};
+});
+
+InterviewTab.displayName = 'InterviewTab';
 
 export default InterviewTab; 
