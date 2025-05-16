@@ -366,19 +366,56 @@ const CalendarComponent: React.FC<CalendarProps> = ({ session }) => {
     }
   };
 
-  const fullCalendarEvents = events.map(event => ({
-    id: event.id,
-    title: formatEventTitleForDisplay(event),
-    start: event.start_time,
-    end: event.end_time,
-    allDay: new Date(event.start_time).getHours() === 0 && 
-            new Date(event.start_time).getMinutes() === 0 && 
-            new Date(event.start_time).getSeconds() === 0,
-    extendedProps: {
-      ...event,
-    },
-    className: getEventClassNames(event),
-  }));
+  const fullCalendarEvents = events.map(event => {
+    // Check if this is a leave event
+    const isLeaveEvent = ['sick_leave', 'timeoff', 'annual_leave'].includes(event.event_type.toLowerCase());
+    
+    // Determine if it's an all-day event by checking start time 
+    const startDate = new Date(event.start_time);
+    const endDate = new Date(event.end_time);
+    
+    // For leave events spanning midnight to midnight, mark as allDay and adjust end date
+    const isAllDay = 
+      (startDate.getHours() === 0 && startDate.getMinutes() === 0) &&
+      ((endDate.getHours() === 23 && endDate.getMinutes() === 59) || 
+       (endDate.getHours() === 0 && endDate.getMinutes() === 0));
+    
+    // For multi-day events, FullCalendar requires end date to be exclusive (day after the last day)
+    let adjustedEndDate = endDate;
+    if (isAllDay && endDate.getHours() === 23 && endDate.getMinutes() === 59) {
+      // If the end time is 23:59, add 1 minute to make it the next day at 00:00
+      adjustedEndDate = new Date(endDate.getTime() + 60000);
+    }
+    
+    // Check if this is a multi-day event
+    const isMultiDay = 
+      startDate.toDateString() !== endDate.toDateString() && 
+      isAllDay;
+    
+    // Debug logging for leave events
+    if (isLeaveEvent) {
+      console.log(`Leave event: ${event.title}`, {
+        start: startDate.toISOString(),
+        end: endDate.toISOString(),
+        isAllDay,
+        isMultiDay,
+        adjustedEnd: adjustedEndDate.toISOString()
+      });
+    }
+    
+    return {
+      id: event.id,
+      title: formatEventTitleForDisplay(event),
+      start: event.start_time,
+      end: isAllDay ? adjustedEndDate.toISOString() : event.end_time,
+      allDay: isAllDay,
+      extendedProps: {
+        ...event,
+        isMultiDay: isMultiDay
+      },
+      className: getEventClassNames(event),
+    };
+  });
 
   function getCountryCode(location: string | null | undefined): string {
     if (!location) return '';
