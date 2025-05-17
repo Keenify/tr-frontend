@@ -44,15 +44,18 @@ const LazadaManualEntry: React.FC<LazadaManualEntryProps> = ({
   });
 
   const onSubmit = (data: LazadaMetricUpsertPayload) => {
-    // Ensure numeric fields are properly converted
+    // Ensure fields are properly formatted for API
     const payload: LazadaMetricUpsertPayload = {
-      ...data,
+      account_id: data.account_id.trim(),
+      date: data.date, // Ensure date is included in YYYY-MM-DD format
       revenue: data.revenue ? data.revenue : undefined,
       ads_expense: data.ads_expense ? data.ads_expense : undefined,
       total_orders: data.total_orders ? Number(data.total_orders) : undefined,
       new_buyer_count: data.new_buyer_count ? Number(data.new_buyer_count) : undefined,
       existing_buyer_count: data.existing_buyer_count ? Number(data.existing_buyer_count) : undefined
     };
+    
+    console.log('Submitting Lazada payload with date:', payload);
     
     mutate(payload);
   };
