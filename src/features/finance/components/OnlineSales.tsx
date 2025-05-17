@@ -17,6 +17,8 @@ import RevenueChart from "./charts/RevenueChart";
 import OrdersChart from "./charts/OrdersChart";
 import MetricsDataTable from "./MetricsDataTable";
 import EmptyStateMessage from "./EmptyStateMessage";
+import LazadaManualEntryModal from "./LazadaManualEntryModal";
+import ShopifyManualEntryModal from "./ShopifyManualEntryModal";
 
 // Import types
 import { ShopeeMetric } from '../services/useShopeeMetrics';
@@ -38,6 +40,8 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [selectedPlatform, setSelectedPlatform] = useState<Platform>("shopee");
   const [selectedEntityId, setSelectedEntityId] = useState<string | number | null>(null);
+  const [isLazadaManualEntryOpen, setIsLazadaManualEntryOpen] = useState<boolean>(false);
+  const [isShopifyManualEntryOpen, setIsShopifyManualEntryOpen] = useState<boolean>(false);
 
   // Get user and company data
   const { companyInfo, error: userDataError, isLoading: userDataLoading } = 
@@ -142,6 +146,75 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     setSelectedEntityId(entityId);
   };
 
+  // Handle manual entry for Lazada
+  const handleOpenLazadaManualEntry = () => {
+    if (!companyInfo?.id) {
+      alert('Company information is required for manual entry');
+      return;
+    }
+    setIsLazadaManualEntryOpen(true);
+  };
+
+  const handleLazadaManualEntryClose = () => {
+    setIsLazadaManualEntryOpen(false);
+    refreshData();
+  };
+
+  // Handle manual entry for Shopify
+  const handleOpenShopifyManualEntry = () => {
+    if (!companyInfo?.id) {
+      alert('Company information is required for manual entry');
+      return;
+    }
+    setIsShopifyManualEntryOpen(true);
+  };
+
+  const handleShopifyManualEntryClose = () => {
+    setIsShopifyManualEntryOpen(false);
+    refreshData();
+  };
+
+  // Determine if manual entry should be shown
+  const showManualEntry = () => {
+    if (selectedPlatform === 'lazada') {
+      return (
+        <button 
+          className="px-3 py-1 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onClick={handleOpenLazadaManualEntry}
+        >
+          Manual Entry
+        </button>
+      );
+    } else if (selectedPlatform === 'shopify') {
+      return (
+        <button 
+          className="px-3 py-1 text-sm bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
+          onClick={handleOpenShopifyManualEntry}
+        >
+          Manual Entry
+        </button>
+      );
+    } else if (selectedPlatform === 'all_sg' || selectedPlatform === 'all_my') {
+      return (
+        <div className="flex space-x-2">
+          <button 
+            className="px-3 py-1 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onClick={handleOpenLazadaManualEntry}
+          >
+            Lazada Entry
+          </button>
+          <button 
+            className="px-3 py-1 text-sm bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
+            onClick={handleOpenShopifyManualEntry}
+          >
+            Shopify Entry
+          </button>
+        </div>
+      );
+    }
+    return null;
+  };
+
   // Handle loading state for user data
   if (userDataLoading) {
     return (
@@ -235,7 +308,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
       </h1>
 
       {/* Platform indicator */}
-      <div className="mb-4">
+      <div className="mb-4 flex justify-between items-center">
         <span className={`px-3 py-1 text-xs rounded-full font-medium ${
           selectedPlatform === "shopee" ? "bg-orange-100 text-orange-800" : 
           selectedPlatform === "lazada" ? "bg-blue-100 text-blue-800" : 
@@ -246,6 +319,9 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         }`}>
           {isAllSG ? 'All (SG)' : isAllMY ? 'All (MY)' : selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} Data
         </span>
+
+        {/* Manual Entry Buttons */}
+        {showManualEntry()}
       </div>
 
       {/* Controls section - reorganized into two main sections */}
@@ -404,6 +480,23 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
           />
         )
       ) : null}
+
+      {/* Manual Entry Modals */}
+      {companyInfo?.id && isLazadaManualEntryOpen && (
+        <LazadaManualEntryModal
+          isOpen={isLazadaManualEntryOpen}
+          onClose={handleLazadaManualEntryClose}
+          companyId={companyInfo.id}
+        />
+      )}
+
+      {companyInfo?.id && isShopifyManualEntryOpen && (
+        <ShopifyManualEntryModal
+          isOpen={isShopifyManualEntryOpen}
+          onClose={handleShopifyManualEntryClose}
+          companyId={companyInfo.id}
+        />
+      )}
     </div>
   );
 };

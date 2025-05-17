@@ -6,7 +6,7 @@
  * @module LazadaMetricsService
  */
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 const API_DOMAIN = import.meta.env.VITE_BACKEND_API_DOMAIN;
 
@@ -25,6 +25,19 @@ export interface LazadaMetric {
   company_id: string;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Interface for manually updating Lazada metrics
+ */
+export interface LazadaMetricUpsertPayload {
+  account_id: string;
+  date: string;
+  revenue?: string;
+  ads_expense?: string;
+  total_orders?: number;
+  new_buyer_count?: number;
+  existing_buyer_count?: number;
 }
 
 /**
@@ -74,6 +87,52 @@ export async function getLazadaMetrics(
 }
 
 /**
+ * Manually upserts (insert or update) Lazada metrics for a specific company
+ * 
+ * @param {string} companyId - The ID of the company
+ * @param {LazadaMetricUpsertPayload} payload - Metrics data to upsert
+ * @returns {Promise<LazadaMetric>} - A promise that resolves to the upserted Lazada metric
+ * @throws {Error} If company ID is missing or API request fails
+ */
+export async function upsertLazadaMetrics(
+  companyId: string,
+  payload: LazadaMetricUpsertPayload
+): Promise<LazadaMetric> {
+  if (!companyId) {
+    throw new Error('Company ID is required');
+  }
+
+  const endpoint = `${API_DOMAIN}/lazada-metrics/company/${encodeURIComponent(companyId)}/manual-upsert`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('❌ API request failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData
+      });
+      throw new Error(errorData.detail || 'Failed to update Lazada metrics');
+    }
+
+    const data = await response.json();
+    return data as LazadaMetric;
+  } catch (error) {
+    console.error('Lazada metrics upsert error:', error);
+    throw error;
+  }
+}
+
+/**
  * React Query hook for fetching Lazada metrics
  * 
  * @param {string} companyId - The ID of the company
@@ -92,6 +151,24 @@ export function useLazadaMetrics(
     queryKey: ['lazada-metrics', companyId, startDate, endDate],
     queryFn: () => companyId ? getLazadaMetrics(companyId, startDate, endDate) : Promise.resolve([]),
     enabled: !!companyId,
+    ...options,
+  });
+}
+
+/**
+ * React Query mutation hook for upserting Lazada metrics
+ * 
+ * @param {string} companyId - The ID of the company
+ * @param {object} options - Additional options to pass to useMutation
+ * @returns {UseMutationResult} - The mutation result
+ */
+export function useLazadaMetricsUpsert(
+  companyId: string | undefined,
+  options = {}
+) {
+  return useMutation({
+    mutationFn: (payload: LazadaMetricUpsertPayload) => 
+      companyId ? upsertLazadaMetrics(companyId, payload) : Promise.reject('Company ID is required'),
     ...options,
   });
 }
