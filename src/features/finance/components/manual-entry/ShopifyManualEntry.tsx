@@ -47,9 +47,17 @@ const ShopifyManualEntry: React.FC<ShopifyManualEntryProps> = ({
   });
 
   const onSubmit = (data: ShopifyMetricUpsertPayload) => {
-    // Ensure numeric fields are properly converted
-    const payload: ShopifyMetricUpsertPayload = {
+    // Log raw data before processing
+    console.log('Raw form data before processing:', {
       ...data,
+      dateValue: data.date,
+      dateType: typeof data.date
+    });
+    
+    // Ensure all fields are properly formatted for API
+    const payload: ShopifyMetricUpsertPayload = {
+      store_id: data.store_id.trim(),
+      date: data.date, // Ensure date is included in YYYY-MM-DD format
       session: data.session ? Number(data.session) : undefined,
       bounce_rate: data.bounce_rate ? data.bounce_rate : undefined,
       add_to_cart_count: data.add_to_cart_count ? Number(data.add_to_cart_count) : undefined,
@@ -59,6 +67,12 @@ const ShopifyManualEntry: React.FC<ShopifyManualEntryProps> = ({
       new_customer_sales: data.new_customer_sales ? data.new_customer_sales : undefined,
       existing_customer_sales: data.existing_customer_sales ? data.existing_customer_sales : undefined
     };
+    
+    console.log('Submitting Shopify payload with date:', {
+      ...payload,
+      dateValue: payload.date,
+      dateType: typeof payload.date
+    });
     
     mutate(payload);
   };

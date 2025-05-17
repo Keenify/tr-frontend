@@ -115,18 +115,32 @@ export async function upsertShopifyMetrics(
     throw new Error('Date is required');
   }
 
-  const { store_id, date, ...updateData } = payload;
+  // Create a copy to avoid modifying the original
+  const payloadCopy = { ...payload };
+  
+  // Extract parameters that need to go in the URL
+  const { store_id, date } = payloadCopy;
+  
+  // Create payload without store_id and date
+  const requestBody: Record<string, unknown> = { ...payloadCopy };
+  delete requestBody.store_id;
+  delete requestBody.date;
+
+  console.log('Date being used in API request:', date);
+  console.log('Date type:', typeof date);
 
   const endpoint = `${API_DOMAIN}/shopify-metrics/by-store-date?company_id=${encodeURIComponent(companyId)}&store_id=${encodeURIComponent(store_id)}&date=${encodeURIComponent(date)}`;
 
   try {
+    console.log(`Sending request to ${endpoint} with payload:`, requestBody);
+    
     const response = await fetch(endpoint, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: JSON.stringify(updateData),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {

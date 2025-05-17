@@ -23,8 +23,8 @@ interface MetricsDataTableProps {
  */
 const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, currency = 'SGD', shopName, isFoodpanda }) => {
   // Helper to safely convert string/number to formatted currency
-  const formatCurrency = (value: string | number | undefined) => {
-    if (value === undefined) return `${currency} 0.00`;
+  const formatCurrency = (value: string | number | undefined | null) => {
+    if (value === undefined || value === null) return `${currency} 0.00`;
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
     return `${currency} ${numValue.toFixed(2)}`;
   };
