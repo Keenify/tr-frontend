@@ -63,9 +63,6 @@ const LazadaManualEntry: React.FC<LazadaManualEntryProps> = ({
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm mb-4">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="font-bold text-lg text-gray-800">Manual Lazada Metrics Entry</h3>
-      </div>
       <div className="px-6 py-4">
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
