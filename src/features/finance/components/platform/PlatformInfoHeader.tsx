@@ -24,6 +24,7 @@ const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
       case 'lazada': return 'bg-blue-100 text-blue-800';
       case 'shopify': return 'bg-green-100 text-green-800';
       case 'foodpanda': return 'bg-purple-100 text-purple-800';
+      case 'grab': return 'bg-green-100 text-green-800';
       case 'all_sg': return 'bg-gray-800 text-white';
       case 'all_my': return 'bg-yellow-800 text-white';
       default: return 'bg-gray-100 text-gray-800';
@@ -37,6 +38,7 @@ const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
       case 'lazada': return '📦';
       case 'shopify': return '🏪';
       case 'foodpanda': return '🍱';
+      case 'grab': return '🚗';
       default: return '🔍';
     }
   };
@@ -48,6 +50,7 @@ const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
       case 'lazada': return 'Account ID';
       case 'shopify': return 'Store ID';
       case 'foodpanda': return 'Shop ID';
+      case 'grab': return 'Store Name';
       default: return 'Entity ID';
     }
   };
@@ -65,6 +68,7 @@ const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
       platform === 'lazada' ? 'border-l-blue-500 bg-white' :
       platform === 'shopify' ? 'border-l-green-500 bg-white' :
       platform === 'foodpanda' ? 'border-l-purple-500 bg-white' :
+      platform === 'grab' ? 'border-l-green-600 bg-white' :
       platform === 'all_sg' ? 'border-l-gray-800 bg-white' :
       platform === 'all_my' ? 'border-l-yellow-800 bg-white' :
       'border-l-gray-500 bg-white'
@@ -85,7 +89,10 @@ const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
             {platform === 'foodpanda' && shopName && selectedEntityId && (
               <><span className="font-medium">Foodpanda Shop:</span> {shopName} ({selectedEntityId})</>
             )}
-            {platform !== 'shopee' && platform !== 'lazada' && platform !== 'foodpanda' && selectedEntityId && (
+            {platform === 'grab' && selectedEntityId && (
+              <><span className="font-medium">Grab Store:</span> {selectedEntityId}</>
+            )}
+            {platform !== 'shopee' && platform !== 'lazada' && platform !== 'foodpanda' && platform !== 'grab' && selectedEntityId && (
               <><span className="font-medium">{getEntityFieldName()}:</span> {selectedEntityId}</>
             )}
             {(platform === 'all_sg' || platform === 'all_my') && includedStores && includedStores.length > 0 && (

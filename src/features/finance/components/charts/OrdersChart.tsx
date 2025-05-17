@@ -9,7 +9,7 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-import { Platform } from '../PlatformSelector';
+import { Platform } from '../platform/PlatformSelector';
 import { ChartDataPoint } from './RevenueChart';
 
 interface OrdersChartProps {
@@ -27,6 +27,7 @@ const OrdersChart: React.FC<OrdersChartProps> = ({ data, platform }) => {
       case 'shopee': return '#3B82F6';
       case 'lazada': return '#60A5FA';
       case 'shopify': return '#93C5FD';
+      case 'grab': return '#00B14F';
       default: return '#3B82F6';
     }
   };
@@ -36,9 +37,16 @@ const OrdersChart: React.FC<OrdersChartProps> = ({ data, platform }) => {
       case 'shopee': return '#EC4899';
       case 'lazada': return '#DB2777';
       case 'shopify': return '#BE185D';
+      case 'grab': return '#00A148';
       default: return '#EC4899';
     }
   };
+
+  const getCancelledOrdersColor = () => {
+    return '#EF4444'; // Red color for cancelled orders
+  };
+
+  const isGrabPlatform = platform === 'grab';
 
   return (
     <div className="bg-white p-4 rounded-lg shadow">
@@ -60,18 +68,37 @@ const OrdersChart: React.FC<OrdersChartProps> = ({ data, platform }) => {
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar
-              dataKey="newBuyers"
-              name="New Buyers"
-              stackId="a"
-              fill={getNewBuyersColor()}
-            />
-            <Bar
-              dataKey="existingBuyers"
-              name="Existing Buyers"
-              stackId="a"
-              fill={getExistingBuyersColor()}
-            />
+            {isGrabPlatform ? (
+              // For Grab platform
+              <>
+                <Bar
+                  dataKey="totalOrders"
+                  name="Completed Orders"
+                  fill={getNewBuyersColor()}
+                />
+                <Bar
+                  dataKey="cancelledOrders"
+                  name="Cancelled Orders"
+                  fill={getCancelledOrdersColor()}
+                />
+              </>
+            ) : (
+              // For other platforms
+              <>
+                <Bar
+                  dataKey="newBuyers"
+                  name="New Buyers"
+                  stackId="a"
+                  fill={getNewBuyersColor()}
+                />
+                <Bar
+                  dataKey="existingBuyers"
+                  name="Existing Buyers"
+                  stackId="a"
+                  fill={getExistingBuyersColor()}
+                />
+              </>
+            )}
           </BarChart>
         </ResponsiveContainer>
       </div>

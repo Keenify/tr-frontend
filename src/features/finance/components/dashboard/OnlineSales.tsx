@@ -19,12 +19,14 @@ import MetricsDataTable from "../metrics/MetricsDataTable";
 import EmptyStateMessage from "./EmptyStateMessage";
 import LazadaManualEntryModal from "../manual-entry/LazadaManualEntryModal";
 import ShopifyManualEntryModal from "../manual-entry/ShopifyManualEntryModal";
+import GrabManualEntryModal from "../manual-entry/GrabManualEntryModal";
 
 // Import types
 import { ShopeeMetric } from '../../services/useShopeeMetrics';
 import { LazadaMetric } from '../../services/useLazadaMetrics';
 import { ShopifyMetric } from '../../services/useShopifyMetrics';
 import { FoodpandaMetric } from '../../services/useFoodpandaMetrics';
+import { GrabMetric } from '../../services/useGrabMetrics';
 
 interface OnlineSalesProps {
   session: Session;
@@ -42,6 +44,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const [selectedEntityId, setSelectedEntityId] = useState<string | number | null>(null);
   const [isLazadaManualEntryOpen, setIsLazadaManualEntryOpen] = useState<boolean>(false);
   const [isShopifyManualEntryOpen, setIsShopifyManualEntryOpen] = useState<boolean>(false);
+  const [isGrabManualEntryOpen, setIsGrabManualEntryOpen] = useState<boolean>(false);
 
   // Get user and company data
   const { companyInfo, error: userDataError, isLoading: userDataLoading } = 
@@ -174,6 +177,20 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     refreshData();
   };
 
+  // Handle manual entry for Grab
+  const handleOpenGrabManualEntry = () => {
+    if (!companyInfo?.id) {
+      alert('Company information is required for manual entry');
+      return;
+    }
+    setIsGrabManualEntryOpen(true);
+  };
+
+  const handleGrabManualEntryClose = () => {
+    setIsGrabManualEntryOpen(false);
+    refreshData();
+  };
+
   // Determine if manual entry should be shown
   const showManualEntry = () => {
     if (selectedPlatform === 'lazada') {
@@ -194,6 +211,15 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
           Manual Entry
         </button>
       );
+    } else if (selectedPlatform === 'grab') {
+      return (
+        <button 
+          className="px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600"
+          onClick={handleOpenGrabManualEntry}
+        >
+          Manual Entry
+        </button>
+      );
     } else if (selectedPlatform === 'all_sg' || selectedPlatform === 'all_my') {
       return (
         <div className="flex space-x-2">
@@ -208,6 +234,12 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
             onClick={handleOpenShopifyManualEntry}
           >
             Shopify Entry
+          </button>
+          <button 
+            className="px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600"
+            onClick={handleOpenGrabManualEntry}
+          >
+            Grab Entry
           </button>
         </div>
       );
@@ -235,14 +267,14 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   }
 
   // Determine enabled platforms
-  const enabledPlatforms: Platform[] = ["shopee", "lazada", "shopify", "foodpanda", "all_sg", "all_my"];
+  const enabledPlatforms: Platform[] = ["shopee", "lazada", "shopify", "foodpanda", "grab", "all_sg", "all_my"];
 
   // Determine if we're in all_sg or all_my mode
   const isAllSG = selectedPlatform === 'all_sg';
   const isAllMY = selectedPlatform === 'all_my';
   const allCurrency = isAllSG ? 'SGD' : isAllMY ? 'MYR' : undefined;
 
-  type AllMetric = ShopeeMetric | LazadaMetric | ShopifyMetric | FoodpandaMetric;
+  type AllMetric = ShopeeMetric | LazadaMetric | ShopifyMetric | FoodpandaMetric | GrabMetric;
 
   // Filter metrics for all_sg/all_my
   let filteredAllMetrics = filteredMetrics;
@@ -268,6 +300,11 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         if (isAllSG) return true; // include all Foodpanda for SG
         if (isAllMY) return false; // adjust if you have MYR foodpanda
       }
+      // Grab: include in all_sg, exclude from all_my (or adjust per your currency requirements)
+      if ('store_name' in item && 'completed_order' in item && 'cancelled_order' in item) {
+        if (isAllSG) return true; // include all Grab for SG
+        if (isAllMY) return false; // adjust if you have MYR grab
+      }
       return false;
     });
   }
@@ -280,6 +317,10 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
       if ('shop_id' in item && 'total_orders' in item && 'revenue' in item && !('ads_expense' in item)) {
         // Foodpanda
         return `Foodpanda: ${FOODPANDA_SHOP_NAMES[item.shop_id] || item.shop_id}`;
+      }
+      if ('store_name' in item && 'completed_order' in item && 'cancelled_order' in item) {
+        // Grab
+        return `Grab: ${item.store_name}`;
       }
       if ('shop_id' in item) return `Shopee: ${SHOPEE_SHOP_NAMES[item.shop_id] || item.shop_id}`;
       if ('account_id' in item) return `Lazada: ${LAZADA_ACCOUNT_NAMES[item.account_id] || item.account_id}`;
@@ -494,6 +535,14 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         <ShopifyManualEntryModal
           isOpen={isShopifyManualEntryOpen}
           onClose={handleShopifyManualEntryClose}
+          companyId={companyInfo.id}
+        />
+      )}
+
+      {companyInfo?.id && isGrabManualEntryOpen && (
+        <GrabManualEntryModal
+          isOpen={isGrabManualEntryOpen}
+          onClose={handleGrabManualEntryClose}
           companyId={companyInfo.id}
         />
       )}

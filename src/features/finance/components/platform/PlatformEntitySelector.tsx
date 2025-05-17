@@ -2,7 +2,7 @@ import React from 'react';
 import { Platform } from './PlatformSelector';
 import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES } from '../../constant/Shopname';
 
-interface Entity {
+export interface Entity {
   id: string | number;
   name: string;
 }
@@ -40,6 +40,7 @@ const PlatformEntitySelector: React.FC<PlatformEntitySelectorProps> = ({
       case 'lazada': return 'Lazada Account';
       case 'shopify': return 'Shopify Store';
       case 'foodpanda': return 'Foodpanda Shop';
+      case 'grab': return 'Grab Store';
       default: return 'Select Entity';
     }
   };
@@ -86,5 +87,4 @@ const PlatformEntitySelector: React.FC<PlatformEntitySelectorProps> = ({
   );
 };
 
-export default PlatformEntitySelector;
-export type { Entity }; 
+export default PlatformEntitySelector; 

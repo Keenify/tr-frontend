@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type Platform = "shopee" | "lazada" | "shopify" | "all_sg" | "all_my" | "foodpanda";
+export type Platform = "shopee" | "lazada" | "shopify" | "all_sg" | "all_my" | "foodpanda" | "grab";
 
 interface PlatformSelectorProps {
   selectedPlatform: Platform;
@@ -15,7 +15,7 @@ interface PlatformSelectorProps {
 const PlatformSelector: React.FC<PlatformSelectorProps> = ({ 
   selectedPlatform, 
   onPlatformChange,
-  enabledPlatforms = ["shopee", "lazada"],  // Default enabled platforms
+  enabledPlatforms = ["shopee", "lazada", "shopify", "foodpanda", "grab"],  // Default enabled platforms
   hideLabel = false
 }) => {
   const isEnabled = (platform: Platform) => enabledPlatforms.includes(platform);
@@ -25,7 +25,7 @@ const PlatformSelector: React.FC<PlatformSelectorProps> = ({
       {!hideLabel && (
         <label className="block text-sm font-medium text-gray-700 mb-1">Platform</label>
       )}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <button
           className={`px-4 py-2 rounded-md ${
             selectedPlatform === "shopee"
@@ -64,6 +64,30 @@ const PlatformSelector: React.FC<PlatformSelectorProps> = ({
         </button>
         <button
           className={`px-4 py-2 rounded-md ${
+            selectedPlatform === "grab"
+              ? "bg-green-600 text-white"
+              : "bg-gray-200 text-gray-700"
+          }`}
+          onClick={() => onPlatformChange("grab")}
+          disabled={!isEnabled("grab")}
+          title={isEnabled("grab") ? undefined : "Coming soon"}
+        >
+          Grab
+        </button>
+        <button
+          className={`px-4 py-2 rounded-md ${
+            selectedPlatform === "foodpanda"
+              ? "bg-purple-600 text-white"
+              : "bg-gray-200 text-gray-700"
+          }`}
+          onClick={() => onPlatformChange("foodpanda")}
+          disabled={!isEnabled("foodpanda")}
+          title={isEnabled("foodpanda") ? undefined : "Coming soon"}
+        >
+          Foodpanda
+        </button>
+        <button
+          className={`px-4 py-2 rounded-md ${
             selectedPlatform === "all_sg"
               ? "bg-gray-800 text-white"
               : "bg-gray-200 text-gray-700"
@@ -81,18 +105,6 @@ const PlatformSelector: React.FC<PlatformSelectorProps> = ({
           onClick={() => onPlatformChange("all_my")}
         >
           All (MY)
-        </button>
-        <button
-          className={`px-4 py-2 rounded-md ${
-            selectedPlatform === "foodpanda"
-              ? "bg-purple-600 text-white"
-              : "bg-gray-200 text-gray-700"
-          }`}
-          onClick={() => onPlatformChange("foodpanda")}
-          disabled={!isEnabled("foodpanda")}
-          title={isEnabled("foodpanda") ? undefined : "Coming soon"}
-        >
-          Foodpanda
         </button>
       </div>
     </div>

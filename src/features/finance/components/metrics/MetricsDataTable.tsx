@@ -1,12 +1,14 @@
 import React from 'react';
-import { Platform } from './PlatformSelector';
-import { ShopeeMetric } from '../services/useShopeeMetrics';
-import { LazadaMetric } from '../services/useLazadaMetrics';
-import { ShopifyMetric } from '../services/useShopifyMetrics';
-import { FoodpandaMetric } from '../services/useFoodpandaMetrics';
-import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES } from "../../constant/Shopname";
 
-type AllMetric = ShopeeMetric | LazadaMetric | ShopifyMetric | FoodpandaMetric;
+import { ShopeeMetric } from '../../services/useShopeeMetrics';
+import { LazadaMetric } from '../../services/useLazadaMetrics';
+import { ShopifyMetric } from '../../services/useShopifyMetrics';
+import { FoodpandaMetric } from '../../services/useFoodpandaMetrics';
+import { GrabMetric } from '../../services/useGrabMetrics';
+import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES } from "../../constant/Shopname";
+import { Platform } from '../platform/PlatformSelector';
+
+type AllMetric = ShopeeMetric | LazadaMetric | ShopifyMetric | FoodpandaMetric | GrabMetric;
 
 interface MetricsDataTableProps {
   data: AllMetric[];
@@ -39,6 +41,7 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
       case 'shopee': return 'bg-orange-50 text-orange-700 border-orange-200';
       case 'lazada': return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'shopify': return 'bg-green-50 text-green-700 border-green-200';
+      case 'grab': return 'bg-green-50 text-green-700 border-green-200';
       default: return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
@@ -49,6 +52,7 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
       case 'shopee': return 'Shop ID';
       case 'lazada': return 'Account';
       case 'shopify': return 'Store';
+      case 'grab': return 'Store Name';
       default: return 'ID';
     }
   };
@@ -62,6 +66,7 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
     if ('shop_id' in item) return `Shopee: ${SHOPEE_SHOP_NAMES[item.shop_id] || item.shop_id}`;
     if ('account_id' in item) return `Lazada: ${LAZADA_ACCOUNT_NAMES[item.account_id] || item.account_id}`;
     if ('store_id' in item) return `Shopify: ${item.store_id}`;
+    if ('store_name' in item) return `Grab: ${item.store_name}`;
     return '-';
   };
 
@@ -75,6 +80,8 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
       return item.store_id;
     } else if (platform === 'foodpanda' && 'shop_id' in item) {
       return item.shop_id;
+    } else if (platform === 'grab' && 'store_name' in item) {
+      return item.store_name;
     }
     return '-';
   };
@@ -99,6 +106,9 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
     if ('account_id' in item) {
       return item.revenue;
     }
+    if ('store_name' in item && 'completed_order' in item) {
+      return item.revenue;
+    }
     return 0;
   };
 
@@ -115,6 +125,9 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
     }
     if ('account_id' in item) {
       return item.ads_expense;
+    }
+    if ('store_name' in item && 'completed_order' in item) {
+      return '0.00'; // Grab doesn't have ads_expense
     }
     return '0.00';
   };
@@ -133,6 +146,9 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
     if ('account_id' in item) {
       return item.total_orders;
     }
+    if ('store_name' in item && 'completed_order' in item) {
+      return item.completed_order + item.cancelled_order; // Total = completed + cancelled for Grab
+    }
     return 0;
   };
 
@@ -146,6 +162,9 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
     }
     if ('account_id' in item) {
       return item.new_buyer_count;
+    }
+    if ('store_name' in item && 'completed_order' in item) {
+      return item.completed_order; // For Grab, treat completed_order as "new" buyers
     }
     return 0;
   };
@@ -161,8 +180,14 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
     if ('account_id' in item) {
       return item.existing_buyer_count;
     }
+    if ('store_name' in item && 'completed_order' in item) {
+      return item.cancelled_order; // For Grab, treat cancelled_order as "existing" buyers
+    }
     return 0;
   };
+
+  // Determine if this is Grab platform
+  const isGrab = platform === 'grab';
 
   // Calculate summary totals
   const calculateSummary = () => {
@@ -176,7 +201,9 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
       addToCart: 0,
       completedCheckout: 0,
       newCustomerSales: 0,
-      existingCustomerSales: 0
+      existingCustomerSales: 0,
+      completedOrders: 0,
+      cancelledOrders: 0
     };
 
     data.forEach(item => {
@@ -195,6 +222,13 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
         totals.completedCheckout += parseNumber(shopifyItem.session_completed_checkout_count);
         totals.newCustomerSales += parseNumber(shopifyItem.new_customer_sales);
         totals.existingCustomerSales += parseNumber(shopifyItem.existing_customer_sales);
+      }
+
+      // Grab specific metrics
+      if (platform === 'grab') {
+        const grabItem = item as GrabMetric;
+        totals.completedOrders += parseNumber(grabItem.completed_order);
+        totals.cancelledOrders += parseNumber(grabItem.cancelled_order);
       }
     });
 
@@ -265,6 +299,26 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
                     Revenue
                   </th>
                 </>
+              ) : isGrab ? (
+                <>
+                  {!isAllMode && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                      {getIdFieldName()}
+                    </th>
+                  )}
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                    Revenue
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                    Completed Orders
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                    Cancelled Orders
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                    Total Orders
+                  </th>
+                </>
               ) : (
                 <>
                   {!isAllMode && (
@@ -333,6 +387,26 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
                       {formatCurrency('revenue' in item ? item.revenue : 0)}
                     </td>
                   </>
+                ) : isGrab ? (
+                  <>
+                    {!isAllMode && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatIdFieldValue(getIdFieldValue(item))}
+                      </td>
+                    )}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {formatCurrency(getRevenue(item))}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {'store_name' in item && 'completed_order' in item ? item.completed_order : 0}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {'store_name' in item && 'cancelled_order' in item ? item.cancelled_order : 0}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {getOrdersCount(item)}
+                    </td>
+                  </>
                 ) : (
                   <>
                     {!isAllMode && (
@@ -387,44 +461,78 @@ const MetricsDataTable: React.FC<MetricsDataTableProps> = ({ data, platform, cur
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                 <strong>Total</strong>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                —
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                <strong>{formatCurrency(summaryTotals.revenue)}</strong>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                <strong>{formatCurrency(summaryTotals.adsExpense)}</strong>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                <strong>{summaryTotals.totalOrders}</strong>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                <strong>{summaryTotals.newBuyers}</strong>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                <strong>{summaryTotals.existingBuyers}</strong>
-              </td>
-              {platform === 'shopify' && (
+              {isAllMode && (
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">—</td>
+              )}
+              {isFoodpanda ? (
                 <>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    <strong>{summaryTotals.sessions}</strong>
+                    <strong>{summaryTotals.totalOrders}</strong>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    —
+                    <strong>{formatCurrency(summaryTotals.revenue)}</strong>
+                  </td>
+                </>
+              ) : isGrab ? (
+                <>
+                  {!isAllMode && (
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">—</td>
+                  )}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <strong>{formatCurrency(summaryTotals.revenue)}</strong>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    <strong>{summaryTotals.addToCart}</strong>
+                    <strong>{summaryTotals.completedOrders}</strong>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    <strong>{summaryTotals.completedCheckout}</strong>
+                    <strong>{summaryTotals.cancelledOrders}</strong>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    <strong>{formatCurrency(summaryTotals.newCustomerSales)}</strong>
+                    <strong>{summaryTotals.totalOrders}</strong>
+                  </td>
+                </>
+              ) : (
+                <>
+                  {!isAllMode && (
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">—</td>
+                  )}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <strong>{formatCurrency(summaryTotals.revenue)}</strong>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    <strong>{formatCurrency(summaryTotals.existingCustomerSales)}</strong>
+                    <strong>{formatCurrency(summaryTotals.adsExpense)}</strong>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <strong>{summaryTotals.totalOrders}</strong>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <strong>{summaryTotals.newBuyers}</strong>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                    <strong>{summaryTotals.existingBuyers}</strong>
+                  </td>
+                  {platform === 'shopify' && (
+                    <>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <strong>{summaryTotals.sessions}</strong>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        —
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <strong>{summaryTotals.addToCart}</strong>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <strong>{summaryTotals.completedCheckout}</strong>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <strong>{formatCurrency(summaryTotals.newCustomerSales)}</strong>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        <strong>{formatCurrency(summaryTotals.existingCustomerSales)}</strong>
+                      </td>
+                    </>
+                  )}
                 </>
               )}
             </tr>

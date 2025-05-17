@@ -3,16 +3,17 @@ import { useShopeeMetrics, ShopeeMetric } from '../services/useShopeeMetrics';
 import { useLazadaMetrics, LazadaMetric } from '../services/useLazadaMetrics';
 import { useShopifyMetrics, ShopifyMetric } from '../services/useShopifyMetrics';
 import { useFoodpandaMetrics, FoodpandaMetric } from '../services/useFoodpandaMetrics';
+import { useGrabMetrics, GrabMetric } from '../services/useGrabMetrics';
 import { format } from 'date-fns';
-import { Platform } from '../components/PlatformSelector';
-import { Entity } from '../components/PlatformEntitySelector';
+import { Platform } from '../components/platform/PlatformSelector';
+import { Entity } from '../components/platform/PlatformEntitySelector';
 import { ChartDataPoint } from '../components/charts/RevenueChart';
 import { FOODPANDA_SHOP_NAMES } from '../constant/Shopname';
 import { useQueries } from '@tanstack/react-query';
 import { getFoodpandaMetrics } from '../services/useFoodpandaMetrics';
 
 // Union type for all metric types
-type MetricType = ShopeeMetric | LazadaMetric | ShopifyMetric | FoodpandaMetric;
+type MetricType = ShopeeMetric | LazadaMetric | ShopifyMetric | FoodpandaMetric | GrabMetric;
 
 interface UseMetricsDataProps {
   platform: Platform;
@@ -136,6 +137,19 @@ export function useMetricsData({
   }
   // --- END FIX ---
 
+  // Fetch Grab metrics
+  const {
+    data: grabMetrics,
+    isLoading: grabLoading,
+    error: grabError,
+    refetch: refetchGrab
+  } = useGrabMetrics(
+    platform === 'grab' || platform === 'all_sg' || platform === 'all_my' ? companyId : undefined,
+    {
+      enabled: (platform === 'grab' || platform === 'all_sg' || platform === 'all_my') && !!companyId
+    }
+  );
+
   // Get appropriate data, loading state, and error based on selected platform
   const metrics = useMemo((): MetricType[] => {
     if (platform === 'all_sg' || platform === 'all_my') {
@@ -143,7 +157,8 @@ export function useMetricsData({
         ...(shopeeMetrics || []),
         ...(lazadaMetrics || []),
         ...(shopifyMetrics || []),
-        ...(foodpandaMetrics || [])
+        ...(foodpandaMetrics || []),
+        ...(grabMetrics || [])
       ];
     }
     switch (platform) {
@@ -151,35 +166,38 @@ export function useMetricsData({
       case 'lazada': return lazadaMetrics || [];
       case 'shopify': return shopifyMetrics || [];
       case 'foodpanda': return foodpandaMetrics || [];
+      case 'grab': return grabMetrics || [];
       default: return [];
     }
-  }, [platform, shopeeMetrics, lazadaMetrics, shopifyMetrics, foodpandaMetrics]);
+  }, [platform, shopeeMetrics, lazadaMetrics, shopifyMetrics, foodpandaMetrics, grabMetrics]);
 
   const isLoading = useMemo(() => {
     if (platform === 'all_sg' || platform === 'all_my') {
-      return shopeeLoading || lazadaLoading || shopifyLoading;
+      return shopeeLoading || lazadaLoading || shopifyLoading || grabLoading;
     }
     switch (platform) {
       case 'shopee': return shopeeLoading;
       case 'lazada': return lazadaLoading;
       case 'shopify': return shopifyLoading;
       case 'foodpanda': return foodpandaLoading;
+      case 'grab': return grabLoading;
       default: return false;
     }
-  }, [platform, shopeeLoading, lazadaLoading, shopifyLoading, foodpandaLoading]);
+  }, [platform, shopeeLoading, lazadaLoading, shopifyLoading, foodpandaLoading, grabLoading]);
 
   const error = useMemo(() => {
     if (platform === 'all_sg' || platform === 'all_my') {
-      return shopeeError || lazadaError || shopifyError || null;
+      return shopeeError || lazadaError || shopifyError || grabError || null;
     }
     switch (platform) {
       case 'shopee': return shopeeError;
       case 'lazada': return lazadaError;
       case 'shopify': return shopifyError;
       case 'foodpanda': return foodpandaError;
+      case 'grab': return grabError;
       default: return null;
     }
-  }, [platform, shopeeError, lazadaError, shopifyError, foodpandaError]);
+  }, [platform, shopeeError, lazadaError, shopifyError, foodpandaError, grabError]);
 
   // Extract entities (shops/accounts) from metrics data
   const entities = useMemo(() => {
@@ -207,9 +225,15 @@ export function useMetricsData({
           id: shopId,
           name: shopId
         }));
+    } else if (platform === 'grab' && grabMetrics) {
+      return [...new Set(grabMetrics.map(item => item.store_name))]
+        .map(storeName => ({
+          id: storeName,
+          name: storeName
+        }));
     }
     return [];
-  }, [platform, shopeeMetrics, lazadaMetrics, shopifyMetrics, foodpandaMetrics]);
+  }, [platform, shopeeMetrics, lazadaMetrics, shopifyMetrics, foodpandaMetrics, grabMetrics]);
 
   // Filter metrics by selected entity
   const filteredMetrics = useMemo((): MetricType[] => {
@@ -232,6 +256,11 @@ export function useMetricsData({
       return metrics.filter(metric => {
         const foodpandaMetric = metric as FoodpandaMetric;
         return selectedEntityId ? foodpandaMetric.shop_id === selectedEntityId : true;
+      });
+    } else if (platform === 'grab' && Array.isArray(metrics)) {
+      return metrics.filter(metric => {
+        const grabMetric = metric as GrabMetric;
+        return selectedEntityId ? grabMetric.store_name === selectedEntityId : true;
       });
     }
     return metrics;
@@ -294,6 +323,24 @@ export function useMetricsData({
         const dateB = new Date(b.date).getTime();
         return dateA - dateB;
       });
+    } else if (platform === 'grab') {
+      const data = filteredMetrics.map(metric => {
+        const grabMetric = metric as GrabMetric;
+        return {
+          date: grabMetric.date,
+          revenue: Number(grabMetric.revenue) || 0,
+          adsExpense: 0, // Grab doesn't provide ads expense
+          totalOrders: Number(grabMetric.completed_order) || 0,
+          newBuyers: 0, // Grab doesn't provide this info
+          existingBuyers: 0, // Grab doesn't provide this info
+          cancelledOrders: Number(grabMetric.cancelled_order) || 0 // Extra field for Grab
+        };
+      });
+      return data.sort((a, b) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return dateA - dateB;
+      });
     } else {
       // Lazada and any other platforms
       const data = filteredMetrics.map(metric => {
@@ -334,6 +381,11 @@ export function useMetricsData({
         const foodpandaMetric = metric as FoodpandaMetric;
         return sum + (Number(foodpandaMetric.revenue) || 0);
       }, 0);
+    } else if (platform === 'grab') {
+      return filteredMetrics.reduce((sum, metric) => {
+        const grabMetric = metric as GrabMetric;
+        return sum + (Number(grabMetric.revenue) || 0);
+      }, 0);
     } else {
       return filteredMetrics.reduce((sum, metric) => {
         const lazadaMetric = metric as LazadaMetric;
@@ -357,6 +409,11 @@ export function useMetricsData({
       return filteredMetrics.reduce((sum, metric) => {
         const foodpandaMetric = metric as FoodpandaMetric;
         return sum + (Number(foodpandaMetric.total_orders) || 0);
+      }, 0);
+    } else if (platform === 'grab') {
+      return filteredMetrics.reduce((sum, metric) => {
+        const grabMetric = metric as GrabMetric;
+        return sum + (Number(grabMetric.completed_order) || 0);
       }, 0);
     } else {
       return filteredMetrics.reduce((sum, metric) => {
@@ -394,11 +451,13 @@ export function useMetricsData({
         await refetchShopify();
       } else if (platform === 'foodpanda') {
         await refetchFoodpanda();
+      } else if (platform === 'grab') {
+        await refetchGrab();
       }
     } finally {
       setIsRefreshing(false);
     }
-  }, [platform, refetchShopee, refetchLazada, refetchShopify, refetchFoodpanda]);
+  }, [platform, refetchShopee, refetchLazada, refetchShopify, refetchFoodpanda, refetchGrab]);
 
   // Reset refreshing state when data or error changes
   useEffect(() => {

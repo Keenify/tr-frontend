@@ -9,12 +9,16 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-import { Platform } from '../PlatformSelector';
+import { Platform } from '../platform/PlatformSelector';
 
 interface ChartDataPoint {
   date: string;
   revenue: number;
   adsExpense: number;
+  totalOrders?: number;
+  newBuyers?: number;
+  existingBuyers?: number;
+  cancelledOrders?: number;
   [key: string]: any;
 }
 
