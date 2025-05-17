@@ -121,7 +121,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="people"
                           activeSubTab="directory"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <DirectoryPage session={session} />
                         </DashboardLayout>
@@ -140,7 +140,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="people"
                           activeSubTab="orgChart"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <OrgChartPage session={session} />
                         </DashboardLayout>
@@ -159,7 +159,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="people"
                           activeSubTab="supplier"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Supplier session={session} />
                         </DashboardLayout>
@@ -178,7 +178,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="people"
                           activeSubTab="client"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Client session={session} />
                         </DashboardLayout>
@@ -201,7 +201,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="meeting"
                           activeSubTab="dailyHuddle"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <DailyHuddle session={session} />
                         </DashboardLayout>
@@ -220,7 +220,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="sales"
                           activeSubTab="salesTab"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Sales session={session} />
                         </DashboardLayout>
@@ -239,7 +239,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="sales"
                           activeSubTab="quotation"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Quotation session={session} />
                         </DashboardLayout>
@@ -258,7 +258,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="sales"
                           activeSubTab="product"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Product session={session} />
                         </DashboardLayout>
@@ -277,7 +277,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="technology"
                           activeSubTab="resources"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Resources session={session} />
                         </DashboardLayout>
@@ -296,7 +296,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="projects"
                           activeSubTab="projects"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Projects session={session} />
                         </DashboardLayout>
@@ -315,7 +315,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="people"
                           activeSubTab="hiring"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Hiring session={session} />
                         </DashboardLayout>
@@ -334,7 +334,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="people"
                           activeSubTab="accountability"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Accountability session={session} />
                         </DashboardLayout>
@@ -353,7 +353,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="people"
                           activeSubTab="leaves"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Leaves session={session} />
                         </DashboardLayout>
@@ -372,7 +372,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="technology"
                           activeSubTab="password"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Password session={session} />
                         </DashboardLayout>
@@ -391,7 +391,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="process"
                           activeSubTab="todo"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Todo session={session} />
                         </DashboardLayout>
@@ -410,7 +410,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="technology"
                           activeSubTab="sandbox"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Idea session={session} />
                         </DashboardLayout>
@@ -429,7 +429,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="teamHealth"
                           activeSubTab="feedback"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Feedback session={session} />
                         </DashboardLayout>
@@ -448,7 +448,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="financeData"
                           activeSubTab="financeTab"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Finance session={session} />
                         </DashboardLayout>
@@ -467,7 +467,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="process"
                           activeSubTab="playbook"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Playbook session={session} />
                         </DashboardLayout>
@@ -486,7 +486,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="people"
                           activeSubTab="calendar"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Calendar session={session} />
                         </DashboardLayout>
@@ -505,7 +505,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="financeData"
                           activeSubTab="onlineSales"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <OnlineSales session={session} />
                         </DashboardLayout>
@@ -524,7 +524,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="technology"
                           activeSubTab="sandbox"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Idea session={session} key="new" />
                         </DashboardLayout>
@@ -543,7 +543,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="technology"
                           activeSubTab="sandbox"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Idea session={session} />
                         </DashboardLayout>
@@ -562,7 +562,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="teamHealth"
                           activeSubTab="admin"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Admin session={session} />
                         </DashboardLayout>
@@ -581,7 +581,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="teamHealth"
                           activeSubTab="award"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Award session={session} />
                         </DashboardLayout>
@@ -600,7 +600,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="teamHealth"
                           activeSubTab="leaderboard"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Leaderboard session={session} />
                         </DashboardLayout>
@@ -619,7 +619,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="teamHealth"
                           activeSubTab="milestone"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Milestone session={session} />
                         </DashboardLayout>
@@ -638,7 +638,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="teamHealth"
                           activeSubTab="issue_statement"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <IssueStatementPage session={session} />
                         </DashboardLayout>
@@ -657,7 +657,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="thePlan"
                           activeSubTab="peak"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Home session={session} />
                         </DashboardLayout>
@@ -676,7 +676,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="thePlan"
                           activeSubTab="vivid_vision"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Vision session={session} />
                         </DashboardLayout>
@@ -695,7 +695,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="technology"
                           activeSubTab="integration"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <Integration session={session} />
                         </DashboardLayout>
@@ -714,7 +714,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="thePlan"
                           activeSubTab="businessQuadrant"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <BusinessQuadrant session={session} />
                         </DashboardLayout>
@@ -733,7 +733,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="financeData"
                           activeSubTab="ccc"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <CashAccelerationStrategies session={session} />
                         </DashboardLayout>
@@ -752,7 +752,7 @@ const App: React.FC = () => {
                           signOut={signOut}
                           activeTab="thePlan"
                           activeSubTab="theRocks"
-                          onTabChange={() => {}}
+                          onSubTabChange={() => {}}
                         >
                           <TheRocksMain session={session} />
                         </DashboardLayout>
