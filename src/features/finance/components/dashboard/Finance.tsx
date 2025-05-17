@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Session } from '@supabase/supabase-js';
 import { Tab } from '@headlessui/react';
-import { getUserData } from '../../../services/useUser';
-import ProfitLoss from '../components/ProfitLoss';  // You'll need to create this component
+import { getUserData } from '../../../../services/useUser';
+import ProfitLoss from './ProfitLoss';  // You'll need to create this component
 
 interface FinanceProps {
   session: Session;

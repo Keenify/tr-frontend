@@ -1,6 +1,6 @@
 import React from 'react';
 import { Platform } from './PlatformSelector';
-import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES } from '../constant/Shopname';
+import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES } from '../../constant/Shopname';
 
 interface Entity {
   id: string | number;

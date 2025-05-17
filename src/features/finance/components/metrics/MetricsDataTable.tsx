@@ -4,7 +4,7 @@ import { ShopeeMetric } from '../services/useShopeeMetrics';
 import { LazadaMetric } from '../services/useLazadaMetrics';
 import { ShopifyMetric } from '../services/useShopifyMetrics';
 import { FoodpandaMetric } from '../services/useFoodpandaMetrics';
-import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES } from '../constant/Shopname';
+import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES } from "../../constant/Shopname";
 
 type AllMetric = ShopeeMetric | LazadaMetric | ShopifyMetric | FoodpandaMetric;
 

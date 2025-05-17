@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
-import { LazadaMetricUpsertPayload, useLazadaMetricsUpsert } from '../services/useLazadaMetrics';
+import { LazadaMetricUpsertPayload, useLazadaMetricsUpsert } from '../../services/useLazadaMetrics';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface LazadaManualEntryProps {

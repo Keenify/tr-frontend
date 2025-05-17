@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import LazadaManualEntry from './LazadaManualEntry';
-import { useLazadaMetrics } from '../services/useLazadaMetrics';
+import ShopifyManualEntry from './ShopifyManualEntry';
+import { useShopifyMetrics } from '../../services/useShopifyMetrics';
 
-interface LazadaManualEntryModalProps {
+interface ShopifyManualEntryModalProps {
   isOpen: boolean;
   onClose: () => void;
   companyId: string;
 }
 
-const LazadaManualEntryModal: React.FC<LazadaManualEntryModalProps> = ({
+const ShopifyManualEntryModal: React.FC<ShopifyManualEntryModalProps> = ({
   isOpen,
   onClose,
   companyId
 }) => {
-  const [accounts, setAccounts] = useState<string[]>([]);
+  const [stores, setStores] = useState<string[]>([]);
   
-  // Fetch existing Lazada accounts for the company to populate the dropdown
+  // Fetch existing Shopify stores for the company to populate the dropdown
   const today = new Date();
   const oneMonthAgo = new Date();
   oneMonthAgo.setMonth(today.getMonth() - 1);
@@ -24,7 +24,7 @@ const LazadaManualEntryModal: React.FC<LazadaManualEntryModalProps> = ({
     return date.toISOString().split('T')[0];
   };
   
-  const { data: lazadaMetrics, isLoading, error } = useLazadaMetrics(
+  const { data: shopifyMetrics, isLoading, error } = useShopifyMetrics(
     companyId,
     formatDate(oneMonthAgo),
     formatDate(today),
@@ -34,15 +34,15 @@ const LazadaManualEntryModal: React.FC<LazadaManualEntryModalProps> = ({
   );
   
   useEffect(() => {
-    if (lazadaMetrics?.length) {
-      // Extract unique account IDs
-      const uniqueAccounts = [...new Set(lazadaMetrics.map(metric => metric.account_id))];
-      setAccounts(uniqueAccounts);
+    if (shopifyMetrics?.length) {
+      // Extract unique store IDs
+      const uniqueStores = [...new Set(shopifyMetrics.map(metric => metric.store_id))];
+      setStores(uniqueStores);
     }
-  }, [lazadaMetrics]);
+  }, [shopifyMetrics]);
   
-  // Show error in the UI if there's an error fetching lazada metrics
-  const errorMessage = error ? (error instanceof Error ? error.message : 'Could not load Lazada accounts') : null;
+  // Show error in the UI if there's an error fetching shopify metrics
+  const errorMessage = error ? (error instanceof Error ? error.message : 'Could not load Shopify stores') : null;
   
   const handleSuccess = () => {
     onClose();
@@ -65,13 +65,13 @@ const LazadaManualEntryModal: React.FC<LazadaManualEntryModalProps> = ({
             <div className="sm:flex sm:items-start">
               <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                  Manual Lazada Metrics Entry
+                  Manual Shopify Metrics Entry
                 </h3>
                 
                 {isLoading ? (
                   <div className="flex justify-center items-center py-6">
                     <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
-                    <p className="ml-2 text-sm text-gray-500">Loading accounts...</p>
+                    <p className="ml-2 text-sm text-gray-500">Loading stores...</p>
                   </div>
                 ) : errorMessage ? (
                   <div className="bg-red-50 border border-red-300 rounded-md p-4 mb-4">
@@ -82,7 +82,7 @@ const LazadaManualEntryModal: React.FC<LazadaManualEntryModalProps> = ({
                         </svg>
                       </div>
                       <div className="ml-3">
-                        <h3 className="text-sm font-medium text-red-800">Error Loading Accounts</h3>
+                        <h3 className="text-sm font-medium text-red-800">Error Loading Stores</h3>
                         <div className="mt-2 text-sm text-red-700">
                           <p>{errorMessage}</p>
                         </div>
@@ -90,9 +90,9 @@ const LazadaManualEntryModal: React.FC<LazadaManualEntryModalProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <LazadaManualEntry
+                  <ShopifyManualEntry
                     companyId={companyId}
-                    accounts={accounts}
+                    stores={stores}
                     onSuccess={handleSuccess}
                   />
                 )}
@@ -114,4 +114,4 @@ const LazadaManualEntryModal: React.FC<LazadaManualEntryModalProps> = ({
   );
 };
 
-export default LazadaManualEntryModal;
+export default ShopifyManualEntryModal; 

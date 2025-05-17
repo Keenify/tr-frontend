@@ -1,30 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
 import { subDays, startOfMonth, startOfYear, startOfDay, endOfDay } from "date-fns";
-import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
-import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES } from '../constant/Shopname';
+import { useUserAndCompanyData } from "../../../../shared/hooks/useUserAndCompanyData";
+import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES } from '../../constant/Shopname';
 
 // Import custom hook
-import { useMetricsData } from "../hooks/useMetricsData";
+import { useMetricsData } from "../../hooks/useMetricsData";
 
 // Import components
-import PlatformSelector, { Platform } from "./PlatformSelector";
+import PlatformSelector, { Platform } from "../platform/PlatformSelector";
 import DateRangeSelector from "./DateRangeSelector";
-import PlatformEntitySelector from "./PlatformEntitySelector";
-import PlatformInfoHeader from "./PlatformInfoHeader";
-import MetricsSummary from "./MetricsSummary";
-import RevenueChart from "./charts/RevenueChart";
-import OrdersChart from "./charts/OrdersChart";
-import MetricsDataTable from "./MetricsDataTable";
+import PlatformEntitySelector from "../platform/PlatformEntitySelector";
+import PlatformInfoHeader from "../platform/PlatformInfoHeader";
+import MetricsSummary from "../metrics/MetricsSummary";
+import RevenueChart from "../charts/RevenueChart";
+import OrdersChart from "../charts/OrdersChart";
+import MetricsDataTable from "../metrics/MetricsDataTable";
 import EmptyStateMessage from "./EmptyStateMessage";
-import LazadaManualEntryModal from "./LazadaManualEntryModal";
-import ShopifyManualEntryModal from "./ShopifyManualEntryModal";
+import LazadaManualEntryModal from "../manual-entry/LazadaManualEntryModal";
+import ShopifyManualEntryModal from "../manual-entry/ShopifyManualEntryModal";
 
 // Import types
-import { ShopeeMetric } from '../services/useShopeeMetrics';
-import { LazadaMetric } from '../services/useLazadaMetrics';
-import { ShopifyMetric } from '../services/useShopifyMetrics';
-import { FoodpandaMetric } from '../services/useFoodpandaMetrics';
+import { ShopeeMetric } from '../../services/useShopeeMetrics';
+import { LazadaMetric } from '../../services/useLazadaMetrics';
+import { ShopifyMetric } from '../../services/useShopifyMetrics';
+import { FoodpandaMetric } from '../../services/useFoodpandaMetrics';
 
 interface OnlineSalesProps {
   session: Session;
