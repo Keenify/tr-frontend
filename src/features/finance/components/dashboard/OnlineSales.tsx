@@ -21,6 +21,7 @@ import LazadaManualEntryModal from "../manual-entry/LazadaManualEntryModal";
 import ShopifyManualEntryModal from "../manual-entry/ShopifyManualEntryModal";
 import GrabManualEntryModal from "../manual-entry/GrabManualEntryModal";
 import RedmartManualEntryModal from "../manual-entry/RedmartManualEntryModal";
+import FoodpandaManualEntryModal from "../manual-entry/FoodpandaManualEntryModal";
 
 // Import types
 import { ShopeeMetric } from '../../services/useShopeeMetrics';
@@ -47,6 +48,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const [isShopifyManualEntryOpen, setIsShopifyManualEntryOpen] = useState<boolean>(false);
   const [isGrabManualEntryOpen, setIsGrabManualEntryOpen] = useState<boolean>(false);
   const [isRedmartManualEntryOpen, setIsRedmartManualEntryOpen] = useState<boolean>(false);
+  const [isFoodpandaManualEntryOpen, setIsFoodpandaManualEntryOpen] = useState<boolean>(false);
 
   // Get user and company data
   const { companyInfo, error: userDataError, isLoading: userDataLoading } = 
@@ -215,6 +217,20 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     refreshData();
   };
 
+  // Handle manual entry for Foodpanda
+  const handleOpenFoodpandaManualEntry = () => {
+    if (!companyInfo?.id) {
+      alert('Company information is required for manual entry');
+      return;
+    }
+    setIsFoodpandaManualEntryOpen(true);
+  };
+
+  const handleFoodpandaManualEntryClose = () => {
+    setIsFoodpandaManualEntryOpen(false);
+    refreshData();
+  };
+
   // Determine if manual entry should be shown
   const showManualEntry = () => {
     if (selectedPlatform === 'lazada') {
@@ -253,6 +269,15 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
           Manual Entry
         </button>
       );
+    } else if (selectedPlatform === 'foodpanda') {
+      return (
+        <button 
+          className="px-3 py-1 text-sm bg-purple-500 text-white rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          onClick={handleOpenFoodpandaManualEntry}
+        >
+          Manual Entry
+        </button>
+      );
     } else if (selectedPlatform === 'all_sg' || selectedPlatform === 'all_my') {
       return (
         <div className="flex space-x-2">
@@ -267,6 +292,12 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
             onClick={handleOpenRedmartManualEntry}
           >
             Redmart Entry
+          </button>
+          <button 
+            className="px-3 py-1 text-sm bg-purple-500 text-white rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            onClick={handleOpenFoodpandaManualEntry}
+          >
+            Foodpanda Entry
           </button>
           <button 
             className="px-3 py-1 text-sm bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -394,6 +425,8 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         <span className={`px-3 py-1 text-xs rounded-full font-medium ${
           selectedPlatform === "shopee" ? "bg-orange-100 text-orange-800" : 
           selectedPlatform === "lazada" ? "bg-blue-100 text-blue-800" : 
+          selectedPlatform === "redmart" ? "bg-red-100 text-red-800" : 
+          selectedPlatform === "foodpanda" ? "bg-purple-100 text-purple-800" :
           selectedPlatform === "shopify" ? "bg-green-100 text-green-800" :
           selectedPlatform === "all_sg" ? "bg-gray-800 text-white" :
           selectedPlatform === "all_my" ? "bg-yellow-800 text-white" :
@@ -479,6 +512,8 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
           <div className={`animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 ${
             selectedPlatform === "shopee" ? "border-orange-500" : 
             selectedPlatform === "lazada" ? "border-blue-500" : 
+            selectedPlatform === "redmart" ? "border-red-500" :
+            selectedPlatform === "foodpanda" ? "border-purple-500" :
             selectedPlatform === "shopify" ? "border-green-500" :
             selectedPlatform === "all_sg" ? "border-gray-800" :
             selectedPlatform === "all_my" ? "border-yellow-800" :
@@ -576,6 +611,14 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         <RedmartManualEntryModal
           isOpen={isRedmartManualEntryOpen}
           onClose={handleRedmartManualEntryClose}
+          companyId={companyInfo.id}
+        />
+      )}
+
+      {companyInfo?.id && isFoodpandaManualEntryOpen && (
+        <FoodpandaManualEntryModal
+          isOpen={isFoodpandaManualEntryOpen}
+          onClose={handleFoodpandaManualEntryClose}
           companyId={companyInfo.id}
         />
       )}
