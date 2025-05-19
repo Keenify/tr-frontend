@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
 import { subDays, startOfMonth, startOfYear, startOfDay, endOfDay } from "date-fns";
 import { useUserAndCompanyData } from "../../../../shared/hooks/useUserAndCompanyData";
-import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES } from '../../constant/Shopname';
+import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES, REDMART_SHOP_NAMES } from '../../constant/Shopname';
 
 // Import custom hook
 import { useMetricsData } from "../../hooks/useMetricsData";
@@ -20,6 +20,7 @@ import EmptyStateMessage from "./EmptyStateMessage";
 import LazadaManualEntryModal from "../manual-entry/LazadaManualEntryModal";
 import ShopifyManualEntryModal from "../manual-entry/ShopifyManualEntryModal";
 import GrabManualEntryModal from "../manual-entry/GrabManualEntryModal";
+import RedmartManualEntryModal from "../manual-entry/RedmartManualEntryModal";
 
 // Import types
 import { ShopeeMetric } from '../../services/useShopeeMetrics';
@@ -45,6 +46,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const [isLazadaManualEntryOpen, setIsLazadaManualEntryOpen] = useState<boolean>(false);
   const [isShopifyManualEntryOpen, setIsShopifyManualEntryOpen] = useState<boolean>(false);
   const [isGrabManualEntryOpen, setIsGrabManualEntryOpen] = useState<boolean>(false);
+  const [isRedmartManualEntryOpen, setIsRedmartManualEntryOpen] = useState<boolean>(false);
 
   // Get user and company data
   const { companyInfo, error: userDataError, isLoading: userDataLoading } = 
@@ -72,7 +74,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
 
   // After entities are loaded, set default Shopee shop if not set
   useEffect(() => {
-    if ((selectedPlatform === 'shopee' || selectedPlatform === 'lazada' || selectedPlatform === 'foodpanda') && !selectedEntityId && entities.length > 0) {
+    if ((selectedPlatform === 'shopee' || selectedPlatform === 'lazada' || selectedPlatform === 'foodpanda' || selectedPlatform === 'redmart') && !selectedEntityId && entities.length > 0) {
       setSelectedEntityId(entities[0].id);
     }
     // eslint-disable-next-line
@@ -86,6 +88,14 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     }
   }, [selectedPlatform, selectedEntityId]);
 
+  // Set default Redmart shopId if not set
+  useEffect(() => {
+    if (selectedPlatform === 'redmart' && !selectedEntityId) {
+      const shopIds = Object.keys(REDMART_SHOP_NAMES);
+      if (shopIds.length > 0) setSelectedEntityId(shopIds[0]);
+    }
+  }, [selectedPlatform, selectedEntityId]);
+
   // Determine currency
   let currency = 'SGD';
   if (selectedPlatform === 'shopee') {
@@ -94,10 +104,10 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     } else if (selectedEntityId === 2421911 || selectedEntityId === '2421911') {
       currency = 'SGD';
     }
-  } else if (selectedPlatform === 'lazada') {
+  } else if (selectedPlatform === 'lazada' || selectedPlatform === 'redmart') {
     if (selectedEntityId === 'leon@thekettlegourmet.com') {
       currency = 'MYR';
-    } else if (selectedEntityId === 'flo@thekettlegourmet.com') {
+    } else if (selectedEntityId === 'flo@thekettlegourmet.com' || selectedEntityId === 'czy199162@gmail.com') {
       currency = 'SGD';
     }
   } else if (selectedPlatform === 'foodpanda') {
@@ -191,6 +201,20 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     refreshData();
   };
 
+  // Handle manual entry for Redmart
+  const handleOpenRedmartManualEntry = () => {
+    if (!companyInfo?.id) {
+      alert('Company information is required for manual entry');
+      return;
+    }
+    setIsRedmartManualEntryOpen(true);
+  };
+
+  const handleRedmartManualEntryClose = () => {
+    setIsRedmartManualEntryOpen(false);
+    refreshData();
+  };
+
   // Determine if manual entry should be shown
   const showManualEntry = () => {
     if (selectedPlatform === 'lazada') {
@@ -198,6 +222,15 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         <button 
           className="px-3 py-1 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           onClick={handleOpenLazadaManualEntry}
+        >
+          Manual Entry
+        </button>
+      );
+    } else if (selectedPlatform === 'redmart') {
+      return (
+        <button 
+          className="px-3 py-1 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+          onClick={handleOpenRedmartManualEntry}
         >
           Manual Entry
         </button>
@@ -228,6 +261,12 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
             onClick={handleOpenLazadaManualEntry}
           >
             Lazada Entry
+          </button>
+          <button 
+            className="px-3 py-1 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+            onClick={handleOpenRedmartManualEntry}
+          >
+            Redmart Entry
           </button>
           <button 
             className="px-3 py-1 text-sm bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -267,7 +306,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   }
 
   // Determine enabled platforms
-  const enabledPlatforms: Platform[] = ["shopee", "lazada", "shopify", "foodpanda", "grab", "all_sg", "all_my"];
+  const enabledPlatforms: Platform[] = ["shopee", "lazada", "redmart", "shopify", "foodpanda", "grab", "all_sg", "all_my"];
 
   // Determine if we're in all_sg or all_my mode
   const isAllSG = selectedPlatform === 'all_sg';
@@ -338,6 +377,8 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     shopName = SHOPEE_SHOP_NAMES[selectedEntityId as string] || selectedEntityId as string;
   } else if (selectedPlatform === 'lazada') {
     shopName = LAZADA_ACCOUNT_NAMES[selectedEntityId as string] || selectedEntityId as string;
+  } else if (selectedPlatform === 'redmart') {
+    shopName = REDMART_SHOP_NAMES[selectedEntityId as string] || selectedEntityId as string;
   } else if (selectedPlatform === 'foodpanda') {
     shopName = FOODPANDA_SHOP_NAMES[selectedEntityId as string] || selectedEntityId as string;
   }
@@ -527,6 +568,14 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         <LazadaManualEntryModal
           isOpen={isLazadaManualEntryOpen}
           onClose={handleLazadaManualEntryClose}
+          companyId={companyInfo.id}
+        />
+      )}
+
+      {companyInfo?.id && isRedmartManualEntryOpen && (
+        <RedmartManualEntryModal
+          isOpen={isRedmartManualEntryOpen}
+          onClose={handleRedmartManualEntryClose}
           companyId={companyInfo.id}
         />
       )}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Platform } from './PlatformSelector';
-import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES } from '../../constant/Shopname';
+import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES, REDMART_SHOP_NAMES } from '../../constant/Shopname';
 
 export interface Entity {
   id: string | number;
@@ -38,6 +38,7 @@ const PlatformEntitySelector: React.FC<PlatformEntitySelectorProps> = ({
     switch (platform) {
       case 'shopee': return 'Shopee Shop';
       case 'lazada': return 'Lazada Account';
+      case 'redmart': return 'Redmart Account';
       case 'shopify': return 'Shopify Store';
       case 'foodpanda': return 'Foodpanda Shop';
       case 'grab': return 'Grab Store';
@@ -53,6 +54,10 @@ const PlatformEntitySelector: React.FC<PlatformEntitySelectorProps> = ({
     }
     if (platform === 'lazada') {
       const accountName = LAZADA_ACCOUNT_NAMES[entity.id] || entity.id;
+      return `${accountName} (${entity.id})`;
+    }
+    if (platform === 'redmart') {
+      const accountName = REDMART_SHOP_NAMES[entity.id] || entity.id;
       return `${accountName} (${entity.id})`;
     }
     if (platform === 'foodpanda') {

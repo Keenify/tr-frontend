@@ -1,6 +1,6 @@
 import React from 'react';
 import { format } from 'date-fns';
-import { Platform } from './PlatformSelector';
+import { Platform } from '../platform/PlatformSelector';
 
 interface EmptyStateMessageProps {
   platform: Platform;
@@ -31,6 +31,8 @@ const EmptyStateMessage: React.FC<EmptyStateMessageProps> = ({
         return "Make sure your Shopee shop credentials are properly configured and you have sales data for the selected period.";
       case 'lazada':
         return "Ensure your Lazada API credentials are set up correctly and the account has sales data for the selected date range.";
+      case 'redmart':
+        return "Ensure your Redmart account credentials are set up correctly and the account has sales data for the selected date range.";
       case 'shopify':
         return "Ensure your Shopify store credentials are set up correctly and the store has sales data for the selected date range.";
       default:
@@ -43,7 +45,10 @@ const EmptyStateMessage: React.FC<EmptyStateMessageProps> = ({
     switch (platform) {
       case 'shopee': return '🛍️';
       case 'lazada': return '📦';
+      case 'redmart': return '🏪';
       case 'shopify': return '🏪';
+      case 'foodpanda': return '🍱';
+      case 'grab': return '🚗';
       default: return '❓';
     }
   };
@@ -52,6 +57,9 @@ const EmptyStateMessage: React.FC<EmptyStateMessageProps> = ({
     <div className={`bg-gray-50 border border-gray-300 p-8 rounded-md text-center ${
       platform === 'shopee' ? 'border-orange-200' : 
       platform === 'lazada' ? 'border-blue-200' : 
+      platform === 'redmart' ? 'border-red-200' : 
+      platform === 'foodpanda' ? 'border-purple-200' :
+      platform === 'grab' ? 'border-green-600' :
       'border-green-200'
     }`}>
       <div className="text-5xl mb-4">{getPlatformIcon()}</div>
@@ -63,13 +71,19 @@ const EmptyStateMessage: React.FC<EmptyStateMessageProps> = ({
         <br />Date range: {format(startDate, "yyyy-MM-dd")} to {format(endDate, "yyyy-MM-dd")}
         {platform === "shopee" && selectedEntityId && <><br />Shop ID: {selectedEntityId}</>}
         {platform === "lazada" && selectedEntityId && <><br />Account ID: {selectedEntityId}</>}
+        {platform === "redmart" && selectedEntityId && <><br />Account ID: {selectedEntityId}</>}
         {platform === "shopify" && selectedEntityId && <><br />Store ID: {selectedEntityId}</>}
+        {platform === "foodpanda" && selectedEntityId && <><br />Shop ID: {selectedEntityId}</>}
+        {platform === "grab" && selectedEntityId && <><br />Store Name: {selectedEntityId}</>}
       </p>
       <button
         onClick={onRefresh}
         className={`mt-4 px-4 py-2 text-white rounded-md flex items-center justify-center gap-2 mx-auto ${
           platform === 'shopee' ? 'bg-orange-500 hover:bg-orange-600' : 
           platform === 'lazada' ? 'bg-blue-500 hover:bg-blue-600' : 
+          platform === 'redmart' ? 'bg-red-500 hover:bg-red-600' : 
+          platform === 'foodpanda' ? 'bg-purple-500 hover:bg-purple-600' :
+          platform === 'grab' ? 'bg-green-600 hover:bg-green-700' :
           'bg-green-500 hover:bg-green-600'
         }`}
         disabled={isRefreshing}

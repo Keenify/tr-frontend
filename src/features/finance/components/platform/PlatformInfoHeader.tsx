@@ -1,6 +1,6 @@
 import React from 'react';
 import { Platform } from './PlatformSelector';
-import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES } from '../../constant/Shopname';
+import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES, REDMART_SHOP_NAMES } from '../../constant/Shopname';
 
 interface PlatformInfoHeaderProps {
   platform: Platform;
@@ -22,6 +22,7 @@ const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
     switch (platform) {
       case 'shopee': return 'bg-orange-100 text-orange-800';
       case 'lazada': return 'bg-blue-100 text-blue-800';
+      case 'redmart': return 'bg-red-100 text-red-800';
       case 'shopify': return 'bg-green-100 text-green-800';
       case 'foodpanda': return 'bg-purple-100 text-purple-800';
       case 'grab': return 'bg-green-100 text-green-800';
@@ -36,6 +37,7 @@ const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
     switch (platform) {
       case 'shopee': return '🛍️';
       case 'lazada': return '📦';
+      case 'redmart': return '🏪';
       case 'shopify': return '🏪';
       case 'foodpanda': return '🍱';
       case 'grab': return '🚗';
@@ -48,6 +50,7 @@ const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
     switch (platform) {
       case 'shopee': return 'Shop ID';
       case 'lazada': return 'Account ID';
+      case 'redmart': return 'Account ID';
       case 'shopify': return 'Store ID';
       case 'foodpanda': return 'Shop ID';
       case 'grab': return 'Store Name';
@@ -59,6 +62,7 @@ const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
   const shopName =
     platform === 'shopee' && selectedEntityId ? SHOPEE_SHOP_NAMES[selectedEntityId as string] || selectedEntityId :
     platform === 'lazada' && selectedEntityId ? LAZADA_ACCOUNT_NAMES[selectedEntityId as string] || selectedEntityId :
+    platform === 'redmart' && selectedEntityId ? REDMART_SHOP_NAMES[selectedEntityId as string] || selectedEntityId :
     platform === 'foodpanda' && selectedEntityId ? FOODPANDA_SHOP_NAMES[selectedEntityId as string] || selectedEntityId :
     undefined;
 
@@ -66,6 +70,7 @@ const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
     <div className={`mb-4 p-3 rounded-lg shadow border-l-4 ${
       platform === 'shopee' ? 'border-l-orange-500 bg-white' :
       platform === 'lazada' ? 'border-l-blue-500 bg-white' :
+      platform === 'redmart' ? 'border-l-red-500 bg-white' :
       platform === 'shopify' ? 'border-l-green-500 bg-white' :
       platform === 'foodpanda' ? 'border-l-purple-500 bg-white' :
       platform === 'grab' ? 'border-l-green-600 bg-white' :
@@ -86,13 +91,16 @@ const PlatformInfoHeader: React.FC<PlatformInfoHeaderProps> = ({
             {platform === 'lazada' && shopName && selectedEntityId && (
               <><span className="font-medium">Lazada Shop:</span> {shopName} ({selectedEntityId})</>
             )}
+            {platform === 'redmart' && shopName && selectedEntityId && (
+              <><span className="font-medium">Redmart Shop:</span> {shopName} ({selectedEntityId})</>
+            )}
             {platform === 'foodpanda' && shopName && selectedEntityId && (
               <><span className="font-medium">Foodpanda Shop:</span> {shopName} ({selectedEntityId})</>
             )}
             {platform === 'grab' && selectedEntityId && (
               <><span className="font-medium">Grab Store:</span> {selectedEntityId}</>
             )}
-            {platform !== 'shopee' && platform !== 'lazada' && platform !== 'foodpanda' && platform !== 'grab' && selectedEntityId && (
+            {platform !== 'shopee' && platform !== 'lazada' && platform !== 'redmart' && platform !== 'foodpanda' && platform !== 'grab' && selectedEntityId && (
               <><span className="font-medium">{getEntityFieldName()}:</span> {selectedEntityId}</>
             )}
             {(platform === 'all_sg' || platform === 'all_my') && includedStores && includedStores.length > 0 && (

@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type Platform = "shopee" | "lazada" | "shopify" | "all_sg" | "all_my" | "foodpanda" | "grab";
+export type Platform = "shopee" | "lazada" | "shopify" | "all_sg" | "all_my" | "foodpanda" | "grab" | "redmart";
 
 interface PlatformSelectorProps {
   selectedPlatform: Platform;
@@ -15,10 +15,21 @@ interface PlatformSelectorProps {
 const PlatformSelector: React.FC<PlatformSelectorProps> = ({ 
   selectedPlatform, 
   onPlatformChange,
-  enabledPlatforms = ["shopee", "lazada", "shopify", "foodpanda", "grab"],  // Default enabled platforms
+  enabledPlatforms,  // Remove default value to handle it differently
   hideLabel = false
 }) => {
-  const isEnabled = (platform: Platform) => enabledPlatforms.includes(platform);
+  // If enabledPlatforms is not provided, use all platforms except all_sg and all_my
+  const defaultEnabledPlatforms: Platform[] = ["shopee", "lazada", "redmart", "shopify", "foodpanda", "grab"];
+  
+  // Use provided enabledPlatforms or fallback to defaultEnabledPlatforms
+  const effectiveEnabledPlatforms = enabledPlatforms || defaultEnabledPlatforms;
+  
+  const isEnabled = (platform: Platform) => {
+    // Always enable all_sg and all_my
+    if (platform === "all_sg" || platform === "all_my") return true;
+    // For other platforms, check the enabledPlatforms array
+    return effectiveEnabledPlatforms.includes(platform);
+  };
   
   return (
     <div className="flex flex-col">
@@ -49,6 +60,18 @@ const PlatformSelector: React.FC<PlatformSelectorProps> = ({
           title={isEnabled("lazada") ? undefined : "Coming soon"}
         >
           Lazada
+        </button>
+        <button
+          className={`px-4 py-2 rounded-md ${
+            selectedPlatform === "redmart"
+              ? "bg-red-500 text-white"
+              : "bg-gray-200 text-gray-700"
+          }`}
+          onClick={() => onPlatformChange("redmart")}
+          disabled={!isEnabled("redmart")}
+          title={isEnabled("redmart") ? undefined : "Coming soon"}
+        >
+          Redmart
         </button>
         <button
           className={`px-4 py-2 rounded-md ${

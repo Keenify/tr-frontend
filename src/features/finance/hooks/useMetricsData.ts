@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { Platform } from '../components/platform/PlatformSelector';
 import { Entity } from '../components/platform/PlatformEntitySelector';
 import { ChartDataPoint } from '../components/charts/RevenueChart';
-import { FOODPANDA_SHOP_NAMES } from '../constant/Shopname';
+import { FOODPANDA_SHOP_NAMES, REDMART_SHOP_NAMES } from '../constant/Shopname';
 import { useQueries } from '@tanstack/react-query';
 import { getFoodpandaMetrics } from '../services/useFoodpandaMetrics';
 
@@ -72,7 +72,7 @@ export function useMetricsData({
     error: lazadaError,
     refetch: refetchLazada
   } = useLazadaMetrics(
-    platform === 'lazada' || platform === 'all_sg' || platform === 'all_my' ? companyId : undefined,
+    platform === 'lazada' || platform === 'redmart' || platform === 'all_sg' || platform === 'all_my' ? companyId : undefined,
     formattedStartDate,
     formattedEndDate
   );
@@ -164,6 +164,12 @@ export function useMetricsData({
     switch (platform) {
       case 'shopee': return shopeeMetrics || [];
       case 'lazada': return lazadaMetrics || [];
+      case 'redmart': {
+        // Filter Lazada metrics for Redmart accounts
+        return (lazadaMetrics || []).filter(metric => 
+          Object.keys(REDMART_SHOP_NAMES).includes(metric.account_id)
+        );
+      }
       case 'shopify': return shopifyMetrics || [];
       case 'foodpanda': return foodpandaMetrics || [];
       case 'grab': return grabMetrics || [];
@@ -178,6 +184,7 @@ export function useMetricsData({
     switch (platform) {
       case 'shopee': return shopeeLoading;
       case 'lazada': return lazadaLoading;
+      case 'redmart': return lazadaLoading; // Redmart uses Lazada loading state
       case 'shopify': return shopifyLoading;
       case 'foodpanda': return foodpandaLoading;
       case 'grab': return grabLoading;
@@ -192,6 +199,7 @@ export function useMetricsData({
     switch (platform) {
       case 'shopee': return shopeeError;
       case 'lazada': return lazadaError;
+      case 'redmart': return lazadaError; // Redmart uses Lazada error state
       case 'shopify': return shopifyError;
       case 'foodpanda': return foodpandaError;
       case 'grab': return grabError;
@@ -213,6 +221,24 @@ export function useMetricsData({
           id: accountId,
           name: accountId
         }));
+    } else if (platform === 'redmart' && lazadaMetrics) {
+      // Filter for Redmart accounts from Lazada metrics
+      const redmartAccountIds = Object.keys(REDMART_SHOP_NAMES);
+      
+      // First try to get from metrics
+      const accountsFromMetrics = [...new Set(lazadaMetrics
+        .filter(metric => redmartAccountIds.includes(metric.account_id))
+        .map(item => item.account_id)
+      )];
+      
+      // If no accounts found in metrics, use the ones from REDMART_SHOP_NAMES
+      const accountIds = accountsFromMetrics.length > 0 ? 
+        accountsFromMetrics : redmartAccountIds;
+      
+      return accountIds.map(accountId => ({
+        id: accountId,
+        name: REDMART_SHOP_NAMES[accountId] || accountId
+      }));
     } else if (platform === 'shopify' && shopifyMetrics) {
       return [...new Set(shopifyMetrics.map(item => item.store_id))]
         .map(storeId => ({
@@ -242,7 +268,7 @@ export function useMetricsData({
         const shopeeMetric = metric as ShopeeMetric;
         return selectedEntityId ? shopeeMetric.shop_id === selectedEntityId : true;
       });
-    } else if (platform === 'lazada' && Array.isArray(metrics)) {
+    } else if ((platform === 'lazada' || platform === 'redmart') && Array.isArray(metrics)) {
       return metrics.filter(metric => {
         const lazadaMetric = metric as LazadaMetric;
         return selectedEntityId ? lazadaMetric.account_id === selectedEntityId : true;
@@ -342,7 +368,7 @@ export function useMetricsData({
         return dateA - dateB;
       });
     } else {
-      // Lazada and any other platforms
+      // Lazada, Redmart and any other platforms
       const data = filteredMetrics.map(metric => {
         const lazadaMetric = metric as LazadaMetric;
         return {
@@ -387,6 +413,7 @@ export function useMetricsData({
         return sum + (Number(grabMetric.revenue) || 0);
       }, 0);
     } else {
+      // Lazada and Redmart
       return filteredMetrics.reduce((sum, metric) => {
         const lazadaMetric = metric as LazadaMetric;
         return sum + (Number(lazadaMetric.revenue) || 0);
@@ -416,6 +443,7 @@ export function useMetricsData({
         return sum + (Number(grabMetric.completed_order) || 0);
       }, 0);
     } else {
+      // Lazada and Redmart
       return filteredMetrics.reduce((sum, metric) => {
         const lazadaMetric = metric as LazadaMetric;
         return sum + (Number(lazadaMetric.total_orders) || 0);
@@ -432,6 +460,7 @@ export function useMetricsData({
         return sum + (Number(shopeeMetric.ads_expense) || 0);
       }, 0);
     } else {
+      // Lazada, Redmart, and other platforms
       return filteredMetrics.reduce((sum, metric) => {
         const lazadaMetric = metric as LazadaMetric;
         return sum + (Number(lazadaMetric.ads_expense) || 0);
@@ -445,7 +474,7 @@ export function useMetricsData({
     try {
       if (platform === 'shopee') {
         await refetchShopee();
-      } else if (platform === 'lazada') {
+      } else if (platform === 'lazada' || platform === 'redmart') {
         await refetchLazada();
       } else if (platform === 'shopify') {
         await refetchShopify();
