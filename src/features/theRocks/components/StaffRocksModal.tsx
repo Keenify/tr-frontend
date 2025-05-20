@@ -419,7 +419,7 @@ const StaffRocksModal: React.FC<StaffRocksModalProps> = ({
                         [{value: null, label: 'Not Set / No Manager'}, ...managerEmployees.map(emp => ({value: emp.id, label: `${emp.first_name} ${emp.last_name}`}))] 
                       )}
                       <div className="md:col-span-2">
-                        {renderFieldWithHint('go_to_for', 'Go To For', 'e.g., Guidance on Project X', 'input')}
+                      {renderFieldWithHint('go_to_for', 'Go To For', 'e.g., Guidance on Project X', 'input')}
                       </div>
                     </div>
                   </fieldset>
