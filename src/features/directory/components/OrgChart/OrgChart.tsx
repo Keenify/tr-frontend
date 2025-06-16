@@ -119,7 +119,11 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-500 border-t-transparent"></div>
           </div>
         ) : treeData ? (
-          <OrgChartTree node={treeData} onNodeClick={handleNodeClick} />
+          <OrgChartTree 
+            node={treeData} 
+            onNodeClick={handleNodeClick} 
+            searchQuery={searchQuery}
+          />
         ) : (
           <div className="flex flex-col items-center justify-center py-16">
             <img

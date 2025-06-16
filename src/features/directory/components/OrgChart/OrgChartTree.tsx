@@ -12,12 +12,46 @@ interface TreeNode extends Employee {
 interface OrgChartTreeProps {
   node: TreeNode;
   onNodeClick: (employee: Employee) => void;
+  searchQuery?: string;
 }
 
-const OrgChartTree: React.FC<OrgChartTreeProps> = ({ node, onNodeClick }) => {
+const OrgChartTree: React.FC<OrgChartTreeProps> = ({ node, onNodeClick, searchQuery = "" }) => {
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Function to filter tree based on search query
+  const filterTree = (node: TreeNode, query: string): TreeNode | null => {
+    if (!query.trim()) {
+      return node; // Return full tree if no search query
+    }
+
+    const queryLower = query.toLowerCase();
+    const matchesNode = (
+      node.first_name.toLowerCase().includes(queryLower) ||
+      node.last_name.toLowerCase().includes(queryLower) ||
+      node.role?.toLowerCase().includes(queryLower) ||
+      `${node.first_name} ${node.last_name}`.toLowerCase().includes(queryLower)
+    );
+
+    // Filter children recursively
+    const filteredChildren = node.children
+      .map(child => filterTree(child, query))
+      .filter(child => child !== null) as TreeNode[];
+
+    // Include this node if it matches or if it has matching descendants
+    if (matchesNode || filteredChildren.length > 0) {
+      return {
+        ...node,
+        children: filteredChildren
+      };
+    }
+
+    return null;
+  };
+
+  // Get filtered tree data
+  const filteredNode = filterTree(node, searchQuery);
 
   // Function to calculate tree dimensions
   const calculateTreeDimensions = () => {
@@ -51,15 +85,34 @@ const OrgChartTree: React.FC<OrgChartTreeProps> = ({ node, onNodeClick }) => {
         style={{ width: '150px', height: '100px', cursor: 'pointer' }}
         onClick={() => onNodeClick(nodeDatum as unknown as Employee)}
       >
-        <MemoizedTreeNodeComponent node={nodeDatum as unknown as TreeNode} />
+        <MemoizedTreeNodeComponent 
+          node={nodeDatum as unknown as TreeNode} 
+          searchQuery={searchQuery}
+        />
       </div>
     </foreignObject>
   );
 
-  const treeData: RawNodeDatum[] = [node];
+  // If no nodes match the search, show a message
+  if (!filteredNode) {
+    return (
+      <div ref={containerRef} className="org-chart-container">
+        <div className="flex items-center justify-center py-16">
+          <div className="text-center">
+            <p className="text-gray-500 text-lg">No employees found matching "{searchQuery}"</p>
+            <p className="text-gray-400 text-sm mt-2">Try adjusting your search terms</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const treeData: RawNodeDatum[] = [filteredNode];
 
   // Calculate the zoom based on the number of nodes and container size
   const calculateZoom = () => {
+    if (!filteredNode) return 1; // Default zoom if no filtered node
+    
     const countNodes = (node: TreeNode): number => {
       let count = 1;
       if (node.children) {
@@ -70,7 +123,7 @@ const OrgChartTree: React.FC<OrgChartTreeProps> = ({ node, onNodeClick }) => {
       return count;
     };
 
-    const totalNodes = countNodes(node);
+    const totalNodes = countNodes(filteredNode);
     const baseZoom = Math.min(dimensions.width, dimensions.height) / (totalNodes * 100);
     return Math.min(Math.max(baseZoom, 0.4), 1.2); // Limit zoom between 0.4 and 1.2
   };
