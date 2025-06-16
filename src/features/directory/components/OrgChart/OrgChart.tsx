@@ -31,7 +31,6 @@ interface TreeNode extends Employee {
  * @returns JSX.Element - The rendered org chart component.
  */
 export const OrgChart = ({ companyId }: OrgChartProps) => {
-  const [activeTab, setActiveTab] = useState<"people" | "roles">("people");
   const [searchQuery, setSearchQuery] = useState("");
   const [isConfigPanelOpen, setIsConfigPanelOpen] = useState(false);
   const [, setEmployees] = useState<Employee[]>([]);
@@ -91,29 +90,6 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
 
       {/* Controls */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
-        <div className="flex space-x-4">
-          <button
-            onClick={() => setActiveTab("people")}
-            className={`px-4 py-2 font-medium ${
-              activeTab === "people"
-                ? "text-red-500 border-b-2 border-red-500"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            People
-          </button>
-          <button
-            onClick={() => setActiveTab("roles")}
-            className={`px-4 py-2 font-medium ${
-              activeTab === "roles"
-                ? "text-red-500 border-b-2 border-red-500"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            Roles
-          </button>
-        </div>
-
         <div className="flex w-full sm:w-auto space-x-4">
           <div className="relative flex-1 sm:flex-initial">
             <input
