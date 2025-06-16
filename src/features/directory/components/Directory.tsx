@@ -16,6 +16,9 @@ export const Directory = ({ companyId }: { companyId: string }) => {
 
   const selectedEmployee = employees.find(emp => emp.id === filters.selectedEmployeeId);
 
+  // Filter to only show employed employees
+  const employedEmployees = employees.filter(employee => employee.Is_Employed);
+
   const handleEmployeeClick = (employeeId: string) => {
     setFilters({ ...filters, selectedEmployeeId: employeeId });
   };
@@ -69,7 +72,7 @@ export const Directory = ({ companyId }: { companyId: string }) => {
           <div className="text-center py-8 text-red-600">{error}</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
-            {employees.map((employee) => (
+            {employedEmployees.map((employee) => (
               <EmployeeCard 
                 key={employee.id} 
                 employee={employee}
