@@ -16,8 +16,10 @@ export const Directory = ({ companyId }: { companyId: string }) => {
 
   const selectedEmployee = employees.find(emp => emp.id === filters.selectedEmployeeId);
 
-  // Filter to only show employed employees
-  const employedEmployees = employees.filter(employee => employee.Is_Employed);
+  // Filter to only show employed employees OR the backup user (special case)
+  const employedEmployees = employees.filter(employee => 
+    employee.Is_Employed || employee.first_name.toLowerCase() === 'backup'
+  );
 
   const handleEmployeeClick = (employeeId: string) => {
     setFilters({ ...filters, selectedEmployeeId: employeeId });

@@ -21,16 +21,22 @@ export const OrgChartConfigPanel = ({ isOpen, onClose, companyId, onUpdate }: Or
     const fetchEmployees = async () => {
       try {
         const data = await directoryService.fetchEmployees(companyId);
-        setEmployees(data);
+        
+        // Filter to only show employed employees OR the backup user (special case)
+        const employedEmployees = data.filter(employee => 
+          employee.Is_Employed || employee.first_name.toLowerCase() === 'backup'
+        );
+        
+        setEmployees(employedEmployees);
 
         // Find the highest-ranking employee
-        const highestRankEmployee = data.find(emp => emp.highest_rank === true);
+        const highestRankEmployee = employedEmployees.find(emp => emp.highest_rank === true);
         if (highestRankEmployee) {
           setHighestRanking(highestRankEmployee.id);
         }
 
         // Set initial reporting structure
-        const initialStructure = data.reduce((acc, emp) => {
+        const initialStructure = employedEmployees.reduce((acc, emp) => {
           if (emp.reports_to) {
             acc[emp.id] = emp.reports_to;
           }

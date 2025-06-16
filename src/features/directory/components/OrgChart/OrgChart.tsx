@@ -44,15 +44,21 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
     try {
       setIsLoading(true);
       const employeesData = await directoryService.fetchEmployees(companyId);
-      setEmployees(employeesData);
+      
+      // Filter to only show employed employees OR the backup user (special case)
+      const employedEmployees = employeesData.filter(employee => 
+        employee.Is_Employed || employee.first_name.toLowerCase() === 'backup'
+      );
+      
+      setEmployees(employedEmployees);
 
       // Log employees data
-      console.log("Employees data:", JSON.stringify(employeesData, null, 2));
+      console.log("Employees data:", JSON.stringify(employedEmployees, null, 2));
 
       // Check if there is an employee with the highest rank
-      const hasHighestRank = employeesData.some(emp => emp.highest_rank);
+      const hasHighestRank = employedEmployees.some(emp => emp.highest_rank);
       if (hasHighestRank) {
-        setTreeData(transformToTree(employeesData));
+        setTreeData(transformToTree(employedEmployees));
       } else {
         setTreeData(null);
       }
