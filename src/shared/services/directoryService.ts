@@ -48,6 +48,9 @@ export const directoryService = {
    * @throws Will throw an error if the add operation fails.
    */
   async addEmployee(employeeData: Partial<Employee>): Promise<Employee> {
+    console.log(`📤 Sending request to: ${API_BASE_URL}/employees`);
+    console.log('📊 Request payload:', JSON.stringify(employeeData, null, 2));
+    
     const response = await fetch(`${API_BASE_URL}/employees`, {
       method: "POST",
       headers: {
@@ -55,10 +58,32 @@ export const directoryService = {
       },
       body: JSON.stringify(employeeData),
     });
+    
+    console.log(`📥 Response status: ${response.status} ${response.statusText}`);
+    
     if (!response.ok) {
-      throw new Error("Failed to add employee");
+      const errorText = await response.text();
+      console.error('❌ Response error details:', errorText);
+      
+      let errorMessage = `Failed to add employee (${response.status})`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        if (errorJson.detail) {
+          errorMessage = errorJson.detail;
+        }
+      } catch (e) {
+        // If parsing fails, use the raw text
+        if (errorText) {
+          errorMessage = errorText;
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
-    return response.json();
+    
+    const result = await response.json();
+    console.log('✅ Employee created successfully:', result);
+    return result;
   },
 
   /**

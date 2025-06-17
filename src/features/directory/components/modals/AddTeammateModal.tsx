@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { directoryService } from '../../../../shared/services/directoryService';
+import { createUserWithBackend } from '../../../../shared/services/userAuthService';
 
 interface AddTeammateModalProps {
   isOpen: boolean;
@@ -14,6 +14,8 @@ interface FormData {
   email: string;
   title: string;
   phone: string;
+  password: string;
+  confirmPassword: string;
 }
 
 export const AddTeammateModal = ({ isOpen, onClose, onSuccess, companyId }: AddTeammateModalProps) => {
@@ -25,6 +27,8 @@ export const AddTeammateModal = ({ isOpen, onClose, onSuccess, companyId }: AddT
     email: '',
     title: '',
     phone: '',
+    password: '',
+    confirmPassword: '',
   });
 
   const resetForm = () => {
@@ -34,6 +38,8 @@ export const AddTeammateModal = ({ isOpen, onClose, onSuccess, companyId }: AddT
       email: '',
       title: '',
       phone: '',
+      password: '',
+      confirmPassword: '',
     });
     setError(null);
   };
@@ -47,17 +53,60 @@ export const AddTeammateModal = ({ isOpen, onClose, onSuccess, companyId }: AddT
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
+    
+    console.log('🎯 Form submission started with data:', {
+      ...formData,
+      password: '[REDACTED]',
+      confirmPassword: '[REDACTED]'
+    });
+
+    // Validate passwords
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
-      await directoryService.addEmployee({
-        ...formData,
+      console.log('📞 Calling createUserWithBackend...');
+      // Use backend endpoint to create user and employee atomically
+      const result = await createUserWithBackend({
+        email: formData.email,
+        password: formData.password,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        title: formData.title,
+        phone: formData.phone,
         company_id: companyId,
       });
+      
+      console.log('✅ User creation successful:', result);
       onSuccess();
       handleClose();
     } catch (error) {
-      console.error('Failed to add teammate:', error);
-      setError(error instanceof Error ? error.message : 'Failed to add teammate');
+      console.error('❌ Failed to create user:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to add teammate';
+      
+      // Provide more specific error messages for common issues
+      if (errorMessage.includes('already exists') || errorMessage.includes('user_id already exists')) {
+        setError('A user with this email or account already exists. Please use a different email address or contact support to resolve any orphaned accounts.');
+      } else if (errorMessage.includes('duplicate')) {
+        setError('This email is already registered. Please use a different email address.');
+      } else if (errorMessage.includes('invalid email')) {
+        setError('Please enter a valid email address.');
+      } else if (errorMessage.includes('password')) {
+        setError('Password requirements not met. Please ensure it\'s at least 6 characters long.');
+      } else if (errorMessage.includes('Unable to connect')) {
+        setError('Unable to connect to the server. Please check your internet connection and try again.');
+      } else {
+        setError(errorMessage || 'An unexpected error occurred. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -71,7 +120,15 @@ export const AddTeammateModal = ({ isOpen, onClose, onSuccess, companyId }: AddT
       <div className="relative bg-white rounded-lg p-6 max-w-md w-full mx-4">
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-xl font-bold">Add a user</h2>
+          <div>
+            <h2 className="text-xl font-bold">Add New Teammate</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              {isSubmitting 
+                ? 'Creating user account...' 
+                : 'This will create a new user account. They may need to verify their email before logging in.'
+              }
+            </p>
+          </div>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600"
@@ -134,6 +191,43 @@ export const AddTeammateModal = ({ isOpen, onClose, onSuccess, companyId }: AddT
                 required
                 disabled={isSubmitting}
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Password <span className="text-red-500">*</span>
+              </label>
+              <input
+                title="Password"
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+                required
+                disabled={isSubmitting}
+                minLength={6}
+                placeholder="Minimum 6 characters"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Confirm Password <span className="text-red-500">*</span>
+              </label>
+              <input
+                title="Confirm Password"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+                required
+                disabled={isSubmitting}
+                minLength={6}
+                placeholder="Confirm your password"
+              />
+              {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                <p className="mt-1 text-sm text-red-600">Passwords do not match</p>
+              )}
             </div>
 
             {/* Optional Fields */}
