@@ -107,6 +107,8 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
   const [refreshing, setRefreshing] = React.useState(false);
   const dateInputRef = React.useRef<HTMLInputElement>(null); // Ref for hidden date input
 
+
+
   /**
    * Initializes the component by fetching questions and employee responses.
    */
@@ -139,18 +141,17 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
       setLoading(true); // Show loading state while fetching
       
       try {
-        // Construct start and end dates directly from the selectedDate string (YYYY-MM-DD)
-        // Assuming selectedDate represents the target *local* date
-        const startDate = new Date(`${selectedDate}T00:00:00`); // Start of the local day
-        const endDate = new Date(`${selectedDate}T23:59:59.999`); // End of the local day
-
-        // Convert to ISO strings for the API call (will likely be UTC)
+        // Use the selectedDate directly as YYYY-MM-DD format to match your API
+        // This avoids timezone conversion issues
+        console.log(`Fetching calendar events for company ${companyInfo.id} on date ${selectedDate}`);
+        
         const events = await getCompanyCalendarEvents(
           companyInfo.id,
-          startDate.toISOString(),
-          endDate.toISOString()
+          selectedDate, // Use selectedDate as-is (YYYY-MM-DD format)
+          selectedDate  // Same date for from_time and to_time
         );
         
+        console.log(`Received ${events.length} calendar events for ${selectedDate}:`, events);
         setCalendarEvents(events as CalendarEvent[]);
       } catch (error) {
         console.error("Failed to fetch calendar events:", error);
@@ -212,30 +213,51 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
   };
 
   /**
-   * Checks if an employee is on leave for the selected date
+   * Gets the leave type for an employee on the selected date
    * @param employeeName - The name of the employee to check
-   * @returns boolean indicating if the employee is on leave
+   * @returns leave type string or null if not on leave
    */
-  const isEmployeeOnLeave = (employeeName: string): boolean => {
-    if (!calendarEvents || !calendarEvents.length) return false;
+  const getEmployeeLeaveType = (employeeName: string): string | null => {
+    if (!calendarEvents || !calendarEvents.length) return null;
     
     // selectedDate is already in YYYY-MM-DD format
     const selectedDateStr = selectedDate;
     
-    return calendarEvents.some(event => {
-      // 1. Check if it's a relevant leave event type
-      const isLeaveEvent = ['sick_leave', 'timeoff', 'annual_leave'].includes(event.event_type.toLowerCase());
-      if (!isLeaveEvent) return false;
+    // Debug: Log which employee we're checking
+    if (employeeName.toLowerCase().includes('addie')) {
+      console.log(`🔍 Checking leave status for employee: "${employeeName}" on ${selectedDateStr}`);
+    }
+    
+    // Define all supported leave types
+    const supportedLeaveTypes = ['annual_leave', 'sick_leave', 'timeoff'];
+    
+    for (const event of calendarEvents) {
+      // 1. Check if it's a relevant leave event type (annual_leave, sick_leave, timeoff)
+      const eventType = event.event_type.toLowerCase();
+      const isLeaveEvent = supportedLeaveTypes.includes(eventType);
+      if (!isLeaveEvent) continue;
       
       // 2. Check if the event is for this employee (title format: "Leave Request - Employee Name")
       const eventEmployeeName = event.title.split(' - ')[1]?.trim() || '';
-      const matchesEmployee = eventEmployeeName.toLowerCase() === employeeName.toLowerCase();
-      if (!matchesEmployee) return false;
+      const trimmedEmployeeName = employeeName.trim(); // Trim employee name to handle trailing spaces
+      const matchesEmployee = eventEmployeeName.toLowerCase() === trimmedEmployeeName.toLowerCase();
+      
+      // Debug: Log name comparison for troubleshooting
+      if (eventEmployeeName.toLowerCase().includes('addie') || trimmedEmployeeName.toLowerCase().includes('addie')) {
+        console.log(`🔍 Name matching for ${eventType}:`, {
+          eventEmployeeName: `"${eventEmployeeName}"`,
+          originalEmployeeName: `"${employeeName}"`,
+          trimmedEmployeeName: `"${trimmedEmployeeName}"`,
+          matchesEmployee: matchesEmployee
+        });
+      }
+      
+      if (!matchesEmployee) continue;
       
       // 3. Check if the event is approved (not pending or rejected in description)
       const description = event.description?.toLowerCase() || '';
       const isApproved = !description.includes('pending') && !description.includes('rejected');
-      if (!isApproved) return false;
+      if (!isApproved) continue;
 
       // 4. Check if the selected date falls within the event date range (inclusive)
       try {
@@ -245,7 +267,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
         // Ensure dates are valid
         if (isNaN(eventStartDate.getTime()) || isNaN(eventEndDate.getTime())) {
           console.warn(`Invalid event dates for event ID ${event.id}`);
-          return false; 
+          continue; 
         }
 
         // Iterate from event start date to end date (day by day)
@@ -263,19 +285,35 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
           
           // Check if the current day in the event range matches the selected date
           if (currentEventDayStr === selectedDateStr) {
-            return true; // Match found!
+            // Format leave type for display
+            const leaveTypeDisplay = eventType === 'annual_leave' ? 'Annual Leave' :
+                                   eventType === 'sick_leave' ? 'Sick Leave' :
+                                   eventType === 'timeoff' ? 'Time Off' : eventType;
+            
+            console.log(`✅ ${employeeName} is on ${leaveTypeDisplay} on ${selectedDateStr}`);
+            return leaveTypeDisplay; // Return the leave type
           }
           
           // Move to the next day
           currentDate.setDate(currentDate.getDate() + 1);
         }
       } catch (e) {
-        console.error("Error comparing dates in isEmployeeOnLeave:", e, "Event:", event);
-        return false; // Error during date processing
+        console.error("Error comparing dates in getEmployeeLeaveType:", e, "Event:", event);
+        continue; // Continue checking other events
       }
+    }
 
-      return false; // If loop completes without finding a match
-    });
+    return null; // No leave found
+  };
+
+  /**
+   * Checks if an employee is on leave for the selected date
+   * Supports: Annual Leave, Sick Leave, and Time Off
+   * @param employeeName - The name of the employee to check
+   * @returns boolean indicating if the employee is on leave
+   */
+  const isEmployeeOnLeave = (employeeName: string): boolean => {
+    return getEmployeeLeaveType(employeeName) !== null;
   };
 
   // Helper function to capitalize the first letter of a string
@@ -294,7 +332,8 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
   const formatSubmissionTime = (dateString: string | undefined, employeeName: string, rank?: number) => {
     // If no submission time, check if employee is on leave
     if (!dateString) {
-      return isEmployeeOnLeave(employeeName) ? 'Team member is on leave' : 'Not submitted';
+      const leaveType = getEmployeeLeaveType(employeeName);
+      return leaveType ? `On ${leaveType}` : 'Not submitted';
     }
     
     try {
@@ -380,22 +419,15 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
       
       // Re-fetch calendar events for the selected date
       if (companyInfo?.id) {
-        const selectedDateObj = new Date(selectedDate);
-        // Adjust for timezone offset
-        selectedDateObj.setMinutes(selectedDateObj.getMinutes() + selectedDateObj.getTimezoneOffset());
-
-        const startDate = new Date(selectedDateObj);
-        startDate.setHours(0, 0, 0, 0);
-        
-        const endDate = new Date(selectedDateObj);
-        endDate.setHours(23, 59, 59, 999);
+        console.log(`Refreshing calendar events for company ${companyInfo.id} on date ${selectedDate}`);
         
         const events = await getCompanyCalendarEvents(
           companyInfo.id,
-          startDate.toISOString(),
-          endDate.toISOString()
+          selectedDate, // Use selectedDate as-is (YYYY-MM-DD format)
+          selectedDate  // Same date for from_time and to_time
         );
         
+        console.log(`Refreshed: Received ${events.length} calendar events for ${selectedDate}:`, events);
         setCalendarEvents(events as CalendarEvent[]);
       } else {
         setCalendarEvents([]); // Clear events if no company info
@@ -782,7 +814,9 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                  {onLeave && !hasSubmitted ? (
                    // If employee is on leave and has not submitted, show leave status across all answer cells
                    <td colSpan={questions.length} className="employee-on-leave-cell-span">
-                     <div className="employee-on-leave">Team member is on leave</div>
+                     <div className="employee-on-leave">
+                       {getEmployeeLeaveType(name) ? `Team member is on ${getEmployeeLeaveType(name)}` : 'Team member is on leave'}
+                     </div>
                    </td>
                  ) : (
                    // If employee submitted or is not on leave, show answers
