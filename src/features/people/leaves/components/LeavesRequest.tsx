@@ -414,7 +414,6 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
                                         placeholderText="Select start date - end date"
                                         className="block w-full min-w-[300px] rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                         dateFormat="dd/MM/yyyy"
-                                        minDate={newRequest.leave_type === 'annual_leave' ? new Date() : undefined}
                                         required
                                     />
                                 </div>
