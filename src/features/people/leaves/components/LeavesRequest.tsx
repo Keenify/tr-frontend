@@ -116,10 +116,13 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
         
         try {
             const employees = await directoryService.fetchEmployees(companyId);
-            const formattedEmployees = employees.map(emp => ({
-                id: emp.id,
-                name: `${emp.first_name} ${emp.last_name}`
-            }));
+            // Filter to only show employed employees
+            const formattedEmployees = employees
+                .filter(emp => emp.Is_Employed)
+                .map(emp => ({
+                    id: emp.id,
+                    name: `${emp.first_name} ${emp.last_name}`
+                }));
             setCompanyEmployees(formattedEmployees);
         } catch (error) {
             console.error('Error fetching company employees:', error);
