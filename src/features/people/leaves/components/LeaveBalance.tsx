@@ -97,7 +97,12 @@ export function LeaveBalanceTable({
   };
 
   const getSortedEmployees = () => {
-    return [...employees].sort((a, b) => {
+    // Filter to only show employed employees OR the backup user (special case)
+    const employedEmployees = employees.filter(employee => 
+      employee.Is_Employed
+    );
+
+    return [...employedEmployees].sort((a, b) => {
       if (sortConfig.key === 'name') {
         const nameA = `${a.first_name} ${a.last_name}`;
         const nameB = `${b.first_name} ${b.last_name}`;
