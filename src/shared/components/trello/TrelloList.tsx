@@ -123,7 +123,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   const [showMenu, setShowMenu] = useState(false);
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
 
-  const canManageList = userRole.toLowerCase().includes('manager');
+  const canManageList = userRole.toLowerCase().includes('manager') || userRole.toLowerCase().includes('va');
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
