@@ -6,7 +6,7 @@
  * @module ShopeeMetricsService
  */
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 const API_DOMAIN = import.meta.env.VITE_BACKEND_API_DOMAIN;
 
@@ -25,6 +25,19 @@ export interface ShopeeMetric {
   company_id: string;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Interface for manually updating Shopee metrics
+ */
+export interface ShopeeMetricUpsertPayload {
+  shop_id: number;
+  date: string;
+  revenue?: string;
+  ads_expense?: string;
+  total_orders?: number;
+  new_buyer_count?: number;
+  existing_buyer_count?: number;
 }
 
 /**
@@ -74,6 +87,70 @@ export async function getShopeeMetrics(
 }
 
 /**
+ * Manually upserts (insert or update) Shopee metrics for a specific company
+ * 
+ * @param {string} companyId - The ID of the company
+ * @param {ShopeeMetricUpsertPayload} payload - Metrics data to upsert
+ * @returns {Promise<ShopeeMetric>} - A promise that resolves to the upserted Shopee metric
+ * @throws {Error} If company ID is missing or API request fails
+ */
+export async function upsertShopeeMetrics(
+  companyId: string,
+  payload: ShopeeMetricUpsertPayload
+): Promise<ShopeeMetric> {
+  if (!companyId) {
+    throw new Error('Company ID is required');
+  }
+
+  const endpoint = `${API_DOMAIN}/shopee-metrics/company/${encodeURIComponent(companyId)}/manual-upsert`;
+
+  console.log('🌐 Making API request:', {
+    method: 'PUT',
+    endpoint,
+    payload,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    }
+  });
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    console.log('📥 API Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+      headers: Object.fromEntries(response.headers.entries())
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('❌ API request failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData
+      });
+      throw new Error(errorData.detail || 'Failed to update Shopee metrics');
+    }
+
+    const data = await response.json();
+    console.log('✅ API Success response:', data);
+    return data as ShopeeMetric;
+  } catch (error) {
+    console.error('💥 Shopee metrics upsert error:', error);
+    throw error;
+  }
+}
+
+/**
  * React Query hook for fetching Shopee metrics
  * 
  * @param {string} companyId - The ID of the company
@@ -92,6 +169,23 @@ export function useShopeeMetrics(
     queryKey: ['shopee-metrics', companyId, startDate, endDate],
     queryFn: () => companyId ? getShopeeMetrics(companyId, startDate, endDate) : Promise.resolve([]),
     enabled: !!companyId,
+    ...options,
+  });
+}
+
+/**
+ * React Query mutation hook for upserting Shopee metrics
+ * 
+ * @param {string} companyId - The ID of the company
+ * @param {object} options - Additional options to pass to useMutation
+ * @returns {UseMutationResult} - The mutation result
+ */
+export function useShopeeMetricsUpsert(
+  companyId: string,
+  options = {}
+) {
+  return useMutation({
+    mutationFn: (payload: ShopeeMetricUpsertPayload) => upsertShopeeMetrics(companyId, payload),
     ...options,
   });
 }

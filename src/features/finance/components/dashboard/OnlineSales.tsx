@@ -22,6 +22,7 @@ import ShopifyManualEntryModal from "../manual-entry/ShopifyManualEntryModal";
 import GrabManualEntryModal from "../manual-entry/GrabManualEntryModal";
 import RedmartManualEntryModal from "../manual-entry/RedmartManualEntryModal";
 import FoodpandaManualEntryModal from "../manual-entry/FoodpandaManualEntryModal";
+import ShopeeManualEntryModal from "../manual-entry/ShopeeManualEntryModal";
 
 // Import types
 import { ShopeeMetric } from '../../services/useShopeeMetrics';
@@ -49,6 +50,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const [isGrabManualEntryOpen, setIsGrabManualEntryOpen] = useState<boolean>(false);
   const [isRedmartManualEntryOpen, setIsRedmartManualEntryOpen] = useState<boolean>(false);
   const [isFoodpandaManualEntryOpen, setIsFoodpandaManualEntryOpen] = useState<boolean>(false);
+  const [isShopeeManualEntryOpen, setIsShopeeManualEntryOpen] = useState<boolean>(false);
 
   // Get user and company data
   const { companyInfo, error: userDataError, isLoading: userDataLoading } = 
@@ -231,9 +233,32 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     refreshData();
   };
 
+  // Handle manual entry for Shopee
+  const handleOpenShopeeManualEntry = () => {
+    if (!companyInfo?.id) {
+      alert('Company information is required for manual entry');
+      return;
+    }
+    setIsShopeeManualEntryOpen(true);
+  };
+
+  const handleShopeeManualEntryClose = () => {
+    setIsShopeeManualEntryOpen(false);
+    refreshData();
+  };
+
   // Determine if manual entry should be shown
   const showManualEntry = () => {
-    if (selectedPlatform === 'lazada') {
+    if (selectedPlatform === 'shopee') {
+      return (
+        <button 
+          className="px-3 py-1 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          onClick={handleOpenShopeeManualEntry}
+        >
+          Manual Entry
+        </button>
+      );
+    } else if (selectedPlatform === 'lazada') {
       return (
         <button 
           className="px-3 py-1 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -281,6 +306,12 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     } else if (selectedPlatform === 'all_sg' || selectedPlatform === 'all_my') {
       return (
         <div className="flex space-x-2">
+          <button 
+            className="px-3 py-1 text-sm bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            onClick={handleOpenShopeeManualEntry}
+          >
+            Shopee Entry
+          </button>
           <button 
             className="px-3 py-1 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             onClick={handleOpenLazadaManualEntry}
@@ -635,6 +666,14 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         <GrabManualEntryModal
           isOpen={isGrabManualEntryOpen}
           onClose={handleGrabManualEntryClose}
+          companyId={companyInfo.id}
+        />
+      )}
+
+      {companyInfo?.id && isShopeeManualEntryOpen && (
+        <ShopeeManualEntryModal
+          isOpen={isShopeeManualEntryOpen}
+          onClose={handleShopeeManualEntryClose}
           companyId={companyInfo.id}
         />
       )}
