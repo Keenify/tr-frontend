@@ -162,6 +162,51 @@ export async function upsertShopifyMetrics(
 }
 
 /**
+ * Deletes a Shopify metric by ID
+ * 
+ * @param {string} companyId - The ID of the company
+ * @param {string} metricId - The ID of the metric to delete
+ * @returns {Promise<void>} - A promise that resolves when the metric is deleted
+ * @throws {Error} If company ID or metric ID is missing or API request fails
+ */
+export async function deleteShopifyMetric(
+  companyId: string,
+  metricId: string
+): Promise<void> {
+  if (!companyId) {
+    throw new Error('Company ID is required');
+  }
+
+  if (!metricId) {
+    throw new Error('Metric ID is required');
+  }
+
+  const endpoint = `${API_DOMAIN}/shopify-metrics/${encodeURIComponent(metricId)}?company_id=${encodeURIComponent(companyId)}`;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('❌ Delete request failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData
+      });
+      throw new Error(errorData.detail || 'Failed to delete Shopify metric');
+    }
+  } catch (error) {
+    console.error('Shopify metric delete error:', error);
+    throw error;
+  }
+}
+
+/**
  * React Query hook for fetching Shopify metrics
  * 
  * @param {string} companyId - The ID of the company
@@ -198,6 +243,24 @@ export function useShopifyMetricsUpsert(
   return useMutation({
     mutationFn: (payload: ShopifyMetricUpsertPayload) => 
       companyId ? upsertShopifyMetrics(companyId, payload) : Promise.reject('Company ID is required'),
+    ...options,
+  });
+}
+
+/**
+ * React Query mutation hook for deleting Shopify metrics
+ * 
+ * @param {string} companyId - The ID of the company
+ * @param {object} options - Additional options to pass to useMutation
+ * @returns {UseMutationResult} - The mutation result
+ */
+export function useShopifyMetricDelete(
+  companyId: string | undefined,
+  options = {}
+) {
+  return useMutation({
+    mutationFn: (metricId: string) => 
+      companyId ? deleteShopifyMetric(companyId, metricId) : Promise.reject('Company ID is required'),
     ...options,
   });
 }

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ShopifyManualEntry from './ShopifyManualEntry';
-import { useShopifyMetrics } from '../../services/useShopifyMetrics';
+import { useShopifyMetrics, ShopifyMetric } from '../../services/useShopifyMetrics';
 
 interface ShopifyManualEntryModalProps {
   isOpen: boolean;
@@ -14,6 +14,10 @@ const ShopifyManualEntryModal: React.FC<ShopifyManualEntryModalProps> = ({
   companyId
 }) => {
   const [stores, setStores] = useState<string[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [selectedStoreId, setSelectedStoreId] = useState<string>('');
+  const [existingMetric, setExistingMetric] = useState<ShopifyMetric | null>(null);
+  const [isLoadingExisting, setIsLoadingExisting] = useState<boolean>(false);
   
   // Fetch existing Shopify stores for the company to populate the dropdown
   const today = new Date();
@@ -32,6 +36,16 @@ const ShopifyManualEntryModal: React.FC<ShopifyManualEntryModalProps> = ({
       enabled: isOpen, // Only fetch when modal is open
     }
   );
+
+  // Fetch metrics for a specific date and store
+  const { data: specificDateMetrics, isLoading: isLoadingSpecific } = useShopifyMetrics(
+    companyId,
+    selectedDate,
+    selectedDate,
+    {
+      enabled: isOpen && !!selectedDate && !!selectedStoreId,
+    }
+  );
   
   useEffect(() => {
     if (shopifyMetrics?.length) {
@@ -40,6 +54,25 @@ const ShopifyManualEntryModal: React.FC<ShopifyManualEntryModalProps> = ({
       setStores(uniqueStores);
     }
   }, [shopifyMetrics]);
+
+  // Update existing metric when specific date metrics are loaded
+  useEffect(() => {
+    setIsLoadingExisting(isLoadingSpecific);
+    
+    if (specificDateMetrics?.length && selectedStoreId) {
+      // Find the metric for the selected store
+      const metric = specificDateMetrics.find(m => m.store_id === selectedStoreId);
+      setExistingMetric(metric || null);
+    } else {
+      setExistingMetric(null);
+    }
+  }, [specificDateMetrics, selectedStoreId, isLoadingSpecific]);
+
+  // Handle date and store changes from the form
+  const handleDateStoreChange = useCallback((date: string, storeId: string) => {
+    setSelectedDate(date);
+    setSelectedStoreId(storeId);
+  }, []);
   
   // Show error in the UI if there's an error fetching shopify metrics
   const errorMessage = error ? (error instanceof Error ? error.message : 'Could not load Shopify stores') : null;
@@ -47,6 +80,15 @@ const ShopifyManualEntryModal: React.FC<ShopifyManualEntryModalProps> = ({
   const handleSuccess = () => {
     onClose();
   };
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedDate('');
+      setSelectedStoreId('');
+      setExistingMetric(null);
+    }
+  }, [isOpen]);
   
   if (!isOpen) return null;
   
@@ -93,6 +135,9 @@ const ShopifyManualEntryModal: React.FC<ShopifyManualEntryModalProps> = ({
                   <ShopifyManualEntry
                     companyId={companyId}
                     stores={stores}
+                    existingData={existingMetric}
+                    isLoadingExistingData={isLoadingExisting}
+                    onDateStoreChange={handleDateStoreChange}
                     onSuccess={handleSuccess}
                   />
                 )}
