@@ -11,7 +11,8 @@ export const Directory = ({ companyId }: { companyId: string }) => {
     error, 
     filters, 
     setFilters, 
-    fetchEmployees
+    fetchEmployees,
+    deactivateEmployee
   } = useDirectory(companyId);
 
   const selectedEmployee = employees.find(emp => emp.id === filters.selectedEmployeeId);
@@ -20,6 +21,22 @@ export const Directory = ({ companyId }: { companyId: string }) => {
   const employedEmployees = employees.filter(employee => 
     employee.Is_Employed || employee.first_name.toLowerCase() === 'backup'
   );
+
+  // Debug logging
+  console.log(`🏢 Directory: Total employees: ${employees.length}`);
+  console.log(`👥 Directory: Employed employees: ${employedEmployees.length}`);
+  console.log(`🔍 Directory: All employees:`, employees.map(emp => ({
+    id: emp.id,
+    name: `${emp.first_name} ${emp.last_name}`,
+    Is_Employed: emp.Is_Employed,
+    email: emp.email
+  })));
+  console.log(`✅ Directory: Filtered employed employees:`, employedEmployees.map(emp => ({
+    id: emp.id,
+    name: `${emp.first_name} ${emp.last_name}`,
+    Is_Employed: emp.Is_Employed,
+    email: emp.email
+  })));
 
   const handleEmployeeClick = (employeeId: string) => {
     setFilters({ ...filters, selectedEmployeeId: employeeId });
@@ -90,6 +107,7 @@ export const Directory = ({ companyId }: { companyId: string }) => {
         employee={selectedEmployee}
         isOpen={!!selectedEmployee}
         onClose={handleClosePanel}
+        onDeactivate={deactivateEmployee}
       />
     </div>
   );

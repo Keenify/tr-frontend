@@ -21,17 +21,65 @@ export const useDirectory = (companyId: string) => {
       return;
     }
 
+    console.log(`📊 useDirectory: Fetching employees for company: ${companyId}`);
+    
     try {
       setIsLoading(true);
       setError(null);
       const data = await directoryService.fetchEmployees(companyId);
+      
+      console.log(`📋 useDirectory: Received ${data.length} employees from API`);
+      console.log(`🔍 useDirectory: Employee data:`, data.map(emp => ({
+        id: emp.id,
+        name: `${emp.first_name} ${emp.last_name}`,
+        Is_Employed: emp.Is_Employed,
+        email: emp.email
+      })));
+      
       setEmployees(data);
+      console.log(`✅ useDirectory: Employee state updated`);
     } catch (err) {
+      console.error(`❌ useDirectory: Failed to fetch employees:`, err);
       setError(err instanceof Error ? err.message : 'Failed to fetch employees');
     } finally {
       setIsLoading(false);
     }
   }, [companyId]);
+
+  const deactivateEmployee = useCallback(async (employeeId: string) => {
+    console.log(`🎯 useDirectory: Starting deactivation for employee: ${employeeId}`);
+    
+    try {
+      setError(null);
+      console.log(`📞 useDirectory: Calling directoryService.deactivateEmployee`);
+      
+      const result = await directoryService.deactivateEmployee(employeeId);
+      console.log(`📋 useDirectory: Deactivation result:`, result);
+      
+      if (result.success) {
+        console.log(`🔄 useDirectory: Deactivation successful, refreshing employee list...`);
+        
+        // Refresh the employee list to reflect the changes
+        await fetchEmployees();
+        console.log(`✅ useDirectory: Employee list refreshed`);
+        
+        // Close the panel if the deactivated employee was selected
+        if (filters.selectedEmployeeId === employeeId) {
+          console.log(`🚪 useDirectory: Closing panel for deactivated employee`);
+          setFilters({ ...filters, selectedEmployeeId: null });
+        }
+        return { success: true, message: result.message };
+      } else {
+        console.log(`⚠️ useDirectory: Deactivation failed:`, result.message);
+        return { success: false, message: result.message };
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to deactivate employee';
+      console.error(`❌ useDirectory: Deactivation error:`, err);
+      setError(errorMessage);
+      return { success: false, message: errorMessage };
+    }
+  }, [fetchEmployees, filters]);
 
   useEffect(() => {
     // Only fetch if we have a company ID
@@ -58,6 +106,7 @@ export const useDirectory = (companyId: string) => {
     error,
     filters,
     setFilters,
-    fetchEmployees
+    fetchEmployees,
+    deactivateEmployee
   };
 };

@@ -106,4 +106,51 @@ export const directoryService = {
     }
     return response.json();
   },
+
+  /**
+   * Deactivates an employee by banning them in Supabase auth and setting Is_Employed to false.
+   * @param employeeId - The ID of the employee to deactivate.
+   * @returns A promise that resolves to the deactivation response.
+   * @throws Will throw an error if the deactivation fails.
+   */
+  async deactivateEmployee(employeeId: string): Promise<{ message: string; employee_id: string; success: boolean }> {
+    console.log(`🚫 Starting deactivation for employee: ${employeeId}`);
+    console.log(`📤 Sending request to: ${API_BASE_URL}/employees/deactivate`);
+    
+    const requestBody = { employee_id: employeeId };
+    console.log('📊 Request payload:', JSON.stringify(requestBody, null, 2));
+    
+    const response = await fetch(`${API_BASE_URL}/employees/deactivate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+    
+    console.log(`📥 Response status: ${response.status} ${response.statusText}`);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Deactivation error response:', errorText);
+      
+      let errorMessage = `Failed to deactivate employee (${response.status})`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        if (errorJson.detail) {
+          errorMessage = errorJson.detail;
+        }
+      } catch (e) {
+        if (errorText) {
+          errorMessage = errorText;
+        }
+      }
+      
+      throw new Error(errorMessage);
+    }
+    
+    const result = await response.json();
+    console.log('✅ Deactivation successful:', JSON.stringify(result, null, 2));
+    return result;
+  },
 };
