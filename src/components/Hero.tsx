@@ -65,7 +65,7 @@ const Hero = () => {
               variant="outline" 
               size="lg" 
               onClick={scrollToModules}
-              className="border-2 border-white text-white hover:bg-white hover:text-blue-900 px-8 py-4 text-lg rounded-full font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
+              className="border-2 border-white/80 text-white bg-white/10 backdrop-blur-sm hover:bg-white hover:text-blue-900 px-8 py-4 text-lg rounded-full font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-xl"
             >
               View Features
             </Button>
