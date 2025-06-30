@@ -31,10 +31,10 @@ const Hero = () => {
       
       {/* Floating Elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-yellow-400 rounded-full animate-bounce opacity-70" style={{ animationDelay: '0s' }}></div>
-        <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-orange-400 rounded-full animate-bounce opacity-60" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-1/4 left-1/3 w-3 h-3 bg-blue-300 rounded-full animate-bounce opacity-50" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute top-2/3 right-1/4 w-1.5 h-1.5 bg-purple-300 rounded-full animate-bounce opacity-60" style={{ animationDelay: '3s' }}></div>
+        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-yellow-400 rounded-full animate-bounce opacity-70"></div>
+        <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-orange-400 rounded-full animate-bounce opacity-60 animation-delay-1000"></div>
+        <div className="absolute bottom-1/4 left-1/3 w-3 h-3 bg-blue-300 rounded-full animate-bounce opacity-50 animation-delay-2000"></div>
+        <div className="absolute top-2/3 right-1/4 w-1.5 h-1.5 bg-purple-300 rounded-full animate-bounce opacity-60 animation-delay-3000"></div>
       </div>
       
       <div className="container mx-auto px-6 text-center relative z-10">
