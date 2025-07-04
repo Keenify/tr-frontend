@@ -38,12 +38,12 @@ const Pricing = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-20 bg-gradient-to-br from-blue-900 via-blue-800 to-purple-900 text-white relative overflow-hidden">
+    <section ref={sectionRef} className="py-20 bg-gradient-to-br from-black via-gray-900 to-black text-white relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-10 w-32 h-32 bg-yellow-400 rounded-full opacity-10 animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-10 w-48 h-48 bg-orange-400 rounded-full opacity-5 animate-pulse" style={{ animationDelay: '1.5s' }}></div>
-        <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-purple-400 rounded-full opacity-10 animate-bounce" style={{ animationDelay: '3s' }}></div>
+        <div className="absolute top-1/4 left-10 w-32 h-32 bg-blue-500 rounded-full opacity-10 animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-10 w-48 h-48 bg-blue-600 rounded-full opacity-5 animate-pulse" style={{ animationDelay: '1.5s' }}></div>
+        <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-blue-400 rounded-full opacity-10 animate-bounce" style={{ animationDelay: '3s' }}></div>
       </div>
       
       <div className="container mx-auto px-6 relative z-10">
@@ -53,7 +53,7 @@ const Pricing = () => {
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
             Simple, Transparent Pricing
           </h2>
-          <p className="text-xl text-blue-100 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
             Choose the plan that works for you. Cancel anytime, no questions asked.
           </p>
         </div>
@@ -73,7 +73,7 @@ const Pricing = () => {
               {features.map((feature, index) => (
                 <li key={index} className="flex items-center opacity-0 animate-fade-in" style={{ animationDelay: `${(index + 1) * 100}ms` }}>
                   <Check className="h-5 w-5 text-green-400 mr-3 flex-shrink-0" />
-                  <span className="text-blue-100">{feature}</span>
+                  <span className="text-gray-300">{feature}</span>
                 </li>
               ))}
             </ul>
@@ -120,7 +120,7 @@ const Pricing = () => {
         <div className={`text-center mt-12 transition-all duration-1000 delay-600 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}>
-          <p className="text-blue-200">
+          <p className="text-gray-400">
             30-day money-back guarantee • No setup fees • Cancel anytime
           </p>
         </div>

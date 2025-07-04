@@ -1,4 +1,5 @@
 
+import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import ModulesShowcase from "@/components/ModulesShowcase";
 import Pricing from "@/components/Pricing";
@@ -8,12 +9,23 @@ import Footer from "@/components/Footer";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Hero />
-      <Features />
-      <ModulesShowcase />
-      <Pricing />
-      <Testimonials />
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
+      <Header />
+      <div id="hero">
+        <Hero />
+      </div>
+      <div id="features">
+        <Features />
+      </div>
+      <div id="modules">
+        <ModulesShowcase />
+      </div>
+      <div id="pricing">
+        <Pricing />
+      </div>
+      <div id="testimonials">
+        <Testimonials />
+      </div>
       <Footer />
     </div>
   );
