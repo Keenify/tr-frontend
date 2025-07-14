@@ -3,6 +3,39 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
 
+// Custom hook for scroll-triggered animations
+const useScrollAnimation = (triggerOnce = true) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const elementRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          if (triggerOnce) {
+            observer.disconnect();
+          }
+        } else if (!triggerOnce) {
+          setIsVisible(false);
+        }
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '50px 0px -50px 0px'
+      }
+    );
+
+    if (elementRef.current) {
+      observer.observe(elementRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [triggerOnce]);
+
+  return [elementRef, isVisible] as const;
+};
+
 // Media Display Component to handle both images and videos
 const MediaDisplay = ({ media, className, alt }: { 
   media: { type: string; src: string }, 
@@ -42,6 +75,10 @@ const ModulesShowcase = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const moduleRefs = useRef<(HTMLDivElement | null)[]>([]);
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Scroll animation hooks
+  const [titleRef, titleVisible] = useScrollAnimation();
+  const [subtitleRef, subtitleVisible] = useScrollAnimation();
 
   const modules = [
     { 
@@ -259,14 +296,37 @@ const ModulesShowcase = () => {
           </div>
         </div>
 
-        {/* Samsung-Style Section Heading with Zoom */}
+        {/* Samsung-Style Section Heading with Zoom-in Animation */}
         <div className="text-center mb-16 relative overflow-hidden">
-          <div className="transform transition-all duration-1000 hover:scale-105">
-            <h3 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight tracking-tight">
+          <div 
+            ref={titleRef}
+            className={`transform transition-all duration-1200 hover:scale-105 ${
+              titleVisible 
+                ? 'opacity-100 scale-100' 
+                : 'opacity-0 scale-150'
+            }`}
+            style={{
+              transition: 'opacity 1.2s cubic-bezier(0.2, 0.6, 0.4, 1), transform 1.2s cubic-bezier(0.2, 0.6, 0.4, 1), color 1.2s cubic-bezier(0.2, 0.6, 0.4, 1)',
+              color: titleVisible ? '#000000' : '#6B7280'
+            }}
+          >
+            <h3 className="text-4xl md:text-6xl font-bold mb-6 leading-tight tracking-tight">
               Explore All <span className="bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 bg-clip-text text-transparent">Modules</span>
             </h3>
-            <div className="relative">
-              <p className="text-xl md:text-2xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
+            <div 
+              ref={subtitleRef}
+              className={`relative ${
+                subtitleVisible 
+                  ? 'opacity-100 scale-100' 
+                  : 'opacity-0 scale-120'
+              }`}
+              style={{
+                transition: 'opacity 1s cubic-bezier(0.2, 0.6, 0.4, 1), transform 1s cubic-bezier(0.2, 0.6, 0.4, 1), color 1s cubic-bezier(0.2, 0.6, 0.4, 1)',
+                transitionDelay: '0.3s',
+                color: subtitleVisible ? '#374151' : '#6B7280'
+              }}
+            >
+              <p className="text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed">
                 Discover 16 powerful modules designed to elevate your executive performance and cosmic personal growth
               </p>
               <div className="absolute -inset-4 bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-pink-500/10 rounded-full blur-3xl"></div>

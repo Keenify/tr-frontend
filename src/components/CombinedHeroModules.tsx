@@ -505,7 +505,7 @@ const CombinedHeroModules = () => {
                     {/* Overlay for inactive modules */}
                     <div className={`absolute inset-0 transition-opacity duration-2000 ${
                       moduleIndex === currentModuleIndex ? 'opacity-0' : 'opacity-40 bg-black'
-                    } rounded-3xl`} style={{ zIndex: 3 }}></div>
+                    } rounded-2xl`} style={{ zIndex: 3 }}></div>
                   </div>
                 </div>
               </div>
