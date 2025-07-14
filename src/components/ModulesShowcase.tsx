@@ -367,12 +367,12 @@ const ModulesShowcase = () => {
             <div
               key={moduleIndex}
               ref={el => moduleRefs.current[moduleIndex] = el}
-              className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+              className={`absolute inset-0 transition-all duration-2000 ease-in-out ${
                 moduleIndex === currentModuleIndex 
-                  ? 'z-30 opacity-100 scale-100 translate-x-0' 
+                  ? 'z-30 opacity-100 scale-100 translate-y-0' 
                   : moduleIndex < currentModuleIndex
-                  ? 'z-10 opacity-20 scale-75 -translate-x-full'
-                  : 'z-10 opacity-20 scale-75 translate-x-full'
+                  ? 'z-10 opacity-30 scale-90 -translate-y-full'
+                  : 'z-10 opacity-30 scale-90 translate-y-full'
               }`}
             >
               <div className="group bg-gray-900/95 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden cursor-pointer relative border border-white/10 h-full transform transition-all duration-700 hover:scale-[1.02]">
@@ -385,21 +385,6 @@ const ModulesShowcase = () => {
                   </h4>
                 </div>
 
-                {/* Samsung-Style Bubble Circle */}
-                <div className={`absolute right-6 top-1/2 transform -translate-y-1/2 z-50 transition-all duration-700 ${
-                  moduleIndex === currentModuleIndex ? 'scale-100 opacity-100' : 'scale-75 opacity-60'
-                }`}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleModuleRedirect(module.url);
-                    }}
-                    className="group relative w-16 h-16 bg-white/20 backdrop-blur-md rounded-full border border-white/30 shadow-2xl hover:shadow-white/30 transition-all duration-500 hover:scale-125 hover:bg-white/30 flex items-center justify-center"
-                  >
-                    <div className="w-3 h-3 bg-white rounded-full transition-all duration-300 group-hover:scale-125"></div>
-                    <div className="absolute inset-0 rounded-full bg-white/10 blur-md group-hover:bg-white/20 transition-all duration-300"></div>
-                  </button>
-                </div>
 
 
                 {/* Media Container with Zoom Effect */}
@@ -407,7 +392,6 @@ const ModulesShowcase = () => {
                   className={`media-container relative h-full bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden transition-all duration-700 ${
                     moduleIndex === currentModuleIndex ? 'scale-100' : 'scale-95'
                   }`}
-                  onClick={() => handleModuleClick(moduleIndex)}
                 >
                   <MediaDisplay
                     media={module.media[0]}
@@ -420,8 +404,8 @@ const ModulesShowcase = () => {
                   />
                   
                   {/* Overlay for inactive modules */}
-                  <div className={`absolute inset-0 bg-black transition-opacity duration-700 ${
-                    moduleIndex === currentModuleIndex ? 'opacity-0' : 'opacity-30'
+                  <div className={`absolute inset-0 bg-black transition-opacity duration-2000 ${
+                    moduleIndex === currentModuleIndex ? 'opacity-0' : 'opacity-40'
                   }`}></div>
                   
                 </div>
@@ -429,19 +413,37 @@ const ModulesShowcase = () => {
             </div>
           ))}
           
-          {/* Samsung-Style Navigation Indicators */}
-          <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-3 z-40">
+          {/* Right Side Bubble Circle Navigation */}
+          <div className="absolute right-[-80px] top-1/2 transform -translate-y-1/2 flex flex-col space-y-4 z-40">
             {modules.map((_, index) => (
               <button
                 key={index}
                 onClick={() => handleIndicatorClick(index)}
                 className={`rounded-full transition-all duration-500 border border-white/30 ${
                   index === currentModuleIndex 
-                    ? 'w-8 h-3 bg-white scale-110' 
+                    ? 'w-4 h-4 bg-white scale-125' 
                     : 'w-3 h-3 bg-white/40 hover:bg-white/70 hover:scale-110'
                 }`}
               />
             ))}
+          </div>
+        </div>
+
+        {/* Module Description Display */}
+        <div className="max-w-4xl mx-auto mt-12 text-center">
+          <div className="bg-gray-900/80 backdrop-blur-lg rounded-2xl p-8 border border-white/10">
+            <h3 className="text-3xl font-bold text-white mb-4">
+              {modules[currentModuleIndex].name}
+            </h3>
+            <p className="text-gray-300 text-lg leading-relaxed">
+              {modules[currentModuleIndex].detailedDescription}
+            </p>
+            <button
+              onClick={() => handleModuleRedirect(modules[currentModuleIndex].url)}
+              className="mt-6 px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
+            >
+              Explore {modules[currentModuleIndex].name}
+            </button>
           </div>
         </div>
 
