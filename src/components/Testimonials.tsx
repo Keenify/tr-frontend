@@ -46,11 +46,19 @@ const Testimonials = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-20 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden">
-      {/* Animated background */}
-      <div className="absolute inset-0">
-        <div className="absolute top-0 left-1/4 w-64 h-64 bg-gradient-to-br from-blue-500/30 to-blue-600/30 rounded-full opacity-30 animate-pulse"></div>
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-blue-400/20 to-blue-500/20 rounded-full opacity-25 animate-pulse" style={{ animationDelay: '2s' }}></div>
+    <section ref={sectionRef} className="py-20 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 relative overflow-hidden">
+      {/* Universe-themed animated background */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-64 h-64 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 rounded-full opacity-30 animate-float"></div>
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-gradient-to-br from-indigo-400/15 to-purple-400/15 rounded-full opacity-25 animate-float animation-delay-1000"></div>
+        <div className="absolute top-1/3 left-1/2 w-32 h-32 bg-gradient-to-br from-pink-400/20 to-purple-400/20 rounded-full opacity-20 animate-float animation-delay-2000"></div>
+        
+        {/* Cosmic stars */}
+        <div className="absolute top-20 left-20 w-2 h-2 bg-white rounded-full opacity-60 animate-twinkle"></div>
+        <div className="absolute top-40 right-32 w-1 h-1 bg-purple-300 rounded-full opacity-50 animate-twinkle animation-delay-1000"></div>
+        <div className="absolute bottom-32 left-40 w-1.5 h-1.5 bg-indigo-300 rounded-full opacity-70 animate-twinkle animation-delay-2000"></div>
+        <div className="absolute top-60 right-20 w-1 h-1 bg-pink-300 rounded-full opacity-55 animate-twinkle animation-delay-3000"></div>
+        <div className="absolute bottom-60 right-60 w-0.5 h-0.5 bg-cyan-300 rounded-full opacity-65 animate-twinkle"></div>
       </div>
       
       <div className="container mx-auto px-6 relative z-10">
@@ -69,7 +77,7 @@ const Testimonials = () => {
           {testimonials.map((testimonial, index) => (
             <div 
               key={index} 
-              className={`bg-gradient-to-br from-gray-800/90 to-gray-700/90 backdrop-blur-sm rounded-2xl p-8 border border-gray-600/50 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-700 transform hover:-translate-y-6 hover:rotate-2 ${
+              className={`bg-gradient-to-br from-white/90 to-indigo-50/90 backdrop-blur-sm rounded-2xl p-8 border border-purple-200/50 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-700 transform hover:-translate-y-6 hover:rotate-2 ${
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
               }`}
               style={{ 
@@ -78,15 +86,15 @@ const Testimonials = () => {
               }}
             >
               <div className="flex items-center mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold mr-4 shadow-lg transform transition-transform duration-300 hover:scale-110">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold mr-4 shadow-lg transform transition-transform duration-300 hover:scale-110">
                   {testimonial.avatar}
                 </div>
                 <div>
-                  <div className="font-semibold text-white">{testimonial.name}</div>
-                  <div className="text-gray-400 text-sm">{testimonial.role}</div>
+                  <div className="font-semibold text-gray-900">{testimonial.name}</div>
+                  <div className="text-gray-600 text-sm">{testimonial.role}</div>
                 </div>
               </div>
-              <p className="text-gray-300 leading-relaxed italic">"{testimonial.content}"</p>
+              <p className="text-gray-700 leading-relaxed italic">"{testimonial.content}"</p>
             </div>
           ))}
         </div>

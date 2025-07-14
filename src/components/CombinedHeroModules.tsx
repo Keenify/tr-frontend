@@ -345,9 +345,9 @@ const CombinedHeroModules = () => {
   };
 
   return (
-    <section className="relative min-h-screen bg-white text-gray-900 overflow-hidden">
+    <section className="relative min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 text-gray-900 overflow-hidden">
       {/* Universe-themed Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/70 via-white/80 to-purple-50/70"></div>
       
       {/* Animated Stars */}
       <div className="absolute inset-0 overflow-hidden">
@@ -425,7 +425,7 @@ const CombinedHeroModules = () => {
       </div>
 
       {/* Modules Section */}
-      <div id="modules-section" className="py-16 bg-gradient-to-br from-white via-gray-50 to-indigo-50 relative overflow-hidden">
+      <div id="modules-section" className="py-16 bg-gradient-to-br from-indigo-50 via-white to-purple-50 relative overflow-hidden">
         <div className="container mx-auto px-6 relative z-10">
           {/* Section Heading */}
           <div className="text-center mb-16 relative overflow-hidden">
