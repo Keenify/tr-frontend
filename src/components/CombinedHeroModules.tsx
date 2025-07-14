@@ -380,9 +380,9 @@ const CombinedHeroModules = () => {
       </div>
       
       {/* Hero Section */}
-      <div className="container mx-auto px-6 text-center relative z-10 pt-44 pb-12">
+      <div className="container mx-auto px-6 text-center relative z-10 pt-44 pb-6">
         <div className="max-w-4xl mx-auto">
-          <h1 className={`text-6xl md:text-7xl font-bold mb-6 leading-tight transition-all duration-1000 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent ${
+          <h1 className={`mt-2 text-6xl md:text-7xl font-bold mb-6 leading-tight transition-all duration-1000 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent ${
             isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}>
             CEO <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent animate-pulse">Dashboard</span>
@@ -400,7 +400,7 @@ const CombinedHeroModules = () => {
             16 integrated tools to help CEOs and founders navigate their personal galaxy, build stellar habits, track cosmic growth, and manage life like the universe.
           </p>
           
-          <div className={`flex justify-center mb-12 transition-all duration-1000 delay-500 ${
+          <div className={`flex justify-center mb-6 transition-all duration-1000 delay-500 ${
             isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}>
             <Button 
