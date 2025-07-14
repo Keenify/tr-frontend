@@ -362,7 +362,7 @@ const ModulesShowcase = () => {
         </div>
 
         {/* Samsung-Style Zoom Modules */}
-        <div ref={containerRef} className="max-w-6xl mx-auto relative h-[600px] overflow-hidden">
+        <div ref={containerRef} className="max-w-6xl mx-auto relative h-[600px] overflow-hidden pr-20">
           {modules.map((module, moduleIndex) => (
             <div
               key={moduleIndex}
@@ -375,7 +375,7 @@ const ModulesShowcase = () => {
                   : 'z-10 opacity-30 scale-90 translate-y-full'
               }`}
             >
-              <div className="group bg-gray-900/95 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden cursor-pointer relative border border-white/10 h-full transform transition-all duration-700 hover:scale-[1.02]">
+              <div className="group bg-gray-900/95 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden relative border border-white/10 h-full transform transition-all duration-700 hover:scale-[1.02]">
                 {/* Module Name - Animated */}
                 <div className={`absolute top-6 left-6 z-40 transition-all duration-700 ${
                   moduleIndex === currentModuleIndex ? 'scale-100 opacity-100' : 'scale-90 opacity-70'
@@ -392,10 +392,11 @@ const ModulesShowcase = () => {
                   className={`media-container relative h-full bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden transition-all duration-700 ${
                     moduleIndex === currentModuleIndex ? 'scale-100' : 'scale-95'
                   }`}
+                  onClick={() => handleModuleClick(moduleIndex)}
                 >
                   <MediaDisplay
                     media={module.media[0]}
-                    className={`w-full h-full object-cover transition-all duration-1000 ${
+                    className={`w-full h-full object-cover transition-all duration-1000 cursor-pointer ${
                       moduleIndex === currentModuleIndex 
                         ? 'scale-100 opacity-100' 
                         : 'scale-110 opacity-80'
@@ -408,13 +409,22 @@ const ModulesShowcase = () => {
                     moduleIndex === currentModuleIndex ? 'opacity-0' : 'opacity-40'
                   }`}></div>
                   
+                  {/* Click hint overlay - only visible on hover for active module */}
+                  {moduleIndex === currentModuleIndex && (
+                    <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <div className="text-white text-lg font-semibold bg-black/70 px-4 py-2 rounded-lg backdrop-blur-sm">
+                        Click to view details
+                      </div>
+                    </div>
+                  )}
+                  
                 </div>
               </div>
             </div>
           ))}
           
           {/* Right Side Bubble Circle Navigation */}
-          <div className="absolute right-[-80px] top-1/2 transform -translate-y-1/2 flex flex-col space-y-4 z-40">
+          <div className="absolute right-[-60px] top-1/2 transform -translate-y-1/2 flex flex-col space-y-2 z-40">
             {modules.map((_, index) => (
               <button
                 key={index}
