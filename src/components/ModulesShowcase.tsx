@@ -223,6 +223,19 @@ const ModulesShowcase = () => {
           src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
         }
       ]
+    },
+    // Add Travel P&L module back
+    { 
+      name: "Travel P&L", 
+      description: "Track your travel expenses and profit/loss by destination.",
+      detailedDescription: "Master your travel finances with comprehensive P&L tracking. Monitor expenses, categorize costs, track ROI for business trips, and gain insights into your travel spending patterns to optimize future journeys.",
+      url: "/travel-pl",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
+        }
+      ]
     }
   ];
 
@@ -304,29 +317,36 @@ const ModulesShowcase = () => {
   };
 
   return (
-    <section id="modules" className="py-32 bg-gradient-to-br from-black via-gray-900 to-black relative overflow-hidden">
-      {/* Enhanced Background Elements */}
+    <section id="modules" className="py-32 bg-gradient-to-br from-white via-gray-50 to-indigo-50 relative overflow-hidden">
+      {/* Universe-themed Background Elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-br from-blue-400/10 to-blue-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-purple-400/15 to-indigo-500/15 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-br from-pink-400/15 to-purple-500/15 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-gradient-to-br from-blue-400/10 to-cyan-500/10 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
+        
+        {/* Animated Stars */}
+        <div className="absolute top-10 left-10 w-2 h-2 bg-yellow-400 rounded-full animate-pulse opacity-40"></div>
+        <div className="absolute top-20 right-20 w-1 h-1 bg-blue-400 rounded-full animate-pulse opacity-50 animation-delay-1000"></div>
+        <div className="absolute bottom-20 left-20 w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse opacity-30 animation-delay-2000"></div>
+        <div className="absolute bottom-10 right-10 w-2 h-2 bg-pink-400 rounded-full animate-pulse opacity-45 animation-delay-3000"></div>
       </div>
       
       <div className="container mx-auto px-6 relative z-10">
         {/* Section Heading */}
         <div className="text-center mb-16 animate-fade-in">
-          <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
-            Your <span className="bg-gradient-to-r from-blue-400 to-blue-500 bg-clip-text text-transparent">CEO Toolkit</span>
+          <h2 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+            Your <span className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">CEO Universe</span>
           </h2>
-          <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
-            16 powerful modules designed specifically for executive leadership and personal mastery
+          <p className="text-xl md:text-2xl text-gray-700 max-w-4xl mx-auto leading-relaxed">
+            16 powerful modules designed specifically for executive leadership and cosmic personal mastery
           </p>
         </div>
 
         {/* Enhanced Dashboard Screenshot */}
         <div className="mb-24 max-w-7xl mx-auto animate-scale-in">
           <div className="relative group">
-            <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-3xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
-            <div className="relative bg-white rounded-3xl shadow-2xl p-2 border border-gray-100">
+            <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-indigo-500 to-pink-500 rounded-3xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
+            <div className="relative bg-white rounded-3xl shadow-2xl p-2 border border-purple-100">
               <img 
                 src="/lovable-uploads/3d36dae3-f70e-4cd7-b0cd-4db9be68cd21.png" 
                 alt="CEO Dashboard Interface showing all modules organized by categories"
@@ -339,14 +359,14 @@ const ModulesShowcase = () => {
         {/* Samsung-Style Section Heading with Zoom */}
         <div className="text-center mb-16 relative overflow-hidden">
           <div className="transform transition-all duration-1000 hover:scale-105">
-            <h3 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight tracking-tight">
-              Explore All <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">Modules</span>
+            <h3 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight tracking-tight">
+              Explore All <span className="bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 bg-clip-text text-transparent">Modules</span>
             </h3>
             <div className="relative">
-              <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                Discover 16 powerful modules designed to elevate your executive performance and personal growth
+              <p className="text-xl md:text-2xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
+                Discover 16 powerful modules designed to elevate your executive performance and cosmic personal growth
               </p>
-              <div className="absolute -inset-4 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10 rounded-full blur-3xl"></div>
+              <div className="absolute -inset-4 bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-pink-500/10 rounded-full blur-3xl"></div>
             </div>
           </div>
         </div>
@@ -365,12 +385,12 @@ const ModulesShowcase = () => {
                   : 'z-10 opacity-30 scale-90 translate-y-full'
               }`}
             >
-              <div className="group bg-gray-900/95 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden relative border border-white/10 h-full transform transition-all duration-700 hover:scale-[1.02]">
+              <div className="group bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden relative border border-purple-100 h-full transform transition-all duration-700 hover:scale-[1.02]">
                 {/* Module Name - Animated */}
                 <div className={`absolute top-6 left-6 z-40 transition-all duration-700 ${
                   moduleIndex === currentModuleIndex ? 'scale-100 opacity-100' : 'scale-90 opacity-70'
                 }`}>
-                  <h4 className="font-bold text-3xl text-white bg-black/70 px-6 py-3 rounded-xl backdrop-blur-md border border-white/20 shadow-lg">
+                  <h4 className="font-bold text-3xl text-gray-900 bg-white/70 px-6 py-3 rounded-xl backdrop-blur-md border border-purple-200 shadow-lg">
                     {module.name}
                   </h4>
                 </div>
@@ -423,7 +443,7 @@ const ModulesShowcase = () => {
           ))}
           
           {/* Right Side Bubble Circle Navigation */}
-          <div className="absolute right-[-60px] top-1/2 transform -translate-y-1/2 flex flex-col space-y-2 z-40">
+          <div className="absolute right-[-32px] top-1/2 transform -translate-y-1/2 flex flex-col space-y-2 z-40">
             {modules.map((_, index) => (
               <button
                 key={index}
@@ -448,23 +468,23 @@ const ModulesShowcase = () => {
             onClick={closeDescription}
           >
             <div 
-              className="relative bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+              className="relative bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-purple-200 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
               <button
                 onClick={closeDescription}
-                className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 transition-colors"
+                className="absolute top-4 right-4 z-10 text-gray-900 hover:text-gray-600 transition-colors"
               >
                 <X size={24} />
               </button>
 
               {/* Content */}
               <div className="p-8">
-                <h3 className="text-3xl font-bold text-white mb-4">
+                <h3 className="text-3xl font-bold text-gray-900 mb-4">
                   {modules[currentModuleIndex].name}
                 </h3>
-                <p className="text-gray-300 text-lg leading-relaxed mb-6">
+                <p className="text-gray-700 text-lg leading-relaxed mb-6">
                   {modules[currentModuleIndex].detailedDescription}
                 </p>
                 

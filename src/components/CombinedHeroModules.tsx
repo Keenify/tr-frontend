@@ -1,0 +1,461 @@
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { useState, useEffect, useRef } from "react";
+import { X } from "lucide-react";
+
+// Media Display Component to handle both images and videos
+const MediaDisplay = ({ media, className, alt }: { 
+  media: { type: string; src: string }, 
+  className: string, 
+  alt: string 
+}) => {
+  if (media.type === "video") {
+    return (
+      <video 
+        src={media.src}
+        className={className}
+        autoPlay
+        loop
+        muted
+        playsInline
+        style={{ objectFit: 'contain', width: '100%', height: '100%', position: 'relative', zIndex: 2 }}
+      />
+    );
+  }
+  
+  // For both "image" and "gif" types
+  return (
+    <img 
+      src={media.src}
+      alt={alt}
+      className={className}
+      style={{ objectFit: 'contain', width: '100%', height: '100%', position: 'relative', zIndex: 2 }}
+    />
+  );
+};
+
+const CombinedHeroModules = () => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+  const [openDialog, setOpenDialog] = useState<string | null>(null);
+  const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
+  const [showDescription, setShowDescription] = useState(false);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const leftElementsRef = useRef<HTMLDivElement>(null);
+  const rightElementsRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const moduleRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
+
+  const modules = [
+    { 
+      name: "Daily Journal", 
+      description: "Record your thoughts and reflections with guided prompts",
+      detailedDescription: "Transform your daily routine with our comprehensive journaling system. Features guided prompts, mood tracking, gratitude exercises, and reflection spaces to help you process your thoughts and emotions. Build a consistent writing habit that promotes self-awareness and personal growth.",
+      url: "/journaling",
+      media: [
+        {
+          type: "video",
+          src: "/lovable-uploads/Daily Journal.mp4"
+        }
+      ]
+    },
+    { 
+      name: "Weekly Rhythm", 
+      description: "Plan and review your weekly priorities and goals",
+      detailedDescription: "Establish a powerful weekly planning system that helps you stay focused on what matters most. Set intentions, track progress, and reflect on your achievements. Perfect for busy professionals who want to maintain work-life balance while achieving their goals.",
+      url: "/weekly-rhythms",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/9d4339cc-fb5a-413e-8500-be791ea4f20f.png"
+        }
+      ]
+    },
+    { 
+      name: "Habit Tracker", 
+      description: "Track your daily habits and build consistency",
+      detailedDescription: "Build lasting positive habits with our intuitive tracking system. Monitor your progress, identify patterns, and celebrate streaks. Features customizable habits, visual progress indicators, and insights to help you understand your behavior patterns.",
+      url: "/habit-tracker",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/c3622682-2d1c-4c45-b8f8-8041feb87e52.png"
+        }
+      ]
+    },
+    { 
+      name: "To-do List", 
+      description: "A simple and easy-to-use to-do list, like a piece of paper",
+      detailedDescription: "Experience the simplicity of a digital to-do list that feels as natural as pen and paper. Quickly capture tasks, set priorities, and check off completed items. Perfect for those who prefer minimalist productivity tools without overwhelming features.",
+      url: "/todo",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/0571b04f-4bf8-48a9-bc01-f5c9a7bd7921.png"
+        }
+      ]
+    },
+    { 
+      name: "Weekly Design System", 
+      description: "Plan and track your weekly activities with a design focus",
+      detailedDescription: "Structure your creative projects with our design sprint methodology. Break down complex projects into manageable weekly sprints, track deliverables, and maintain momentum on your creative endeavors. Ideal for designers, developers, and creative professionals.",
+      url: "/weekly-design-system",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/7f9297e4-9626-4110-aa40-e4f49f32c644.png"
+        }
+      ]
+    },
+    { 
+      name: "Project Management", 
+      description: "Organize and track your projects from start to finish",
+      detailedDescription: "Comprehensive project management tools to keep your initiatives on track. Features include milestone tracking, deadline management, resource allocation, and progress visualization. Perfect for managing multiple projects simultaneously with an intuitive sidebar navigation and clean interface.",
+      url: "/project",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/44b6c86f-1e58-4822-b1e6-27627ddda763.png"
+        }
+      ]
+    }
+  ];
+
+  useEffect(() => {
+    setIsLoaded(true);
+    
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      setScrollY(scrollPosition);
+      
+      // Calculate animation progress (0 to 1)
+      const progress = Math.min(scrollPosition / window.innerHeight, 1);
+      
+      // Move elements from sides to center
+      if (leftElementsRef.current) {
+        leftElementsRef.current.style.transform = `translateX(${progress * 100}px)`;
+      }
+      if (rightElementsRef.current) {
+        rightElementsRef.current.style.transform = `translateX(${-progress * 100}px)`;
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Samsung-style auto-play functionality
+  useEffect(() => {
+    if (isAutoPlaying) {
+      autoPlayRef.current = setInterval(() => {
+        setCurrentModuleIndex(prev => (prev + 1) % modules.length);
+      }, 4000); // Change every 4 seconds
+    } else {
+      if (autoPlayRef.current) {
+        clearInterval(autoPlayRef.current);
+      }
+    }
+
+    return () => {
+      if (autoPlayRef.current) {
+        clearInterval(autoPlayRef.current);
+      }
+    };
+  }, [isAutoPlaying, modules.length]);
+
+  const scrollToModules = () => {
+    document.getElementById('modules-section')?.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'start'
+    });
+  };
+
+  const handleModuleClick = (index: number) => {
+    setCurrentModuleIndex(index);
+    setShowDescription(true);
+    setIsAutoPlaying(false); // Stop auto-play when viewing details
+  };
+
+  const handleIndicatorClick = (index: number) => {
+    setCurrentModuleIndex(index);
+    setIsAutoPlaying(false); // Stop auto-play on manual selection
+  };
+
+  const closeDescription = () => {
+    setShowDescription(false);
+  };
+
+  const handleModuleRedirect = (url: string) => {
+    // For now, we'll just show an alert since this is a landing page
+    // In a real application, you would use router.push(url) or window.location.href = url
+    alert(`Redirecting to: ${url}`);
+  };
+
+  return (
+    <section className="relative min-h-screen bg-white text-gray-900 overflow-hidden">
+      {/* Universe-themed Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50"></div>
+      
+      {/* Animated Stars */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-yellow-400 rounded-full animate-pulse opacity-60"></div>
+        <div className="absolute top-1/3 right-1/3 w-0.5 h-0.5 bg-blue-400 rounded-full animate-pulse opacity-70 animation-delay-1000"></div>
+        <div className="absolute bottom-1/4 left-1/3 w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse opacity-50 animation-delay-2000"></div>
+        <div className="absolute top-2/3 right-1/4 w-1 h-1 bg-pink-400 rounded-full animate-pulse opacity-65 animation-delay-3000"></div>
+        <div className="absolute top-1/2 left-1/5 w-0.5 h-0.5 bg-cyan-400 rounded-full animate-pulse opacity-75"></div>
+        <div className="absolute bottom-1/3 right-1/5 w-1 h-1 bg-indigo-400 rounded-full animate-pulse opacity-60 animation-delay-1000"></div>
+      </div>
+      
+      {/* Left Side Elements */}
+      <div ref={leftElementsRef} className="absolute left-0 top-0 h-full w-1/3 transition-transform duration-300 ease-out">
+        <div className="absolute top-20 left-10 w-4 h-4 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-30 animate-pulse"></div>
+        <div className="absolute top-40 left-20 w-6 h-6 bg-gradient-to-r from-pink-400 to-red-400 rounded-full opacity-25 animate-pulse animation-delay-1000"></div>
+        <div className="absolute top-60 left-5 w-3 h-3 bg-gradient-to-r from-green-400 to-blue-400 rounded-full opacity-35 animate-pulse animation-delay-2000"></div>
+        <div className="absolute top-80 left-32 w-5 h-5 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full opacity-30 animate-pulse animation-delay-3000"></div>
+        <div className="absolute bottom-40 left-8 w-4 h-4 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full opacity-25 animate-pulse"></div>
+        <div className="absolute bottom-60 left-24 w-2 h-2 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full opacity-40 animate-pulse animation-delay-1000"></div>
+      </div>
+      
+      {/* Right Side Elements */}
+      <div ref={rightElementsRef} className="absolute right-0 top-0 h-full w-1/3 transition-transform duration-300 ease-out">
+        <div className="absolute top-20 right-10 w-4 h-4 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full opacity-30 animate-pulse"></div>
+        <div className="absolute top-40 right-20 w-6 h-6 bg-gradient-to-r from-red-400 to-pink-400 rounded-full opacity-25 animate-pulse animation-delay-1000"></div>
+        <div className="absolute top-60 right-5 w-3 h-3 bg-gradient-to-r from-blue-400 to-green-400 rounded-full opacity-35 animate-pulse animation-delay-2000"></div>
+        <div className="absolute top-80 right-32 w-5 h-5 bg-gradient-to-r from-orange-400 to-yellow-400 rounded-full opacity-30 animate-pulse animation-delay-3000"></div>
+        <div className="absolute bottom-40 right-8 w-4 h-4 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full opacity-25 animate-pulse"></div>
+        <div className="absolute bottom-60 right-24 w-2 h-2 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full opacity-40 animate-pulse animation-delay-1000"></div>
+      </div>
+      
+      {/* Hero Section */}
+      <div className="container mx-auto px-6 text-center relative z-10 pt-24 pb-12">
+        <div className="max-w-4xl mx-auto">
+          <h1 className={`text-6xl md:text-7xl font-bold mb-6 leading-tight transition-all duration-1000 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent ${
+            isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}>
+            CEO <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent animate-pulse">Dashboard</span>
+          </h1>
+          
+          <p className={`text-xl md:text-2xl text-gray-700 mb-4 leading-relaxed transition-all duration-1000 delay-300 font-semibold ${
+            isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}>
+            Your Personal <span className="bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">Universe</span> for Life and Work.
+          </p>
+          
+          <p className={`text-lg md:text-xl text-gray-600 mb-8 leading-relaxed transition-all duration-1000 delay-400 font-medium ${
+            isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}>
+            16 integrated tools to help CEOs and founders navigate their personal galaxy, build stellar habits, track cosmic growth, and manage life like the universe.
+          </p>
+          
+          <div className={`flex justify-center mb-12 transition-all duration-1000 delay-500 ${
+            isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}>
+            <Button 
+              size="lg" 
+              onClick={scrollToModules}
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold px-12 py-4 text-lg rounded-full transition-all duration-300 transform hover:scale-110 hover:shadow-2xl hover:shadow-purple-500/50 border-2 border-purple-200"
+            >
+              Explore the Universe
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Combined Dashboard Screenshot with Cursor */}
+      <div className="mb-24 max-w-7xl mx-auto animate-scale-in px-6 relative">
+        <div className="relative group">
+          <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-indigo-500 to-pink-500 rounded-3xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
+          <div className="relative bg-white rounded-3xl shadow-2xl p-2 border border-purple-100">
+            <div className="relative overflow-hidden rounded-2xl">
+              <img 
+                src="/lovable-uploads/3d36dae3-f70e-4cd7-b0cd-4db9be68cd21.png" 
+                alt="CEO Dashboard Interface showing all modules organized by categories"
+                className="w-full h-auto"
+                style={{
+                  clipPath: 'inset(0 0 25% 0)',
+                  transform: 'translateY(-12.5%)'
+                }}
+              />
+              {/* Cursor overlay - adjusted position for cropped image */}
+              <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                <img 
+                  src="/lovable-uploads/cursor.png" 
+                  alt="Interactive cursor" 
+                  className="w-8 h-8 animate-pulse"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modules Section */}
+      <div id="modules-section" className="py-16 bg-gradient-to-br from-white via-gray-50 to-indigo-50 relative overflow-hidden">
+        <div className="container mx-auto px-6 relative z-10">
+          {/* Section Heading */}
+          <div className="text-center mb-16 relative overflow-hidden">
+            <div className="transform transition-all duration-1000 hover:scale-105">
+              <h3 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight tracking-tight">
+                Explore All <span className="bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 bg-clip-text text-transparent">Modules</span>
+              </h3>
+              <div className="relative">
+                <p className="text-xl md:text-2xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
+                  Discover 6 powerful modules designed to elevate your executive performance and cosmic personal growth
+                </p>
+                <div className="absolute -inset-4 bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-pink-500/10 rounded-full blur-3xl"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Samsung-Style Zoom Modules */}
+          <div ref={containerRef} className="max-w-6xl mx-auto relative h-[600px] overflow-hidden pr-20">
+            {modules.map((module, moduleIndex) => (
+              <div
+                key={moduleIndex}
+                ref={el => moduleRefs.current[moduleIndex] = el}
+                className={`absolute inset-0 transition-all duration-2000 ease-in-out ${
+                  moduleIndex === currentModuleIndex 
+                    ? 'z-30 opacity-100 scale-100 translate-y-0' 
+                    : moduleIndex < currentModuleIndex
+                    ? 'z-10 opacity-30 scale-90 -translate-y-full'
+                    : 'z-10 opacity-30 scale-90 translate-y-full'
+                }`}
+              >
+                <div className="group bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden relative border border-purple-100 h-full transform transition-all duration-700 hover:scale-[1.02]">
+                  {/* Module Name - Animated */}
+                  <div className={`absolute top-6 left-6 z-40 transition-all duration-700 ${
+                    moduleIndex === currentModuleIndex ? 'scale-100 opacity-100' : 'scale-90 opacity-70'
+                  }`}>
+                    <h4 className="font-bold text-3xl text-gray-900 bg-white/70 px-6 py-3 rounded-xl backdrop-blur-md border border-purple-200 shadow-lg">
+                      {module.name}
+                    </h4>
+                  </div>
+
+                  {/* Media Container with Zoom Effect */}
+                  <div 
+                    className={`media-container relative h-full overflow-hidden transition-all duration-700 ${
+                      moduleIndex === currentModuleIndex ? 'scale-100' : 'scale-95'
+                    }`}
+                    onClick={() => handleModuleClick(moduleIndex)}
+                  >
+                    {/* Blurred background using the same image */}
+                    {module.media[0].type === 'image' && (
+                      <img
+                        src={module.media[0].src}
+                        alt="background-blur"
+                        className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110"
+                        style={{ zIndex: 1 }}
+                      />
+                    )}
+                    {module.media[0].type === 'video' && (
+                      <video
+                        src={module.media[0].src}
+                        className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        style={{ zIndex: 1 }}
+                      />
+                    )}
+                    <MediaDisplay
+                      media={module.media[0]}
+                      className={`w-full h-full transition-all duration-1000 cursor-pointer ${
+                        moduleIndex === currentModuleIndex 
+                          ? 'scale-100 opacity-100' 
+                          : 'scale-110 opacity-80'
+                      } hover:scale-105`}
+                      alt={`${module.name} screenshot`}
+                    />
+                    {/* Overlay for inactive modules */}
+                    <div className={`absolute inset-0 transition-opacity duration-2000 ${
+                      moduleIndex === currentModuleIndex ? 'opacity-0' : 'opacity-40 bg-black'
+                    }`} style={{ zIndex: 3 }}></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {/* Right Side Bubble Circle Navigation */}
+            <div className="absolute right-[-32px] top-1/2 transform -translate-y-1/2 flex flex-col space-y-2 z-40">
+              {modules.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleIndicatorClick(index)}
+                  className={`rounded-full transition-all duration-500 border border-white/30 ${
+                    index === currentModuleIndex 
+                      ? 'w-4 h-4 bg-white scale-125' 
+                      : 'w-3 h-3 bg-white/40 hover:bg-white/70 hover:scale-110'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Description Modal */}
+          {showDescription && (
+            <div 
+              className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+              onClick={closeDescription}
+            >
+              <div 
+                className="relative bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-purple-200 shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Close Button */}
+                <button
+                  onClick={closeDescription}
+                  className="absolute top-4 right-4 z-10 text-gray-900 hover:text-gray-600 transition-colors"
+                >
+                  <X size={24} />
+                </button>
+
+                {/* Content */}
+                <div className="p-8">
+                  <h3 className="text-3xl font-bold text-gray-900 mb-4">
+                    {modules[currentModuleIndex].name}
+                  </h3>
+                  <p className="text-gray-700 text-lg leading-relaxed mb-6">
+                    {modules[currentModuleIndex].detailedDescription}
+                  </p>
+                  
+                  {/* Module Image */}
+                  <div className="rounded-xl overflow-hidden relative" style={{height: '360px'}}>
+                    {/* Blurred background for modal */}
+                    {modules[currentModuleIndex].media[0].type === 'image' && (
+                      <img
+                        src={modules[currentModuleIndex].media[0].src}
+                        alt="background-blur"
+                        className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110"
+                        style={{ zIndex: 1 }}
+                      />
+                    )}
+                    {modules[currentModuleIndex].media[0].type === 'video' && (
+                      <video
+                        src={modules[currentModuleIndex].media[0].src}
+                        className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        style={{ zIndex: 1 }}
+                      />
+                    )}
+                    <MediaDisplay
+                      media={modules[currentModuleIndex].media[0]}
+                      className="w-full h-full"
+                      alt={`${modules[currentModuleIndex].name} demo`}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default CombinedHeroModules;
