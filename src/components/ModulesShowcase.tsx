@@ -1,7 +1,7 @@
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { X } from "lucide-react";
 
 // Media Display Component to handle both images and videos
 const MediaDisplay = ({ media, className, alt }: { 
@@ -34,6 +34,10 @@ const MediaDisplay = ({ media, className, alt }: {
 
 const ModulesShowcase = () => {
   const [openDialog, setOpenDialog] = useState<string | null>(null);
+  const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
+  const [showDescription, setShowDescription] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const moduleRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const modules = [
     { 
@@ -214,6 +218,49 @@ const ModulesShowcase = () => {
     }
   ];
 
+  // Handle wheel events for scrolling between modules
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement;
+      
+      // Check if mouse is over video or image
+      const isOverMedia = target.tagName === 'VIDEO' || target.tagName === 'IMG' || 
+                          target.closest('.media-container');
+      
+      if (isOverMedia && containerRef.current?.contains(target)) {
+        e.preventDefault();
+        
+        if (e.deltaY > 0 && currentModuleIndex < modules.length - 1) {
+          // Scroll down - next module
+          setCurrentModuleIndex(prev => prev + 1);
+        } else if (e.deltaY < 0 && currentModuleIndex > 0) {
+          // Scroll up - previous module
+          setCurrentModuleIndex(prev => prev - 1);
+        }
+      }
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('wheel', handleWheel, { passive: false });
+      return () => container.removeEventListener('wheel', handleWheel);
+    }
+  }, [currentModuleIndex, modules.length]);
+
+  // Module transition effect (no scroll needed since cards are stacked)
+  useEffect(() => {
+    // Optional: Add any additional effects when module changes
+  }, [currentModuleIndex]);
+
+  const handleModuleClick = (index: number) => {
+    setCurrentModuleIndex(index);
+    setShowDescription(true);
+  };
+
+  const closeDescription = () => {
+    setShowDescription(false);
+  };
+
   return (
     <section id="modules" className="py-32 bg-gradient-to-br from-black via-gray-900 to-black relative overflow-hidden">
       {/* Enhanced Background Elements */}
@@ -257,67 +304,114 @@ const ModulesShowcase = () => {
           </p>
         </div>
 
-        {/* Modules Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Stacked Modules - Only One Visible */}
+        <div ref={containerRef} className="max-w-4xl mx-auto relative h-[500px]">
           {modules.map((module, moduleIndex) => (
-            <Dialog key={moduleIndex} open={openDialog === moduleIndex.toString()} onOpenChange={(open) => setOpenDialog(open ? moduleIndex.toString() : null)}>
-              <DialogTrigger asChild>
-                <div className="group bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 border-2 border-white/30 hover:border-transparent overflow-hidden cursor-pointer relative">
-                  {/* Vibrant Gradient Border Effect */}
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl">
-                    <div className="absolute inset-0 bg-gradient-to-br from-pink-200 via-purple-200 to-cyan-200 rounded-2xl"></div>
-                    <div className="absolute inset-0 bg-gradient-to-tl from-yellow-100 via-orange-200 to-red-200 opacity-95 rounded-2xl"></div>
-                    <div className="absolute inset-0 bg-gradient-to-bl from-green-100 via-blue-200 to-indigo-300 opacity-90 rounded-2xl"></div>
-                    <div className="absolute inset-0 bg-gradient-to-tr from-fuchsia-100 via-violet-200 to-purple-300 opacity-85 rounded-2xl"></div>
-                    <div className="absolute inset-0 bg-gradient-to-br from-lime-100 via-emerald-200 to-teal-300 opacity-80 rounded-2xl"></div>
+            <div
+              key={moduleIndex}
+              ref={el => moduleRefs.current[moduleIndex] = el}
+              className={`absolute inset-0 transition-all duration-700 ${
+                moduleIndex === currentModuleIndex 
+                  ? 'z-20 opacity-100 scale-100' 
+                  : moduleIndex === currentModuleIndex + 1
+                  ? 'z-10 opacity-30 scale-95 translate-y-4'
+                  : moduleIndex === currentModuleIndex - 1
+                  ? 'z-10 opacity-30 scale-95 -translate-y-4'
+                  : 'z-0 opacity-0 scale-90'
+              }`}
+            >
+              <div className="group bg-gray-900/90 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden cursor-pointer relative border border-white/20 h-full">
+                {/* Module Name - Top Left Corner */}
+                <div className="absolute top-4 left-4 z-30">
+                  <h4 className="font-bold text-2xl text-white bg-black/60 px-4 py-2 rounded-lg backdrop-blur-sm">
+                    {module.name}
+                  </h4>
+                </div>
+
+                {/* Module Counter - Top Right Corner */}
+                <div className="absolute top-4 right-4 z-30">
+                  <div className="text-white bg-black/60 px-3 py-1 rounded-lg backdrop-blur-sm text-sm">
+                    {moduleIndex + 1} / {modules.length}
                   </div>
-                  <div className="absolute inset-1 bg-gray-900/80 backdrop-blur-sm rounded-xl z-10"></div>
+                </div>
+
+                {/* Media Container */}
+                <div 
+                  className="media-container relative h-full bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden"
+                  onClick={() => handleModuleClick(moduleIndex)}
+                >
+                  <MediaDisplay
+                    media={module.media[0]}
+                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                    alt={`${module.name} screenshot`}
+                  />
                   
-                  {/* Enhanced Media Container */}
-                  <div className="relative h-56 bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden z-20">
-                    <MediaDisplay
-                      media={module.media[0]}
-                      className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-700"
-                      alt={`${module.name} screenshot`}
-                    />
-                    
-                    {/* Overlay Gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  </div>
-                  
-                  {/* Enhanced Content */}
-                  <div className="p-8 relative z-20 text-center">
-                    <h4 className="font-bold text-xl text-white mb-3 group-hover:text-blue-400 transition-colors duration-300">
-                      {module.name}
-                    </h4>
-                    <p className="text-gray-300 leading-relaxed">
-                      {module.description}
-                    </p>
-                    
-                    {/* Hover Arrow */}
-                    <div className="flex items-center justify-center mt-4 text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <span className="text-sm font-medium">View Demo</span>
-                      <svg className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
+                  {/* Click overlay */}
+                  <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <div className="text-white text-lg font-semibold bg-black/60 px-6 py-3 rounded-lg backdrop-blur-sm">
+                      Click to learn more
                     </div>
                   </div>
                 </div>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl p-0 border-0 bg-transparent shadow-none">
-                <div className="relative w-full">
-                  <div className="relative rounded-2xl overflow-hidden">
-                    <MediaDisplay
-                      media={module.media[0]}
-                      className="w-full h-auto object-cover"
-                      alt={`${module.name} demo`}
-                    />
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+              </div>
+            </div>
           ))}
+          
+          {/* Navigation Indicators */}
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-30">
+            {modules.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentModuleIndex(index)}
+                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                  index === currentModuleIndex 
+                    ? 'bg-white scale-125' 
+                    : 'bg-white/40 hover:bg-white/60'
+                }`}
+              />
+            ))}
+          </div>
         </div>
+
+        {/* Description Modal */}
+        {showDescription && (
+          <div 
+            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+            onClick={closeDescription}
+          >
+            <div 
+              className="relative bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close Button */}
+              <button
+                onClick={closeDescription}
+                className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 transition-colors"
+              >
+                <X size={24} />
+              </button>
+
+              {/* Content */}
+              <div className="p-8">
+                <h3 className="text-3xl font-bold text-white mb-4">
+                  {modules[currentModuleIndex].name}
+                </h3>
+                <p className="text-gray-300 text-lg leading-relaxed mb-6">
+                  {modules[currentModuleIndex].detailedDescription}
+                </p>
+                
+                {/* Module Image */}
+                <div className="rounded-xl overflow-hidden">
+                  <MediaDisplay
+                    media={modules[currentModuleIndex].media[0]}
+                    className="w-full h-auto object-cover"
+                    alt={`${modules[currentModuleIndex].name} demo`}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
