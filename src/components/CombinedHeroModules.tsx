@@ -415,31 +415,13 @@ const CombinedHeroModules = () => {
       </div>
 
       {/* Combined Dashboard Screenshot with Cursor */}
-      <div className="mb-24 max-w-7xl mx-auto animate-scale-in px-6 relative" style={{ marginBottom: 0 }}>
-        <div className="relative group">
-          <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-indigo-500 to-pink-500 rounded-3xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
-          <div className="relative bg-white rounded-3xl shadow-2xl p-2 border border-purple-100">
-            <div className="relative overflow-hidden rounded-2xl">
-              <img 
-                src="/lovable-uploads/3d36dae3-f70e-4cd7-b0cd-4db9be68cd21.png" 
-                alt="CEO Dashboard Interface showing all modules organized by categories"
-                className="w-full h-auto"
-                style={{
-                  clipPath: 'inset(0 0 25% 0)',
-                  transform: 'translateY(-12.5%)'
-                }}
-              />
-              {/* Cursor overlay - adjusted position for cropped image */}
-              <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                <img 
-                  src="/lovable-uploads/cursor.png" 
-                  alt="Interactive cursor" 
-                  className="w-8 h-8 animate-pulse"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="mb-12 max-w-5xl mx-auto px-6 relative flex justify-center items-center">
+        <img 
+          src="/lovable-uploads/ceo-dashboard-pic.png" 
+          alt="CEO Dashboard UI Overview"
+          className="w-full h-auto rounded-3xl shadow-2xl border border-purple-100"
+          style={{ objectFit: 'contain' }}
+        />
       </div>
 
       {/* Modules Section */}
