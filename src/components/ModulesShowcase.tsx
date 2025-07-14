@@ -18,6 +18,7 @@ const MediaDisplay = ({ media, className, alt }: {
         loop
         muted
         playsInline
+        style={{ objectFit: 'contain', width: '100%', height: '100%', position: 'relative', zIndex: 2 }}
       />
     );
   }
@@ -28,6 +29,7 @@ const MediaDisplay = ({ media, className, alt }: {
       src={media.src}
       alt={alt}
       className={className}
+      style={{ objectFit: 'contain', width: '100%', height: '100%', position: 'relative', zIndex: 2 }}
     />
   );
 };
@@ -221,18 +223,6 @@ const ModulesShowcase = () => {
           src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
         }
       ]
-    },
-    { 
-      name: "Travel P&L", 
-      description: "Track your travel expenses and profit/loss by destination.",
-      detailedDescription: "Master your travel finances with comprehensive P&L tracking. Monitor expenses, categorize costs, track ROI for business trips, and gain insights into your travel spending patterns to optimize future journeys.",
-      url: "/travel-pl",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
-        }
-      ]
     }
   ];
 
@@ -389,35 +379,44 @@ const ModulesShowcase = () => {
 
                 {/* Media Container with Zoom Effect */}
                 <div 
-                  className={`media-container relative h-full bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden transition-all duration-700 ${
+                  className={`media-container relative h-full overflow-hidden transition-all duration-700 ${
                     moduleIndex === currentModuleIndex ? 'scale-100' : 'scale-95'
                   }`}
                   onClick={() => handleModuleClick(moduleIndex)}
                 >
+                  {/* Blurred background using the same image */}
+                  {module.media[0].type === 'image' && (
+                    <img
+                      src={module.media[0].src}
+                      alt="background-blur"
+                      className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110"
+                      style={{ zIndex: 1 }}
+                    />
+                  )}
+                  {module.media[0].type === 'video' && (
+                    <video
+                      src={module.media[0].src}
+                      className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      style={{ zIndex: 1 }}
+                    />
+                  )}
                   <MediaDisplay
                     media={module.media[0]}
-                    className={`w-full h-full object-cover transition-all duration-1000 cursor-pointer ${
+                    className={`w-full h-full transition-all duration-1000 cursor-pointer ${
                       moduleIndex === currentModuleIndex 
                         ? 'scale-100 opacity-100' 
                         : 'scale-110 opacity-80'
                     } hover:scale-105`}
                     alt={`${module.name} screenshot`}
                   />
-                  
                   {/* Overlay for inactive modules */}
-                  <div className={`absolute inset-0 bg-black transition-opacity duration-2000 ${
-                    moduleIndex === currentModuleIndex ? 'opacity-0' : 'opacity-40'
-                  }`}></div>
-                  
-                  {/* Click hint overlay - only visible on hover for active module */}
-                  {moduleIndex === currentModuleIndex && (
-                    <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <div className="text-white text-lg font-semibold bg-black/70 px-4 py-2 rounded-lg backdrop-blur-sm">
-                        Click to view details
-                      </div>
-                    </div>
-                  )}
-                  
+                  <div className={`absolute inset-0 transition-opacity duration-2000 ${
+                    moduleIndex === currentModuleIndex ? 'opacity-0' : 'opacity-40 bg-black'
+                  }`} style={{ zIndex: 3 }}></div>
                 </div>
               </div>
             </div>
@@ -440,22 +439,7 @@ const ModulesShowcase = () => {
         </div>
 
         {/* Module Description Display */}
-        <div className="max-w-4xl mx-auto mt-12 text-center">
-          <div className="bg-gray-900/80 backdrop-blur-lg rounded-2xl p-8 border border-white/10">
-            <h3 className="text-3xl font-bold text-white mb-4">
-              {modules[currentModuleIndex].name}
-            </h3>
-            <p className="text-gray-300 text-lg leading-relaxed">
-              {modules[currentModuleIndex].detailedDescription}
-            </p>
-            <button
-              onClick={() => handleModuleRedirect(modules[currentModuleIndex].url)}
-              className="mt-6 px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
-            >
-              Explore {modules[currentModuleIndex].name}
-            </button>
-          </div>
-        </div>
+        {/* REMOVED: No persistent module description box below the cards for any module */}
 
         {/* Description Modal */}
         {showDescription && (
@@ -485,10 +469,30 @@ const ModulesShowcase = () => {
                 </p>
                 
                 {/* Module Image */}
-                <div className="rounded-xl overflow-hidden">
+                <div className="rounded-xl overflow-hidden relative" style={{height: '360px'}}>
+                  {/* Blurred background for modal */}
+                  {modules[currentModuleIndex].media[0].type === 'image' && (
+                    <img
+                      src={modules[currentModuleIndex].media[0].src}
+                      alt="background-blur"
+                      className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110"
+                      style={{ zIndex: 1 }}
+                    />
+                  )}
+                  {modules[currentModuleIndex].media[0].type === 'video' && (
+                    <video
+                      src={modules[currentModuleIndex].media[0].src}
+                      className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      style={{ zIndex: 1 }}
+                    />
+                  )}
                   <MediaDisplay
                     media={modules[currentModuleIndex].media[0]}
-                    className="w-full h-auto object-cover"
+                    className="w-full h-full"
                     alt={`${modules[currentModuleIndex].name} demo`}
                   />
                 </div>
