@@ -139,103 +139,6 @@ const ModulesShowcase = () => {
           src: "/lovable-uploads/fb01924f-66c7-4fda-8487-e54bcf8de069.png"
         }
       ]
-    },
-    { 
-      name: "Manifestation", 
-      description: "Set intentions and track your manifestation journey",
-      detailedDescription: "Harness the power of intention setting with our manifestation tracker. Visualize your goals, track synchronicities, practice gratitude, and monitor your progress toward your desires. Includes guided exercises and reflection prompts.",
-      url: "/manifestation",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/7ac55d26-5d6c-494e-96d7-5ec52c97e77a.png"
-        }
-      ]
-    },
-    { 
-      name: "Five Percent Review", 
-      description: "Track and review your progress with 5% improvements",
-      detailedDescription: "Embrace the philosophy of continuous improvement with our 5% better methodology. Track small, incremental changes that compound over time. Perfect for sustainable personal development without overwhelming yourself.",
-      url: "/five-percent-reviews",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/e164c680-f89b-4000-9e69-878b4194a114.png"
-        }
-      ]
-    },
-    { 
-      name: "Future Me", 
-      description: "Send letters to your future self for reflection and growth",
-      detailedDescription: "Connect with your future self through time-delayed letters and messages. Set reminders for important milestones, reflect on your growth journey, and maintain perspective on your long-term goals. A powerful tool for self-reflection and motivation.",
-      url: "/futureme",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/295e0ebc-d09f-4915-9d23-6121b91205d6.png"
-        }
-      ]
-    },
-    { 
-      name: "Ikigai", 
-      description: "Discover your life's purpose by exploring your ikigai",
-      detailedDescription: "Discover your reason for being through the Japanese concept of Ikigai. Explore the intersection of what you love, what you're good at, what the world needs, and what you can be paid for. Features interactive exercises and reflection tools.",
-      url: "/ikigai",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/a5a312cb-e64c-4ef8-a123-fcf76bd6dbf1.png"
-        }
-      ]
-    },
-    { 
-      name: "Dreamboard", 
-      description: "Create a visual dream board with drawings, texts, and images",
-      detailedDescription: "Visualize your dreams and goals with our interactive dreamboard creator. Add images, drawings, text, and symbols to create a powerful visual representation of your aspirations. Features collaborative tools and export options.",
-      url: "/dreamboard",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
-        }
-      ]
-    },
-    { 
-      name: "Let Me In", 
-      description: "Your mental clarity zone. Let AI guide your thoughts, organize your mind, and unlock new insights.",
-      detailedDescription: "Transform your mental landscape with AI-powered guidance. This module helps you organize scattered thoughts, gain mental clarity, and unlock breakthrough insights through intelligent prompts and structured thinking exercises.",
-      url: "/ai-journal",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
-        }
-      ]
-    },
-    { 
-      name: "Mindmap", 
-      description: "Create interactive mind maps to visualize ideas, brainstorm, and organize your thoughts.",
-      detailedDescription: "Unleash your creativity with powerful mind mapping tools. Visualize complex ideas, structure your thinking, and explore connections between concepts with an intuitive, interactive interface designed for executive-level strategic thinking.",
-      url: "/mindmap",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
-        }
-      ]
-    },
-    // Add Travel P&L module back
-    { 
-      name: "Travel P&L", 
-      description: "Track your travel expenses and profit/loss by destination.",
-      detailedDescription: "Master your travel finances with comprehensive P&L tracking. Monitor expenses, categorize costs, track ROI for business trips, and gain insights into your travel spending patterns to optimize future journeys.",
-      url: "/travel-pl",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
-        }
-      ]
     }
   ];
 
@@ -338,7 +241,7 @@ const ModulesShowcase = () => {
             Your <span className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">CEO Universe</span>
           </h2>
           <p className="text-xl md:text-2xl text-gray-700 max-w-4xl mx-auto leading-relaxed">
-            16 powerful modules designed specifically for executive leadership and cosmic personal mastery
+            8 powerful modules designed specifically for executive leadership and cosmic personal mastery
           </p>
         </div>
 
