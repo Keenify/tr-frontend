@@ -470,7 +470,7 @@ const CombinedHeroModules = () => {
                   <div 
                     className={`media-container relative h-full overflow-hidden transition-all duration-700 ${
                       moduleIndex === currentModuleIndex ? 'scale-100' : 'scale-95'
-                    }`}
+                    } rounded-3xl`}
                     onClick={() => handleModuleClick(moduleIndex)}
                   >
                     {/* Blurred background using the same image */}
@@ -478,14 +478,14 @@ const CombinedHeroModules = () => {
                       <img
                         src={module.media[0].src}
                         alt="background-blur"
-                        className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110"
+                        className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 rounded-3xl"
                         style={{ zIndex: 1 }}
                       />
                     )}
                     {module.media[0].type === 'video' && (
                       <video
                         src={module.media[0].src}
-                        className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110"
+                        className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 rounded-3xl"
                         autoPlay
                         loop
                         muted
@@ -495,7 +495,7 @@ const CombinedHeroModules = () => {
                     )}
                     <MediaDisplay
                       media={module.media[0]}
-                      className={`w-full h-full transition-all duration-1000 cursor-pointer ${
+                      className={`w-full h-full transition-all duration-1000 cursor-pointer rounded-3xl ${
                         moduleIndex === currentModuleIndex 
                           ? 'scale-100 opacity-100' 
                           : 'scale-110 opacity-80'
@@ -505,7 +505,7 @@ const CombinedHeroModules = () => {
                     {/* Overlay for inactive modules */}
                     <div className={`absolute inset-0 transition-opacity duration-2000 ${
                       moduleIndex === currentModuleIndex ? 'opacity-0' : 'opacity-40 bg-black'
-                    }`} style={{ zIndex: 3 }}></div>
+                    } rounded-3xl`} style={{ zIndex: 3 }}></div>
                   </div>
                 </div>
               </div>
@@ -517,11 +517,10 @@ const CombinedHeroModules = () => {
                 <button
                   key={index}
                   onClick={() => handleIndicatorClick(index)}
-                  className={`rounded-full transition-all duration-500 border border-white/30 ${
-                    index === currentModuleIndex 
-                      ? 'w-4 h-4 bg-white scale-125' 
-                      : 'w-3 h-3 bg-white/40 hover:bg-white/70 hover:scale-110'
-                  }`}
+                  className={`w-6 h-6 rounded-full border-2 border-gray-700 shadow-md flex items-center justify-center transition-all duration-300
+                    ${index === currentModuleIndex ? 'bg-black border-black' : 'bg-white hover:bg-gray-200'}
+                  `}
+                  aria-label={`Go to module ${index + 1}`}
                 />
               ))}
             </div>
