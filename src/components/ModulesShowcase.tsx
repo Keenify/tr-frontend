@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
-import { X } from "lucide-react";
+import { X, ArrowRight } from "lucide-react";
 
 // Media Display Component to handle both images and videos
 const MediaDisplay = ({ media, className, alt }: { 
@@ -44,6 +44,7 @@ const ModulesShowcase = () => {
       name: "Daily Journal", 
       description: "Record your thoughts and reflections with guided prompts",
       detailedDescription: "Transform your daily routine with our comprehensive journaling system. Features guided prompts, mood tracking, gratitude exercises, and reflection spaces to help you process your thoughts and emotions. Build a consistent writing habit that promotes self-awareness and personal growth.",
+      url: "/journaling",
       media: [
         {
           type: "video",
@@ -55,6 +56,7 @@ const ModulesShowcase = () => {
       name: "Weekly Rhythm", 
       description: "Plan and review your weekly priorities and goals",
       detailedDescription: "Establish a powerful weekly planning system that helps you stay focused on what matters most. Set intentions, track progress, and reflect on your achievements. Perfect for busy professionals who want to maintain work-life balance while achieving their goals.",
+      url: "/weekly-rhythms",
       media: [
         {
           type: "image",
@@ -66,6 +68,7 @@ const ModulesShowcase = () => {
       name: "Habit Tracker", 
       description: "Track your daily habits and build consistency",
       detailedDescription: "Build lasting positive habits with our intuitive tracking system. Monitor your progress, identify patterns, and celebrate streaks. Features customizable habits, visual progress indicators, and insights to help you understand your behavior patterns.",
+      url: "/habit-tracker",
       media: [
         {
           type: "image",
@@ -77,6 +80,7 @@ const ModulesShowcase = () => {
       name: "To-do List", 
       description: "A simple and easy-to-use to-do list, like a piece of paper",
       detailedDescription: "Experience the simplicity of a digital to-do list that feels as natural as pen and paper. Quickly capture tasks, set priorities, and check off completed items. Perfect for those who prefer minimalist productivity tools without overwhelming features.",
+      url: "/todo",
       media: [
         {
           type: "image",
@@ -88,6 +92,7 @@ const ModulesShowcase = () => {
       name: "Weekly Design System", 
       description: "Plan and track your weekly activities with a design focus",
       detailedDescription: "Structure your creative projects with our design sprint methodology. Break down complex projects into manageable weekly sprints, track deliverables, and maintain momentum on your creative endeavors. Ideal for designers, developers, and creative professionals.",
+      url: "/weekly-design-system",
       media: [
         {
           type: "image",
@@ -99,6 +104,7 @@ const ModulesShowcase = () => {
       name: "Project Management", 
       description: "Organize and track your projects from start to finish",
       detailedDescription: "Comprehensive project management tools to keep your initiatives on track. Features include milestone tracking, deadline management, resource allocation, and progress visualization. Perfect for managing multiple projects simultaneously with an intuitive sidebar navigation and clean interface.",
+      url: "/project",
       media: [
         {
           type: "image",
@@ -110,6 +116,7 @@ const ModulesShowcase = () => {
       name: "Personal Finance", 
       description: "Track income, expenses, and manage your budget",
       detailedDescription: "Take control of your financial future with comprehensive budget tracking and expense management. Monitor income streams, categorize expenses, set savings goals, and visualize your financial health with intuitive charts and reports.",
+      url: "/personal-finance",
       media: [
         {
           type: "image",
@@ -121,6 +128,7 @@ const ModulesShowcase = () => {
       name: "Bucket List", 
       description: "Create and manage your life goals and dreams",
       detailedDescription: "Turn your dreams into actionable plans with our bucket list manager. Categorize goals by timeline, track progress, add photos and memories, and celebrate achievements. Perfect for maintaining motivation and focus on your life aspirations.",
+      url: "/bucket-list",
       media: [
         {
           type: "image",
@@ -132,6 +140,7 @@ const ModulesShowcase = () => {
       name: "Manifestation", 
       description: "Set intentions and track your manifestation journey",
       detailedDescription: "Harness the power of intention setting with our manifestation tracker. Visualize your goals, track synchronicities, practice gratitude, and monitor your progress toward your desires. Includes guided exercises and reflection prompts.",
+      url: "/manifestation",
       media: [
         {
           type: "image",
@@ -143,6 +152,7 @@ const ModulesShowcase = () => {
       name: "Five Percent Review", 
       description: "Track and review your progress with 5% improvements",
       detailedDescription: "Embrace the philosophy of continuous improvement with our 5% better methodology. Track small, incremental changes that compound over time. Perfect for sustainable personal development without overwhelming yourself.",
+      url: "/five-percent-reviews",
       media: [
         {
           type: "image",
@@ -154,6 +164,7 @@ const ModulesShowcase = () => {
       name: "Future Me", 
       description: "Send letters to your future self for reflection and growth",
       detailedDescription: "Connect with your future self through time-delayed letters and messages. Set reminders for important milestones, reflect on your growth journey, and maintain perspective on your long-term goals. A powerful tool for self-reflection and motivation.",
+      url: "/futureme",
       media: [
         {
           type: "image",
@@ -165,6 +176,7 @@ const ModulesShowcase = () => {
       name: "Ikigai", 
       description: "Discover your life's purpose by exploring your ikigai",
       detailedDescription: "Discover your reason for being through the Japanese concept of Ikigai. Explore the intersection of what you love, what you're good at, what the world needs, and what you can be paid for. Features interactive exercises and reflection tools.",
+      url: "/ikigai",
       media: [
         {
           type: "image",
@@ -176,6 +188,7 @@ const ModulesShowcase = () => {
       name: "Dreamboard", 
       description: "Create a visual dream board with drawings, texts, and images",
       detailedDescription: "Visualize your dreams and goals with our interactive dreamboard creator. Add images, drawings, text, and symbols to create a powerful visual representation of your aspirations. Features collaborative tools and export options.",
+      url: "/dreamboard",
       media: [
         {
           type: "image",
@@ -187,6 +200,7 @@ const ModulesShowcase = () => {
       name: "Let Me In", 
       description: "Your mental clarity zone. Let AI guide your thoughts, organize your mind, and unlock new insights.",
       detailedDescription: "Transform your mental landscape with AI-powered guidance. This module helps you organize scattered thoughts, gain mental clarity, and unlock breakthrough insights through intelligent prompts and structured thinking exercises.",
+      url: "/ai-journal",
       media: [
         {
           type: "image",
@@ -198,6 +212,7 @@ const ModulesShowcase = () => {
       name: "Mindmap", 
       description: "Create interactive mind maps to visualize ideas, brainstorm, and organize your thoughts.",
       detailedDescription: "Unleash your creativity with powerful mind mapping tools. Visualize complex ideas, structure your thinking, and explore connections between concepts with an intuitive, interactive interface designed for executive-level strategic thinking.",
+      url: "/mindmap",
       media: [
         {
           type: "image",
@@ -209,6 +224,7 @@ const ModulesShowcase = () => {
       name: "Travel P&L", 
       description: "Track your travel expenses and profit/loss by destination.",
       detailedDescription: "Master your travel finances with comprehensive P&L tracking. Monitor expenses, categorize costs, track ROI for business trips, and gain insights into your travel spending patterns to optimize future journeys.",
+      url: "/travel-pl",
       media: [
         {
           type: "image",
@@ -261,6 +277,12 @@ const ModulesShowcase = () => {
     setShowDescription(false);
   };
 
+  const handleModuleRedirect = (url: string) => {
+    // For now, we'll just show an alert since this is a landing page
+    // In a real application, you would use router.push(url) or window.location.href = url
+    alert(`Redirecting to: ${url}`);
+  };
+
   return (
     <section id="modules" className="py-32 bg-gradient-to-br from-black via-gray-900 to-black relative overflow-hidden">
       {/* Enhanced Background Elements */}
@@ -300,7 +322,7 @@ const ModulesShowcase = () => {
             Explore All Modules
           </h3>
           <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-            Click any module below to learn more about its features and capabilities
+            Discover 16 powerful modules designed to elevate your executive performance and personal growth
           </p>
         </div>
 
@@ -328,12 +350,23 @@ const ModulesShowcase = () => {
                   </h4>
                 </div>
 
-                {/* Module Counter - Top Right Corner */}
-                <div className="absolute top-4 right-4 z-30">
-                  <div className="text-white bg-black/60 px-3 py-1 rounded-lg backdrop-blur-sm text-sm">
-                    {moduleIndex + 1} / {modules.length}
-                  </div>
+                {/* Bubble Circle - Right Side */}
+                <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-40">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleModuleRedirect(module.url);
+                    }}
+                    className="group relative w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-110 flex items-center justify-center border-3 border-white/30 hover:border-white/60"
+                  >
+                    <ArrowRight 
+                      size={28} 
+                      className="text-white transition-transform duration-300 group-hover:translate-x-1" 
+                    />
+                    <div className="absolute -inset-2 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full blur-lg opacity-40 group-hover:opacity-70 transition-opacity duration-300"></div>
+                  </button>
                 </div>
+
 
                 {/* Media Container */}
                 <div 
@@ -346,12 +379,6 @@ const ModulesShowcase = () => {
                     alt={`${module.name} screenshot`}
                   />
                   
-                  {/* Click overlay */}
-                  <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <div className="text-white text-lg font-semibold bg-black/60 px-6 py-3 rounded-lg backdrop-blur-sm">
-                      Click to learn more
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
