@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
-import { X, ArrowRight } from "lucide-react";
+import { X } from "lucide-react";
 
 // Media Display Component to handle both images and videos
 const MediaDisplay = ({ media, className, alt }: { 
@@ -36,8 +36,10 @@ const ModulesShowcase = () => {
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
   const [showDescription, setShowDescription] = useState(false);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const moduleRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
 
   const modules = [
     { 
@@ -234,25 +236,47 @@ const ModulesShowcase = () => {
     }
   ];
 
-  // Handle wheel events for scrolling between modules
+  // Samsung-style auto-play functionality
   useEffect(() => {
+    if (isAutoPlaying) {
+      autoPlayRef.current = setInterval(() => {
+        setCurrentModuleIndex(prev => (prev + 1) % modules.length);
+      }, 4000); // Change every 4 seconds
+    } else {
+      if (autoPlayRef.current) {
+        clearInterval(autoPlayRef.current);
+      }
+    }
+
+    return () => {
+      if (autoPlayRef.current) {
+        clearInterval(autoPlayRef.current);
+      }
+    };
+  }, [isAutoPlaying, modules.length]);
+
+  // Enhanced wheel navigation with smoother transitions
+  useEffect(() => {
+    let isScrolling = false;
+    
     const handleWheel = (e: WheelEvent) => {
       const target = e.target as HTMLElement;
       
-      // Check if mouse is over video or image
-      const isOverMedia = target.tagName === 'VIDEO' || target.tagName === 'IMG' || 
-                          target.closest('.media-container');
-      
-      if (isOverMedia && containerRef.current?.contains(target)) {
+      if (containerRef.current?.contains(target) && !isScrolling) {
         e.preventDefault();
+        isScrolling = true;
+        setIsAutoPlaying(false); // Stop auto-play on manual interaction
         
         if (e.deltaY > 0 && currentModuleIndex < modules.length - 1) {
-          // Scroll down - next module
           setCurrentModuleIndex(prev => prev + 1);
         } else if (e.deltaY < 0 && currentModuleIndex > 0) {
-          // Scroll up - previous module
           setCurrentModuleIndex(prev => prev - 1);
         }
+        
+        // Re-enable scrolling after animation
+        setTimeout(() => {
+          isScrolling = false;
+        }, 1000);
       }
     };
 
@@ -271,6 +295,12 @@ const ModulesShowcase = () => {
   const handleModuleClick = (index: number) => {
     setCurrentModuleIndex(index);
     setShowDescription(true);
+    setIsAutoPlaying(false); // Stop auto-play when viewing details
+  };
+
+  const handleIndicatorClick = (index: number) => {
+    setCurrentModuleIndex(index);
+    setIsAutoPlaying(false); // Stop auto-play on manual selection
   };
 
   const closeDescription = () => {
@@ -316,84 +346,99 @@ const ModulesShowcase = () => {
           </div>
         </div>
 
-        {/* Modules Grid Heading */}
-        <div className="text-center mb-12">
-          <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Explore All Modules
-          </h3>
-          <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-            Discover 16 powerful modules designed to elevate your executive performance and personal growth
-          </p>
+        {/* Samsung-Style Section Heading with Zoom */}
+        <div className="text-center mb-16 relative overflow-hidden">
+          <div className="transform transition-all duration-1000 hover:scale-105">
+            <h3 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight tracking-tight">
+              Explore All <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-blue-500 bg-clip-text text-transparent">Modules</span>
+            </h3>
+            <div className="relative">
+              <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                Discover 16 powerful modules designed to elevate your executive performance and personal growth
+              </p>
+              <div className="absolute -inset-4 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-blue-600/10 rounded-full blur-3xl"></div>
+            </div>
+          </div>
         </div>
 
-        {/* Stacked Modules - Only One Visible */}
-        <div ref={containerRef} className="max-w-4xl mx-auto relative h-[500px]">
+        {/* Samsung-Style Zoom Modules */}
+        <div ref={containerRef} className="max-w-6xl mx-auto relative h-[600px] overflow-hidden">
           {modules.map((module, moduleIndex) => (
             <div
               key={moduleIndex}
               ref={el => moduleRefs.current[moduleIndex] = el}
-              className={`absolute inset-0 transition-all duration-700 ${
+              className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
                 moduleIndex === currentModuleIndex 
-                  ? 'z-20 opacity-100 scale-100' 
-                  : moduleIndex === currentModuleIndex + 1
-                  ? 'z-10 opacity-30 scale-95 translate-y-4'
-                  : moduleIndex === currentModuleIndex - 1
-                  ? 'z-10 opacity-30 scale-95 -translate-y-4'
-                  : 'z-0 opacity-0 scale-90'
+                  ? 'z-30 opacity-100 scale-100 translate-x-0' 
+                  : moduleIndex < currentModuleIndex
+                  ? 'z-10 opacity-20 scale-75 -translate-x-full'
+                  : 'z-10 opacity-20 scale-75 translate-x-full'
               }`}
             >
-              <div className="group bg-gray-900/90 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden cursor-pointer relative border border-white/20 h-full">
-                {/* Module Name - Top Left Corner */}
-                <div className="absolute top-4 left-4 z-30">
-                  <h4 className="font-bold text-2xl text-white bg-black/60 px-4 py-2 rounded-lg backdrop-blur-sm">
+              <div className="group bg-gray-900/95 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden cursor-pointer relative border border-white/10 h-full transform transition-all duration-700 hover:scale-[1.02]">
+                {/* Module Name - Animated */}
+                <div className={`absolute top-6 left-6 z-40 transition-all duration-700 ${
+                  moduleIndex === currentModuleIndex ? 'scale-100 opacity-100' : 'scale-90 opacity-70'
+                }`}>
+                  <h4 className="font-bold text-3xl text-white bg-black/70 px-6 py-3 rounded-xl backdrop-blur-md border border-white/20 shadow-lg">
                     {module.name}
                   </h4>
                 </div>
 
-                {/* Bubble Circle - Right Side */}
-                <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-40">
+                {/* Samsung-Style Bubble Circle */}
+                <div className={`absolute right-6 top-1/2 transform -translate-y-1/2 z-50 transition-all duration-700 ${
+                  moduleIndex === currentModuleIndex ? 'scale-100 opacity-100' : 'scale-75 opacity-60'
+                }`}>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleModuleRedirect(module.url);
                     }}
-                    className="group relative w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 hover:scale-110 flex items-center justify-center border-3 border-white/30 hover:border-white/60"
+                    className="group relative w-16 h-16 bg-white/20 backdrop-blur-md rounded-full border border-white/30 shadow-2xl hover:shadow-white/30 transition-all duration-500 hover:scale-125 hover:bg-white/30 flex items-center justify-center"
                   >
-                    <ArrowRight 
-                      size={28} 
-                      className="text-white transition-transform duration-300 group-hover:translate-x-1" 
-                    />
-                    <div className="absolute -inset-2 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full blur-lg opacity-40 group-hover:opacity-70 transition-opacity duration-300"></div>
+                    <div className="w-3 h-3 bg-white rounded-full transition-all duration-300 group-hover:scale-125"></div>
+                    <div className="absolute inset-0 rounded-full bg-white/10 blur-md group-hover:bg-white/20 transition-all duration-300"></div>
                   </button>
                 </div>
 
 
-                {/* Media Container */}
+                {/* Media Container with Zoom Effect */}
                 <div 
-                  className="media-container relative h-full bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden"
+                  className={`media-container relative h-full bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden transition-all duration-700 ${
+                    moduleIndex === currentModuleIndex ? 'scale-100' : 'scale-95'
+                  }`}
                   onClick={() => handleModuleClick(moduleIndex)}
                 >
                   <MediaDisplay
                     media={module.media[0]}
-                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                    className={`w-full h-full object-cover transition-all duration-1000 ${
+                      moduleIndex === currentModuleIndex 
+                        ? 'scale-100 opacity-100' 
+                        : 'scale-110 opacity-80'
+                    } hover:scale-105`}
                     alt={`${module.name} screenshot`}
                   />
+                  
+                  {/* Overlay for inactive modules */}
+                  <div className={`absolute inset-0 bg-black transition-opacity duration-700 ${
+                    moduleIndex === currentModuleIndex ? 'opacity-0' : 'opacity-30'
+                  }`}></div>
                   
                 </div>
               </div>
             </div>
           ))}
           
-          {/* Navigation Indicators */}
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-30">
+          {/* Samsung-Style Navigation Indicators */}
+          <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-3 z-40">
             {modules.map((_, index) => (
               <button
                 key={index}
-                onClick={() => setCurrentModuleIndex(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                onClick={() => handleIndicatorClick(index)}
+                className={`rounded-full transition-all duration-500 border border-white/30 ${
                   index === currentModuleIndex 
-                    ? 'bg-white scale-125' 
-                    : 'bg-white/40 hover:bg-white/60'
+                    ? 'w-8 h-3 bg-white scale-110' 
+                    : 'w-3 h-3 bg-white/40 hover:bg-white/70 hover:scale-110'
                 }`}
               />
             ))}
