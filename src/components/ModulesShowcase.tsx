@@ -317,7 +317,7 @@ const ModulesShowcase = () => {
   };
 
   return (
-    <section id="modules" className="py-32 bg-gradient-to-br from-white via-gray-50 to-indigo-50 relative overflow-hidden">
+    <section id="modules" className="pt-32 pb-0 bg-gradient-to-br from-white via-gray-50 to-indigo-50 relative overflow-hidden" style={{ borderRadius: 0 }}>
       {/* Universe-themed Background Elements */}
       <div className="absolute inset-0">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-purple-400/15 to-indigo-500/15 rounded-full blur-3xl"></div>

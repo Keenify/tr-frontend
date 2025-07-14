@@ -380,7 +380,7 @@ const CombinedHeroModules = () => {
       </div>
       
       {/* Hero Section */}
-      <div className="container mx-auto px-6 text-center relative z-10 pt-40 pb-12">
+      <div className="container mx-auto px-6 text-center relative z-10 pt-44 pb-12">
         <div className="max-w-4xl mx-auto">
           <h1 className={`text-6xl md:text-7xl font-bold mb-6 leading-tight transition-all duration-1000 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent ${
             isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
@@ -415,7 +415,7 @@ const CombinedHeroModules = () => {
       </div>
 
       {/* Combined Dashboard Screenshot with Cursor */}
-      <div className="mb-24 max-w-7xl mx-auto animate-scale-in px-6 relative">
+      <div className="mb-24 max-w-7xl mx-auto animate-scale-in px-6 relative" style={{ marginBottom: 0 }}>
         <div className="relative group">
           <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 via-indigo-500 to-pink-500 rounded-3xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
           <div className="relative bg-white rounded-3xl shadow-2xl p-2 border border-purple-100">
