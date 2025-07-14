@@ -119,6 +119,126 @@ const CombinedHeroModules = () => {
           src: "/lovable-uploads/44b6c86f-1e58-4822-b1e6-27627ddda763.png"
         }
       ]
+    },
+    { 
+      name: "Personal Finance", 
+      description: "Track income, expenses, and manage your budget",
+      detailedDescription: "Take control of your financial future with comprehensive budget tracking and expense management. Monitor income streams, categorize expenses, set savings goals, and visualize your financial health with intuitive charts and reports.",
+      url: "/personal-finance",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/77ac6f1e-3107-4af0-8b84-f0a8422a9786.png"
+        }
+      ]
+    },
+    { 
+      name: "Bucket List", 
+      description: "Create and manage your life goals and dreams",
+      detailedDescription: "Turn your dreams into actionable plans with our bucket list manager. Categorize goals by timeline, track progress, add photos and memories, and celebrate achievements. Perfect for maintaining motivation and focus on your life aspirations.",
+      url: "/bucket-list",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/fb01924f-66c7-4fda-8487-e54bcf8de069.png"
+        }
+      ]
+    },
+    { 
+      name: "Manifestation", 
+      description: "Set intentions and track your manifestation journey",
+      detailedDescription: "Harness the power of intention setting with our manifestation tracker. Visualize your goals, track synchronicities, practice gratitude, and monitor your progress toward your desires. Includes guided exercises and reflection prompts.",
+      url: "/manifestation",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/7ac55d26-5d6c-494e-96d7-5ec52c97e77a.png"
+        }
+      ]
+    },
+    { 
+      name: "Five Percent Review", 
+      description: "Track and review your progress with 5% improvements",
+      detailedDescription: "Embrace the philosophy of continuous improvement with our 5% better methodology. Track small, incremental changes that compound over time. Perfect for sustainable personal development without overwhelming yourself.",
+      url: "/five-percent-reviews",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/e164c680-f89b-4000-9e69-878b4194a114.png"
+        }
+      ]
+    },
+    { 
+      name: "Future Me", 
+      description: "Send letters to your future self for reflection and growth",
+      detailedDescription: "Connect with your future self through time-delayed letters and messages. Set reminders for important milestones, reflect on your growth journey, and maintain perspective on your long-term goals. A powerful tool for self-reflection and motivation.",
+      url: "/futureme",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/295e0ebc-d09f-4915-9d23-6121b91205d6.png"
+        }
+      ]
+    },
+    { 
+      name: "Ikigai", 
+      description: "Discover your life's purpose by exploring your ikigai",
+      detailedDescription: "Discover your reason for being through the Japanese concept of Ikigai. Explore the intersection of what you love, what you're good at, what the world needs, and what you can be paid for. Features interactive exercises and reflection tools.",
+      url: "/ikigai",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/a5a312cb-e64c-4ef8-a123-fcf76bd6dbf1.png"
+        }
+      ]
+    },
+    { 
+      name: "Dreamboard", 
+      description: "Create a visual dream board with drawings, texts, and images",
+      detailedDescription: "Visualize your dreams and goals with our interactive dreamboard creator. Add images, drawings, text, and symbols to create a powerful visual representation of your aspirations. Features collaborative tools and export options.",
+      url: "/dreamboard",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
+        }
+      ]
+    },
+    { 
+      name: "Let Me In", 
+      description: "Your mental clarity zone. Let AI guide your thoughts, organize your mind, and unlock new insights.",
+      detailedDescription: "Transform your mental landscape with AI-powered guidance. This module helps you organize scattered thoughts, gain mental clarity, and unlock breakthrough insights through intelligent prompts and structured thinking exercises.",
+      url: "/ai-journal",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
+        }
+      ]
+    },
+    { 
+      name: "Mindmap", 
+      description: "Create interactive mind maps to visualize ideas, brainstorm, and organize your thoughts.",
+      detailedDescription: "Unleash your creativity with powerful mind mapping tools. Visualize complex ideas, structure your thinking, and explore connections between concepts with an intuitive, interactive interface designed for executive-level strategic thinking.",
+      url: "/mindmap",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
+        }
+      ]
+    },
+    { 
+      name: "Travel P&L", 
+      description: "Track your travel expenses and profit/loss by destination.",
+      detailedDescription: "Master your travel finances with comprehensive P&L tracking. Monitor expenses, categorize costs, track ROI for business trips, and gain insights into your travel spending patterns to optimize future journeys.",
+      url: "/travel-pl",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
+        }
+      ]
     }
   ];
 
@@ -163,6 +283,38 @@ const CombinedHeroModules = () => {
       }
     };
   }, [isAutoPlaying, modules.length]);
+
+  // Enhanced wheel navigation with smoother transitions
+  useEffect(() => {
+    let isScrolling = false;
+    
+    const handleWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement;
+      
+      if (containerRef.current?.contains(target) && !isScrolling) {
+        e.preventDefault();
+        isScrolling = true;
+        setIsAutoPlaying(false); // Stop auto-play on manual interaction
+        
+        if (e.deltaY > 0 && currentModuleIndex < modules.length - 1) {
+          setCurrentModuleIndex(prev => prev + 1);
+        } else if (e.deltaY < 0 && currentModuleIndex > 0) {
+          setCurrentModuleIndex(prev => prev - 1);
+        }
+        
+        // Re-enable scrolling after animation
+        setTimeout(() => {
+          isScrolling = false;
+        }, 1000);
+      }
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('wheel', handleWheel, { passive: false });
+      return () => container.removeEventListener('wheel', handleWheel);
+    }
+  }, [currentModuleIndex, modules.length]);
 
   const scrollToModules = () => {
     document.getElementById('modules-section')?.scrollIntoView({ 
@@ -228,7 +380,7 @@ const CombinedHeroModules = () => {
       </div>
       
       {/* Hero Section */}
-      <div className="container mx-auto px-6 text-center relative z-10 pt-24 pb-12">
+      <div className="container mx-auto px-6 text-center relative z-10 pt-40 pb-12">
         <div className="max-w-4xl mx-auto">
           <h1 className={`text-6xl md:text-7xl font-bold mb-6 leading-tight transition-all duration-1000 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent ${
             isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
