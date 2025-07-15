@@ -331,6 +331,36 @@ const ModulesShowcase = () => {
     // Optional: Add any additional effects when module changes
   }, [currentModuleIndex]);
 
+  // Disable body scroll when modal is open
+  useEffect(() => {
+    if (showDescription) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Restore scroll position when modal closes
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
+    }
+
+    // Cleanup function to restore scroll on unmount
+    return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+    };
+  }, [showDescription]);
+
   const handleModuleClick = (index: number) => {
     setCurrentModuleIndex(index);
     setShowDescription(true);
@@ -430,8 +460,10 @@ const ModulesShowcase = () => {
           </div>
         </div>
 
-        {/* Samsung-Style Zoom Modules */}
-        <div ref={containerRef} className="max-w-6xl mx-auto relative h-[600px] overflow-hidden pr-20">
+        {/* Samsung-Style Zoom Modules with Navigation */}
+        <div className="max-w-7xl mx-auto relative">
+          {/* Module Content Container */}
+          <div ref={containerRef} className="max-w-6xl mx-auto relative h-[600px] overflow-hidden">
           {modules.map((module, moduleIndex) => (
             <div
               key={moduleIndex}
@@ -500,23 +532,8 @@ const ModulesShowcase = () => {
               </div>
             </div>
           ))}
-          
-          {/* Right Side Bubble Circle Navigation */}
-          <div className="absolute right-[-40px] top-1/2 transform -translate-y-1/2 flex flex-col space-y-1.5 z-40">
-            {modules.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => handleIndicatorClick(index)}
-                className={`rounded-full transition-all duration-500 border-2 border-black shadow-lg flex items-center justify-center ${
-                  index === currentModuleIndex 
-                    ? 'w-5 h-5 bg-black border-black scale-125 shadow-black/50' 
-                    : 'w-4 h-4 bg-white hover:bg-gray-100 hover:scale-110'
-                }`}
-                aria-label={`Go to module ${index + 1}: ${modules[index].name}`}
-                title={modules[index].name}
-              />
-            ))}
           </div>
+          
         </div>
 
         {/* Module Description Display */}
@@ -525,7 +542,8 @@ const ModulesShowcase = () => {
         {/* Description Modal */}
         {showDescription && (
           <div 
-            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/80 flex items-center justify-center p-4"
+            style={{ zIndex: 9999 }}
             onClick={closeDescription}
           >
             <div 
