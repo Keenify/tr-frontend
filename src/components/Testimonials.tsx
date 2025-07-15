@@ -46,7 +46,7 @@ const Testimonials = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-20 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 relative overflow-hidden">
+    <section ref={sectionRef} className="py-20 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 relative overflow-hidden mx-8 rounded-3xl">
       {/* Universe-themed animated background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-64 h-64 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 rounded-full opacity-30 animate-float"></div>

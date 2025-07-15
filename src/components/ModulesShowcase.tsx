@@ -383,18 +383,18 @@ const ModulesShowcase = () => {
   };
 
   return (
-    <section id="modules" className="pt-32 pb-0 bg-gradient-to-br from-white via-gray-50 to-indigo-50 relative overflow-hidden" style={{ borderRadius: 0 }}>
-      {/* Universe-themed Background Elements */}
+    <section id="modules" className="pt-32 pb-0 bg-gradient-to-b from-purple-100/30 via-slate-50 to-gray-100 relative overflow-hidden" style={{ borderRadius: 0 }}>
+      {/* Subtle Background Elements with Purple Universe Theme */}
       <div className="absolute inset-0">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-purple-400/15 to-indigo-500/15 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-br from-pink-400/15 to-purple-500/15 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-gradient-to-br from-blue-400/10 to-cyan-500/10 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-purple-300/8 to-indigo-400/8 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-br from-slate-300/12 to-gray-400/12 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-gradient-to-br from-purple-200/6 to-slate-300/6 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
         
-        {/* Animated Stars */}
-        <div className="absolute top-10 left-10 w-2 h-2 bg-yellow-400 rounded-full animate-pulse opacity-40"></div>
-        <div className="absolute top-20 right-20 w-1 h-1 bg-blue-400 rounded-full animate-pulse opacity-50 animation-delay-1000"></div>
-        <div className="absolute bottom-20 left-20 w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse opacity-30 animation-delay-2000"></div>
-        <div className="absolute bottom-10 right-10 w-2 h-2 bg-pink-400 rounded-full animate-pulse opacity-45 animation-delay-3000"></div>
+        {/* Subtle Animated Stars */}
+        <div className="absolute top-10 left-10 w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse opacity-25"></div>
+        <div className="absolute top-20 right-20 w-1 h-1 bg-slate-400 rounded-full animate-pulse opacity-30 animation-delay-1000"></div>
+        <div className="absolute bottom-20 left-20 w-1 h-1 bg-purple-300 rounded-full animate-pulse opacity-20 animation-delay-2000"></div>
+        <div className="absolute bottom-10 right-10 w-1.5 h-1.5 bg-gray-400 rounded-full animate-pulse opacity-25 animation-delay-3000"></div>
       </div>
       
       <div className="container mx-auto px-6 relative z-10">

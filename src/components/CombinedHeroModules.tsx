@@ -316,6 +316,44 @@ const CombinedHeroModules = () => {
     }
   }, [currentModuleIndex, modules.length]);
 
+  // Scroll lock effect when description modal is open
+  useEffect(() => {
+    if (showDescription) {
+      // Disable scroll on body
+      document.body.style.overflow = 'hidden';
+      
+      // Prevent scroll on wheel events
+      const preventScroll = (e: WheelEvent) => {
+        e.preventDefault();
+      };
+      
+      // Prevent scroll on touch events
+      const preventTouchScroll = (e: TouchEvent) => {
+        e.preventDefault();
+      };
+      
+      // Prevent scroll on keyboard events
+      const preventKeyboardScroll = (e: KeyboardEvent) => {
+        const scrollKeys = ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '];
+        if (scrollKeys.includes(e.key)) {
+          e.preventDefault();
+        }
+      };
+      
+      document.addEventListener('wheel', preventScroll, { passive: false });
+      document.addEventListener('touchmove', preventTouchScroll, { passive: false });
+      document.addEventListener('keydown', preventKeyboardScroll);
+      
+      return () => {
+        // Restore scroll
+        document.body.style.overflow = '';
+        document.removeEventListener('wheel', preventScroll);
+        document.removeEventListener('touchmove', preventTouchScroll);
+        document.removeEventListener('keydown', preventKeyboardScroll);
+      };
+    }
+  }, [showDescription]);
+
   const scrollToModules = () => {
     document.getElementById('modules-section')?.scrollIntoView({ 
       behavior: 'smooth',
@@ -380,7 +418,7 @@ const CombinedHeroModules = () => {
       </div>
       
       {/* Combined Hero Section and Dashboard Image with Single Purple Universe Background */}
-      <div className="relative bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-700 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-700 overflow-hidden mx-6 rounded-3xl">
         {/* Single Universe-themed Background for entire section */}
         <div className="absolute inset-0">
           {/* Animated cosmic background */}
@@ -455,7 +493,7 @@ const CombinedHeroModules = () => {
       </div>
 
       {/* Modules Section - White Background with Clear Border */}
-      <div id="modules-section" className="py-16 bg-white relative overflow-hidden border-t-4 border-gray-200 shadow-lg">
+      <div id="modules-section" className="py-16 bg-white relative overflow-hidden border-t-4 border-gray-200 shadow-lg mx-6 rounded-b-3xl">
         <div className="container mx-auto px-6 relative z-10">
           {/* Section Heading */}
           <div className="text-center mb-16 relative overflow-hidden">

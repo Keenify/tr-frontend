@@ -38,7 +38,7 @@ const Pricing = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-20 bg-gradient-to-br from-white via-gray-50 to-purple-50 text-gray-900 relative overflow-hidden">
+    <section ref={sectionRef} className="py-20 bg-gradient-to-br from-white via-gray-50 to-purple-50 text-gray-900 relative overflow-hidden mx-8 rounded-3xl">
       {/* Universe-themed animated background elements */}
       <div className="absolute inset-0">
         <div className="absolute top-1/4 left-10 w-32 h-32 bg-purple-400 rounded-full opacity-10 animate-pulse"></div>

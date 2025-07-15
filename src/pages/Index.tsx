@@ -9,7 +9,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">
       {/* Main Content Container */}
-      <div className="max-w-7xl mx-auto min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 relative shadow-2xl">
+      <div className="mx-8 min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 relative shadow-2xl rounded-3xl">
         {/* Universe-themed background elements */}
         <div className="absolute inset-0 pointer-events-none">
           {/* Animated cosmic background */}
@@ -36,13 +36,15 @@ const Index = () => {
           <div id="hero">
             <CombinedHeroModules />
           </div>
-          <div id="pricing">
+          <div id="pricing" className="mt-4">
             <Pricing />
           </div>
-          <div id="testimonials">
+          <div id="testimonials" className="mt-4">
             <Testimonials />
           </div>
-          <Footer />
+          <div className="mt-4">
+            <Footer />
+          </div>
         </div>
       </div>
     </div>

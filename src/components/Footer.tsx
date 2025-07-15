@@ -1,7 +1,7 @@
 
 const Footer = () => {
   return (
-    <footer className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 text-gray-900 py-12 border-t border-purple-200/50 relative overflow-hidden">
+    <footer className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 text-gray-900 py-12 border-t border-purple-200/50 relative overflow-hidden mx-8 rounded-b-3xl">
       {/* Universe-themed footer elements */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-10 left-20 w-1 h-1 bg-purple-400 rounded-full opacity-30 animate-twinkle"></div>
