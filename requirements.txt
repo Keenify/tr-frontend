@@ -1,0 +1,3 @@
+2. The logo and the word ceo dashboard and the sign in button should be move to stick to the left and right hand side
+3. add a border to main page refer to this, so user can see contrast about where is the snippet and where is the border clearly
+4. when user clicked on the modules card to see the description, user should not be able to scroll anymore, unless user exit the page by clicking the top right corner x or clicking any empty space to exit from the description page. because right now when i enter the description page, im able to scroll and the monthly plana nd yearly  plan will show on top of my description instead of showing in the background.
