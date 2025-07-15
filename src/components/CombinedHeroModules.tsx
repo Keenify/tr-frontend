@@ -492,37 +492,45 @@ const CombinedHeroModules = () => {
         </div>
       </div>
 
-      {/* Modules Section - Universe Theme Background with Clear Contrast */}
-      <div id="modules-section" className="py-16 relative overflow-hidden mx-6 rounded-b-3xl mt-8">
-        {/* Universe-themed Background for Modules Section */}
+      {/* Modules Section - Strong Universe Theme Background */}
+      <div id="modules-section" className="py-16 relative overflow-hidden mx-6 rounded-3xl mt-8">
+        {/* Strong Universe-themed Background for Modules Section */}
         <div className="absolute inset-0">
-          {/* Main gradient background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-100/30 via-slate-50 to-gray-100"></div>
+          {/* Strong gradient background - Very visible */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-400/60 via-indigo-300/50 to-purple-500/40"></div>
           
-          {/* Subtle cosmic elements */}
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-purple-300/8 to-indigo-400/8 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-gradient-to-br from-slate-300/12 to-gray-400/12 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-gradient-to-br from-purple-200/6 to-slate-300/6 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
+          {/* Large prominent cosmic elements */}
+          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-purple-500/40 to-indigo-600/35 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-gradient-to-br from-indigo-500/45 to-purple-600/40 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-gradient-to-br from-purple-400/35 to-indigo-500/30 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
           
-          {/* Subtle Animated Stars */}
-          <div className="absolute top-10 left-10 w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse opacity-25"></div>
-          <div className="absolute top-20 right-20 w-1 h-1 bg-slate-400 rounded-full animate-pulse opacity-30 animation-delay-1000"></div>
-          <div className="absolute bottom-20 left-20 w-1 h-1 bg-purple-300 rounded-full animate-pulse opacity-20 animation-delay-2000"></div>
-          <div className="absolute bottom-10 right-10 w-1.5 h-1.5 bg-gray-400 rounded-full animate-pulse opacity-25 animation-delay-3000"></div>
+          {/* Additional large cosmic orbs */}
+          <div className="absolute top-1/3 right-1/3 w-[600px] h-[600px] bg-gradient-to-br from-indigo-400/30 to-purple-500/25 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-1/3 left-1/4 w-[550px] h-[550px] bg-gradient-to-br from-purple-400/40 to-indigo-500/35 rounded-full blur-3xl"></div>
+          
+          {/* Prominent Animated Stars */}
+          <div className="absolute top-10 left-10 w-3 h-3 bg-purple-400 rounded-full animate-pulse opacity-70"></div>
+          <div className="absolute top-20 right-20 w-2.5 h-2.5 bg-indigo-400 rounded-full animate-pulse opacity-80 animation-delay-1000"></div>
+          <div className="absolute bottom-20 left-20 w-2.5 h-2.5 bg-purple-300 rounded-full animate-pulse opacity-65 animation-delay-2000"></div>
+          <div className="absolute bottom-10 right-10 w-3 h-3 bg-indigo-400 rounded-full animate-pulse opacity-75 animation-delay-3000"></div>
+          <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-purple-400 rounded-full animate-pulse opacity-60 animation-delay-1500"></div>
+          <div className="absolute top-3/4 right-1/4 w-2.5 h-2.5 bg-indigo-300 rounded-full animate-pulse opacity-70 animation-delay-2500"></div>
+          <div className="absolute top-1/4 right-1/6 w-2 h-2 bg-purple-400 rounded-full animate-pulse opacity-55 animation-delay-500"></div>
+          <div className="absolute bottom-1/4 left-1/6 w-2.5 h-2.5 bg-indigo-400 rounded-full animate-pulse opacity-65 animation-delay-3500"></div>
         </div>
         
         <div className="container mx-auto px-6 relative z-10">
           {/* Section Heading */}
           <div className="text-center mb-16 relative overflow-hidden">
             <div className="transform transition-all duration-1000 hover:scale-105">
-              <h3 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight tracking-tight">
-                Explore All <span className="bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 bg-clip-text text-transparent">Modules</span>
+              <h3 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight tracking-tight drop-shadow-lg">
+                Explore All <span className="bg-gradient-to-r from-purple-200 via-indigo-200 to-pink-200 bg-clip-text text-transparent">Modules</span>
               </h3>
               <div className="relative">
-                <p className="text-xl md:text-2xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
+                <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
                   Discover 16 powerful modules designed to elevate your executive performance and cosmic personal growth
                 </p>
-                <div className="absolute -inset-4 bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-pink-500/10 rounded-full blur-3xl"></div>
+                <div className="absolute -inset-4 bg-gradient-to-r from-purple-500/20 via-indigo-500/20 to-pink-500/20 rounded-full blur-3xl"></div>
               </div>
             </div>
           </div>
