@@ -436,7 +436,7 @@ const ModulesShowcase = () => {
               color: titleVisible ? '#000000' : '#6B7280'
             }}
           >
-            <h3 className="text-4xl md:text-6xl font-bold mb-6 leading-tight tracking-tight">
+            <h3 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight tracking-tight">
               Explore All <span className="bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 bg-clip-text text-transparent">Modules</span>
             </h3>
             <div 
@@ -452,7 +452,7 @@ const ModulesShowcase = () => {
                 color: subtitleVisible ? '#374151' : '#6B7280'
               }}
             >
-              <p className="text-xl md:text-2xl max-w-3xl mx-auto leading-relaxed">
+              <p className="text-xl md:text-2xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
                 Discover 16 powerful modules designed to elevate your executive performance and cosmic personal growth
               </p>
               <div className="absolute -inset-4 bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-pink-500/10 rounded-full blur-3xl"></div>

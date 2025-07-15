@@ -523,11 +523,11 @@ const CombinedHeroModules = () => {
           {/* Section Heading */}
           <div className="text-center mb-16">
             <div className="transform transition-all duration-1000 hover:scale-105">
-              <h3 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight tracking-tight drop-shadow-lg">
-                Explore All <span className="bg-gradient-to-r from-purple-200 via-indigo-200 to-pink-200 bg-clip-text text-transparent">Modules</span>
+              <h3 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight tracking-tight drop-shadow-lg">
+                Explore All <span className="bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 bg-clip-text text-transparent">Modules</span>
               </h3>
               <div>
-                <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
+                <p className="text-xl md:text-2xl text-gray-700 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
                   Discover 16 powerful modules designed to elevate your executive performance and cosmic personal growth
                 </p>
               </div>
