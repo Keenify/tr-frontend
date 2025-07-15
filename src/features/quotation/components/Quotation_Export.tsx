@@ -6,6 +6,7 @@ import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyDa
 import { generateQuotationExportPDF } from '../services/useQuotationPDF';
 import { QuotationExportPDFData } from '../types/QuotationPDF';
 import { ExportPriceTierModal } from './ExportPriceTierModal';
+import { TierEditModal } from './TierEditModal';
 import { getProductExportPriceTiers, ProductExportPriceTier } from '../services/useProductsExportPriceTier';
 import { getProductVariants } from '../../../services/useProductVariants';
 import { ProductVariant } from '../../../shared/types/Product';
@@ -35,6 +36,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     const [selectedProductIdForModal, setSelectedProductIdForModal] = useState<number | null>(null);
     const [selectedProductNameForModal, setSelectedProductNameForModal] = useState<string | null>(null);
     const [selectAllStatus, setSelectAllStatus] = useState<'none' | 'some' | 'all'>('none'); // State for Select All checkbox
+    const [isTierEditModalOpen, setIsTierEditModalOpen] = useState<boolean>(false);
 
     // --- UI Toggles State ---
     const [showProductBarcode, setShowProductBarcode] = useState<boolean>(true);
@@ -392,6 +394,11 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     };
     const openPriceTierModal = (productId: number, productName: string) => { setSelectedProductIdForModal(productId); setSelectedProductNameForModal(productName); setIsPriceTierModalOpen(true); };
     const closePriceTierModal = () => { setIsPriceTierModalOpen(false); setSelectedProductIdForModal(null); setSelectedProductNameForModal(null); };
+    const handleEditSelectedTier = () => {
+        if (!selectedGlobalTierName) return;
+        setIsTierEditModalOpen(true);
+    };
+    const closeTierEditModal = () => { setIsTierEditModalOpen(false); };
     const toggleFOBPricePerUnit = () => { setShowFOBPricePerUnit(prev => !prev); };
     const toggleCartonBarcode = () => { setShowCartonBarcode(prev => !prev); };
     const toggleProductBarcode = () => { setShowProductBarcode(prev => !prev); };
@@ -502,6 +509,15 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                                             <option value="">-- Default Pricing --</option>
                                             {isFetchingTiers ? ( <option disabled>Loading...</option> ) : ( uniqueTierNames.map(name => (<option key={name} value={name}>{name}</option>)) ) || fetchError && <option disabled>Error loading tiers</option> }
                                         </select>
+                                        {selectedGlobalTierName && (
+                                            <button
+                                                onClick={() => handleEditSelectedTier()}
+                                                className="ml-2 bg-blue-500 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2 rounded"
+                                                title={`Edit all items in ${selectedGlobalTierName} tier`}
+                                            >
+                                                Edit
+                                            </button>
+                                        )}
                                         {uniqueTierNames.length === 0 && !isFetchingTiers && !fetchError && (
                                             <span className="ms-2 text-xs text-black italic">(No active tiers)</span>
                                         )}
@@ -690,6 +706,15 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                 onClose={closePriceTierModal}
                 productId={selectedProductIdForModal}
                 productName={selectedProductNameForModal}
+                onTiersUpdated={handleTiersUpdated}
+            />
+
+            <TierEditModal
+                isOpen={isTierEditModalOpen}
+                onClose={closeTierEditModal}
+                selectedTierName={selectedGlobalTierName}
+                allProducts={selections}
+                allApplicableTiers={allApplicableTiers}
                 onTiersUpdated={handleTiersUpdated}
             />
         </div>
