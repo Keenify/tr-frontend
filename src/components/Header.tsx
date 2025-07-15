@@ -37,7 +37,7 @@ const Header = () => {
             </button>
 
             <button
-              onClick={() => scrollToSection('modules')}
+              onClick={() => scrollToSection('modules-section')}
               className="text-gray-700 hover:text-purple-600 font-medium transition-colors duration-200"
             >
               Modules
@@ -87,7 +87,7 @@ const Header = () => {
               </button>
 
               <button
-                onClick={() => scrollToSection('modules')}
+                onClick={() => scrollToSection('modules-section')}
                 className="text-left text-gray-700 hover:text-purple-600 font-medium py-2 transition-colors duration-200"
               >
                 Modules
