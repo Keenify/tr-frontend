@@ -407,7 +407,7 @@ const CombinedHeroModules = () => {
         </div>
         
         {/* Hero Content */}
-        <div className="container mx-auto px-6 text-center relative z-10 pt-44 pb-6">
+        <div className="container mx-auto px-6 text-center relative z-10 pt-56 pb-6">
           <div className="max-w-4xl mx-auto">
             <h1 className={`mt-2 text-6xl md:text-7xl font-bold mb-6 leading-tight transition-all duration-1000 text-white ${
               isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
@@ -443,11 +443,11 @@ const CombinedHeroModules = () => {
         
         {/* Dashboard Screenshot within same background */}
         <div className="pb-16 relative z-10">
-          <div className="max-w-5xl mx-auto px-2 flex justify-center items-center">
+          <div className="max-w-6xl mx-auto px-1 flex justify-center items-center">
             <img 
               src="/lovable-uploads/ceo-dashboard-pic.png" 
               alt="CEO Dashboard UI Overview"
-              className="w-full h-auto rounded-3xl shadow-2xl border-2 border-white/20 backdrop-blur-sm"
+              className="w-full h-auto rounded-2xl shadow-2xl border-2 border-white/10 backdrop-blur-sm"
               style={{ objectFit: 'contain' }}
             />
           </div>
