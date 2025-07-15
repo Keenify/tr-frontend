@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "vercel-build": "if exist requirements.txt del requirements.txt && npm run build"
+    "vercel-build": "[ -f requirements.txt ] && rm requirements.txt; npm run build"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
