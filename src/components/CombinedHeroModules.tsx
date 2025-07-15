@@ -542,22 +542,22 @@ const CombinedHeroModules = () => {
             ))}
             
             {/* Right Side Bubble Circle Navigation */}
-            <div className="absolute right-8 top-1/2 transform -translate-y-1/2 flex flex-col space-y-2 z-50 bg-white/90 backdrop-blur-md rounded-2xl p-3 shadow-2xl border-2 border-gray-200">
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex flex-col space-y-1.5 z-50 bg-white/80 backdrop-blur-sm rounded-xl p-2 shadow-lg border border-gray-300">
               {modules.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => handleIndicatorClick(index)}
-                  className={`group relative rounded-full transition-all duration-300 border-2 shadow-lg flex items-center justify-center hover:scale-110 ${
+                  className={`group relative rounded-full transition-all duration-300 border shadow-lg flex items-center justify-center hover:scale-110 ${
                     index === currentModuleIndex 
-                      ? 'w-6 h-6 bg-gradient-to-r from-purple-600 to-indigo-600 border-purple-500 scale-110 shadow-purple-500/50' 
-                      : 'w-4 h-4 bg-white hover:bg-gray-50 border-gray-300 hover:border-gray-400'
+                      ? 'w-5 h-5 bg-gradient-to-r from-purple-600 to-indigo-600 border-purple-500 scale-110 shadow-purple-500/30' 
+                      : 'w-3.5 h-3.5 bg-white/90 hover:bg-white border-gray-400 hover:border-gray-500'
                   }`}
                   aria-label={`Go to module ${index + 1}: ${modules[index].name}`}
                   title={modules[index].name}
                 >
                   {/* Active indicator dot */}
                   {index === currentModuleIndex && (
-                    <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-green-500 rounded-full border border-white shadow-sm animate-pulse"></div>
+                    <div className="absolute -top-0.5 -right-0.5 w-1 h-1 bg-green-500 rounded-full border border-white shadow-sm animate-pulse"></div>
                   )}
                   
                   {/* Tooltip */}
