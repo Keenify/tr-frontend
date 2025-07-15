@@ -93,7 +93,7 @@ const Hero = () => {
             16 integrated tools to help CEOs and founders navigate their personal galaxy, build stellar habits, track cosmic growth, and manage life like the universe.
           </p>
           
-          <div className={`flex justify-center mb-12 transition-all duration-1000 delay-500 ${
+          <div className={`flex justify-center mb-24 transition-all duration-1000 delay-500 ${
             isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}>
             <Button 

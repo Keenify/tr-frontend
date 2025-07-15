@@ -176,6 +176,102 @@ const ModulesShowcase = () => {
           src: "/lovable-uploads/fb01924f-66c7-4fda-8487-e54bcf8de069.png"
         }
       ]
+    },
+    { 
+      name: "Manifestation", 
+      description: "Set intentions and track your manifestation journey",
+      detailedDescription: "Harness the power of intention setting with our manifestation tracker. Visualize your goals, track synchronicities, practice gratitude, and monitor your progress toward your desires. Includes guided exercises and reflection prompts.",
+      url: "/manifestation",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/7ac55d26-5d6c-494e-96d7-5ec52c97e77a.png"
+        }
+      ]
+    },
+    { 
+      name: "Five Percent Review", 
+      description: "Track and review your progress with 5% improvements",
+      detailedDescription: "Embrace the philosophy of continuous improvement with our 5% better methodology. Track small, incremental changes that compound over time. Perfect for sustainable personal development without overwhelming yourself.",
+      url: "/five-percent-reviews",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/e164c680-f89b-4000-9e69-878b4194a114.png"
+        }
+      ]
+    },
+    { 
+      name: "Future Me", 
+      description: "Send letters to your future self for reflection and growth",
+      detailedDescription: "Connect with your future self through time-delayed letters and messages. Set reminders for important milestones, reflect on your growth journey, and maintain perspective on your long-term goals. A powerful tool for self-reflection and motivation.",
+      url: "/futureme",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/295e0ebc-d09f-4915-9d23-6121b91205d6.png"
+        }
+      ]
+    },
+    { 
+      name: "Ikigai", 
+      description: "Discover your life's purpose by exploring your ikigai",
+      detailedDescription: "Discover your reason for being through the Japanese concept of Ikigai. Explore the intersection of what you love, what you're good at, what the world needs, and what you can be paid for. Features interactive exercises and reflection tools.",
+      url: "/ikigai",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/a5a312cb-e64c-4ef8-a123-fcf76bd6dbf1.png"
+        }
+      ]
+    },
+    { 
+      name: "Dreamboard", 
+      description: "Create a visual dream board with drawings, texts, and images",
+      detailedDescription: "Visualize your dreams and goals with our interactive dreamboard creator. Add images, drawings, text, and symbols to create a powerful visual representation of your aspirations. Features collaborative tools and export options.",
+      url: "/dreamboard",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
+        }
+      ]
+    },
+    { 
+      name: "Let Me In", 
+      description: "Your mental clarity zone. Let AI guide your thoughts, organize your mind, and unlock new insights.",
+      detailedDescription: "Transform your mental landscape with AI-powered guidance. This module helps you organize scattered thoughts, gain mental clarity, and unlock breakthrough insights through intelligent prompts and structured thinking exercises.",
+      url: "/ai-journal",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
+        }
+      ]
+    },
+    { 
+      name: "Mindmap", 
+      description: "Create interactive mind maps to visualize ideas, brainstorm, and organize your thoughts.",
+      detailedDescription: "Unleash your creativity with powerful mind mapping tools. Visualize complex ideas, structure your thinking, and explore connections between concepts with an intuitive, interactive interface designed for executive-level strategic thinking.",
+      url: "/mindmap",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
+        }
+      ]
+    },
+    { 
+      name: "Travel P&L", 
+      description: "Track your travel expenses and profit/loss by destination.",
+      detailedDescription: "Master your travel finances with comprehensive P&L tracking. Monitor expenses, categorize costs, track ROI for business trips, and gain insights into your travel spending patterns to optimize future journeys.",
+      url: "/travel-pl",
+      media: [
+        {
+          type: "image",
+          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
+        }
+      ]
     }
   ];
 
@@ -348,12 +444,12 @@ const ModulesShowcase = () => {
                   : 'z-10 opacity-30 scale-90 translate-y-full'
               }`}
             >
-              <div className="group bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden relative border border-purple-100 h-full transform transition-all duration-700 hover:scale-[1.02]">
+              <div className="group bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden relative border-2 border-gray-300 ring-2 ring-gray-200/50 h-full transform transition-all duration-700 hover:scale-[1.02] hover:shadow-[0_25px_60px_-12px_rgba(0,0,0,0.4)] hover:ring-purple-300/70">
                 {/* Module Name - Animated */}
-                <div className={`absolute top-6 left-6 z-40 transition-all duration-700 ${
+                <div className={`absolute top-0 left-0 z-40 transition-all duration-700 ${
                   moduleIndex === currentModuleIndex ? 'scale-100 opacity-100' : 'scale-90 opacity-70'
                 }`}>
-                  <h4 className="font-bold text-3xl text-gray-900 bg-white/70 px-6 py-3 rounded-xl backdrop-blur-md border border-purple-200 shadow-lg">
+                  <h4 className="font-bold text-3xl text-gray-900 bg-white/90 px-6 py-3 rounded-tl-3xl rounded-br-xl backdrop-blur-md border-2 border-gray-400 shadow-xl ring-2 ring-gray-300/50">
                     {module.name}
                   </h4>
                 </div>
@@ -406,16 +502,18 @@ const ModulesShowcase = () => {
           ))}
           
           {/* Right Side Bubble Circle Navigation */}
-          <div className="absolute right-[-32px] top-1/2 transform -translate-y-1/2 flex flex-col space-y-2 z-40">
+          <div className="absolute right-[-40px] top-1/2 transform -translate-y-1/2 flex flex-col space-y-1.5 z-40">
             {modules.map((_, index) => (
               <button
                 key={index}
                 onClick={() => handleIndicatorClick(index)}
-                className={`rounded-full transition-all duration-500 border border-white/30 ${
+                className={`rounded-full transition-all duration-500 border-2 border-black shadow-lg flex items-center justify-center ${
                   index === currentModuleIndex 
-                    ? 'w-4 h-4 bg-white scale-125' 
-                    : 'w-3 h-3 bg-white/40 hover:bg-white/70 hover:scale-110'
+                    ? 'w-5 h-5 bg-black border-black scale-125 shadow-black/50' 
+                    : 'w-4 h-4 bg-white hover:bg-gray-100 hover:scale-110'
                 }`}
+                aria-label={`Go to module ${index + 1}: ${modules[index].name}`}
+                title={modules[index].name}
               />
             ))}
           </div>

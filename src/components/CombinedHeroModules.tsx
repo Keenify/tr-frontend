@@ -415,7 +415,7 @@ const CombinedHeroModules = () => {
       </div>
 
       {/* Combined Dashboard Screenshot with Cursor */}
-      <div className="mb-12 max-w-5xl mx-auto px-6 relative flex justify-center items-center">
+      <div className="mb-12 max-w-5xl mx-auto px-2 relative flex justify-center items-center">
         <img 
           src="/lovable-uploads/ceo-dashboard-pic.png" 
           alt="CEO Dashboard UI Overview"
@@ -456,12 +456,12 @@ const CombinedHeroModules = () => {
                     : 'z-10 opacity-30 scale-90 translate-y-full'
                 }`}
               >
-                <div className="group bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden relative border border-purple-100 h-full transform transition-all duration-700 hover:scale-[1.02]">
+                <div className="group bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden relative border-2 border-gray-300 ring-2 ring-gray-200/50 h-full transform transition-all duration-700 hover:scale-[1.02] hover:shadow-[0_25px_60px_-12px_rgba(0,0,0,0.4)] hover:ring-purple-300/70">
                   {/* Module Name - Animated */}
-                  <div className={`absolute top-6 left-6 z-40 transition-all duration-700 ${
+                  <div className={`absolute top-0 left-0 z-40 transition-all duration-700 ${
                     moduleIndex === currentModuleIndex ? 'scale-100 opacity-100' : 'scale-90 opacity-70'
                   }`}>
-                    <h4 className="font-bold text-3xl text-gray-900 bg-white/70 px-6 py-3 rounded-xl backdrop-blur-md border border-purple-200 shadow-lg">
+                    <h4 className="font-bold text-3xl text-gray-900 bg-white/90 px-6 py-3 rounded-tl-3xl rounded-br-xl backdrop-blur-md border-2 border-gray-400 shadow-xl ring-2 ring-gray-300/50">
                       {module.name}
                     </h4>
                   </div>
@@ -512,15 +512,18 @@ const CombinedHeroModules = () => {
             ))}
             
             {/* Right Side Bubble Circle Navigation */}
-            <div className="absolute right-[-32px] top-1/2 transform -translate-y-1/2 flex flex-col space-y-2 z-40">
+            <div className="absolute right-[-40px] top-1/2 transform -translate-y-1/2 flex flex-col space-y-1.5 z-40">
               {modules.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => handleIndicatorClick(index)}
-                  className={`w-6 h-6 rounded-full border-2 border-gray-700 shadow-md flex items-center justify-center transition-all duration-300
-                    ${index === currentModuleIndex ? 'bg-black border-black' : 'bg-white hover:bg-gray-200'}
-                  `}
-                  aria-label={`Go to module ${index + 1}`}
+                  className={`rounded-full transition-all duration-500 border-2 border-black shadow-lg flex items-center justify-center ${
+                    index === currentModuleIndex 
+                      ? 'w-5 h-5 bg-black border-black scale-125 shadow-black/50' 
+                      : 'w-4 h-4 bg-white hover:bg-gray-100 hover:scale-110'
+                  }`}
+                  aria-label={`Go to module ${index + 1}: ${modules[index].name}`}
+                  title={modules[index].name}
                 />
               ))}
             </div>
