@@ -542,40 +542,28 @@ const CombinedHeroModules = () => {
             ))}
             
             {/* Right Side Bubble Circle Navigation */}
-            <div className="absolute right-8 top-1/2 transform -translate-y-1/2 flex flex-col space-y-3 z-50 bg-white/90 backdrop-blur-md rounded-2xl p-4 shadow-2xl border-2 border-gray-200">
-              <div className="text-center mb-2">
-                <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Modules</span>
-              </div>
+            <div className="absolute right-8 top-1/2 transform -translate-y-1/2 flex flex-col space-y-2 z-50 bg-white/90 backdrop-blur-md rounded-2xl p-3 shadow-2xl border-2 border-gray-200">
               {modules.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => handleIndicatorClick(index)}
                   className={`group relative rounded-full transition-all duration-300 border-2 shadow-lg flex items-center justify-center hover:scale-110 ${
                     index === currentModuleIndex 
-                      ? 'w-8 h-8 bg-gradient-to-r from-purple-600 to-indigo-600 border-purple-500 scale-110 shadow-purple-500/50' 
-                      : 'w-6 h-6 bg-white hover:bg-gray-50 border-gray-300 hover:border-gray-400'
+                      ? 'w-6 h-6 bg-gradient-to-r from-purple-600 to-indigo-600 border-purple-500 scale-110 shadow-purple-500/50' 
+                      : 'w-4 h-4 bg-white hover:bg-gray-50 border-gray-300 hover:border-gray-400'
                   }`}
                   aria-label={`Go to module ${index + 1}: ${modules[index].name}`}
                   title={modules[index].name}
                 >
                   {/* Active indicator dot */}
                   {index === currentModuleIndex && (
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-sm animate-pulse"></div>
+                    <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-green-500 rounded-full border border-white shadow-sm animate-pulse"></div>
                   )}
                   
-                  {/* Module number */}
-                  <span className={`text-xs font-bold ${
-                    index === currentModuleIndex 
-                      ? 'text-white' 
-                      : 'text-gray-600 group-hover:text-gray-900'
-                  }`}>
-                    {index + 1}
-                  </span>
-                  
                   {/* Tooltip */}
-                  <div className="absolute right-full mr-3 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap shadow-lg">
+                  <div className="absolute right-full mr-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap shadow-lg">
                     {modules[index].name}
-                    <div className="absolute left-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-4 border-l-gray-900 border-t-2 border-t-transparent border-b-2 border-b-transparent"></div>
+                    <div className="absolute left-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-3 border-l-gray-900 border-t-1.5 border-t-transparent border-b-1.5 border-b-transparent"></div>
                   </div>
                 </button>
               ))}
