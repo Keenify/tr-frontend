@@ -195,7 +195,7 @@ const ExploreModules = () => {
         <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-purple-400 rounded-full animate-pulse opacity-60 animation-delay-1500"></div>
         <div className="absolute top-3/4 right-1/4 w-2.5 h-2.5 bg-indigo-300 rounded-full animate-pulse opacity-70 animation-delay-2500"></div>
         <div className="absolute top-1/4 right-1/6 w-2 h-2 bg-purple-400 rounded-full animate-pulse opacity-55 animation-delay-500"></div>
-        <div className="absolute bottom-1/4 left-1/6 w-2.5 h-2.5 bg-indigo-400 rounded-full animate-pulse opacity-65 animation-delay-3500"></div> 
+        <div className="absolute bottom-1/4 left-1/6 w-2.5 h-2.5 bg-indigo-400 rounded-full animate-pulse opacity-65 animation-delay-3500"></div>
       </div>
       
       <div className="container mx-auto px-6 relative z-10">
