@@ -453,7 +453,7 @@ const ModulesShowcase = () => {
               }}
             >
               <p className="text-xl md:text-2xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
-                Discover 16 powerful modules designed to elevate your executive performance and cosmic personal growth
+                Discover 17 powerful modules designed to elevate your executive performance and cosmic personal growth
               </p>
               <div className="absolute -inset-4 bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-pink-500/10 rounded-full blur-3xl"></div>
             </div>

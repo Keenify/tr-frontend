@@ -17,19 +17,25 @@ const ExploreModules = () => {
       name: "Weekly Rhythm", 
       description: "Plan and review your weekly priorities with structured goal-setting frameworks and progress tracking",
       detailedDescription: "Establish a powerful weekly planning system that helps you stay focused on what matters most. Set intentions, track progress, and reflect on your achievements. Perfect for busy professionals who want to maintain work-life balance while achieving their goals.",
-      media: { type: "image", src: "/lovable-uploads/9d4339cc-fb5a-413e-8500-be791ea4f20f.png" }
+      media: { type: "video", src: "/lovable-uploads/Weekly Rhythms.mp4" }
+    },
+    {
+      name: "Annual Calendar Plans",
+      description: "Strategic yearly planning with comprehensive goal setting and milestone tracking for long-term success",
+      detailedDescription: "Master your annual planning with our comprehensive calendar system. Set strategic goals, plan major milestones, and track your progress throughout the year. Perfect for executives and professionals who need to align daily actions with long-term vision and objectives.",
+      media: { type: "video", src: "/lovable-uploads/Annual Calendar Plans.mp4" }
     },
     {
       name: "Habit Tracker",
       description: "Build lasting positive habits with visual progress tracking and streak monitoring for consistent growth",
       detailedDescription: "Build lasting positive habits with our intuitive tracking system. Monitor your progress, identify patterns, and celebrate streaks. Features customizable habits, visual progress indicators, and insights to help you understand your behavior patterns.",
-      media: { type: "image", src: "/lovable-uploads/c3622682-2d1c-4c45-b8f8-8041feb87e52.png" }
+      media: { type: "video", src: "/lovable-uploads/Habit Tracker.mp4" }
     },
     {
       name: "To-do List",
       description: "Simple, elegant task management that feels as natural as pen and paper with digital convenience",
       detailedDescription: "Experience the simplicity of a digital to-do list that feels as natural as pen and paper. Quickly capture tasks, set priorities, and check off completed items. Perfect for those who prefer minimalist productivity tools without overwhelming features.",
-      media: { type: "image", src: "/lovable-uploads/0571b04f-4bf8-48a9-bc01-f5c9a7bd7921.png" }
+      media: { type: "video", src: "/lovable-uploads/To-Do List.mp4" }
     },
     {
       name: "Weekly Design System",
@@ -201,7 +207,7 @@ const ExploreModules = () => {
             </h3>
             <div>
               <p className="text-xl md:text-2xl text-gray-700 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
-                Discover 16 powerful modules designed to elevate your executive performance and cosmic personal growth
+                Discover 17 powerful modules designed to elevate your executive performance and cosmic personal growth
               </p>
             </div>
           </div>
@@ -215,7 +221,7 @@ const ExploreModules = () => {
           <div className="flex-1 max-w-5xl">
             <div 
               onClick={openModal}
-              className="group relative bg-white/25 backdrop-blur-lg rounded-2xl p-6 hover:bg-white/35 transition-all duration-700 ease-in-out hover:scale-[1.2] hover:shadow-2xl pointer overflow-hidden shadow-lg"
+              className="group relative bg-white/25 backdrop-blur-lg rounded-2xl hover:bg-white/35 transition-all duration-700 ease-in-out hover:scale-[1.02] hover:shadow-2xl cursor-pointer overflow-hidden shadow-lg h-[600px]"
             >
               {/* Enhanced Tech Grid Background Pattern */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-700 pointer-events-none">
@@ -242,13 +248,13 @@ const ExploreModules = () => {
               <div className="absolute -top-2 -left-2 w-6 h-6 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full opacity-0 group-hover:opacity-80 transition-all duration-700 animate-pulse animation-delay-200"></div>
               <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-gradient-to-r from-pink-400 to-cyan-400 rounded-full opacity-0 group-hover:opacity-80 transition-all duration-700 animate-pulse animation-delay-500"></div>
               
-              <div className="relative z-10">
+              <div className="relative z-10 h-full">
                 {/* Module Media Preview - Full Size with Enhanced Shadow */}
-                <div className="relative w-full h-[600px]">
+                <div className="relative w-full h-full">
                   {currentModule.media.type === 'video' ? (
                     <video 
                       src={currentModule.media.src}
-                      className="w-full h-full object-contain rounded-3xl shadow-2xl overflow-hidden"
+                      className="w-full h-full object-contain rounded-3xl shadow-2xl"
                       style={{ background: 'black' }}
                       autoPlay
                       loop
@@ -259,13 +265,13 @@ const ExploreModules = () => {
                     <img
                       src={currentModule.media.src}
                       alt={`${currentModule.name} preview`}
-                      className="w-full h-full object-contain rounded-3xl shadow-2xl overflow-hidden"
+                      className="w-full h-full object-contain rounded-3xl shadow-2xl"
                     />
                   )}
                   
                   {/* Module Name Overlay - Top Left Corner */}
-                  <div className="absolute top-4 left-4 bg-gray-900 text-white px-5 py-2 rounded-xl shadow-2xl min-h-[48px] flex items-center">
-                    <span className="text-lg font-black leading-tight">{currentModule.name}</span>
+                  <div className="absolute top-0 left-0 bg-gray-900 text-white px-6 py-4 rounded-tl-3xl shadow-2xl min-h-[72px] flex items-center z-20">
+                    <span className="text-3xl font-extrabold leading-tight">{currentModule.name}</span>
                   </div>
                 </div>
               </div>
@@ -293,15 +299,15 @@ const ExploreModules = () => {
           </div>
           
           {/* Redesigned Sidebar: All Modules in Compact Grid - Moved to Right */}
-          <div className="w-80 flex-shrink-0">
-            <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 shadow-lg" style={{height: '600px'}}>
-              <div className="grid grid-cols-2 gap-2">
+          <div className="w-80 flex-shrink-0 mt-6 h-[600px] flex flex-col justify-between">
+            <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 shadow-lg h-full">
+              <div className="grid grid-cols-2 gap-2 h-full">
                 {modules.map((module, index) => (
                   <button
                     key={index}
                     data-module-index={index}
                     onClick={() => setCurrentModuleIndex(index)}
-                    className={`flex items-center gap-2 px-3 rounded-lg transition-all duration-300 text-left whitespace-nowrap overflow-hidden text-ellipsis font-medium shadow-sm border border-transparent focus:outline-none focus:ring-2 focus:ring-purple-400/50
+                    className={`flex items-center gap-2 px-3 py-5 rounded-lg transition-all duration-300 text-left whitespace-nowrap overflow-hidden text-ellipsis font-medium shadow-sm border border-transparent focus:outline-none focus:ring-2 focus:ring-purple-400/50
                       ${index === currentModuleIndex
                         ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg scale-105 border-purple-500'
                         : 'bg-white/60 text-gray-800 hover:bg-purple-10 hover:scale-105'}
@@ -310,7 +316,7 @@ const ExploreModules = () => {
                   >
                     <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 transition-all duration-300
                       ${index === currentModuleIndex ? 'bg-white shadow' : 'bg-purple-400'}`} />
-                    <span className="truncate text-sm" title={module.name}>{module.name}</span>
+                    <span className="truncate text-xl font-semibold" title={module.name}>{module.name}</span>
                   </button>
                 ))}
               </div>
@@ -358,7 +364,7 @@ const ExploreModules = () => {
                   {currentModule.media.type === 'video' ? (
                     <video 
                       src={currentModule.media.src}
-                      className="w-full h-full object-contain rounded-3xl shadow-2xl overflow-hidden"
+                      className="w-full h-full object-cover rounded-3xl shadow-2xl"
                       style={{ background: 'black' }}
                       controls
                       autoPlay
@@ -370,7 +376,7 @@ const ExploreModules = () => {
                     <img
                       src={currentModule.media.src}
                       alt={`${currentModule.name} screenshot`}
-                      className="w-full h-full object-contain rounded-3xl shadow-2xl overflow-hidden"
+                      className="w-full h-full object-contain rounded-3xl shadow-2xl"
                     />
                   )}
                   {/* Module Name Overlay - Top Left Corner (REMOVED FROM MODAL) */}
