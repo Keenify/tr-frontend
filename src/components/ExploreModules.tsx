@@ -107,7 +107,7 @@ const ExploreModules = () => {
       name: "Travel P&L",
       description: "Master travel finances with comprehensive expense tracking and ROI analysis for smart traveling",
       detailedDescription: "Master your travel finances with comprehensive P&L tracking. Monitor expenses, categorize costs, track ROI for business trips, and gain insights into your travel spending patterns to optimize future journeys.",
-      media: { type: "image", src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png" }
+      media: { type: "image", src: "/lovable-uploads/77ac6f1e-3107-4af0-8b84-f0a8422a9786.png" }
     }
   ];
 
@@ -218,10 +218,10 @@ const ExploreModules = () => {
         <div className="flex items-start justify-center max-w-7xl mx-auto gap-8">
           
           {/* Main Module Card */}
-          <div className="flex-1 max-w-5xl">
+          <div className="flex-1 max-w-5xl h-[600px]">
             <div 
               onClick={openModal}
-              className="group relative bg-white/25 backdrop-blur-lg rounded-2xl hover:bg-white/35 transition-all duration-700 ease-in-out hover:scale-[1.02] hover:shadow-2xl cursor-pointer overflow-hidden shadow-lg h-[600px]"
+              className="group relative bg-white/25 backdrop-blur-lg rounded-2xl hover:bg-white/35 transition-all duration-700 ease-in-out hover:scale-[1.02] hover:shadow-2xl cursor-pointer overflow-hidden shadow-lg h-full"
             >
               {/* Enhanced Tech Grid Background Pattern */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-700 pointer-events-none">
@@ -254,24 +254,30 @@ const ExploreModules = () => {
                   {currentModule.media.type === 'video' ? (
                     <video 
                       src={currentModule.media.src}
-                      className="w-full h-full object-contain rounded-3xl shadow-2xl"
-                      style={{ background: 'black' }}
+                      className="w-full h-full rounded-3xl shadow-2xl"
+                      style={{ objectFit: 'fill', background: 'black' }}
                       autoPlay
                       loop
                       muted
                       playsInline
+                      preload="metadata"
+                      onError={(e) => {
+                        console.error('Video loading error:', e);
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
                   ) : (
                     <img
                       src={currentModule.media.src}
                       alt={`${currentModule.name} preview`}
-                      className="w-full h-full object-contain rounded-3xl shadow-2xl"
+                      className="w-full h-full rounded-3xl shadow-2xl"
+                      style={{ objectFit: 'fill' }}
                     />
                   )}
                   
-                  {/* Module Name Overlay - Top Left Corner */}
-                  <div className="absolute top-0 left-0 bg-gray-900 text-white px-6 py-4 rounded-tl-3xl shadow-2xl min-h-[72px] flex items-center z-20">
-                    <span className="text-3xl font-extrabold leading-tight">{currentModule.name}</span>
+                  {/* Module Name Overlay - Extended width and consistent height */}
+                  <div className="absolute top-4 left-4 bg-gray-900/90 backdrop-blur-sm text-white px-6 py-3 rounded-lg shadow-lg z-20 min-w-[220px] h-[50px] flex items-center justify-start">
+                    <span className="text-xl font-bold whitespace-nowrap">{currentModule.name}</span>
                   </div>
                 </div>
               </div>
@@ -298,26 +304,30 @@ const ExploreModules = () => {
             </div>
           </div>
           
-          {/* Redesigned Sidebar: All Modules in Compact Grid - Moved to Right */}
-          <div className="w-80 flex-shrink-0 mt-6 h-[600px] flex flex-col justify-between">
+          {/* Redesigned Sidebar: All Modules in Single Vertical Line */}
+          <div className="w-80 flex-shrink-0 h-[600px]">
             <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 shadow-lg h-full">
-              <div className="grid grid-cols-2 gap-2 h-full">
+              <div className="flex flex-col gap-0 h-full justify-between pt-1">
                 {modules.map((module, index) => (
-                  <button
-                    key={index}
-                    data-module-index={index}
-                    onClick={() => setCurrentModuleIndex(index)}
-                    className={`flex items-center gap-2 px-3 py-5 rounded-lg transition-all duration-300 text-left whitespace-nowrap overflow-hidden text-ellipsis font-medium shadow-sm border border-transparent focus:outline-none focus:ring-2 focus:ring-purple-400/50
-                      ${index === currentModuleIndex
-                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg scale-105 border-purple-500'
-                        : 'bg-white/60 text-gray-800 hover:bg-purple-10 hover:scale-105'}
-                    `}
-                    style={{minWidth: 0}}
-                  >
-                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 transition-all duration-300
-                      ${index === currentModuleIndex ? 'bg-white shadow' : 'bg-purple-400'}`} />
-                    <span className="truncate text-xl font-semibold" title={module.name}>{module.name}</span>
-                  </button>
+                  <div key={index} className="flex flex-col">
+                    <button
+                      data-module-index={index}
+                      onClick={() => setCurrentModuleIndex(index)}
+                      className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-all duration-300 text-left whitespace-nowrap overflow-hidden text-ellipsis font-medium focus:outline-none focus:ring-2 focus:ring-purple-400/50 flex-shrink-0
+                        ${index === currentModuleIndex
+                          ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg scale-105'
+                          : 'bg-transparent text-gray-800 hover:bg-white/30 hover:scale-105'}
+                      `}
+                      style={{minWidth: 0}}
+                    >
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 transition-all duration-300
+                        ${index === currentModuleIndex ? 'bg-white shadow' : 'bg-purple-400'}`} />
+                      <span className="truncate text-sm font-semibold" title={module.name}>{module.name}</span>
+                    </button>
+                    {index < modules.length - 1 && (
+                      <div className="h-px bg-gray-300/30 mx-3 my-0.5"></div>
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
@@ -346,15 +356,18 @@ const ExploreModules = () => {
 
               {/* Modal Content */}
               <div className="p-8">
-                {/* Module Header */}
+                {/* Module Header with Name and Description */}
                 <div className="text-center mb-8">
-                  <h2 className="text-4xl font-bold text-gray-900 mb-6">
+                  <h2 className="text-4xl font-bold text-gray-900 mb-4">
                     {currentModule.name}
                   </h2>
                   <div className="flex justify-center mb-6">
                     <div className="w-20 h-1 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full"></div>
                   </div>
-                  <p className="text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
+                  <p className="text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto mb-6">
+                    {currentModule.description}
+                  </p>
+                  <p className="text-lg text-gray-600 leading-relaxed max-w-4xl mx-auto">
                     {currentModule.detailedDescription}
                   </p>
                 </div>
@@ -364,22 +377,26 @@ const ExploreModules = () => {
                   {currentModule.media.type === 'video' ? (
                     <video 
                       src={currentModule.media.src}
-                      className="w-full h-full object-cover rounded-3xl shadow-2xl"
-                      style={{ background: 'black' }}
+                      className="w-full h-full rounded-3xl shadow-2xl"
+                      style={{ objectFit: 'fill', background: 'black' }}
                       controls
                       autoPlay
                       loop
                       muted
                       playsInline
+                      preload="metadata"
+                      onError={(e) => {
+                        console.error('Video loading error:', e);
+                      }}
                     />
                   ) : (
                     <img
                       src={currentModule.media.src}
                       alt={`${currentModule.name} screenshot`}
-                      className="w-full h-full object-contain rounded-3xl shadow-2xl"
+                      className="w-full h-full rounded-3xl shadow-2xl"
+                      style={{ objectFit: 'fill' }}
                     />
                   )}
-                  {/* Module Name Overlay - Top Left Corner (REMOVED FROM MODAL) */}
                 </div>
               </div>
             </div>

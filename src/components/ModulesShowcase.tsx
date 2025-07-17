@@ -51,6 +51,10 @@ const MediaDisplay = ({ media, className, alt }: {
         loop
         muted
         playsInline
+        preload="metadata"
+        onError={(e) => {
+          console.error('Video loading error:', e);
+        }}
         style={{ objectFit: 'contain', width: '100%', height: '100%', position: 'relative', zIndex: 2 }}
       />
     );
@@ -269,7 +273,7 @@ const ModulesShowcase = () => {
       media: [
         {
           type: "image",
-          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
+          src: "/lovable-uploads/77ac6f1e-3107-4af0-8b84-f0a8422a9786.png"
         }
       ]
     }
@@ -477,11 +481,11 @@ const ModulesShowcase = () => {
               }`}
             >
               <div className="group bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden relative border-2 border-gray-300 ring-2 ring-gray-200/50 h-full transform transition-all duration-700 hover:scale-[1.02] hover:shadow-[0_25px_60px_-12px_rgba(0,0,0,0.4)] hover:ring-purple-300/70">
-                {/* Module Name - Animated */}
-                <div className={`absolute top-0 left-0 z-40 transition-all duration-700 ${
+                {/* Module Name - Extended width and consistent height */}
+                <div className={`absolute top-4 left-4 z-40 transition-all duration-700 ${
                   moduleIndex === currentModuleIndex ? 'scale-100 opacity-100' : 'scale-90 opacity-70'
                 }`}>
-                  <h4 className="font-bold text-3xl text-gray-900 bg-white/90 px-6 py-3 rounded-tl-3xl rounded-br-xl backdrop-blur-md border-2 border-gray-400 shadow-xl ring-2 ring-gray-300/50">
+                  <h4 className="font-bold text-xl text-white bg-gray-900/90 backdrop-blur-sm px-6 py-3 rounded-lg shadow-lg min-w-[220px] h-[50px] flex items-center justify-start whitespace-nowrap">
                     {module.name}
                   </h4>
                 </div>
