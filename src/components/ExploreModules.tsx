@@ -1,294 +1,150 @@
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { useState, useEffect, useRef } from "react";
-import { X } from "lucide-react";
-
-// Media Display Component to handle both images and videos
-const MediaDisplay = ({ media, className, alt }: { 
-  media: { type: string; src: string }, 
-  className: string, 
-  alt: string 
-}) => {
-  if (media.type === "video") {
-    return (
-      <video 
-        src={media.src}
-        className={className}
-        autoPlay
-        loop
-        muted
-        playsInline
-        style={{ objectFit: 'contain', width: '100%', height: '100%', position: 'relative', zIndex: 2 }}
-      />
-    );
-  }
-  
-  return (
-    <img 
-      src={media.src}
-      alt={alt}
-      className={className}
-      style={{ objectFit: 'contain', width: '100%', height: '100%', position: 'relative', zIndex: 2 }}
-    />
-  );
-};
+import React, { useState, useEffect, useRef } from "react";
+import { X, Play, ChevronUp, ChevronDown } from "lucide-react";
 
 const ExploreModules = () => {
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
-  const [showDescription, setShowDescription] = useState(false);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const moduleRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   const modules = [
-    { 
-      name: "Daily Journal", 
-      description: "Record your thoughts and reflections with guided prompts",
+    {
+      name: "Daily Journal",
+      description: "Record your thoughts and reflections with guided prompts for deeper self-awareness and personal growth",
       detailedDescription: "Transform your daily routine with our comprehensive journaling system. Features guided prompts, mood tracking, gratitude exercises, and reflection spaces to help you process your thoughts and emotions. Build a consistent writing habit that promotes self-awareness and personal growth.",
-      url: "/journaling",
-      media: [
-        {
-          type: "video",
-          src: "/lovable-uploads/Daily Journal.mp4"
-        }
-      ]
+      media: { type: "video", src: "/lovable-uploads/Daily Journal.mp4" }
     },
-    { 
+    {
       name: "Weekly Rhythm", 
-      description: "Plan and review your weekly priorities and goals",
+      description: "Plan and review your weekly priorities with structured goal-setting frameworks and progress tracking",
       detailedDescription: "Establish a powerful weekly planning system that helps you stay focused on what matters most. Set intentions, track progress, and reflect on your achievements. Perfect for busy professionals who want to maintain work-life balance while achieving their goals.",
-      url: "/weekly-rhythms",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/9d4339cc-fb5a-413e-8500-be791ea4f20f.png"
-        }
-      ]
+      media: { type: "image", src: "/lovable-uploads/9d4339cc-fb5a-413e-8500-be791ea4f20f.png" }
     },
-    { 
-      name: "Habit Tracker", 
-      description: "Track your daily habits and build consistency",
+    {
+      name: "Habit Tracker",
+      description: "Build lasting positive habits with visual progress tracking and streak monitoring for consistent growth",
       detailedDescription: "Build lasting positive habits with our intuitive tracking system. Monitor your progress, identify patterns, and celebrate streaks. Features customizable habits, visual progress indicators, and insights to help you understand your behavior patterns.",
-      url: "/habit-tracker",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/c3622682-2d1c-4c45-b8f8-8041feb87e52.png"
-        }
-      ]
+      media: { type: "image", src: "/lovable-uploads/c3622682-2d1c-4c45-b8f8-8041feb87e52.png" }
     },
-    { 
-      name: "To-do List", 
-      description: "A simple and easy-to-use to-do list, like a piece of paper",
+    {
+      name: "To-do List",
+      description: "Simple, elegant task management that feels as natural as pen and paper with digital convenience",
       detailedDescription: "Experience the simplicity of a digital to-do list that feels as natural as pen and paper. Quickly capture tasks, set priorities, and check off completed items. Perfect for those who prefer minimalist productivity tools without overwhelming features.",
-      url: "/todo",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/0571b04f-4bf8-48a9-bc01-f5c9a7bd7921.png"
-        }
-      ]
+      media: { type: "image", src: "/lovable-uploads/0571b04f-4bf8-48a9-bc01-f5c9a7bd7921.png" }
     },
-    { 
-      name: "Weekly Design System", 
-      description: "Plan and track your weekly activities with a design focus",
+    {
+      name: "Weekly Design System",
+      description: "Structure creative projects with design sprint methodology and milestone tracking for better outcomes",
       detailedDescription: "Structure your creative projects with our design sprint methodology. Break down complex projects into manageable weekly sprints, track deliverables, and maintain momentum on your creative endeavors. Ideal for designers, developers, and creative professionals.",
-      url: "/weekly-design-system",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/7f9297e4-9626-4110-aa40-e4f49f32c644.png"
-        }
-      ]
+      media: { type: "image", src: "/lovable-uploads/7f9297e4-9626-4110-aa40-e4f49f32c644.png" }
     },
-    { 
-      name: "Project Management", 
-      description: "Organize and track your projects from start to finish",
+    {
+      name: "Project Management",
+      description: "Comprehensive project oversight with timeline management and resource allocation for executive success",
       detailedDescription: "Comprehensive project management tools to keep your initiatives on track. Features include milestone tracking, deadline management, resource allocation, and progress visualization. Perfect for managing multiple projects simultaneously with an intuitive sidebar navigation and clean interface.",
-      url: "/project",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/44b6c86f-1e58-4822-b1e6-27627ddda763.png"
-        }
-      ]
+      media: { type: "image", src: "/lovable-uploads/44b6c86f-1e58-4822-b1e6-27627ddda763.png" }
     },
-    { 
-      name: "Personal Finance", 
-      description: "Track income, expenses, and manage your budget",
+    {
+      name: "Personal Finance",
+      description: "Take control of your financial future with intelligent budget tracking and insights for wealth building",
       detailedDescription: "Take control of your financial future with comprehensive budget tracking and expense management. Monitor income streams, categorize expenses, set savings goals, and visualize your financial health with intuitive charts and reports.",
-      url: "/personal-finance",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/77ac6f1e-3107-4af0-8b84-f0a8422a9786.png"
-        }
-      ]
+      media: { type: "image", src: "/lovable-uploads/77ac6f1e-3107-4af0-8b84-f0a8422a9786.png" }
     },
-    { 
-      name: "Bucket List", 
-      description: "Create and manage your life goals and dreams",
+    {
+      name: "Bucket List",
+      description: "Transform life dreams into actionable plans with progress tracking and celebration milestones",
       detailedDescription: "Turn your dreams into actionable plans with our bucket list manager. Categorize goals by timeline, track progress, add photos and memories, and celebrate achievements. Perfect for maintaining motivation and focus on your life aspirations.",
-      url: "/bucket-list",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/fb01924f-66c7-4fda-8487-e54bcf8de069.png"
-        }
-      ]
+      media: { type: "image", src: "/lovable-uploads/fb01924f-66c7-4fda-8487-e54bcf8de069.png" }
     },
-    { 
-      name: "Manifestation", 
-      description: "Set intentions and track your manifestation journey",
+    {
+      name: "Manifestation",
+      description: "Harness intention-setting power with guided exercises and synchronicity tracking for goal achievement",
       detailedDescription: "Harness the power of intention setting with our manifestation tracker. Visualize your goals, track synchronicities, practice gratitude, and monitor your progress toward your desires. Includes guided exercises and reflection prompts.",
-      url: "/manifestation",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/7ac55d26-5d6c-494e-96d7-5ec52c97e77a.png"
-        }
-      ]
+      media: { type: "image", src: "/lovable-uploads/7ac55d26-5d6c-494e-96d7-5ec52c97e77a.png" }
     },
-    { 
-      name: "Five Percent Review", 
-      description: "Track and review your progress with 5% improvements",
+    {
+      name: "Five Percent Review",
+      description: "Embrace continuous improvement with small, sustainable changes that compound over time",
       detailedDescription: "Embrace the philosophy of continuous improvement with our 5% better methodology. Track small, incremental changes that compound over time. Perfect for sustainable personal development without overwhelming yourself.",
-      url: "/five-percent-reviews",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/e164c680-f89b-4000-9e69-878b4194a114.png"
-        }
-      ]
+      media: { type: "image", src: "/lovable-uploads/e164c680-f89b-4000-9e69-878b4194a114.png" }
     },
-    { 
-      name: "Future Me", 
-      description: "Send letters to your future self for reflection and growth",
+    {
+      name: "Future Me",
+      description: "Connect with your future self through time-delayed letters and milestone reflections for growth",
       detailedDescription: "Connect with your future self through time-delayed letters and messages. Set reminders for important milestones, reflect on your growth journey, and maintain perspective on your long-term goals. A powerful tool for self-reflection and motivation.",
-      url: "/futureme",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/295e0ebc-d09f-4915-9d23-6121b91205d6.png"
-        }
-      ]
+      media: { type: "image", src: "/lovable-uploads/295e0ebc-d09f-4915-9d23-6121b91205d6.png" }
     },
-    { 
-      name: "Ikigai", 
-      description: "Discover your life's purpose by exploring your ikigai",
+    {
+      name: "Ikigai",
+      description: "Discover your life's purpose through the Japanese philosophy of reason for being and fulfillment",
       detailedDescription: "Discover your reason for being through the Japanese concept of Ikigai. Explore the intersection of what you love, what you're good at, what the world needs, and what you can be paid for. Features interactive exercises and reflection tools.",
-      url: "/ikigai",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/a5a312cb-e64c-4ef8-a123-fcf76bd6dbf1.png"
-        }
-      ]
+      media: { type: "image", src: "/lovable-uploads/a5a312cb-e64c-4ef8-a123-fcf76bd6dbf1.png" }
     },
-    { 
-      name: "Dreamboard", 
-      description: "Create a visual dream board with drawings, texts, and images",
+    {
+      name: "Dreamboard",
+      description: "Visualize aspirations with interactive mood boards, images, and creative elements for inspiration",
       detailedDescription: "Visualize your dreams and goals with our interactive dreamboard creator. Add images, drawings, text, and symbols to create a powerful visual representation of your aspirations. Features collaborative tools and export options.",
-      url: "/dreamboard",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
-        }
-      ]
+      media: { type: "image", src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png" }
     },
-    { 
-      name: "Let Me In", 
-      description: "Your mental clarity zone. Let AI guide your thoughts, organize your mind, and unlock new insights.",
+    {
+      name: "Let Me In",
+      description: "AI-powered mental clarity zone to organize thoughts and unlock breakthrough insights for innovation",
       detailedDescription: "Transform your mental landscape with AI-powered guidance. This module helps you organize scattered thoughts, gain mental clarity, and unlock breakthrough insights through intelligent prompts and structured thinking exercises.",
-      url: "/ai-journal",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
-        }
-      ]
+      media: { type: "image", src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png" }
     },
-    { 
-      name: "Mindmap", 
-      description: "Create interactive mind maps to visualize ideas, brainstorm, and organize your thoughts.",
+    {
+      name: "Mindmap",
+      description: "Visualize complex ideas with interactive mind mapping for strategic thinking and problem solving",
       detailedDescription: "Unleash your creativity with powerful mind mapping tools. Visualize complex ideas, structure your thinking, and explore connections between concepts with an intuitive, interactive interface designed for executive-level strategic thinking.",
-      url: "/mindmap",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
-        }
-      ]
+      media: { type: "image", src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png" }
     },
-    { 
-      name: "Travel P&L", 
-      description: "Track your travel expenses and profit/loss by destination.",
+    {
+      name: "Travel P&L",
+      description: "Master travel finances with comprehensive expense tracking and ROI analysis for smart traveling",
       detailedDescription: "Master your travel finances with comprehensive P&L tracking. Monitor expenses, categorize costs, track ROI for business trips, and gain insights into your travel spending patterns to optimize future journeys.",
-      url: "/travel-pl",
-      media: [
-        {
-          type: "image",
-          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
-        }
-      ]
+      media: { type: "image", src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png" }
     }
   ];
 
-  // Samsung-style auto-play functionality
-  useEffect(() => {
-    if (isAutoPlaying) {
-      autoPlayRef.current = setInterval(() => {
-        setCurrentModuleIndex(prev => (prev + 1) % modules.length);
-      }, 4000);
-    } else {
-      if (autoPlayRef.current) {
-        clearInterval(autoPlayRef.current);
-      }
-    }
+  const currentModule = modules[currentModuleIndex];
 
-    return () => {
-      if (autoPlayRef.current) {
-        clearInterval(autoPlayRef.current);
-      }
-    };
-  }, [isAutoPlaying, modules.length]);
-
-  // Enhanced wheel navigation with smoother transitions
+  // Auto-scroll to active module in sidebar for better UX
   useEffect(() => {
-    let isScrolling = false;
-    
-    const handleWheel = (e: WheelEvent) => {
-      const target = e.target as HTMLElement;
+    const activeButton = document.querySelector(`[data-module-index="${currentModuleIndex}"]`);
+    if (activeButton && sidebarRef.current) {
+      const sidebar = sidebarRef.current;
+      const button = activeButton as HTMLElement;
+      const sidebarRect = sidebar.getBoundingClientRect();
+      const buttonRect = button.getBoundingClientRect();
       
-      if (containerRef.current?.contains(target) && !isScrolling) {
-        e.preventDefault();
-        isScrolling = true;
-        setIsAutoPlaying(false);
-        
-        if (e.deltaY > 0 && currentModuleIndex < modules.length - 1) {
-          setCurrentModuleIndex(prev => prev + 1);
-        } else if (e.deltaY < 0 && currentModuleIndex > 0) {
-          setCurrentModuleIndex(prev => prev - 1);
-        }
-        
-        setTimeout(() => {
-          isScrolling = false;
-        }, 1000);
+      const isVisible = buttonRect.top >= sidebarRect.top && buttonRect.bottom <= sidebarRect.bottom;
+      
+      if (!isVisible) {
+        button.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'nearest'
+        });
       }
-    };
-
-    const container = containerRef.current;
-    if (container) {
-      container.addEventListener('wheel', handleWheel, { passive: false });
-      return () => container.removeEventListener('wheel', handleWheel);
     }
-  }, [currentModuleIndex, modules.length]);
+  }, [currentModuleIndex]);
 
-  // Scroll lock effect when description modal is open
+  const openModal = () => {
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    // Ensure we stay in the modules section after closing modal
+    setTimeout(() => {
+      document.getElementById('modules-section')?.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }, 100);
+  };
+
+  // Prevent body scroll when modal is open
   useEffect(() => {
-    if (showDescription) {
+    if (showModal) {
       const scrollY = window.scrollY;
       document.body.style.position = 'fixed';
       document.body.style.top = `-${scrollY}px`;
@@ -311,22 +167,7 @@ const ExploreModules = () => {
       document.body.style.width = '';
       document.body.style.overflow = '';
     };
-  }, [showDescription]);
-
-  const handleModuleClick = (index: number) => {
-    setCurrentModuleIndex(index);
-    setShowDescription(true);
-    setIsAutoPlaying(false);
-  };
-
-  const handleIndicatorClick = (index: number) => {
-    setCurrentModuleIndex(index);
-    setIsAutoPlaying(false);
-  };
-
-  const closeDescription = () => {
-    setShowDescription(false);
-  };
+  }, [showModal]);
 
   return (
     <div id="modules-section" className="py-16 relative overflow-hidden mx-6 rounded-3xl mt-8">
@@ -366,163 +207,179 @@ const ExploreModules = () => {
           </div>
         </div>
 
-        {/* Samsung-Style Zoom Modules */}
-        <div ref={containerRef} className="max-w-6xl mx-auto relative h-[600px] overflow-hidden pr-20">
-          {modules.map((module, moduleIndex) => (
-            <div
-              key={moduleIndex}
-              ref={el => moduleRefs.current[moduleIndex] = el}
-              className={`absolute inset-0 transition-all duration-2000 ease-in-out ${
-                moduleIndex === currentModuleIndex 
-                  ? 'z-30 opacity-100 scale-100 translate-y-0' 
-                  : moduleIndex < currentModuleIndex
-                  ? 'z-10 opacity-30 scale-90 -translate-y-full'
-                  : 'z-10 opacity-30 scale-90 translate-y-full'
-              }`}
-            >
-              <div className="group bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden relative border-2 border-gray-300 ring-2 ring-gray-200/50 h-full transform transition-all duration-700 hover:scale-[1.02] hover:shadow-[0_25px_60px_-12px_rgba(0,0,0,0.4)] hover:ring-purple-300/70">
-                {/* Module Name - Animated */}
-                <div className={`absolute top-0 left-0 z-40 transition-all duration-700 ${
-                  moduleIndex === currentModuleIndex ? 'scale-100 opacity-100' : 'scale-90 opacity-70'
-                }`}>
-                  <h4 className="font-bold text-3xl text-gray-900 bg-white/90 px-6 py-3 rounded-tl-3xl rounded-br-xl backdrop-blur-md border-2 border-gray-400 shadow-xl ring-2 ring-gray-300/50">
-                    {module.name}
-                  </h4>
-                </div>
 
-                {/* Media Container with Zoom Effect */}
-                <div 
-                  className={`media-container relative h-full overflow-hidden transition-all duration-700 ${
-                    moduleIndex === currentModuleIndex ? 'scale-100' : 'scale-95'
-                  } rounded-3xl`}
-                  onClick={() => handleModuleClick(moduleIndex)}
-                >
-                  {/* Blurred background using the same image */}
-                  {module.media[0].type === 'image' && (
-                    <img
-                      src={module.media[0].src}
-                      alt="background-blur"
-                      className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 rounded-3xl"
-                      style={{ zIndex: 1 }}
-                    />
-                  )}
-                  {module.media[0].type === 'video' && (
-                    <video
-                      src={module.media[0].src}
-                      className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 rounded-3xl"
+        {/* Single Module Display */}
+        <div className="flex items-start justify-center max-w-7xl mx-auto gap-8">
+          
+          {/* Main Module Card */}
+          <div className="flex-1 max-w-5xl">
+            <div 
+              onClick={openModal}
+              className="group relative bg-white/25 backdrop-blur-lg rounded-2xl p-6 hover:bg-white/35 transition-all duration-700 ease-in-out hover:scale-[1.2] hover:shadow-2xl pointer overflow-hidden shadow-lg"
+            >
+              {/* Enhanced Tech Grid Background Pattern */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-700 pointer-events-none">
+                <div className="absolute inset-0" style={{
+                  backgroundImage: `
+                    linear-gradient(rgba(139, 92, 246, 0.6) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(139, 92, 246, 0.6) 1px, transparent 1px),
+                    linear-gradient(45deg, rgba(99, 102, 241, 0.3) 1px, transparent 1px),
+                    linear-gradient(-45deg, rgba(99, 102, 241, 0.3) 1px, transparent 1px)
+                  `,
+                  backgroundSize: '20px 20px, 20px 20px, 40px 40px, 40px 40px'
+                }}></div>
+              </div>
+              
+              {/* Scanning Line Effect */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000">
+                <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent animate-pulse"></div>
+                <div className="absolute bottom-0 right-0 w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400 to-transparent animate-pulse animation-delay-500"></div>
+              </div>
+              
+              {/* Enhanced Corner Tech Elements */}
+              <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500 animate-ping"></div>
+              <div className="absolute -bottom-2 -left-2 w-8 h-8 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500 animate-ping animation-delay-300"></div>
+              <div className="absolute -top-2 -left-2 w-6 h-6 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full opacity-0 group-hover:opacity-80 transition-all duration-700 animate-pulse animation-delay-200"></div>
+              <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-gradient-to-r from-pink-400 to-cyan-400 rounded-full opacity-0 group-hover:opacity-80 transition-all duration-700 animate-pulse animation-delay-500"></div>
+              
+              <div className="relative z-10">
+                {/* Module Media Preview - Full Size with Enhanced Shadow */}
+                <div className="relative w-full h-[600px]">
+                  {currentModule.media.type === 'video' ? (
+                    <video 
+                      src={currentModule.media.src}
+                      className="w-full h-full object-contain rounded-3xl shadow-2xl overflow-hidden"
+                      style={{ background: 'black' }}
                       autoPlay
                       loop
                       muted
                       playsInline
-                      style={{ zIndex: 1 }}
+                    />
+                  ) : (
+                    <img
+                      src={currentModule.media.src}
+                      alt={`${currentModule.name} preview`}
+                      className="w-full h-full object-contain rounded-3xl shadow-2xl overflow-hidden"
                     />
                   )}
-                  <MediaDisplay
-                    media={module.media[0]}
-                    className={`w-full h-full transition-all duration-1000 cursor-pointer rounded-3xl ${
-                      moduleIndex === currentModuleIndex 
-                        ? 'scale-100 opacity-100' 
-                        : 'scale-110 opacity-80'
-                    } hover:scale-105`}
-                    alt={`${module.name} screenshot`}
-                  />
-                  {/* Overlay for inactive modules */}
-                  <div className={`absolute inset-0 transition-opacity duration-2000 ${
-                    moduleIndex === currentModuleIndex ? 'opacity-0' : 'opacity-40 bg-black'
-                  } rounded-2xl`} style={{ zIndex: 3 }}></div>
+                  
+                  {/* Module Name Overlay - Top Left Corner */}
+                  <div className="absolute top-4 left-4 bg-gray-900 text-white px-5 py-2 rounded-xl shadow-2xl min-h-[48px] flex items-center">
+                    <span className="text-lg font-black leading-tight">{currentModule.name}</span>
+                  </div>
                 </div>
               </div>
+              
+              {/* Enhanced Floating Tech Particles */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
+                <div className="absolute top-8 left-8 w-3 h-3 bg-cyan-400 rounded-full animate-ping animation-delay-100"></div>
+                <div className="absolute bottom-8 right-8 w-3 h-3 bg-purple-400 rounded-full animate-ping animation-delay-300"></div>
+                <div className="absolute top-1/2 left-4 w-2 h-2 bg-pink-400 rounded-full animate-pulse animation-delay-500"></div>
+                <div className="absolute top-1/4 right-4 w-2 h-2 bg-indigo-400 rounded-full animate-pulse animation-delay-700"></div>
+                <div className="absolute top-3/4 left-8 w-1.5 h-1.5 bg-blue-400 rounded-full animate-ping animation-delay-200"></div>
+                <div className="absolute top-1/3 right-8 w-1.5 h-1.5 bg-green-400 rounded-full animate-ping animation-delay-600"></div>
+                <div className="absolute bottom-1/4 left-1/4 w-1 h-1 bg-yellow-400 rounded-full animate-pulse animation-delay-400"></div>
+                <div className="absolute top-5/6 right-1/4 w-1 h-1 bg-red-400 rounded-full animate-pulse animation-delay-800"></div>
+              </div>
+              
+              {/* Data Stream Lines */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-60 transition-opacity duration-1000 pointer-events-none">
+                <div className="absolute top-4 left-0 w-full h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent animate-pulse animation-delay-300"></div>
+                <div className="absolute bottom-4 left-0 w-full h-px bg-gradient-to-r from-transparent via-purple-400/60 to-transparent animate-pulse animation-delay-600"></div>
+                <div className="absolute top-0 left-4 w-px h-full bg-gradient-to-b from-transparent via-indigo-400/60 to-transparent animate-pulse animation-delay-450"></div>
+                <div className="absolute top-0 right-4 w-px h-full bg-gradient-to-b from-transparent via-pink-400/60 to-transparent animate-pulse animation-delay-750"></div>
+              </div>
             </div>
-          ))}
+          </div>
           
-          {/* Right Side Bubble Circle Navigation */}
-          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex flex-col space-y-1.5 z-50 bg-white/80 backdrop-blur-sm rounded-xl p-2 shadow-lg border border-gray-300">
-            {modules.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => handleIndicatorClick(index)}
-                className={`group relative rounded-full transition-all duration-300 border shadow-lg flex items-center justify-center hover:scale-110 ${
-                  index === currentModuleIndex 
-                    ? 'w-5 h-5 bg-gradient-to-r from-purple-600 to-indigo-600 border-purple-500 scale-110 shadow-purple-500/30' 
-                    : 'w-3.5 h-3.5 bg-white/90 hover:bg-white border-gray-400 hover:border-gray-500'
-                }`}
-                aria-label={`Go to module ${index + 1}: ${modules[index].name}`}
-                title={modules[index].name}
-              >
-                {/* Active indicator dot */}
-                {index === currentModuleIndex && (
-                  <div className="absolute -top-0.5 -right-0.5 w-1 h-1 bg-green-500 rounded-full border border-white shadow-sm animate-pulse"></div>
-                )}
-                
-                {/* Tooltip */}
-                <div className="absolute right-full mr-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap shadow-lg">
-                  {modules[index].name}
-                  <div className="absolute left-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-l-3 border-l-gray-900 border-t-1.5 border-t-transparent border-b-1.5 border-b-transparent"></div>
-                </div>
-              </button>
-            ))}
+          {/* Redesigned Sidebar: All Modules in Compact Grid - Moved to Right */}
+          <div className="w-80 flex-shrink-0">
+            <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 shadow-lg" style={{height: '600px'}}>
+              <div className="grid grid-cols-2 gap-2">
+                {modules.map((module, index) => (
+                  <button
+                    key={index}
+                    data-module-index={index}
+                    onClick={() => setCurrentModuleIndex(index)}
+                    className={`flex items-center gap-2 px-3 rounded-lg transition-all duration-300 text-left whitespace-nowrap overflow-hidden text-ellipsis font-medium shadow-sm border border-transparent focus:outline-none focus:ring-2 focus:ring-purple-400/50
+                      ${index === currentModuleIndex
+                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg scale-105 border-purple-500'
+                        : 'bg-white/60 text-gray-800 hover:bg-purple-10 hover:scale-105'}
+                    `}
+                    style={{minWidth: 0}}
+                  >
+                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 transition-all duration-300
+                      ${index === currentModuleIndex ? 'bg-white shadow' : 'bg-purple-400'}`} />
+                    <span className="truncate text-sm" title={module.name}>{module.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Description Modal */}
-        {showDescription && (
+
+
+        {/* Enhanced Modal for Detailed View */}
+        {showModal && (
           <div 
-            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-            onClick={closeDescription}
+            className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 overflow-y-auto"
+            onClick={closeModal}
           >
             <div 
-              className="relative bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-purple-200 shadow-2xl"
+              className="relative bg-white rounded-3xl max-w-6xl w-full my-8 border-2 border-purple-200 shadow-2xl max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
               <button
-                onClick={closeDescription}
-                className="absolute top-4 right-4 z-10 text-gray-900 hover:text-gray-600 transition-colors"
+                onClick={closeModal}
+                className="absolute top-6 right-6 z-10 text-gray-600 hover:text-gray-900 transition-colors bg-white/80 rounded-full p-2 backdrop-blur-sm"
               >
                 <X size={24} />
               </button>
 
-              {/* Content */}
+              {/* Modal Content */}
               <div className="p-8">
-                <h3 className="text-3xl font-bold text-gray-900 mb-4">
-                  {modules[currentModuleIndex].name}
-                </h3>
-                <p className="text-gray-700 text-lg leading-relaxed mb-6">
-                  {modules[currentModuleIndex].detailedDescription}
-                </p>
+                {/* Module Header */}
+                <div className="text-center mb-8">
+                  <h2 className="text-4xl font-bold text-gray-900 mb-6">
+                    {currentModule.name}
+                  </h2>
+                  <div className="flex justify-center mb-6">
+                    <div className="w-20 h-1 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full"></div>
+                  </div>
+                  <p className="text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
+                    {currentModule.detailedDescription}
+                  </p>
+                </div>
                 
-                {/* Module Image */}
-                <div className="rounded-xl overflow-hidden relative" style={{height: '360px'}}>
-                  {/* Blurred background for modal */}
-                  {modules[currentModuleIndex].media[0].type === 'image' && (
-                    <img
-                      src={modules[currentModuleIndex].media[0].src}
-                      alt="background-blur"
-                      className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110"
-                      style={{ zIndex: 1 }}
-                    />
-                  )}
-                  {modules[currentModuleIndex].media[0].type === 'video' && (
-                    <video
-                      src={modules[currentModuleIndex].media[0].src}
-                      className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110"
+                {/* Enhanced Module Media with Rounded Corners and Enhanced Shadow */}
+                <div className="relative h-[500px]">
+                  {currentModule.media.type === 'video' ? (
+                    <video 
+                      src={currentModule.media.src}
+                      className="w-full h-full object-contain rounded-3xl shadow-2xl overflow-hidden"
+                      style={{ background: 'black' }}
+                      controls
                       autoPlay
                       loop
                       muted
                       playsInline
-                      style={{ zIndex: 1 }}
+                    />
+                  ) : (
+                    <img
+                      src={currentModule.media.src}
+                      alt={`${currentModule.name} screenshot`}
+                      className="w-full h-full object-contain rounded-3xl shadow-2xl overflow-hidden"
                     />
                   )}
-                  <MediaDisplay
-                    media={modules[currentModuleIndex].media[0]}
-                    className="w-full h-full"
-                    alt={`${modules[currentModuleIndex].name} demo`}
-                  />
+                  {/* Module Name Overlay - Top Left Corner (REMOVED FROM MODAL) */}
                 </div>
               </div>
             </div>
           </div>
         )}
+
       </div>
     </div>
   );
