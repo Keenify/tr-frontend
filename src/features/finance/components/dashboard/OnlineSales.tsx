@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
 import { subDays, startOfMonth, startOfYear, startOfDay, endOfDay } from "date-fns";
 import { useUserAndCompanyData } from "../../../../shared/hooks/useUserAndCompanyData";
-import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES, REDMART_SHOP_NAMES } from '../../constant/Shopname';
+import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES, REDMART_SHOP_NAMES} from '../../constant/Shopname';
 
 // Import custom hook
 import { useMetricsData } from "../../hooks/useMetricsData";
@@ -116,6 +116,12 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     }
   } else if (selectedPlatform === 'foodpanda') {
     currency = 'SGD'; // Or set per shop if needed
+  } else if (selectedPlatform === 'shopify') {
+    if (selectedEntityId === 'thekettlegourmet_my') {
+      currency = 'MYR';
+    } else if (selectedEntityId === 'thekettlegourmet_sg') {
+      currency = 'SGD';
+    }
   }
 
   // Handle date changes
