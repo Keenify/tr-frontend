@@ -11,31 +11,31 @@ const ExploreModules = () => {
       name: "Daily Journal",
       description: "Record your thoughts and reflections with guided prompts for deeper self-awareness and personal growth",
       detailedDescription: "Transform your daily routine with our comprehensive journaling system. Features guided prompts, mood tracking, gratitude exercises, and reflection spaces to help you process your thoughts and emotions. Build a consistent writing habit that promotes self-awareness and personal growth.",
-      media: { type: "video", src: "/lovable-uploads/1. Daily Journal.mp4" }
+      media: { type: "video", src: "/lovable-uploads/1. Daily Journal.mp4" }  
     },
     {
       name: "Weekly Rhythm", 
       description: "Plan and review your weekly priorities with structured goal-setting frameworks and progress tracking",
       detailedDescription: "Establish a powerful weekly planning system that helps you stay focused on what matters most. Set intentions, track progress, and reflect on your achievements. Perfect for busy professionals who want to maintain work-life balance while achieving their goals.",
-      media: { type: "video", src: "/lovable-uploads/Weekly Rhythms.mp4" }
+      media: { type: "video", src: "/lovable-uploads/2. Weekly Rhythms.mp4" }
     },
     {
       name: "Annual Calendar Plans",
       description: "Strategic yearly planning with comprehensive goal setting and milestone tracking for long-term success",
       detailedDescription: "Master your annual planning with our comprehensive calendar system. Set strategic goals, plan major milestones, and track your progress throughout the year. Perfect for executives and professionals who need to align daily actions with long-term vision and objectives.",
-      media: { type: "video", src: "/lovable-uploads/Annual Calendar Plans.mp4" }
+      media: { type: "video", src: "/lovable-uploads/3. Annual Calendar Plans.mp4" }
     },
     {
       name: "Habit Tracker",
       description: "Build lasting positive habits with visual progress tracking and streak monitoring for consistent growth",
       detailedDescription: "Build lasting positive habits with our intuitive tracking system. Monitor your progress, identify patterns, and celebrate streaks. Features customizable habits, visual progress indicators, and insights to help you understand your behavior patterns.",
-      media: { type: "video", src: "/lovable-uploads/Habit Tracker.mp4" }
+      media: { type: "video", src: "/lovable-uploads/4. Habit Tracker.mp4" }
     },
     {
       name: "To-do List",
       description: "Simple, elegant task management that feels as natural as pen and paper with digital convenience",
       detailedDescription: "Experience the simplicity of a digital to-do list that feels as natural as pen and paper. Quickly capture tasks, set priorities, and check off completed items. Perfect for those who prefer minimalist productivity tools without overwhelming features.",
-      media: { type: "video", src: "/lovable-uploads/To-Do List.mp4" }
+      media: { type: "video", src: "/lovable-uploads/5. To-Do List.mp4" }
     },
     {
       name: "Weekly Design System",
@@ -255,7 +255,7 @@ const ExploreModules = () => {
                     <video 
                       src={currentModule.media.src}
                       className="w-full h-full rounded-3xl shadow-2xl"
-                      style={{ objectFit: 'contain', background: 'black', maxHeight: '100%', maxWidth: '100%' }}
+                      style={{ objectFit: 'contain', background: '#fff' }}
                       autoPlay
                       loop
                       muted
@@ -271,7 +271,7 @@ const ExploreModules = () => {
                       src={currentModule.media.src}
                       alt={`${currentModule.name} preview`}
                       className="w-full h-full rounded-3xl shadow-2xl"
-                      style={{ objectFit: 'contain', background: 'black', maxHeight: '100%', maxWidth: '100%' }}
+                      style={{ objectFit: 'contain', background: '#fff' }}
                     />
                   )}
                   

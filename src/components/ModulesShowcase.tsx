@@ -106,7 +106,7 @@ const ModulesShowcase = () => {
       media: [
         {
           type: "video",
-          src: "/lovable-uploads/Daily Journal.mp4"
+          src: "/lovable-uploads/1. Daily Journal.mp4"
         }
       ]
     },
@@ -117,8 +117,20 @@ const ModulesShowcase = () => {
       url: "/weekly-rhythms",
       media: [
         {
-          type: "image",
-          src: "/lovable-uploads/9d4339cc-fb5a-413e-8500-be791ea4f20f.png"
+          type: "video",
+          src: "/lovable-uploads/2. Weekly Rhythms.mp4"
+        }
+      ]
+    },
+    { 
+      name: "Annual Calendar Plans", 
+      description: "Strategic yearly planning with comprehensive goal setting and milestone tracking for long-term success",
+      detailedDescription: "Master your annual planning with our comprehensive calendar system. Set strategic goals, plan major milestones, and track your progress throughout the year. Perfect for executives and professionals who need to align daily actions with long-term vision and objectives.",
+      url: "/annual_calendar_plans",
+      media: [
+        {
+          type: "video",
+          src: "/lovable-uploads/3. Annual Calendar Plans.mp4"
         }
       ]
     },
@@ -129,8 +141,8 @@ const ModulesShowcase = () => {
       url: "/habit-tracker",
       media: [
         {
-          type: "image",
-          src: "/lovable-uploads/c3622682-2d1c-4c45-b8f8-8041feb87e52.png"
+          type: "video",
+          src: "/lovable-uploads/4. Habit Tracker.mp4"
         }
       ]
     },
@@ -141,8 +153,8 @@ const ModulesShowcase = () => {
       url: "/todo",
       media: [
         {
-          type: "image",
-          src: "/lovable-uploads/0571b04f-4bf8-48a9-bc01-f5c9a7bd7921.png"
+          type: "video",
+          src: "/lovable-uploads/5. To-Do List.mp4"
         }
       ]
     },
@@ -153,8 +165,8 @@ const ModulesShowcase = () => {
       url: "/weekly-design-system",
       media: [
         {
-          type: "image",
-          src: "/lovable-uploads/7f9297e4-9626-4110-aa40-e4f49f32c644.png"
+          type: "video",
+          src: "/lovable-uploads/6. Weekly Design System.mp4"
         }
       ]
     },
@@ -165,8 +177,8 @@ const ModulesShowcase = () => {
       url: "/project",
       media: [
         {
-          type: "image",
-          src: "/lovable-uploads/44b6c86f-1e58-4822-b1e6-27627ddda763.png"
+          type: "video",
+          src: "/lovable-uploads/7. Project Management.mp4"
         }
       ]
     },
@@ -177,8 +189,8 @@ const ModulesShowcase = () => {
       url: "/personal-finance",
       media: [
         {
-          type: "image",
-          src: "/lovable-uploads/77ac6f1e-3107-4af0-8b84-f0a8422a9786.png"
+          type: "video",
+          src: "/lovable-uploads/8. Personal Finance.mp4"
         }
       ]
     },
@@ -189,8 +201,8 @@ const ModulesShowcase = () => {
       url: "/bucket-list",
       media: [
         {
-          type: "image",
-          src: "/lovable-uploads/fb01924f-66c7-4fda-8487-e54bcf8de069.png"
+          type: "video",
+          src: "/lovable-uploads/9. Bucket List.mp4"
         }
       ]
     },
@@ -201,8 +213,8 @@ const ModulesShowcase = () => {
       url: "/manifestation",
       media: [
         {
-          type: "image",
-          src: "/lovable-uploads/7ac55d26-5d6c-494e-96d7-5ec52c97e77a.png"
+          type: "video",
+          src: "/lovable-uploads/10. Manifestation.mp4"
         }
       ]
     },
@@ -213,8 +225,8 @@ const ModulesShowcase = () => {
       url: "/five-percent-reviews",
       media: [
         {
-          type: "image",
-          src: "/lovable-uploads/e164c680-f89b-4000-9e69-878b4194a114.png"
+          type: "video",
+          src: "/lovable-uploads/11. Five Percent Reviews.mp4"
         }
       ]
     },
@@ -225,8 +237,8 @@ const ModulesShowcase = () => {
       url: "/futureme",
       media: [
         {
-          type: "image",
-          src: "/lovable-uploads/295e0ebc-d09f-4915-9d23-6121b91205d6.png"
+          type: "video",
+          src: "/lovable-uploads/12. Future Me.mp4"
         }
       ]
     },
@@ -273,8 +285,8 @@ const ModulesShowcase = () => {
       url: "/mindmap",
       media: [
         {
-          type: "image",
-          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
+          type: "video",
+          src: "/lovable-uploads/16. Mind Map.mp4"
         }
       ]
     },
@@ -285,8 +297,8 @@ const ModulesShowcase = () => {
       url: "/travel-pl",
       media: [
         {
-          type: "image",
-          src: "/lovable-uploads/77ac6f1e-3107-4af0-8b84-f0a8422a9786.png"
+          type: "video",
+          src: "/lovable-uploads/17. Travel P & L.mp4"
         }
       ]
     }
