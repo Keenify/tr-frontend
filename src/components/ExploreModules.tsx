@@ -255,7 +255,7 @@ const ExploreModules = () => {
                     <video 
                       src={currentModule.media.src}
                       className="w-full h-full rounded-3xl shadow-2xl"
-                      style={{ objectFit: 'contain', background: 'black' }}
+                      style={{ objectFit: 'contain', background: '#fff' }}
                       autoPlay
                       loop
                       muted
@@ -271,7 +271,7 @@ const ExploreModules = () => {
                       src={currentModule.media.src}
                       alt={`${currentModule.name} preview`}
                       className="w-full h-full rounded-3xl shadow-2xl"
-                      style={{ objectFit: 'contain' }}
+                      style={{ objectFit: 'contain', background: '#fff' }}
                     />
                   )}
                   
