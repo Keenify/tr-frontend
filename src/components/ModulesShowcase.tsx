@@ -55,7 +55,14 @@ const MediaDisplay = ({ media, className, alt }: {
         onError={(e) => {
           console.error('Video loading error:', e);
         }}
-        style={{ objectFit: 'contain', width: '100%', height: '100%', position: 'relative', zIndex: 2 }}
+        style={{ 
+          objectFit: 'cover', 
+          width: '100%', 
+          height: '100%', 
+          position: 'relative', 
+          zIndex: 2,
+          backgroundColor: 'black'
+        }}
       />
     );
   }
@@ -66,7 +73,13 @@ const MediaDisplay = ({ media, className, alt }: {
       src={media.src}
       alt={alt}
       className={className}
-      style={{ objectFit: 'contain', width: '100%', height: '100%', position: 'relative', zIndex: 2 }}
+      style={{ 
+        objectFit: 'cover', 
+        width: '100%', 
+        height: '100%', 
+        position: 'relative', 
+        zIndex: 2 
+      }}
     />
   );
 };
@@ -571,8 +584,8 @@ const ModulesShowcase = () => {
                   {modules[currentModuleIndex].detailedDescription}
                 </p>
                 
-                {/* Module Image */}
-                <div className="rounded-xl overflow-hidden relative" style={{height: '360px'}}>
+                {/* Module Media */}
+                <div className="rounded-xl overflow-hidden relative" style={{height: '500px'}}>
                   {/* Blurred background for modal */}
                   {modules[currentModuleIndex].media[0].type === 'image' && (
                     <img
@@ -595,7 +608,7 @@ const ModulesShowcase = () => {
                   )}
                   <MediaDisplay
                     media={modules[currentModuleIndex].media[0]}
-                    className="w-full h-full"
+                    className="w-full h-full rounded-xl"
                     alt={`${modules[currentModuleIndex].name} demo`}
                   />
                 </div>

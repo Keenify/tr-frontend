@@ -11,7 +11,7 @@ const ExploreModules = () => {
       name: "Daily Journal",
       description: "Record your thoughts and reflections with guided prompts for deeper self-awareness and personal growth",
       detailedDescription: "Transform your daily routine with our comprehensive journaling system. Features guided prompts, mood tracking, gratitude exercises, and reflection spaces to help you process your thoughts and emotions. Build a consistent writing habit that promotes self-awareness and personal growth.",
-      media: { type: "video", src: "/lovable-uploads/Daily Journal.mp4" }
+      media: { type: "video", src: "/lovable-uploads/1. Daily Journal.mp4" }
     },
     {
       name: "Weekly Rhythm", 
@@ -41,43 +41,43 @@ const ExploreModules = () => {
       name: "Weekly Design System",
       description: "Structure creative projects with design sprint methodology and milestone tracking for better outcomes",
       detailedDescription: "Structure your creative projects with our design sprint methodology. Break down complex projects into manageable weekly sprints, track deliverables, and maintain momentum on your creative endeavors. Ideal for designers, developers, and creative professionals.",
-      media: { type: "image", src: "/lovable-uploads/7f9297e4-9626-4110-aa40-e4f49f32c644.png" }
+      media: { type: "video", src: "/lovable-uploads/6. Weekly Design System.mp4" }
     },
     {
       name: "Project Management",
       description: "Comprehensive project oversight with timeline management and resource allocation for executive success",
       detailedDescription: "Comprehensive project management tools to keep your initiatives on track. Features include milestone tracking, deadline management, resource allocation, and progress visualization. Perfect for managing multiple projects simultaneously with an intuitive sidebar navigation and clean interface.",
-      media: { type: "image", src: "/lovable-uploads/44b6c86f-1e58-4822-b1e6-27627ddda763.png" }
+      media: { type: "video", src: "/lovable-uploads/7. Project Management.mp4" }
     },
     {
       name: "Personal Finance",
       description: "Take control of your financial future with intelligent budget tracking and insights for wealth building",
       detailedDescription: "Take control of your financial future with comprehensive budget tracking and expense management. Monitor income streams, categorize expenses, set savings goals, and visualize your financial health with intuitive charts and reports.",
-      media: { type: "image", src: "/lovable-uploads/77ac6f1e-3107-4af0-8b84-f0a8422a9786.png" }
+      media: { type: "video", src: "/lovable-uploads/8. Personal Finance.mp4" }
     },
     {
       name: "Bucket List",
       description: "Transform life dreams into actionable plans with progress tracking and celebration milestones",
       detailedDescription: "Turn your dreams into actionable plans with our bucket list manager. Categorize goals by timeline, track progress, add photos and memories, and celebrate achievements. Perfect for maintaining motivation and focus on your life aspirations.",
-      media: { type: "image", src: "/lovable-uploads/fb01924f-66c7-4fda-8487-e54bcf8de069.png" }
+      media: { type: "video", src: "/lovable-uploads/9. Bucket List.mp4" }
     },
     {
       name: "Manifestation",
       description: "Harness intention-setting power with guided exercises and synchronicity tracking for goal achievement",
       detailedDescription: "Harness the power of intention setting with our manifestation tracker. Visualize your goals, track synchronicities, practice gratitude, and monitor your progress toward your desires. Includes guided exercises and reflection prompts.",
-      media: { type: "image", src: "/lovable-uploads/7ac55d26-5d6c-494e-96d7-5ec52c97e77a.png" }
+      media: { type: "video", src: "/lovable-uploads/10. Manifestation.mp4" }
     },
     {
       name: "Five Percent Review",
       description: "Embrace continuous improvement with small, sustainable changes that compound over time",
       detailedDescription: "Embrace the philosophy of continuous improvement with our 5% better methodology. Track small, incremental changes that compound over time. Perfect for sustainable personal development without overwhelming yourself.",
-      media: { type: "image", src: "/lovable-uploads/e164c680-f89b-4000-9e69-878b4194a114.png" }
+      media: { type: "video", src: "/lovable-uploads/11. Five Percent Reviews.mp4" }
     },
     {
       name: "Future Me",
       description: "Connect with your future self through time-delayed letters and milestone reflections for growth",
       detailedDescription: "Connect with your future self through time-delayed letters and messages. Set reminders for important milestones, reflect on your growth journey, and maintain perspective on your long-term goals. A powerful tool for self-reflection and motivation.",
-      media: { type: "image", src: "/lovable-uploads/295e0ebc-d09f-4915-9d23-6121b91205d6.png" }
+      media: { type: "video", src: "/lovable-uploads/12. Future Me.mp4" }
     },
     {
       name: "Ikigai",
@@ -101,13 +101,13 @@ const ExploreModules = () => {
       name: "Mindmap",
       description: "Visualize complex ideas with interactive mind mapping for strategic thinking and problem solving",
       detailedDescription: "Unleash your creativity with powerful mind mapping tools. Visualize complex ideas, structure your thinking, and explore connections between concepts with an intuitive, interactive interface designed for executive-level strategic thinking.",
-      media: { type: "image", src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png" }
+      media: { type: "video", src: "/lovable-uploads/16. Mind Map.mp4" }  
     },
     {
       name: "Travel P&L",
       description: "Master travel finances with comprehensive expense tracking and ROI analysis for smart traveling",
       detailedDescription: "Master your travel finances with comprehensive P&L tracking. Monitor expenses, categorize costs, track ROI for business trips, and gain insights into your travel spending patterns to optimize future journeys.",
-      media: { type: "image", src: "/lovable-uploads/77ac6f1e-3107-4af0-8b84-f0a8422a9786.png" }
+      media: { type: "video", src: "/lovable-uploads/17. Travel P & L.mp4" }
     }
   ];
 
@@ -207,7 +207,7 @@ const ExploreModules = () => {
             </h3>
             <div>
               <p className="text-xl md:text-2xl text-gray-700 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
-                Discover 17 powerful modules designed to elevate your executive performance and cosmic personal growth
+              Experience the demo and discover how it drives measurable progress.
               </p>
             </div>
           </div>
@@ -250,12 +250,12 @@ const ExploreModules = () => {
               
               <div className="relative z-10 h-full">
                 {/* Module Media Preview - Full Size with Enhanced Shadow */}
-                <div className="relative w-full h-full">
+                <div className="relative w-full h-full flex items-center justify-center bg-black rounded-3xl">
                   {currentModule.media.type === 'video' ? (
                     <video 
                       src={currentModule.media.src}
                       className="w-full h-full rounded-3xl shadow-2xl"
-                      style={{ objectFit: 'fill', background: 'black' }}
+                      style={{ objectFit: 'contain', background: 'black', maxHeight: '100%', maxWidth: '100%' }}
                       autoPlay
                       loop
                       muted
@@ -271,7 +271,7 @@ const ExploreModules = () => {
                       src={currentModule.media.src}
                       alt={`${currentModule.name} preview`}
                       className="w-full h-full rounded-3xl shadow-2xl"
-                      style={{ objectFit: 'fill' }}
+                      style={{ objectFit: 'contain', background: 'black', maxHeight: '100%', maxWidth: '100%' }}
                     />
                   )}
                   
@@ -378,7 +378,7 @@ const ExploreModules = () => {
                     <video 
                       src={currentModule.media.src}
                       className="w-full h-full rounded-3xl shadow-2xl"
-                      style={{ objectFit: 'fill', background: 'black' }}
+                      style={{ objectFit: 'cover', background: 'black' }}
                       controls
                       autoPlay
                       loop
@@ -394,7 +394,7 @@ const ExploreModules = () => {
                       src={currentModule.media.src}
                       alt={`${currentModule.name} screenshot`}
                       className="w-full h-full rounded-3xl shadow-2xl"
-                      style={{ objectFit: 'fill' }}
+                      style={{ objectFit: 'cover' }}
                     />
                   )}
                 </div>
