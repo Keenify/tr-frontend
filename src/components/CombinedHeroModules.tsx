@@ -32,7 +32,7 @@ const CombinedHeroModules = () => {
       });
     }
     
-    return () => {
+    return () => { 
       if (vantaEffect.current) {
         vantaEffect.current.destroy();
       }
