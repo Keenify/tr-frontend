@@ -1,15 +1,46 @@
 import { Button } from "@/components/ui/button";
 import ExploreModules from "@/components/ExploreModules";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 
 const CombinedHeroModules = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [scrollY, setScrollY] = useState(0);
-
+  const vantaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsLoaded(true);
+    
+    // Load Vanta.js scripts
+    const script1 = document.createElement('script');
+    script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js';
+    document.head.appendChild(script1);
+    
+    script1.onload = () => {
+      const script2 = document.createElement('script');
+      script2.src = 'https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js';
+      document.head.appendChild(script2);
+      
+      script2.onload = () => {
+        if (vantaRef.current && window.VANTA) {
+          window.VANTA.NET({
+            el: vantaRef.current,
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: 0x8b5cf6,
+            backgroundColor: 0x0f0519,
+            points: 15.00,
+            maxDistance: 25.00,
+            spacing: 18.00
+          });
+        }
+      };
+    };
   }, []);
 
   const scrollToModules = () => {
@@ -34,32 +65,8 @@ const CombinedHeroModules = () => {
         <div className="absolute bottom-1/3 right-1/5 w-1 h-1 bg-indigo-400 rounded-full animate-pulse opacity-60 animation-delay-1000"></div>
       </div>
       
-      {/* Combined Hero Section and Dashboard Image with Single Purple Universe Background */}
-      <div className="relative bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-700 overflow-hidden mx-6 rounded-3xl">
-        {/* Single Universe-themed Background for entire section */}
-        <div className="absolute inset-0">
-          {/* Animated cosmic background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-600/80 via-indigo-600/70 to-purple-700/80"></div>
-          
-          {/* Floating cosmic elements distributed across entire section */}
-          <div className="absolute top-10 left-10 w-3 h-3 bg-white rounded-full opacity-60 animate-twinkle"></div>
-          <div className="absolute top-20 right-20 w-2 h-2 bg-yellow-300 rounded-full opacity-70 animate-twinkle animation-delay-1000"></div>
-          <div className="absolute top-32 left-32 w-2.5 h-2.5 bg-pink-300 rounded-full opacity-50 animate-twinkle animation-delay-2000"></div>
-          <div className="absolute top-40 right-40 w-1.5 h-1.5 bg-cyan-300 rounded-full opacity-65 animate-twinkle animation-delay-3000"></div>
-          <div className="absolute top-60 right-80 w-1 h-1 bg-purple-300 rounded-full opacity-80 animate-twinkle"></div>
-          <div className="absolute top-80 left-80 w-2 h-2 bg-indigo-300 rounded-full opacity-55 animate-twinkle animation-delay-1000"></div>
-          
-          {/* Middle section cosmic elements */}
-          <div className="absolute top-96 left-20 w-2 h-2 bg-white rounded-full opacity-40 animate-twinkle animation-delay-2000"></div>
-          <div className="absolute top-[28rem] right-40 w-1.5 h-1.5 bg-yellow-300 rounded-full opacity-50 animate-twinkle animation-delay-1000"></div>
-          <div className="absolute top-[32rem] left-40 w-1 h-1 bg-pink-300 rounded-full opacity-60 animate-twinkle animation-delay-2000"></div>
-          <div className="absolute top-[36rem] right-20 w-2 h-2 bg-cyan-300 rounded-full opacity-45 animate-twinkle animation-delay-3000"></div>
-          
-          {/* Larger cosmic orbs spread throughout */}
-          <div className="absolute top-1/4 left-10 w-40 h-40 bg-gradient-to-br from-purple-400/20 to-indigo-400/20 rounded-full animate-float"></div>
-          <div className="absolute top-1/2 right-10 w-56 h-56 bg-gradient-to-br from-indigo-400/15 to-purple-400/15 rounded-full animate-float animation-delay-1000"></div>
-          <div className="absolute top-3/4 left-1/3 w-32 h-32 bg-gradient-to-br from-pink-400/10 to-cyan-400/10 rounded-full animate-float animation-delay-2000"></div>
-        </div>
+      {/* Combined Hero Section and Dashboard Image with Vanta.js Fog Background */}
+      <div ref={vantaRef} className="relative overflow-hidden mx-6 rounded-3xl" style={{ minHeight: '100vh' }}>
         
         {/* Hero Content */}
         <div className="container mx-auto px-6 text-center relative z-10 pt-56 pb-6">
@@ -116,3 +123,9 @@ const CombinedHeroModules = () => {
 };
 
 export default CombinedHeroModules;
+
+declare global {
+  interface Window {
+    VANTA?: any;
+  }
+}
