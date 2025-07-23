@@ -7,16 +7,7 @@ const Pricing = () => {
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
 
-  const features = [
-    "All 13 powerful modules",
-    "Unlimited entries and tracking",
-    "Advanced analytics and insights",
-    "Cloud sync across devices",
-    "Priority customer support",
-    "Regular feature updates",
-    "Data export capabilities",
-    "Custom goal templates"
-  ];
+
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -62,7 +53,7 @@ const Pricing = () => {
 
         <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
           {/* Monthly Plan */}
-          <div className={`bg-white/80 backdrop-blur-lg rounded-2xl p-8 border border-purple-200 transform transition-all duration-700 hover:scale-105 hover:bg-white/90 hover:shadow-2xl hover:shadow-purple-500/25 ${
+          <div className={`bg-white/80 backdrop-blur-lg rounded-2xl p-8 border border-purple-200 transform transition-all duration-700 hover:scale-105 hover:bg-white/90 hover:shadow-2xl hover:shadow-purple-500/25 flex flex-col ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
           }`} style={{ transitionDelay: '200ms' }}>
             <div className="text-center mb-8">
@@ -71,14 +62,7 @@ const Pricing = () => {
               <div className="text-purple-600">per month</div>
             </div>
             
-            <ul className="space-y-4 mb-8">
-              {features.map((feature, index) => (
-                <li key={index} className="flex items-center opacity-0 animate-fade-in" style={{ animationDelay: `${(index + 1) * 100}ms` }}>
-                  <Check className="h-5 w-5 text-green-400 mr-3 flex-shrink-0" />
-                  <span className="text-gray-700">{feature}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="flex-1"></div>
             
             <Button className="w-full bg-purple-600 hover:bg-purple-700 border border-purple-600 text-white font-semibold py-3 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
               Start Monthly Plan
@@ -86,7 +70,7 @@ const Pricing = () => {
           </div>
 
           {/* Yearly Plan */}
-          <div className={`bg-gradient-to-br from-purple-400 to-indigo-500 rounded-2xl p-8 text-white relative overflow-hidden transform transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/50 ${
+          <div className={`bg-gradient-to-br from-purple-400 to-indigo-500 rounded-2xl p-8 text-white relative overflow-hidden transform transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/50 flex flex-col ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
           }`} style={{ transitionDelay: '400ms' }}>
             <div className="absolute top-4 right-4 animate-bounce">
@@ -104,14 +88,7 @@ const Pricing = () => {
               </div>
             </div>
             
-            <ul className="space-y-4 mb-8">
-              {features.map((feature, index) => (
-                <li key={index} className="flex items-center opacity-0 animate-fade-in" style={{ animationDelay: `${(index + 1) * 100}ms` }}>
-                  <Check className="h-5 w-5 text-green-600 mr-3 flex-shrink-0" />
-                  <span className="text-black/80">{feature}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="flex-1"></div>
             
             <Button className="w-full bg-black hover:bg-black/80 text-yellow-400 font-semibold py-3 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl">
               Start Yearly Plan
