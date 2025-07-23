@@ -123,3 +123,9 @@ const CombinedHeroModules = () => {
 };
 
 export default CombinedHeroModules;
+
+declare global {
+  interface Window {
+    VANTA?: any;
+  }
+}
