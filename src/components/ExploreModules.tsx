@@ -11,7 +11,7 @@ const ExploreModules = () => {
       name: "Daily Journal",
       description: "Record your thoughts and reflections with guided prompts for deeper self-awareness and personal growth",
       detailedDescription: "Transform your daily routine with our comprehensive journaling system. Features guided prompts, mood tracking, gratitude exercises, and reflection spaces to help you process your thoughts and emotions. Build a consistent writing habit that promotes self-awareness and personal growth.",
-      media: { type: "video", src: "/lovable-uploads/Daily Journal.mp4" }
+      media: { type: "video", src: "/lovable-uploads/1. Daily Journal.mp4" }
     },
     {
       name: "Weekly Rhythm", 
@@ -250,12 +250,12 @@ const ExploreModules = () => {
               
               <div className="relative z-10 h-full">
                 {/* Module Media Preview - Full Size with Enhanced Shadow */}
-                <div className="relative w-full h-full">
+                <div className="relative w-full h-full flex items-center justify-center bg-black rounded-3xl">
                   {currentModule.media.type === 'video' ? (
                     <video 
                       src={currentModule.media.src}
                       className="w-full h-full rounded-3xl shadow-2xl"
-                      style={{ objectFit: 'cover', background: 'black' }}
+                      style={{ objectFit: 'contain', background: 'black', maxHeight: '100%', maxWidth: '100%' }}
                       autoPlay
                       loop
                       muted
@@ -271,7 +271,7 @@ const ExploreModules = () => {
                       src={currentModule.media.src}
                       alt={`${currentModule.name} preview`}
                       className="w-full h-full rounded-3xl shadow-2xl"
-                      style={{ objectFit: 'cover' }}
+                      style={{ objectFit: 'contain', background: 'black', maxHeight: '100%', maxWidth: '100%' }}
                     />
                   )}
                   
