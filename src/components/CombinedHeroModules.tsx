@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import ExploreModules from "@/components/ExploreModules";
+import ExploreModules from "@/components/ExploreModules"; 
 import { useState, useEffect, useRef } from "react";
 
 
