@@ -1,15 +1,42 @@
 import { Button } from "@/components/ui/button";
 import ExploreModules from "@/components/ExploreModules";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 
 const CombinedHeroModules = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [scrollY, setScrollY] = useState(0);
-
+  const vantaRef = useRef<HTMLDivElement>(null);
+  const vantaEffect = useRef<any>(null);
 
   useEffect(() => {
     setIsLoaded(true);
+    
+    // Initialize Vanta NET effect with tech universe theme
+    if (vantaRef.current && (window as any).VANTA) {
+      vantaEffect.current = (window as any).VANTA.NET({
+        el: vantaRef.current,
+        mouseControls: true,
+        touchControls: true,
+        gyroControls: false,
+        minHeight: 200.00,
+        minWidth: 200.00,
+        scale: 1.00,
+        scaleMobile: 1.00,
+        color: 0x00ffff,        // Cyan connection lines
+        backgroundColor: 0x0a0a0f, // Dark space background
+        points: 8.00,           // Number of connection points
+        maxDistance: 25.00,     // Max distance for connections
+        spacing: 18.00,         // Spacing between points
+        showDots: true          // Show connection dots
+      });
+    }
+    
+    return () => {
+      if (vantaEffect.current) {
+        vantaEffect.current.destroy();
+      }
+    };
   }, []);
 
   const scrollToModules = () => {
@@ -35,7 +62,7 @@ const CombinedHeroModules = () => {
       </div>
       
       {/* Combined Hero Section and Dashboard Image with Single Purple Universe Background */}
-      <div className="relative bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-700 overflow-hidden mx-6 rounded-3xl">
+      <div ref={vantaRef} className="relative bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-700 overflow-hidden mx-6 rounded-3xl">
         {/* Single Universe-themed Background for entire section */}
         <div className="absolute inset-0">
           {/* Animated cosmic background */}

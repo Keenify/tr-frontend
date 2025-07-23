@@ -11,7 +11,7 @@ const ExploreModules = () => {
       name: "Daily Journal",
       description: "Record your thoughts and reflections with guided prompts for deeper self-awareness and personal growth",
       detailedDescription: "Transform your daily routine with our comprehensive journaling system. Features guided prompts, mood tracking, gratitude exercises, and reflection spaces to help you process your thoughts and emotions. Build a consistent writing habit that promotes self-awareness and personal growth.",
-      media: { type: "video", src: "/lovable-uploads/Daily Journal.mp4" }
+      media: { type: "video", src: "/lovable-uploads/1. Daily Journal.mp4" }  
     },
     {
       name: "Weekly Rhythm", 
