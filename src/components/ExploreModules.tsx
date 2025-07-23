@@ -250,7 +250,7 @@ const ExploreModules = () => {
               
               <div className="relative z-10 h-full">
                 {/* Module Media Preview - Full Size with Enhanced Shadow */}
-                <div className="relative w-full h-full">
+                <div className="relative w-full h-full flex items-center justify-center bg-black rounded-3xl">
                   {currentModule.media.type === 'video' ? (
                     <video 
                       src={currentModule.media.src}
