@@ -79,7 +79,7 @@ const CombinedHeroModules = () => {
             <p className={`text-lg md:text-xl text-white/90 mb-8 leading-relaxed transition-all duration-1000 delay-400 font-medium ${
               isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}>
-              16 integrated tools to help CEOs and founders navigate their personal galaxy, build stellar habits, track cosmic growth, and manage life like the universe.
+              Navigate your own galaxy, build better habits, track growth, and manage life with ease.
             </p>
             
             <div className={`flex justify-center mb-6 transition-all duration-1000 delay-500 ${
