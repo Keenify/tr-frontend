@@ -19,14 +19,14 @@ const CombinedHeroModules = () => {
         mouseControls: true,
         touchControls: true,
         gyroControls: false,
-        minHeight: 200.00,
+        minHeight: 800.00,
         minWidth: 200.00,
         scale: 1.00,
         scaleMobile: 1.00,
         color: 0x00ffff,        // Cyan connection lines
         backgroundColor: 0x0a0a0f, // Dark space background
-        points: 8.00,           // Number of connection points
-        maxDistance: 25.00,     // Max distance for connections
+        points: 10.00,          // Number of connection points
+        maxDistance: 27.00,     // Max distance for connections
         spacing: 18.00,         // Spacing between points
         showDots: true          // Show connection dots
       });
