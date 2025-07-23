@@ -17,15 +17,15 @@ const Footer = () => {
               CEO Dashboard
             </h3>
             <p className="text-gray-600 leading-relaxed mb-6">
-              The ultimate productivity suite for high achievers. Transform your life with 13 powerful modules designed specifically for leaders and entrepreneurs.
+              The ultimate productivity suite for high achievers. Transform your life with 17 powerful modules designed specifically for leaders and entrepreneurs.
             </p>
           </div>
           
           <div>
             <h4 className="font-semibold mb-4 text-gray-900">Product</h4>
             <ul className="space-y-2 text-gray-600">
-              <li><a href="#" className="hover:text-purple-600 transition-colors">Modules</a></li>
-              <li><a href="#" className="hover:text-purple-600 transition-colors">Pricing</a></li>
+              <li><a href="#modules-section" className="hover:text-purple-600 transition-colors">Modules</a></li>
+              <li><a href="#pricing" className="hover:text-purple-600 transition-colors">Pricing</a></li>
             </ul>
           </div>
           
