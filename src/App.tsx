@@ -57,6 +57,7 @@ import GoogleOAuthCallback from "./features/integration/components/GoogleOAuthCa
 import BusinessQuadrant from "./features/company/components/BusinessQuadrant";
 import CashAccelerationStrategies from "./features/cash/components/CashAccelerationStrategies";
 import TheRocksMain from "./features/theRocks/components/main";
+import PaceForm from "./features/form/components/PaceForm";
 
 // Import the public daily huddle component
 import PublicDailyHuddle from "./features/dailyHuddle/components/PublicDailyHuddle";
@@ -763,6 +764,25 @@ const App: React.FC = () => {
                 <Route
                   path="/google/oauth/callback"
                   element={<GoogleOAuthCallback session={session} />}
+                />
+                <Route
+                  path="/:userId/paceForm"
+                  element={
+                    <ProtectedRoute
+                      session={session}
+                      element={
+                        <DashboardLayout
+                          session={session}
+                          signOut={signOut}
+                          activeTab="process"
+                          activeSubTab="paceForm"
+                          onSubTabChange={() => {}}
+                        >
+                          <PaceForm />
+                        </DashboardLayout>
+                      }
+                    />
+                  }
                 />
               </>
             )}

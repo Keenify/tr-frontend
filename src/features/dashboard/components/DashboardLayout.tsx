@@ -123,6 +123,7 @@ const navigationConfig = [
     subTabs: [
       { id: "playbook", label: "Playbook", shortForm: "Pb", icon: ThumbsUp },
       { id: "todo", label: "Todo", shortForm: "Td", icon: ThumbsUp },
+      { id: "paceForm", label: "PACe Form", shortForm: "PF", icon: ThumbsUp },
     ],
   },
   {
