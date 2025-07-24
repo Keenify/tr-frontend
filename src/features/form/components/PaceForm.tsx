@@ -90,20 +90,41 @@ const PaceForm: React.FC = () => {
     setLoading(true);
     setSubmitStatus(null);
     try {
-      // Prepare rows for insertion
-      const rows = values.processes.map((row) => ({
-        company_id: companyInfo.id,
-        employee_id: row.employee_id,
-        process_name: row.process_name,
-        kpi_better: row.kpi_better,
-        kpi_faster: row.kpi_faster,
-        kpi_cheaper: row.kpi_cheaper,
-      }));
-      const { error } = await supabase.from('pace_form').insert(rows);
-      if (error) throw error;
+      // Prepare rows for insertion - only include rows with required data
+      const rows = values.processes
+        .filter(row => row.employee_id && row.process_name.trim()) // Only submit rows with required data
+        .map((row) => ({
+          company_id: companyInfo.id,
+          employee_id: row.employee_id,
+          process_name: row.process_name.trim(),
+          kpi_better: row.kpi_better?.trim() || '',
+          kpi_faster: row.kpi_faster?.trim() || '',
+          kpi_cheaper: row.kpi_cheaper?.trim() || '',
+        }));
+      
+      if (rows.length === 0) {
+        setSubmitStatus('Please fill in at least one process with employee and process name');
+        return;
+      }
+      
+      console.log('Submitting pace form data:', rows);
+      
+      // Insert data to pace_form table
+      const { data, error } = await supabase
+        .from('pace_form')
+        .insert(rows)
+        .select();
+      
+      if (error) {
+        throw error;
+      }
+      
+      console.log('Successfully inserted data:', data);
+      
       setSubmitStatus('Form submitted successfully!');
       reset();
     } catch (err: unknown) {
+      console.error('Form submission error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setSubmitStatus('Submission failed: ' + errorMessage);
     } finally {

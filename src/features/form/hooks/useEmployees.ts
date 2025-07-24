@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../../../lib/supabase';
+import { getAllEmployees, UserData } from '../../../services/useUser';
 import { Employee } from '../types/paceFormTypes';
 
 export function useEmployees(companyId: string) {
@@ -12,14 +12,24 @@ export function useEmployees(companyId: string) {
       return;
     }
     const fetchEmployees = async () => {
-      console.log('Fetching employees for company:', companyId);
-      const { data, error } = await supabase
-        .from('employees')
-        .select('id, first_name, last_name, company_id')
-        .eq('company_id', companyId)
-        .order('first_name');
-      console.log('Employees fetch result:', { data, error });
-      if (!error && data) setEmployees(data);
+      try {
+        console.log('Fetching employees for company:', companyId);
+        const userData = await getAllEmployees(companyId);
+        console.log('Employees fetch result:', userData);
+        
+        // Transform UserData to Employee format
+        const employeeData: Employee[] = userData.map((user: UserData) => ({
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          company_id: user.company_id
+        }));
+        
+        setEmployees(employeeData);
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+        setEmployees([]);
+      }
     };
     fetchEmployees();
   }, [companyId]);
