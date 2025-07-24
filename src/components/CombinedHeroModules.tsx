@@ -62,7 +62,7 @@ const CombinedHeroModules = () => {
       </div>
       
       {/* Combined Hero Section and Dashboard Image with Single Purple Universe Background */}
-      <div ref={vantaRef} className="relative bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-700 overflow-hidden mx-6 rounded-3xl">
+      <div ref={vantaRef} className="relative bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-700 overflow-hidden mx-2 sm:mx-6 rounded-2xl sm:rounded-3xl">
         {/* Single Universe-themed Background for entire section */}
         <div className="absolute inset-0">
           {/* Animated cosmic background */}
@@ -89,21 +89,21 @@ const CombinedHeroModules = () => {
         </div>
         
         {/* Hero Content */}
-        <div className="container mx-auto px-6 text-center relative z-10 pt-56 pb-6">
+        <div className="container mx-auto px-4 sm:px-6 text-center relative z-10 pt-56 pb-6">
           <div className="max-w-4xl mx-auto">
-            <h1 className={`mt-2 text-6xl md:text-7xl font-bold mb-6 leading-tight transition-all duration-1000 text-white ${
+            <h1 className={`mt-2 text-4xl sm:text-6xl md:text-7xl font-bold mb-6 leading-tight transition-all duration-1000 text-white ${
               isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}>
               CEO <span className="bg-gradient-to-r from-blue-300 via-purple-300 to-pink-300 bg-clip-text text-transparent animate-pulse">Dashboard</span>
             </h1>
             
-            <p className={`text-xl md:text-2xl text-white mb-4 leading-relaxed transition-all duration-1000 delay-300 font-semibold ${
+            <p className={`text-lg sm:text-xl md:text-2xl text-white mb-4 leading-relaxed transition-all duration-1000 delay-300 font-semibold ${
               isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}>
               Your Personal <span className="bg-gradient-to-r from-purple-300 to-pink-300 bg-clip-text text-transparent">Universe</span> for Life and Work.
             </p>
             
-            <p className={`text-lg md:text-xl text-white/90 mb-8 leading-relaxed transition-all duration-1000 delay-400 font-medium ${
+            <p className={`text-base sm:text-lg md:text-xl text-white/90 mb-8 leading-relaxed transition-all duration-1000 delay-400 font-medium ${
               isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
             }`}>
               Navigate your own galaxy, build better habits, track growth, and manage life with ease.
@@ -125,11 +125,11 @@ const CombinedHeroModules = () => {
         
         {/* Dashboard Screenshot within same background */}
         <div className="pb-16 relative z-10">
-          <div className="max-w-6xl mx-auto px-1 flex justify-center items-center">
+          <div className="max-w-6xl mx-auto px-2 sm:px-4 md:px-6 flex justify-center items-center">
             <img 
               src="/lovable-uploads/ceo-dashboard-pic.png" 
               alt="CEO Dashboard UI Overview"
-              className="w-full h-auto rounded-2xl shadow-2xl border-2 border-white/10 backdrop-blur-sm"
+              className="w-full max-w-none sm:max-w-full h-auto rounded-2xl shadow-2xl border-2 border-white/10 backdrop-blur-sm scale-110 sm:scale-100"
               style={{ objectFit: 'contain' }}
             />
           </div>

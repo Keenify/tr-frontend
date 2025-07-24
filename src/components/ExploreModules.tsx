@@ -176,7 +176,7 @@ const ExploreModules = () => {
   }, [showModal]);
 
   return (
-    <div id="modules-section" className="py-16 relative overflow-hidden mx-6 rounded-3xl mt-8">
+    <div id="modules-section" className="py-12 sm:py-16 relative overflow-hidden mx-2 sm:mx-6 rounded-2xl sm:rounded-3xl mt-6 sm:mt-8">
       {/* Strong Universe-themed Background for Modules Section */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-400/60 via-indigo-300/50 to-purple-500/40"></div>
@@ -198,15 +198,15 @@ const ExploreModules = () => {
         <div className="absolute bottom-1/4 left-1/6 w-2.5 h-2.5 bg-indigo-400 rounded-full animate-pulse opacity-65 animation-delay-3500"></div>
       </div>
       
-      <div className="container mx-auto px-6 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 relative z-10">
         {/* Section Heading */}
         <div className="text-center mb-16">
           <div className="transform transition-all duration-1000 hover:scale-105">
-            <h3 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight tracking-tight drop-shadow-lg">
+            <h3 className="text-3xl sm:text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight tracking-tight drop-shadow-lg">
               Explore All <span className="bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 bg-clip-text text-transparent">Modules</span>
             </h3>
             <div>
-              <p className="text-xl md:text-2xl text-gray-700 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
+              <p className="text-lg sm:text-xl md:text-2xl text-gray-700 max-w-3xl mx-auto leading-relaxed drop-shadow-md">
               Experience the demo and discover how it drives measurable progress.
               </p>
             </div>
@@ -215,10 +215,10 @@ const ExploreModules = () => {
 
 
         {/* Single Module Display */}
-        <div className="flex items-start justify-center max-w-7xl mx-auto gap-8">
+        <div className="flex flex-col lg:flex-row items-start justify-center max-w-7xl mx-auto gap-6 lg:gap-8">
           
           {/* Main Module Card */}
-          <div className="flex-1 max-w-5xl h-[600px]">
+          <div className="w-full lg:flex-1 max-w-5xl h-[400px] sm:h-[500px] lg:h-[600px]">
             <div 
               onClick={openModal}
               className="group relative bg-white/25 backdrop-blur-lg rounded-2xl hover:bg-white/35 transition-all duration-700 ease-in-out hover:scale-[1.02] hover:shadow-2xl cursor-pointer overflow-hidden shadow-lg h-full"
@@ -250,11 +250,11 @@ const ExploreModules = () => {
               
               <div className="relative z-10 h-full">
                 {/* Module Media Preview - Full Size with Enhanced Shadow */}
-                <div className="relative w-full h-full flex items-center justify-center bg-black rounded-3xl">
+                <div className="relative w-full h-full flex items-center justify-center bg-black rounded-2xl lg:rounded-3xl">
                   {currentModule.media.type === 'video' ? (
                     <video 
                       src={currentModule.media.src}
-                      className="w-full h-full rounded-3xl shadow-2xl"
+                      className="w-full h-full rounded-2xl lg:rounded-3xl shadow-2xl"
                       style={{ objectFit: 'contain', background: '#fff' }}
                       autoPlay
                       loop
@@ -270,14 +270,14 @@ const ExploreModules = () => {
                     <img
                       src={currentModule.media.src}
                       alt={`${currentModule.name} preview`}
-                      className="w-full h-full rounded-3xl shadow-2xl"
+                      className="w-full h-full rounded-2xl lg:rounded-3xl shadow-2xl"
                       style={{ objectFit: 'contain', background: '#fff' }}
                     />
                   )}
                   
                   {/* Module Name Overlay - Extended width and consistent height */}
-                  <div className="absolute top-4 left-4 bg-gray-900/90 backdrop-blur-sm text-white px-6 py-3 rounded-lg shadow-lg z-20 min-w-[220px] h-[50px] flex items-center justify-start">
-                    <span className="text-xl font-bold whitespace-nowrap">{currentModule.name}</span>
+                  <div className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-gray-900/90 backdrop-blur-sm text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg shadow-lg z-20 min-w-[180px] sm:min-w-[220px] h-[40px] sm:h-[50px] flex items-center justify-start">
+                    <span className="text-lg sm:text-xl font-bold truncate">{currentModule.name}</span>
                   </div>
                 </div>
               </div>
@@ -305,27 +305,26 @@ const ExploreModules = () => {
           </div>
           
           {/* Redesigned Sidebar: All Modules in Single Vertical Line */}
-          <div className="w-80 flex-shrink-0 h-[600px]">
+          <div className="w-full lg:w-80 flex-shrink-0 h-auto lg:h-[600px]">
             <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 shadow-lg h-full">
-              <div className="flex flex-col gap-0 h-full justify-between pt-1">
+              <div className="flex flex-row lg:flex-col gap-2 lg:gap-0 h-full justify-start lg:justify-between pt-1 overflow-x-auto lg:overflow-x-visible overflow-y-visible lg:overflow-y-auto">
                 {modules.map((module, index) => (
                   <div key={index} className="flex flex-col">
                     <button
                       data-module-index={index}
                       onClick={() => setCurrentModuleIndex(index)}
-                      className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-all duration-300 text-left whitespace-nowrap overflow-hidden text-ellipsis font-medium focus:outline-none focus:ring-2 focus:ring-purple-400/50 flex-shrink-0
+                      className={`flex items-center gap-2 px-3 py-2 lg:px-2 lg:py-1 rounded-lg transition-all duration-300 text-left whitespace-nowrap overflow-hidden text-ellipsis font-medium focus:outline-none focus:ring-2 focus:ring-purple-400/50 flex-shrink-0 min-w-0
                         ${index === currentModuleIndex
                           ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg scale-105'
                           : 'bg-transparent text-gray-800 hover:bg-white/30 hover:scale-105'}
                       `}
-                      style={{minWidth: 0}}
                     >
                       <span className={`w-2 h-2 rounded-full flex-shrink-0 transition-all duration-300
                         ${index === currentModuleIndex ? 'bg-white shadow' : 'bg-purple-400'}`} />
                       <span className="truncate text-sm font-semibold" title={module.name}>{module.name}</span>
                     </button>
                     {index < modules.length - 1 && (
-                      <div className="h-px bg-gray-300/30 mx-3 my-0.5"></div>
+                      <div className="lg:h-px lg:w-auto w-px h-8 bg-gray-300/30 lg:mx-3 lg:my-0.5 mx-0.5 my-0"></div>
                     )}
                   </div>
                 ))}
