@@ -1,40 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { supabase } from '../../../lib/supabase';
-
-// Types for fetched data
-interface Company {
-  id: string;
-  name: string;
-}
-
-interface Employee {
-  id: string;
-  first_name: string;
-  last_name: string;
-  company_id: string;
-}
-
-interface ProcessRow {
-  employee_id: string;
-  process_name: string;
-  kpi_better: string;
-  kpi_faster: string;
-  kpi_cheaper: string;
-}
-
-interface FormValues {
-  company_id: string;
-  processes: ProcessRow[];
-}
+import { useCompanies } from '../hooks/useCompanies';
+import { useEmployees } from '../hooks/useEmployees';
+import { FormValues, ProcessRow } from '../types/paceFormTypes';
+import PaceFormRow from './PaceFormRow';
 
 const MIN_ROWS = 4;
 const MAX_ROWS = 9;
 
 const PaceForm: React.FC = () => {
-  // State for companies and employees
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  // State for loading and submit status
   const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<string | null>(null);
 
@@ -58,36 +34,15 @@ const PaceForm: React.FC = () => {
   });
 
   const selectedCompanyId = watch('company_id');
+  const companies = useCompanies();
+  const employees = useEmployees(selectedCompanyId);
 
-  // Fetch companies on mount
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      const { data, error } = await supabase
-        .from('companies')
-        .select('id, name')
-        .order('name');
-      if (!error && data) setCompanies(data);
-    };
-    fetchCompanies();
-  }, []);
-
-  // Fetch employees when company changes
-  useEffect(() => {
+  // Clear employee_id fields if company is unselected or changes
+  React.useEffect(() => {
     if (!selectedCompanyId) {
-      setEmployees([]);
-      // Clear employee_id fields if company is unselected
       fields.forEach((_, idx) => setValue(`processes.${idx}.employee_id`, ''));
       return;
     }
-    const fetchEmployees = async () => {
-      const { data, error } = await supabase
-        .from('employees')
-        .select('id, first_name, last_name, company_id')
-        .eq('company_id', selectedCompanyId)
-        .order('first_name');
-      if (!error && data) setEmployees(data);
-    };
-    fetchEmployees();
     // Clear employee_id fields if company changes
     fields.forEach((_, idx) => setValue(`processes.${idx}.employee_id`, ''));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -180,9 +135,9 @@ const PaceForm: React.FC = () => {
             rules={{ required: 'Please select a company' }}
             render={({ field, fieldState }) => (
               <div>
-                <select 
-                  {...field} 
-                  id="company_id" 
+                <select
+                  {...field}
+                  id="company_id"
                   className="w-80 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
                 >
                   <option value="">Select company...</option>
@@ -222,131 +177,28 @@ const PaceForm: React.FC = () => {
               <span className="text-xs text-gray-600">(Better, Faster, Cheaper)</span>
             </div>
           </div>
-          
+
           {/* Dynamic Rows */}
           {fields.map((field, idx) => (
-            <div key={field.id} className="grid grid-cols-12 border-b border-gray-300 hover:bg-gray-50">
-              <div className="col-span-1 p-3 text-center border-r border-gray-300">
-                {/* Empty cell for alignment */}
-              </div>
-              
-              {/* Person Accountable */}
-              <div className="col-span-3 p-2 border-r border-gray-300">
-                <Controller
-                  name={`processes.${idx}.employee_id` as const}
-                  control={control}
-                  rules={{ required: 'Required' }}
-                  render={({ field, fieldState }) => (
-                    <div>
-                      <select 
-                        {...field} 
-                        disabled={!selectedCompanyId}
-                        className="w-full p-1 text-sm border-none focus:outline-none bg-transparent"
-                      >
-                        <option value="">Select employee...</option>
-                        {employees.map((e) => (
-                          <option key={e.id} value={e.id}>
-                            {e.first_name} {e.last_name}
-                          </option>
-                        ))}
-                      </select>
-                      {fieldState.error && (
-                        <div className="text-red-500 text-xs mt-1">{fieldState.error.message}</div>
-                      )}
-                    </div>
-                  )}
-                />
-              </div>
-              
-              <div className="col-span-1 p-3 text-center border-r border-gray-300">
-                {/* Empty cell for alignment */}
-              </div>
-              
-              {/* Name of Process */}
-              <div className="col-span-3 p-2 border-r border-gray-300">
-                <Controller
-                  name={`processes.${idx}.process_name` as const}
-                  control={control}
-                  rules={{ required: 'Required' }}
-                  render={({ field, fieldState }) => (
-                    <div>
-                      <input 
-                        {...field} 
-                        type="text" 
-                        className="w-full p-1 text-sm border-none focus:outline-none bg-transparent"
-                        placeholder="Process name"
-                      />
-                      {fieldState.error && (
-                        <div className="text-red-500 text-xs mt-1">{fieldState.error.message}</div>
-                      )}
-                    </div>
-                  )}
-                />
-              </div>
-              
-              <div className="col-span-1 p-3 text-center border-r border-gray-300">
-                {/* Empty cell for alignment */}
-              </div>
-              
-              {/* KPIs Combined */}
-              <div className="col-span-3 p-2">
-                <div className="space-y-1">
-                  <Controller
-                    name={`processes.${idx}.kpi_better` as const}
-                    control={control}
-                    render={({ field }) => (
-                      <input 
-                        {...field} 
-                        type="text" 
-                        className="w-full p-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-orange-400"
-                        placeholder="Better"
-                      />
-                    )}
-                  />
-                  <Controller
-                    name={`processes.${idx}.kpi_faster` as const}
-                    control={control}
-                    render={({ field }) => (
-                      <input 
-                        {...field} 
-                        type="text" 
-                        className="w-full p-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-orange-400"
-                        placeholder="Faster"
-                      />
-                    )}
-                  />
-                  <Controller
-                    name={`processes.${idx}.kpi_cheaper` as const}
-                    control={control}
-                    render={({ field }) => (
-                      <input 
-                        {...field} 
-                        type="text" 
-                        className="w-full p-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-orange-400"
-                        placeholder="Cheaper"
-                      />
-                    )}
-                  />
-                  {fields.length > MIN_ROWS && (
-                    <button 
-                      type="button" 
-                      onClick={() => handleRemoveRow(idx)}
-                      className="text-red-500 text-xs hover:text-red-700 mt-1"
-                    >
-                      ✕ Remove
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
+            <PaceFormRow
+              key={field.id}
+              idx={idx}
+              field={field}
+              control={control}
+              employees={employees}
+              selectedCompanyId={selectedCompanyId}
+              fieldsLength={fields.length}
+              minRows={MIN_ROWS}
+              onRemove={handleRemoveRow}
+            />
           ))}
         </div>
-        
+
         {/* Add Row Button */}
         <div className="p-4 bg-gray-50 border-l border-r border-gray-300">
           {fields.length < MAX_ROWS && (
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={handleAddRow}
               className="bg-orange-400 text-white px-4 py-2 rounded hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-400"
             >
@@ -354,11 +206,11 @@ const PaceForm: React.FC = () => {
             </button>
           )}
         </div>
-        
+
         {/* Submit Button */}
         <div className="p-4 bg-gray-50 border-l border-r border-gray-300">
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading}
             className="bg-orange-400 text-white px-6 py-2 rounded hover:bg-orange-500 disabled:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400"
           >
@@ -371,7 +223,7 @@ const PaceForm: React.FC = () => {
           )}
         </div>
       </form>
-      
+
       {/* Footer */}
       <div className="bg-gray-50 p-4 border border-gray-300 rounded-b-lg text-xs text-gray-600">
         <div className="flex justify-between items-center">
