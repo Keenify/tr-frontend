@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { supabase } from '../../../lib/supabase';
-import { useCompanies } from '../hooks/useCompanies';
 import { useEmployees } from '../hooks/useEmployees';
 import { FormValues, ProcessRow } from '../types/paceFormTypes';
 import PaceFormRow from './PaceFormRow';
+import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
+import { useSession } from '../../../shared/hooks/useSession';
 
 const MIN_ROWS = 4;
 const MAX_ROWS = 9;
@@ -13,11 +14,15 @@ const PaceForm: React.FC = () => {
   // State for loading and submit status
   const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<string | null>(null);
+  
+  // Get session and company data
+  const session = useSession();
+  const { companyInfo, userInfo, isLoading: userDataLoading } = useUserAndCompanyData(session?.user?.id || '');
 
   // React Hook Form setup
   const { control, handleSubmit, watch, reset, setValue } = useForm<FormValues>({
     defaultValues: {
-      company_id: '',
+      company_id: companyInfo?.id || '',
       processes: Array(MIN_ROWS).fill({
         employee_id: '',
         process_name: '',
@@ -33,20 +38,15 @@ const PaceForm: React.FC = () => {
     name: 'processes',
   });
 
-  const selectedCompanyId = watch('company_id');
-  const companies = useCompanies();
+  const selectedCompanyId = companyInfo?.id || '';
   const employees = useEmployees(selectedCompanyId);
 
-  // Clear employee_id fields if company is unselected or changes
+  // Set company_id when companyInfo is available
   React.useEffect(() => {
-    if (!selectedCompanyId) {
-      fields.forEach((_, idx) => setValue(`processes.${idx}.employee_id`, ''));
-      return;
+    if (companyInfo?.id) {
+      setValue('company_id', companyInfo.id);
     }
-    // Clear employee_id fields if company changes
-    fields.forEach((_, idx) => setValue(`processes.${idx}.employee_id`, ''));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCompanyId]);
+  }, [companyInfo?.id, setValue]);
 
   // Add a new process row
   const handleAddRow = () => {
@@ -70,12 +70,17 @@ const PaceForm: React.FC = () => {
 
   // Form submission handler
   const onSubmit = async (values: FormValues) => {
+    if (!companyInfo?.id) {
+      setSubmitStatus('Company information not available');
+      return;
+    }
+    
     setLoading(true);
     setSubmitStatus(null);
     try {
       // Prepare rows for insertion
       const rows = values.processes.map((row) => ({
-        company_id: values.company_id,
+        company_id: companyInfo.id,
         employee_id: row.employee_id,
         process_name: row.process_name,
         kpi_better: row.kpi_better,
@@ -94,87 +99,96 @@ const PaceForm: React.FC = () => {
     }
   };
 
+  if (userDataLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+        <p className="ml-3 text-orange-600 font-medium">Loading form...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white">
       {/* Header */}
       <div className="bg-orange-400 text-white p-4 rounded-t-lg flex justify-between items-center">
         <div>
-          <h1 className="text-xl font-bold">People Process Accountability Chart (PACe)</h1>
+          <h1 className="text-xl">
+            <span className="font-bold">People:</span> Process Accountability Chart (PACe)
+          </h1>
         </div>
-        <div className="text-right">
-          <div className="text-lg font-bold">SCALING UP</div>
-          <div className="text-sm">📈</div>
+        <div className="text-right flex items-center space-x-4">
+          {companyInfo && (
+            <div className="text-right">
+              <div className="text-sm font-medium">{companyInfo.name}</div>
+              {companyInfo.logo_url && (
+                <img 
+                  src={companyInfo.logo_url} 
+                  alt={`${companyInfo.name} logo`}
+                  className="h-8 w-8 rounded object-contain mt-1 ml-auto"
+                />
+              )}
+            </div>
+          )}
+          <div className="text-right">
+            <div className="text-lg font-bold">SCALING UP</div>
+            <div className="text-sm">📈</div>
+          </div>
         </div>
       </div>
 
       {/* Instructions */}
       <div className="bg-gray-50 p-4 border-l border-r border-gray-300">
-        <div className="flex items-start mb-2">
-          <span className="text-purple-600 font-bold mr-2">●</span>
+        <div className="flex items-center mb-2">
+          <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold mr-2 flex-shrink-0">
+            1
+          </div>
           <span className="text-sm">Identify 4 to 9 processes that drive your business</span>
         </div>
-        <div className="flex items-start mb-2">
-          <span className="text-purple-600 font-bold mr-2">●</span>
+        <div className="flex items-center mb-2">
+          <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold mr-2 flex-shrink-0">
+            2
+          </div>
           <span className="text-sm">Assign someone specific accountability for each process</span>
         </div>
-        <div className="flex items-start">
-          <span className="text-purple-600 font-bold mr-2">●</span>
+        <div className="flex items-center">
+          <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold mr-2 flex-shrink-0">
+            3
+          </div>
           <span className="text-sm">Set Key Performance Indicators (KPIs) for each process: Better, faster, cheaper</span>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        {/* Company Selector */}
-        <div className="bg-gray-50 p-4 border-l border-r border-gray-300">
-          <label htmlFor="company_id" className="block text-sm font-medium text-gray-700 mb-2">
-            Company
-          </label>
-          <Controller
-            name="company_id"
-            control={control}
-            rules={{ required: 'Please select a company' }}
-            render={({ field, fieldState }) => (
-              <div>
-                <select
-                  {...field}
-                  id="company_id"
-                  className="w-80 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
-                >
-                  <option value="">Select company...</option>
-                  {companies.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-                {fieldState.error && (
-                  <div className="text-red-500 text-sm mt-1">{fieldState.error.message}</div>
-                )}
-              </div>
-            )}
-          />
-        </div>
 
         {/* Table */}
         <div className="border border-gray-300">
           {/* Table Header */}
-          <div className="grid grid-cols-12 bg-gray-100 border-b border-gray-300">
-            <div className="col-span-1 p-3 text-center">
-              <span className="text-purple-600 font-bold text-lg">●</span>
+          <div className="grid grid-cols-3 bg-gray-100 border-b border-gray-300">
+            <div className="p-3 border-r border-gray-300 relative">
+              <div className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold absolute top-2 left-2">
+                2
+              </div>
+              <div className="font-semibold text-sm text-center">
+                Person Accountable
+              </div>
             </div>
-            <div className="col-span-3 p-3 font-semibold text-sm border-l border-gray-300">
-              Person Accountable
+            <div className="p-3 border-r border-gray-300 relative">
+              <div className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold absolute top-2 left-2">
+                1
+              </div>
+              <div className="font-semibold text-sm text-center">
+                Name of Process
+              </div>
             </div>
-            <div className="col-span-1 p-3 text-center border-l border-gray-300">
-              <span className="text-purple-600 font-bold text-lg">●</span>
-            </div>
-            <div className="col-span-3 p-3 font-semibold text-sm border-l border-gray-300">
-              Name of Process
-            </div>
-            <div className="col-span-1 p-3 text-center border-l border-gray-300">
-              <span className="text-purple-600 font-bold text-lg">●</span>
-            </div>
-            <div className="col-span-3 p-3 font-semibold text-sm border-l border-gray-300">
-              KPIs<br />
-              <span className="text-xs text-gray-600">(Better, Faster, Cheaper)</span>
+            <div className="p-3 relative">
+              <div className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold absolute top-2 left-2">
+                3
+              </div>
+              <div className="font-semibold text-sm text-center">
+                KPIs<br />
+                <span className="text-xs text-gray-600">(Better, Faster, Cheaper)</span>
+              </div>
             </div>
           </div>
 

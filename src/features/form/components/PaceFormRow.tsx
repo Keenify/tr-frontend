@@ -16,9 +16,8 @@ interface PaceFormRowProps {
 const PaceFormRow: React.FC<PaceFormRowProps> = ({
   idx, field, control, employees, selectedCompanyId, fieldsLength, minRows, onRemove
 }) => (
-  <div className="grid grid-cols-12 border-b border-gray-300 hover:bg-gray-50">
-    <div className="col-span-1 p-3 text-center border-r border-gray-300" />
-    <div className="col-span-3 p-2 border-r border-gray-300">
+  <div className="grid grid-cols-3 border-b border-gray-300 hover:bg-gray-50">
+    <div className="p-2 border-r border-gray-300">
       <Controller
         name={`processes.${idx}.employee_id`}
         control={control}
@@ -44,8 +43,7 @@ const PaceFormRow: React.FC<PaceFormRowProps> = ({
         )}
       />
     </div>
-    <div className="col-span-1 p-3 text-center border-r border-gray-300" />
-    <div className="col-span-3 p-2 border-r border-gray-300">
+    <div className="p-2 border-r border-gray-300">
       <Controller
         name={`processes.${idx}.process_name`}
         control={control}
@@ -65,8 +63,7 @@ const PaceFormRow: React.FC<PaceFormRowProps> = ({
         )}
       />
     </div>
-    <div className="col-span-1 p-3 text-center border-r border-gray-300" />
-    <div className="col-span-3 p-2">
+    <div className="p-2">
       <div className="space-y-1">
         <Controller
           name={`processes.${idx}.kpi_better`}
