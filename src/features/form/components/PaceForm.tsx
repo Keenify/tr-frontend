@@ -17,7 +17,19 @@ const PaceForm: React.FC = () => {
   
   // Get session and company data
   const session = useSession();
-  const { companyInfo, userInfo, isLoading: userDataLoading } = useUserAndCompanyData(session?.user?.id || '');
+  // Fallback: use hardcoded user ID if session is not available (temporary fix)
+  const userId = session?.user?.id || 'a1e5998e-8e8e-4e94-8fae-66597aa54e29';
+  const { companyInfo, userInfo, isLoading: userDataLoading } = useUserAndCompanyData(userId);
+  
+  // Debug logging
+  console.log('PaceForm Debug:', {
+    session: session?.user?.id,
+    userId,
+    companyInfo,
+    userInfo,
+    userDataLoading,
+    selectedCompanyId: companyInfo?.id || ''
+  });
 
   // React Hook Form setup
   const { control, handleSubmit, watch, reset, setValue } = useForm<FormValues>({
@@ -117,23 +129,9 @@ const PaceForm: React.FC = () => {
             <span className="font-bold">People:</span> Process Accountability Chart (PACe)
           </h1>
         </div>
-        <div className="text-right flex items-center space-x-4">
-          {companyInfo && (
-            <div className="text-right">
-              <div className="text-sm font-medium">{companyInfo.name}</div>
-              {companyInfo.logo_url && (
-                <img 
-                  src={companyInfo.logo_url} 
-                  alt={`${companyInfo.name} logo`}
-                  className="h-8 w-8 rounded object-contain mt-1 ml-auto"
-                />
-              )}
-            </div>
-          )}
-          <div className="text-right">
-            <div className="text-lg font-bold">SCALING UP</div>
-            <div className="text-sm">📈</div>
-          </div>
+        <div className="text-right">
+          <div className="text-lg font-bold">SCALING UP</div>
+          <div className="text-3xl">📈</div>
         </div>
       </div>
 
@@ -166,7 +164,7 @@ const PaceForm: React.FC = () => {
           {/* Table Header */}
           <div className="grid grid-cols-3 bg-gray-100 border-b border-gray-300">
             <div className="p-3 border-r border-gray-300 relative">
-              <div className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold absolute top-2 left-2">
+              <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold absolute -top-2 left-0 transform -translate-x-1/2">
                 2
               </div>
               <div className="font-semibold text-sm text-center">
@@ -174,17 +172,17 @@ const PaceForm: React.FC = () => {
               </div>
             </div>
             <div className="p-3 border-r border-gray-300 relative">
-              <div className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold absolute top-2 left-2">
+              <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold absolute -top-2 left-0 transform -translate-x-1/2">
                 1
+              </div>
+              <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold absolute -top-2 right-0 transform translate-x-1/2">
+                3
               </div>
               <div className="font-semibold text-sm text-center">
                 Name of Process
               </div>
             </div>
             <div className="p-3 relative">
-              <div className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold absolute top-2 left-2">
-                3
-              </div>
               <div className="font-semibold text-sm text-center">
                 KPIs<br />
                 <span className="text-xs text-gray-600">(Better, Faster, Cheaper)</span>
