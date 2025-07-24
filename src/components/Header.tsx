@@ -16,8 +16,8 @@ const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/70 backdrop-blur-xl border-b border-purple-200/50 shadow-2xl shadow-purple-500/10">
       <div className="container mx-auto px-4 sm:px-6 py-4">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
+        <div className="flex items-center justify-between relative">
+          {/* Logo - Left Section */}
           <div className="flex items-center space-x-2 flex-1 min-w-0">
             <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-lg">C</span>
@@ -27,37 +27,37 @@ const Header = () => {
             </span>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          {/* Desktop Navigation - Centered */}
+          <nav className="hidden md:flex items-center space-x-8 absolute left-1/2 transform -translate-x-1/2">
             <button
               onClick={() => scrollToSection('hero')}
-              className="text-gray-700 hover:text-purple-600 font-medium transition-colors duration-200"
+              className="text-gray-700 hover:text-purple-600 font-medium transition-colors duration-200 px-3 py-2"
             >
               Home
             </button>
 
             <button
               onClick={() => scrollToSection('modules-section')}
-              className="text-gray-700 hover:text-purple-600 font-medium transition-colors duration-200"
+              className="text-gray-700 hover:text-purple-600 font-medium transition-colors duration-200 px-3 py-2"
             >
               Modules
             </button>
             <button
               onClick={() => scrollToSection('pricing')}
-              className="text-gray-700 hover:text-purple-600 font-medium transition-colors duration-200"
+              className="text-gray-700 hover:text-purple-600 font-medium transition-colors duration-200 px-3 py-2"
             >
               Pricing
             </button>
             <button
               onClick={() => scrollToSection('testimonials')}
-              className="text-gray-700 hover:text-purple-600 font-medium transition-colors duration-200"
+              className="text-gray-700 hover:text-purple-600 font-medium transition-colors duration-200 px-3 py-2"
             >
               Reviews
             </button>
           </nav>
 
-          {/* CTA Button */}
-          <div className="hidden md:flex items-center space-x-3">
+          {/* CTA Button - Right Section */}
+          <div className="hidden md:flex items-center flex-1 justify-end">
             <Button 
               variant="outline"
               className="border-purple-300 text-gray-900 hover:bg-purple-600 hover:text-white font-medium px-6 py-2 rounded-full transition-all duration-300"
