@@ -1,6 +1,6 @@
 # Project Commands
 
-## Print file structure
+## Print file structure 
 
 ```bash
 tree -I 'dist|node_modules'
