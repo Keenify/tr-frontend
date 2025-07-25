@@ -22,7 +22,8 @@ export function useEmployees(companyId: string) {
           id: user.id,
           first_name: user.first_name,
           last_name: user.last_name,
-          company_id: user.company_id
+          company_id: user.company_id,
+          profile_pic_url: user.profile_pic_url
         }));
         
         setEmployees(employeeData);
