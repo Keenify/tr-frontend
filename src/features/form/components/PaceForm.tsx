@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { supabase } from '../../../lib/supabase';
-import { useEmployees } from '../hooks/useEmployees';
+import { useEmployees, ExtendedEmployee } from '../hooks/useEmployees';
 import { FormValues, ProcessRow } from '../types/paceFormTypes';
 import PaceFormRow from './PaceFormRow';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
@@ -50,7 +50,7 @@ const PaceForm: React.FC = () => {
   });
 
   const selectedCompanyId = companyInfo?.id || '';
-  const employees = useEmployees(selectedCompanyId);
+  const employees: ExtendedEmployee[] = useEmployees(selectedCompanyId);
 
   // Set company_id when companyInfo is available
   React.useEffect(() => {
@@ -227,7 +227,7 @@ const PaceForm: React.FC = () => {
               idx={idx}
               field={field}
               control={control}
-              employees={employees}
+              employees={employees} // ExtendedEmployee[]
               selectedCompanyId={selectedCompanyId}
               fieldsLength={fields.length}
               minRows={MIN_ROWS}

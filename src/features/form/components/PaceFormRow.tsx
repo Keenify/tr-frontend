@@ -1,12 +1,15 @@
 import React from 'react';
 import { Controller } from 'react-hook-form';
 import { Employee } from '../types/paceFormTypes';
+import { ExtendedEmployee } from '../hooks/useEmployees';
+import defaultAvatar from '../../../assets/images/sg-flag.png'; // Use a local default avatar or replace with a better default
+import Select from 'react-select';
 
 interface PaceFormRowProps {
   idx: number;
   field: any;
   control: any;
-  employees: Employee[];
+  employees: ExtendedEmployee[];
   selectedCompanyId: string;
   fieldsLength: number;
   minRows: number;
@@ -24,18 +27,27 @@ const PaceFormRow: React.FC<PaceFormRowProps> = ({
         rules={{ required: 'Required' }}
         render={({ field, fieldState }) => (
           <div>
-            <select
+            <Select
               {...field}
-              disabled={!selectedCompanyId}
-              className="w-full p-1 text-sm border-none focus:outline-none bg-transparent"
-            >
-              <option value="">Select employee...</option>
-              {employees.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.first_name} {e.last_name}
-                </option>
-              ))}
-            </select>
+              options={employees.filter(e => e.is_employee).map(e => ({
+                value: e.id,
+                label: `${e.first_name} ${e.last_name}`,
+                employee: e
+              }))}
+              placeholder="Select employee..."
+              classNamePrefix="react-select"
+              isClearable
+              formatOptionLabel={(option) => (
+                <div className="flex items-center gap-2">
+                  <img 
+                    src={option.employee?.profile_pic_url || defaultAvatar} 
+                    alt="avatar" 
+                    className="w-6 h-6 rounded-full object-cover flex-shrink-0" 
+                  />
+                  <span className="text-sm">{option.label}</span>
+                </div>
+              )}
+            />
             {fieldState.error && (
               <div className="text-red-500 text-xs mt-1">{fieldState.error.message}</div>
             )}
