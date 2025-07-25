@@ -48,6 +48,7 @@ import OnlineSales from "./features/finance/components/dashboard/OnlineSales";
 import Password from "./features/admin/components/Password";
 import Todo from "./features/todos/components/Todos";
 import Admin from "./features/admin/components/Admin";
+import RockefellerHabitChecklist from "./features/rockefeller_habit_checklist/components/RockefellerHabitChecklist";
 import Milestone from "./features/teamHealth/components/Milestone";
 import Award from "./features/teamHealth/components/Award";
 import Leaderboard from "./features/teamHealth/components/Leaderboard";
@@ -471,6 +472,25 @@ const App: React.FC = () => {
                           onSubTabChange={() => {}}
                         >
                           <Playbook session={session} />
+                        </DashboardLayout>
+                      }
+                    />
+                  }
+                />
+                <Route
+                  path="/:userId/rockefeller-habit-checklist"
+                  element={
+                    <ProtectedRoute
+                      session={session}
+                      element={
+                        <DashboardLayout
+                          session={session}
+                          signOut={signOut}
+                          activeTab="process"
+                          activeSubTab="rockefeller-habit-checklist"
+                          onSubTabChange={() => {}}
+                        >
+                          <RockefellerHabitChecklist session={session} />
                         </DashboardLayout>
                       }
                     />
