@@ -49,7 +49,30 @@ export const fetchQuestions = async (): Promise<Question[]> => {
     }
 
     const data: Question[] = await response.json();
-    return data;
+    
+    // Define the desired order of questions
+    const questionOrder = [
+      "One-word opener",
+      "Wins(1 work + 1 personal)",
+      "OKR", // This will be displayed as "OKR"
+      "Today Goals and Targeted Results", // This will be displayed as "Important Tasks Today"
+      "I need critical help on",
+      "Thank You To"
+    ];
+    
+    // Sort questions according to the desired order
+    const sortedQuestions = data.sort((a, b) => {
+      const indexA = questionOrder.findIndex(order => a.question_text.includes(order));
+      const indexB = questionOrder.findIndex(order => b.question_text.includes(order));
+      
+      // If question not found in order array, put it at the end
+      const finalIndexA = indexA === -1 ? questionOrder.length : indexA;
+      const finalIndexB = indexB === -1 ? questionOrder.length : indexB;
+      
+      return finalIndexA - finalIndexB;
+    });
+    
+    return sortedQuestions;
   } catch (error) {
     console.error('Failed to fetch questions:', error);
     throw error;
