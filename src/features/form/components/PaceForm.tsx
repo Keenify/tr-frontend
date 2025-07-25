@@ -108,7 +108,20 @@ const PaceForm: React.FC = () => {
       
       console.log('Submitting pace form data:', rows);
       
-      // Insert data to pace_form table
+      // Get current session for authentication
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        throw new Error('Failed to get session: ' + sessionError.message);
+      }
+      
+      if (!session) {
+        throw new Error('User not authenticated. Please log in again.');
+      }
+      
+      console.log('Session user:', session.user.id);
+      
+      // Insert data to pace_form table with authenticated context
       const { data, error } = await supabase
         .from('pace_form')
         .insert(rows)
