@@ -51,7 +51,7 @@ export const fetchQuestions = async (): Promise<Question[]> => {
     const data: Question[] = await response.json();
     
     // Define the desired order of questions
-    const questionOrder = [
+    const questionOrder = [ 
       "One-word opener",
       "Wins(1 work + 1 personal)",
       "OKR", // This will be displayed as "OKR"
