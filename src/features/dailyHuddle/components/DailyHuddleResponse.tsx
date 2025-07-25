@@ -732,7 +732,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                 "One-word opener": "One-Word Opener",
                 "Wins(1 work + 1 personal)": "Wins (1 Work + 1 Personal)",
                 "I need critical help on": "I Need Critical Help On",
-                "Main Priority": "OKR",
+                "OKR": "OKR",
                 "Today Goals and Targeted Results": "Important Tasks Today",
                 "Thank You To": "Thank You To"
               };

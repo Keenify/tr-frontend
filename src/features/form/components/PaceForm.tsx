@@ -16,10 +16,9 @@ const PaceForm: React.FC = () => {
   const [submitStatus, setSubmitStatus] = useState<string | null>(null);
   
   // Get session and company data
-  const session = useSession();
-  // Fallback: use hardcoded user ID if session is not available (temporary fix)
-  const userId = session?.user?.id || 'a1e5998e-8e8e-4e94-8fae-66597aa54e29';
-  const { companyInfo, userInfo, isLoading: userDataLoading } = useUserAndCompanyData(userId);
+  const { session } = useSession();
+  const userId = session?.user?.id;
+  const { companyInfo, userInfo, isLoading: userDataLoading } = useUserAndCompanyData(userId || '');
   
   // Debug logging
   console.log('PaceForm Debug:', {
@@ -150,10 +149,7 @@ const PaceForm: React.FC = () => {
             <span className="font-bold">People:</span> Process Accountability Chart (PACe)
           </h1>
         </div>
-        <div className="text-right">
-          <div className="text-lg font-bold">SCALING UP</div>
-          <div className="text-3xl">📈</div>
-        </div>
+
       </div>
 
       {/* Instructions */}
@@ -260,9 +256,7 @@ const PaceForm: React.FC = () => {
       {/* Footer */}
       <div className="bg-gray-50 p-4 border border-gray-300 rounded-b-lg text-xs text-gray-600">
         <div className="flex justify-between items-center">
-          <span>Copyrighted resources used with permission from Scaling Up, a Gazelles company.</span>
-          <span>v@2024 - Copyrighted TROS by Gazelles </span>
-        </div>
+        </div>  
       </div>
     </div>
   );
