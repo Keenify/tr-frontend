@@ -108,26 +108,26 @@ const PaceForm: React.FC = () => {
       
       console.log('Submitting pace form data:', rows);
       
-      // Get current session for authentication
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        throw new Error('Failed to get session: ' + sessionError.message);
-      }
-      
-      if (!session) {
+      // Verify user is authenticated
+      if (!userId) {
         throw new Error('User not authenticated. Please log in again.');
       }
       
-      console.log('Session user:', session.user.id);
+      // Ensure user session is set before database operation
+      const { data: currentSession } = await supabase.auth.getSession();
       
-      // Insert data to pace_form table with authenticated context
+      if (!currentSession?.session) {
+        throw new Error('No active session found. Please log in again.');
+      }
+      
+      // Insert data with current authenticated session context
       const { data, error } = await supabase
         .from('pace_form')
         .insert(rows)
         .select();
       
       if (error) {
+        console.error('Supabase insert error:', error);
         throw error;
       }
       
