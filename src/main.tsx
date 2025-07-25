@@ -16,6 +16,6 @@ import './index.css';
 // Create a root and render the App component wrapped in StrictMode
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <App /> 
   </StrictMode>   
 );
