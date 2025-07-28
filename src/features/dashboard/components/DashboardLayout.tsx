@@ -101,6 +101,7 @@ const navigationConfig = [
         icon: ThumbsUp,
       },
       { id: "financeTab", label: "Finance", shortForm: "Fi", icon: ThumbsUp },
+      { id: "power-of-one", label: "Power of One", shortForm: "PO", icon: ThumbsUp },
       { id: "ccc", label: "Cash Conversion Cycle", shortForm: "CC", icon: ThumbsUp }
     ],
   },

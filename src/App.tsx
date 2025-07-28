@@ -40,6 +40,7 @@ import Idea from "./features/idea/components/Idea";
 import Feedback from "./features/people/feedback/components/Feedback";
 import AnonymousFeedbackPage from "./features/people/feedback/components/AnonymousFeedbackPage";
 import Finance from "./features/finance/components/dashboard/Finance";
+import PowerOfOne from "./features/power_of_one/components/PowerOfOne";
 import Playbook from "./features/playbook/components/Playbook";
 import Calendar from "./features/people/calendar/components/Calendar";
 import Accountability from "./features/people/accountability_matrix/components/Accountability";
@@ -454,6 +455,25 @@ const App: React.FC = () => {
                           onSubTabChange={() => {}}
                         >
                           <Finance session={session} />
+                        </DashboardLayout>
+                      }
+                    />
+                  }
+                />
+                <Route
+                  path="/:userId/power-of-one"
+                  element={
+                    <ProtectedRoute
+                      session={session}
+                      element={
+                        <DashboardLayout
+                          session={session}
+                          signOut={signOut}
+                          activeTab="financeData"
+                          activeSubTab="power-of-one"
+                          onSubTabChange={() => {}}
+                        >
+                          <PowerOfOne userId={session?.user.id || ''} />
                         </DashboardLayout>
                       }
                     />
