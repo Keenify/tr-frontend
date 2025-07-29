@@ -14,12 +14,20 @@ export interface Employee {
 export interface ProcessRow {
   employee_id: string;
   process_name: string;
-  kpi_better: string;
-  kpi_faster: string;
-  kpi_cheaper: string;
+  kpi_list: string;
 }
 
 export interface FormValues {
   company_id: string;
   processes: ProcessRow[];
-} 
+}
+
+export const formatKpiAsBulletPoints = (kpiList: string): string[] => {
+  if (!kpiList || !kpiList.trim()) return [];
+  
+  return kpiList
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .map(line => line.startsWith('•') ? line : `• ${line}`);
+};
