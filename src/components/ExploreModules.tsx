@@ -307,7 +307,7 @@ const ExploreModules = () => {
           {/* Redesigned Sidebar: All Modules in Single Vertical Line */}
           <div className="w-full lg:w-80 flex-shrink-0 h-auto lg:h-[600px]">
             <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 shadow-lg h-full">
-              <div className="flex flex-row lg:flex-col gap-2 lg:gap-0 h-full justify-start lg:justify-between pt-1 overflow-x-auto lg:overflow-x-visible overflow-y-visible lg:overflow-y-auto">
+              <div className="flex flex-row lg:flex-col gap-2 lg:gap-0 h-full justify-start lg:justify-between pt-1 overflow-x-auto lg:overflow-x-visible overflow-y-visible lg:overflow-y-auto scrollbar-hide">
                 {modules.map((module, index) => (
                   <div key={index} className="flex flex-col">
                     <button
