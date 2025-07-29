@@ -61,6 +61,8 @@ import CashAccelerationStrategies from "./features/cash/components/CashAccelerat
 import TheRocksMain from "./features/theRocks/components/main";
 import PaceForm from "./features/form/components/PaceForm";
 import FaceForm from "./features/form/components/FaceForm";
+import StrataPage from "./features/strata/page";
+
 
 // Import the public daily huddle component
 import PublicDailyHuddle from "./features/dailyHuddle/components/PublicDailyHuddle";
@@ -759,6 +761,25 @@ const App: React.FC = () => {
                           onSubTabChange={() => {}}
                         >
                           <BusinessQuadrant session={session} />
+                        </DashboardLayout>
+                      }
+                    />
+                  }
+                />
+                <Route
+                  path="/:userId/strata"
+                  element={
+                    <ProtectedRoute
+                      session={session}
+                      element={
+                        <DashboardLayout
+                          session={session}
+                          signOut={signOut}
+                          activeTab="thePlan"
+                          activeSubTab="strata"
+                          onSubTabChange={() => {}}
+                        >
+                          <StrataPage session={session} />
                         </DashboardLayout>
                       }
                     />
