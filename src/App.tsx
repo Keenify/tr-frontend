@@ -40,6 +40,7 @@ import Idea from "./features/idea/components/Idea";
 import Feedback from "./features/people/feedback/components/Feedback";
 import AnonymousFeedbackPage from "./features/people/feedback/components/AnonymousFeedbackPage";
 import Finance from "./features/finance/components/dashboard/Finance";
+import PowerOfOne from "./features/power_of_one/components/PowerOfOne";
 import Playbook from "./features/playbook/components/Playbook";
 import Calendar from "./features/people/calendar/components/Calendar";
 import Accountability from "./features/people/accountability_matrix/components/Accountability";
@@ -48,6 +49,7 @@ import OnlineSales from "./features/finance/components/dashboard/OnlineSales";
 import Password from "./features/admin/components/Password";
 import Todo from "./features/todos/components/Todos";
 import Admin from "./features/admin/components/Admin";
+import RockefellerHabitChecklist from "./features/rockefeller_habit_checklist/components/RockefellerHabitChecklist";
 import Milestone from "./features/teamHealth/components/Milestone";
 import Award from "./features/teamHealth/components/Award";
 import Leaderboard from "./features/teamHealth/components/Leaderboard";
@@ -458,6 +460,25 @@ const App: React.FC = () => {
                   }
                 />
                 <Route
+                  path="/:userId/power-of-one"
+                  element={
+                    <ProtectedRoute
+                      session={session}
+                      element={
+                        <DashboardLayout
+                          session={session}
+                          signOut={signOut}
+                          activeTab="financeData"
+                          activeSubTab="power-of-one"
+                          onSubTabChange={() => {}}
+                        >
+                          <PowerOfOne userId={session?.user.id || ''} />
+                        </DashboardLayout>
+                      }
+                    />
+                  }
+                />
+                <Route
                   path="/:userId/playbook"
                   element={
                     <ProtectedRoute
@@ -471,6 +492,25 @@ const App: React.FC = () => {
                           onSubTabChange={() => {}}
                         >
                           <Playbook session={session} />
+                        </DashboardLayout>
+                      }
+                    />
+                  }
+                />
+                <Route
+                  path="/:userId/rockefeller-habit-checklist"
+                  element={
+                    <ProtectedRoute
+                      session={session}
+                      element={
+                        <DashboardLayout
+                          session={session}
+                          signOut={signOut}
+                          activeTab="process"
+                          activeSubTab="rockefeller-habit-checklist"
+                          onSubTabChange={() => {}}
+                        >
+                          <RockefellerHabitChecklist session={session} />
                         </DashboardLayout>
                       }
                     />

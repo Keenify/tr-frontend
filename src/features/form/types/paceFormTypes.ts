@@ -8,6 +8,7 @@ export interface Employee {
   first_name: string;
   last_name: string;
   company_id: string;
+  profile_pic_url: string;
 }
 
 export interface ProcessRow {

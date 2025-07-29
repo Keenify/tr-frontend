@@ -101,6 +101,7 @@ const navigationConfig = [
         icon: ThumbsUp,
       },
       { id: "financeTab", label: "Finance", shortForm: "Fi", icon: ThumbsUp },
+      { id: "power-of-one", label: "Power of One", shortForm: "PO", icon: ThumbsUp },
       { id: "ccc", label: "Cash Conversion Cycle", shortForm: "CC", icon: ThumbsUp }
     ],
   },
@@ -123,7 +124,7 @@ const navigationConfig = [
     subTabs: [
       { id: "playbook", label: "Playbook", shortForm: "Pb", icon: ThumbsUp },
       { id: "todo", label: "Todo", shortForm: "Td", icon: ThumbsUp },
-      { id: "paceForm", label: "PACe Form", shortForm: "PF", icon: ThumbsUp },
+      { id: "rockefeller-habit-checklist", label: "Rockefeller Habit Checklist", shortForm: "RH", icon: ThumbsUp },
     ],
   },
   {
