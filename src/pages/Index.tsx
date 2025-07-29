@@ -4,8 +4,14 @@ import CombinedHeroModules from "@/components/CombinedHeroModules";
 import Pricing from "@/components/Pricing";
 import Testimonials from "@/components/Testimonials";
 import Footer from "@/components/Footer";
+import { useState } from "react";
 
 const Index = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleModalStateChange = (isOpen: boolean) => {
+    setIsModalOpen(isOpen);
+  };
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">
       {/* Main Content Container */}
@@ -34,17 +40,23 @@ const Index = () => {
         <div className="relative z-10">
           <Header />
           <div id="hero">
-            <CombinedHeroModules />
+            <CombinedHeroModules onModalStateChange={handleModalStateChange} />
           </div>
-          <div id="pricing" className="mt-4">
-            <Pricing />
-          </div>
-          <div id="testimonials" className="mt-4">
-            <Testimonials />
-          </div>
-          <div className="mt-4">
-            <Footer />
-          </div>
+          {!isModalOpen && (
+            <div id="pricing" className="mt-4">
+              <Pricing />
+            </div>
+          )}
+          {!isModalOpen && (
+            <div id="testimonials" className="mt-4">
+              <Testimonials />
+            </div>
+          )}
+          {!isModalOpen && (
+            <div className="mt-4">
+              <Footer />
+            </div>
+          )}
         </div>
       </div>
     </div>
