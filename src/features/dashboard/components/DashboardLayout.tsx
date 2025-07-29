@@ -177,7 +177,8 @@ const navigationConfig = [
       { id: "theRocks", label: "The Rocks", shortForm: "TR", icon: ThumbsUp },
       { id: "peak", label: "Peak", shortForm: "Pe", icon: ThumbsUp },
       { id: "vivid_vision", label: "Vivid Vision", shortForm: "Vv", icon: ThumbsUp },
-      { id: "businessQuadrant", label: "Business Quadrant", shortForm: "Bq", icon: ThumbsUp }
+      { id: "businessQuadrant", label: "Business Quadrant", shortForm: "Bq", icon: ThumbsUp },
+      { id: "strata", label: "7 Strata", shortForm: "7S", icon: ThumbsUp }
     ],
   },
 ]
