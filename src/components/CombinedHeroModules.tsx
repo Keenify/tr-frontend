@@ -3,7 +3,11 @@ import ExploreModules from "@/components/ExploreModules";
 import { useState, useEffect, useRef } from "react";
 
 
-const CombinedHeroModules = () => {
+interface CombinedHeroModulesProps {
+  onModalStateChange?: (isOpen: boolean) => void;
+}
+
+const CombinedHeroModules = ({ onModalStateChange }: CombinedHeroModulesProps) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const vantaRef = useRef<HTMLDivElement>(null);
@@ -137,7 +141,7 @@ const CombinedHeroModules = () => {
       </div>
 
       {/* Explore Modules Section */}
-      <ExploreModules />
+      <ExploreModules onModalStateChange={onModalStateChange} />
     </section>
   );
 };

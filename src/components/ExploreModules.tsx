@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { X, Play, ChevronUp, ChevronDown } from "lucide-react";
 
-const ExploreModules = () => {
+interface ExploreModulesProps {
+  onModalStateChange?: (isOpen: boolean) => void;
+}
+
+const ExploreModules = ({ onModalStateChange }: ExploreModulesProps) => {
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -135,10 +139,12 @@ const ExploreModules = () => {
 
   const openModal = () => {
     setShowModal(true);
+    onModalStateChange?.(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
+    onModalStateChange?.(false);
     // Ensure we stay in the modules section after closing modal
     setTimeout(() => {
       document.getElementById('modules-section')?.scrollIntoView({ 
@@ -307,7 +313,7 @@ const ExploreModules = () => {
           {/* Redesigned Sidebar: All Modules in Single Vertical Line */}
           <div className="w-full lg:w-80 flex-shrink-0 h-auto lg:h-[600px]">
             <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 shadow-lg h-full">
-              <div className="flex flex-row lg:flex-col gap-2 lg:gap-0 h-full justify-start lg:justify-between pt-1 overflow-x-auto lg:overflow-x-visible overflow-y-visible lg:overflow-y-auto">
+              <div className="flex flex-row lg:flex-col gap-2 lg:gap-0 h-full justify-start lg:justify-between pt-1 overflow-x-auto lg:overflow-x-visible overflow-y-visible lg:overflow-y-auto scrollbar-hide">
                 {modules.map((module, index) => (
                   <div key={index} className="flex flex-col">
                     <button
@@ -335,55 +341,67 @@ const ExploreModules = () => {
 
 
 
-        {/* Enhanced Modal for Detailed View */}
+        {/* Enhanced Modal for Detailed View - Mobile Optimized */}
         {showModal && (
           <div 
-            className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 overflow-y-auto"
+            className="fixed inset-0 bg-black/90 flex items-start justify-center p-3 sm:p-4 z-[100] overflow-y-auto"
             onClick={closeModal}
           >
             <div 
-              className="relative bg-white rounded-3xl max-w-6xl w-full my-8 border-2 border-purple-200 shadow-2xl max-h-[90vh] overflow-y-auto"
+              className="relative bg-white rounded-2xl sm:rounded-3xl max-w-sm sm:max-w-4xl lg:max-w-6xl w-full mt-4 sm:mt-8 mb-4 sm:mb-8 border border-purple-200 sm:border-2 shadow-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Close Button */}
-              <button
-                onClick={closeModal}
-                className="absolute top-6 right-6 z-10 text-gray-600 hover:text-gray-900 transition-colors bg-white/80 rounded-full p-2 backdrop-blur-sm"
-              >
-                <X size={24} />
-              </button>
-
-              {/* Modal Content */}
-              <div className="p-8">
-                {/* Module Header with Name and Description */}
-                <div className="text-center mb-8">
-                  <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              {/* Fixed Header with Close Button and Module Name - Always Visible */}
+              <div className="sticky top-0 bg-white rounded-t-2xl sm:rounded-t-3xl z-20 border-b border-gray-100 px-4 py-4 sm:px-6 sm:py-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 leading-tight truncate pr-4">
                     {currentModule.name}
                   </h2>
-                  <div className="flex justify-center mb-6">
-                    <div className="w-20 h-1 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full"></div>
+                  <button
+                    onClick={closeModal}
+                    className="flex-shrink-0 text-gray-600 hover:text-gray-900 transition-colors bg-gray-100 hover:bg-gray-200 rounded-full p-2 shadow-sm"
+                  >
+                    <X size={20} className="sm:w-5 sm:h-5" />
+                  </button>
+                </div>
+                <div className="flex justify-center mt-3 sm:mt-4">
+                  <div className="w-16 sm:w-20 h-0.5 sm:h-1 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full"></div>
+                </div>
+              </div>
+
+              {/* Scrollable Modal Content */}
+              <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6 lg:pb-8">
+                {/* Module Descriptions - Improved Layout */}
+                <div className="py-4 sm:py-6">
+                  {/* Primary Description - More Prominent */}
+                  <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6">
+                    <p className="text-base sm:text-lg lg:text-xl text-gray-800 font-semibold leading-relaxed">
+                      {currentModule.description}
+                    </p>
                   </div>
-                  <p className="text-xl text-gray-700 leading-relaxed max-w-4xl mx-auto mb-6">
-                    {currentModule.description}
-                  </p>
-                  <p className="text-lg text-gray-600 leading-relaxed max-w-4xl mx-auto">
-                    {currentModule.detailedDescription}
-                  </p>
+                  
+                  {/* Detailed Description - Well Separated */}
+                  <div className="bg-gray-50 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8">
+                    <p className="text-sm sm:text-base lg:text-lg text-gray-700 leading-relaxed">
+                      {currentModule.detailedDescription}
+                    </p>
+                  </div>
                 </div>
                 
-                {/* Enhanced Module Media with Rounded Corners and Enhanced Shadow */}
-                <div className="relative h-[500px]">
+                {/* Enhanced Module Media - Better Proportioned */}
+                <div className="relative h-[250px] sm:h-[350px] lg:h-[450px]">
                   {currentModule.media.type === 'video' ? (
                     <video 
                       src={currentModule.media.src}
-                      className="w-full h-full rounded-3xl shadow-2xl"
-                      style={{ objectFit: 'cover', background: 'black' }}
+                      className="w-full h-full rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-200"
+                      style={{ objectFit: 'contain', background: 'black' }}
                       controls
                       autoPlay
                       loop
                       muted
                       playsInline
                       preload="metadata"
+                      controlsList="nodownload"
                       onError={(e) => {
                         console.error('Video loading error:', e);
                       }}
@@ -392,8 +410,8 @@ const ExploreModules = () => {
                     <img
                       src={currentModule.media.src}
                       alt={`${currentModule.name} screenshot`}
-                      className="w-full h-full rounded-3xl shadow-2xl"
-                      style={{ objectFit: 'cover' }}
+                      className="w-full h-full rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-200"
+                      style={{ objectFit: 'contain', background: '#f8f9fa' }}
                     />
                   )}
                 </div>

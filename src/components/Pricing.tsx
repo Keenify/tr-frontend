@@ -29,7 +29,7 @@ const Pricing = () => {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-20 bg-gradient-to-br from-white via-gray-50 to-purple-50 text-gray-900 relative overflow-hidden mx-8 rounded-3xl">
+    <section ref={sectionRef} className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-white via-gray-50 to-purple-50 text-gray-900 relative overflow-hidden mx-4 sm:mx-6 lg:mx-8 rounded-2xl sm:rounded-3xl mt-8 sm:mt-12 z-10">
       {/* Universe-themed animated background elements */}
       <div className="absolute inset-0">
         <div className="absolute top-1/4 left-10 w-32 h-32 bg-purple-400 rounded-full opacity-10 animate-pulse"></div>
@@ -40,25 +40,25 @@ const Pricing = () => {
       </div>
       
       <div className="container mx-auto px-6 relative z-10">
-        <div className={`text-center mb-16 transition-all duration-1000 ${
+        <div className={`text-center mb-8 sm:mb-12 lg:mb-16 transition-all duration-1000 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}>
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4">
             Simple, Transparent Pricing
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto px-4">
             Choose the plan that works for you. Cancel anytime, no questions asked.
           </p>
         </div>
 
-        <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
+        <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6 sm:gap-8 px-4">
           {/* Monthly Plan */}
-          <div className={`bg-white/80 backdrop-blur-lg rounded-2xl p-8 border border-purple-200 transform transition-all duration-700 hover:scale-105 hover:bg-white/90 hover:shadow-2xl hover:shadow-purple-500/25 flex flex-col ${
+          <div className={`bg-white/80 backdrop-blur-lg rounded-2xl p-6 sm:p-8 border border-purple-200 transform transition-all duration-700 hover:scale-105 hover:bg-white/90 hover:shadow-2xl hover:shadow-purple-500/25 flex flex-col relative z-20 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
           }`} style={{ transitionDelay: '200ms' }}>
-            <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold mb-4">Monthly Plan</h3>
-              <div className="text-5xl font-bold mb-2 animate-pulse">$15</div>
+            <div className="text-center mb-6 sm:mb-8">
+              <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Monthly Plan</h3>
+              <div className="text-4xl sm:text-5xl font-bold mb-2 animate-pulse">$15</div>
               <div className="text-purple-600">per month</div>
             </div>
             
@@ -70,20 +70,20 @@ const Pricing = () => {
           </div>
 
           {/* Yearly Plan */}
-          <div className={`bg-gradient-to-br from-purple-400 to-indigo-500 rounded-2xl p-8 text-white relative overflow-hidden transform transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/50 flex flex-col ${
+          <div className={`bg-gradient-to-br from-purple-400 to-indigo-500 rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden transform transition-all duration-700 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/50 flex flex-col z-20 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
           }`} style={{ transitionDelay: '400ms' }}>
-            <div className="absolute top-4 right-4 animate-bounce">
-              <span className="bg-black text-yellow-400 px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+            <div className="absolute top-3 right-3 sm:top-4 sm:right-4 animate-bounce">
+              <span className="bg-black text-yellow-400 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold shadow-lg">
                 Recommended
               </span>
             </div>
             
-            <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold mb-4">Yearly Plan</h3>
-              <div className="text-5xl font-bold mb-2 animate-pulse">$100</div>
+            <div className="text-center mb-6 sm:mb-8">
+              <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Yearly Plan</h3>
+              <div className="text-4xl sm:text-5xl font-bold mb-2 animate-pulse">$100</div>
               <div className="text-black/70">per year</div>
-              <div className="text-sm mt-2 bg-black/10 rounded-lg px-3 py-1 inline-block animate-bounce">
+              <div className="text-xs sm:text-sm mt-2 bg-black/10 rounded-lg px-2 sm:px-3 py-1 inline-block animate-bounce">
                 Save $80 per year!
               </div>
             </div>
@@ -96,10 +96,10 @@ const Pricing = () => {
           </div>
         </div>
 
-        <div className={`text-center mt-12 transition-all duration-1000 delay-600 ${
+        <div className={`text-center mt-8 sm:mt-12 transition-all duration-1000 delay-600 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}>
-          <p className="text-gray-400">
+          <p className="text-gray-400 text-sm sm:text-base px-4">
             30-day money-back guarantee • No setup fees • Cancel anytime
           </p>
         </div>
