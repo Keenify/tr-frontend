@@ -41,6 +41,5 @@ export function useEmployees(companyId: string) {
     };
     fetchEmployees();
   }, [companyId]);
-  console.log('useEmployees returning employees:', employees);
   return employees;
 } 

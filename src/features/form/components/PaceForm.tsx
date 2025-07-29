@@ -20,15 +20,6 @@ const PaceForm: React.FC = () => {
   const userId = session?.user?.id;
   const { companyInfo, userInfo, isLoading: userDataLoading } = useUserAndCompanyData(userId || '');
   
-  // Debug logging
-  console.log('PaceForm Debug:', {
-    session: session?.user?.id,
-    userId,
-    companyInfo,
-    userInfo,
-    userDataLoading,
-    selectedCompanyId: companyInfo?.id || ''
-  });
 
   // React Hook Form setup
   const { control, handleSubmit, watch, reset, setValue } = useForm<FormValues>({
@@ -37,9 +28,7 @@ const PaceForm: React.FC = () => {
       processes: Array(MIN_ROWS).fill({
         employee_id: '',
         process_name: '',
-        kpi_better: '',
-        kpi_faster: '',
-        kpi_cheaper: '',
+        kpi_list: '',
       }),
     },
   });
@@ -65,9 +54,7 @@ const PaceForm: React.FC = () => {
       append({
         employee_id: '',
         process_name: '',
-        kpi_better: '',
-        kpi_faster: '',
-        kpi_cheaper: '',
+        kpi_list: '',
       });
     }
   };
@@ -96,9 +83,7 @@ const PaceForm: React.FC = () => {
           company_id: companyInfo.id,
           employee_id: row.employee_id,
           process_name: row.process_name.trim(),
-          kpi_better: row.kpi_better?.trim() || '',
-          kpi_faster: row.kpi_faster?.trim() || '',
-          kpi_cheaper: row.kpi_cheaper?.trim() || '',
+          kpi_list: row.kpi_list?.trim() || '',
         }));
       
       if (rows.length === 0) {
@@ -128,6 +113,12 @@ const PaceForm: React.FC = () => {
       
       if (error) {
         console.error('Supabase insert error:', error);
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         throw error;
       }
       
@@ -183,7 +174,7 @@ const PaceForm: React.FC = () => {
           <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold mr-2 flex-shrink-0">
             3
           </div>
-          <span className="text-sm">Set Key Performance Indicators (KPIs) for each process: Better, faster, cheaper</span>
+          <span className="text-sm">Set Key Performance Indicators (KPIs) for each process (enter each KPI on a new line)</span>
         </div>
       </div>
 

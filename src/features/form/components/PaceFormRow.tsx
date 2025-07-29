@@ -28,7 +28,12 @@ const PaceFormRow: React.FC<PaceFormRowProps> = ({
         render={({ field, fieldState }) => (
           <div>
             <Select
-              {...field}
+              value={employees.filter(e => e.is_employee).find(e => e.id === field.value) ? {
+                value: field.value,
+                label: `${employees.find(e => e.id === field.value)?.first_name} ${employees.find(e => e.id === field.value)?.last_name}`,
+                employee: employees.find(e => e.id === field.value)
+              } : null}
+              onChange={(option) => field.onChange(option?.value || '')}
               options={employees.filter(e => e.is_employee).map(e => ({
                 value: e.id,
                 label: `${e.first_name} ${e.last_name}`,
@@ -78,38 +83,14 @@ const PaceFormRow: React.FC<PaceFormRowProps> = ({
     <div className="p-2">
       <div className="space-y-1">
         <Controller
-          name={`processes.${idx}.kpi_better`}
+          name={`processes.${idx}.kpi_list`}
           control={control}
           render={({ field }) => (
-            <input
+            <textarea
               {...field}
-              type="text"
-              className="w-full p-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-orange-400"
-              placeholder="Better"
-            />
-          )}
-        />
-        <Controller
-          name={`processes.${idx}.kpi_faster`}
-          control={control}
-          render={({ field }) => (
-            <input
-              {...field}
-              type="text"
-              className="w-full p-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-orange-400"
-              placeholder="Faster"
-            />
-          )}
-        />
-        <Controller
-          name={`processes.${idx}.kpi_cheaper`}
-          control={control}
-          render={({ field }) => (
-            <input
-              {...field}
-              type="text"
-              className="w-full p-1 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-orange-400"
-              placeholder="Cheaper"
+              className="w-full p-2 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-orange-400 resize-vertical min-h-[60px]"
+              placeholder="• First KPI&#10;• Second KPI&#10;• Third KPI"
+              rows={3}
             />
           )}
         />
