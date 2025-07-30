@@ -16,6 +16,7 @@ const MAX_BU_ROWS = 10;
 // Predefined functions
 const PREDEFINED_FUNCTIONS = [
   'Head of Company',
+  'CEO',
   'Marketing',
   'R&D/Innovation',
   'Sales',
@@ -27,6 +28,38 @@ const PREDEFINED_FUNCTIONS = [
   'Talent Development/Learning',
   'Customer Advocacy'
 ];
+
+// Helper function to determine if a function name should be categorized as a predefined function
+const isPredefinedFunction = (functionName: string): boolean => {
+  const normalizedName = functionName.trim().toLowerCase();
+  
+  // Check exact matches first
+  if (PREDEFINED_FUNCTIONS.some(func => func.toLowerCase() === normalizedName)) {
+    return true;
+  }
+  
+  // Check for common variations
+  const functionVariations: { [key: string]: string[] } = {
+    'ceo': ['chief executive officer', 'chief executive', 'ceo'],
+    'head of company': ['head of company', 'company head', 'ceo', 'chief executive officer'],
+    'marketing': ['marketing', 'marketing head', 'head of marketing', 'marketing director'],
+    'sales': ['sales', 'sales head', 'head of sales', 'sales director', 'sales manager'],
+    'operations': ['operations', 'operations head', 'head of operations', 'operations director', 'ops'],
+    'human resources': ['human resources', 'hr', 'head of hr', 'hr director', 'human resources director'],
+    'information technology': ['information technology', 'it', 'head of it', 'it director', 'technology'],
+    'treasury': ['treasury', 'treasurer', 'head of treasury', 'finance'],
+    'controller': ['controller', 'financial controller', 'finance controller']
+  };
+  
+  // Check if the function name matches any variation
+  for (const [baseFunction, variations] of Object.entries(functionVariations)) {
+    if (variations.some(variation => variation === normalizedName)) {
+      return true;
+    }
+  }
+  
+  return false;
+};
 
 const FaceForm: React.FC = () => {
   // State for loading and submit status
@@ -123,9 +156,9 @@ const FaceForm: React.FC = () => {
     
     data.forEach(row => {
       // Check if it's a predefined function or business unit
-      const isPredefinedFunction = PREDEFINED_FUNCTIONS.includes(row.function_name);
+      const isFunction = isPredefinedFunction(row.function_name);
       
-      if (isPredefinedFunction) {
+      if (isFunction) {
         functionData.push({
           function_name: row.function_name,
           accountable_employee_id: row.accountable_employee_id,
@@ -221,7 +254,7 @@ const FaceForm: React.FC = () => {
     }
   };
 
-  // Form submission handler - simplified to match PaceForm pattern
+  // Form submission handler - with proper validation
   const onSubmit = async (values: FaceFormValues) => {
     if (!companyInfo?.id) {
       setSubmitStatus('Company information not available');
@@ -236,35 +269,82 @@ const FaceForm: React.FC = () => {
     setLoading(true);
     setSubmitStatus(null);
     try {
-      // Prepare function rows for insertion
-      const functionRows = values.functions
-        .filter(row => row.accountable_employee_id && row.function_name.trim() && row.kpi_list?.trim() && row.outcome_list?.trim()) // Only submit rows with all required data
-        .map((row) => ({
-          company_id: companyInfo.id,
-          employee_id: userInfo.id, // Use actual employee ID, not auth user ID
-          function_name: row.function_name.trim(),
-          accountable_employee_id: row.accountable_employee_id,
-          kpi_list: row.kpi_list.trim(),
-          outcome_list: row.outcome_list.trim(),
-        }));
+      // Validate functions - check for incomplete rows before filtering
+      const incompleteFunctions: string[] = [];
+      const validFunctionRows: any[] = [];
+      
+      values.functions.forEach((row, index) => {
+        // Check if row has any data filled
+        const hasData = row.accountable_employee_id || row.kpi_list?.trim() || row.outcome_list?.trim();
+        
+        if (hasData) {
+          // If row has some data, validate all required fields are filled
+          if (!row.accountable_employee_id) {
+            incompleteFunctions.push(`${row.function_name}: Missing Person Accountable`);
+          } else if (!row.kpi_list?.trim()) {
+            incompleteFunctions.push(`${row.function_name}: Missing Leading Indicators (KPIs)`);
+          } else if (!row.outcome_list?.trim()) {
+            incompleteFunctions.push(`${row.function_name}: Missing Results/Outcomes`);
+          } else {
+            // All required fields are filled
+            validFunctionRows.push({
+              company_id: companyInfo.id,
+              employee_id: userInfo.id,
+              function_name: row.function_name.trim(),
+              accountable_employee_id: row.accountable_employee_id,
+              kpi_list: row.kpi_list.trim(),
+              outcome_list: row.outcome_list.trim(),
+            });
+          }
+        }
+      });
 
-      // Prepare business unit rows for insertion
-      const businessUnitRows = values.business_units
-        .filter(row => row.head_employee_id && row.business_unit_name.trim() && row.kpi_list?.trim() && row.outcome_list?.trim()) // Only submit rows with all required data
-        .map((row) => ({
-          company_id: companyInfo.id,
-          employee_id: userInfo.id, // Use actual employee ID, not auth user ID
-          function_name: row.business_unit_name.trim(),
-          accountable_employee_id: row.head_employee_id,
-          kpi_list: row.kpi_list.trim(),
-          outcome_list: row.outcome_list.trim(),
-        }));
+      // Validate business units - check for incomplete rows before filtering
+      const incompleteBusinessUnits: string[] = [];
+      const validBusinessUnitRows: any[] = [];
+      
+      values.business_units.forEach((row, index) => {
+        // Check if row has any data filled
+        const hasData = row.head_employee_id || row.business_unit_name?.trim() || row.kpi_list?.trim() || row.outcome_list?.trim();
+        
+        if (hasData) {
+          // If row has some data, validate all required fields are filled
+          if (!row.business_unit_name?.trim()) {
+            incompleteBusinessUnits.push(`Business Unit ${index + 1}: Missing Business Unit Name`);
+          } else if (!row.head_employee_id) {
+            incompleteBusinessUnits.push(`${row.business_unit_name}: Missing Person Accountable`);
+          } else if (!row.kpi_list?.trim()) {
+            incompleteBusinessUnits.push(`${row.business_unit_name}: Missing Leading Indicators (KPIs)`);
+          } else if (!row.outcome_list?.trim()) {
+            incompleteBusinessUnits.push(`${row.business_unit_name}: Missing Results/Outcomes`);
+          } else {
+            // All required fields are filled
+            validBusinessUnitRows.push({
+              company_id: companyInfo.id,
+              employee_id: userInfo.id,
+              function_name: row.business_unit_name.trim(),
+              accountable_employee_id: row.head_employee_id,
+              kpi_list: row.kpi_list.trim(),
+              outcome_list: row.outcome_list.trim(),
+            });
+          }
+        }
+      });
 
-      // Combine all rows
-      const allRows = [...functionRows, ...businessUnitRows];
+      // Check for validation errors
+      const allErrors = [...incompleteFunctions, ...incompleteBusinessUnits];
+      if (allErrors.length > 0) {
+        setSubmitStatus(`Please complete the following required fields:\n${allErrors.join('\n')}`);
+        setLoading(false);
+        return;
+      }
+
+      // Combine all valid rows
+      const allRows = [...validFunctionRows, ...validBusinessUnitRows];
       
       if (allRows.length === 0) {
         setSubmitStatus('Please fill in at least one function or business unit with all required information: Person Accountable, Leading Indicators (KPIs), and Results/Outcomes');
+        setLoading(false);
         return;
       }
       
@@ -367,8 +447,8 @@ const FaceForm: React.FC = () => {
   const renderReadOnlyView = () => {
     if (!hasSubmittedData || submittedData.length === 0) return null;
     
-    const functions = submittedData.filter(row => PREDEFINED_FUNCTIONS.includes(row.function_name));
-    const businessUnits = submittedData.filter(row => !PREDEFINED_FUNCTIONS.includes(row.function_name));
+    const functions = submittedData.filter(row => isPredefinedFunction(row.function_name));
+    const businessUnits = submittedData.filter(row => !isPredefinedFunction(row.function_name));
     
     return (
       <div className="border border-gray-300 bg-gray-50">
@@ -461,7 +541,7 @@ const FaceForm: React.FC = () => {
       <div className="bg-orange-400 text-white p-4 rounded-t-lg flex justify-between items-center">
         <div>
           <h1 className="text-xl">
-            <span className="font-bold">People:</span> Function Accountability Chart (FaCe)
+            <span className="font-bold">People:</span> Function Accountability Chart (FACe)
           </h1>
         </div>
         {hasSubmittedData && (
@@ -516,7 +596,9 @@ const FaceForm: React.FC = () => {
           {submitStatus && (
             <div className="p-4 bg-gray-50 border-l border-r border-gray-300">
               <div className={`text-sm ${submitStatus.startsWith('Form') ? 'text-green-600' : 'text-red-600'}`}>
-                {submitStatus}
+                {submitStatus.split('\n').map((line, index) => (
+                  <div key={index}>{line}</div>
+                ))}
               </div>
             </div>
           )}
@@ -577,7 +659,7 @@ const FaceForm: React.FC = () => {
           ))}
 
           {/* Heads of Business Units Header */}
-          <div className="grid grid-cols-4 border-b border-gray-300 bg-gray-100">
+          <div className="grid grid-cols-4 border-b border-gray-300 bg-gray-200">
             <div className="p-3 border-r border-gray-300">
               <div className="font-semibold text-sm text-center">
                 Heads of Business Units
@@ -651,7 +733,9 @@ const FaceForm: React.FC = () => {
           </button>
           {submitStatus && (
             <div className={`mt-3 text-sm ${submitStatus.startsWith('Form') ? 'text-green-600' : 'text-red-600'}`}>
-              {submitStatus}
+              {submitStatus.split('\n').map((line, index) => (
+                <div key={index}>{line}</div>
+              ))}
             </div>
           )}
         </div>
