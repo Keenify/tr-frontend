@@ -99,11 +99,35 @@ const PaceForm: React.FC = () => {
       }
       
       // Ensure user session is set before database operation
-      const { data: currentSession } = await supabase.auth.getSession();
+      const { data: currentSession, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error('Failed to get session. Please log in again.');
+      }
       
       if (!currentSession?.session) {
         throw new Error('No active session found. Please log in again.');
       }
+      
+      console.log('Current user ID:', currentSession.session.user.id);
+      console.log('Inserting with authenticated session');
+      
+      // First, let's try to check the table structure
+      console.log('Attempting to check table structure...');
+      const { data: tableCheck, error: tableError } = await supabase
+        .from('pace_form')
+        .select('*')
+        .limit(1);
+      
+      if (tableError) {
+        console.error('Table check error:', tableError);
+      } else {
+        console.log('Table check result:', tableCheck);
+      }
+      
+      // Try basic insert first - only with required fields
+      console.log('Attempting basic insert with original rows:', rows);
       
       // Insert data with current authenticated session context
       const { data, error } = await supabase
@@ -119,7 +143,13 @@ const PaceForm: React.FC = () => {
           hint: error.hint,
           code: error.code
         });
-        throw error;
+        console.error('Failed rows data:', rows);
+        console.error('Current user session:', {
+          userId: currentSession.session.user.id,
+          email: currentSession.session.user.email,
+          role: currentSession.session.user.role
+        });
+        throw new Error(`Database insert failed: ${error.message} (Code: ${error.code})`);
       }
       
       console.log('Successfully inserted data:', data);
@@ -162,13 +192,13 @@ const PaceForm: React.FC = () => {
           <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold mr-2 flex-shrink-0">
             1
           </div>
-          <span className="text-sm">Identify 4 to 9 processes that drive your business</span>
+          <span className="text-sm">Assign someone specific accountability for each process</span>
         </div>
         <div className="flex items-center mb-2">
           <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold mr-2 flex-shrink-0">
             2
           </div>
-          <span className="text-sm">Assign someone specific accountability for each process</span>
+          <span className="text-sm">Identify 4 to 9 processes that drive your business</span>
         </div>
         <div className="flex items-center">
           <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold mr-2 flex-shrink-0">
@@ -186,7 +216,7 @@ const PaceForm: React.FC = () => {
           <div className="grid grid-cols-3 bg-gray-100 border-b border-gray-300">
             <div className="p-3 border-r border-gray-300 relative">
               <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold absolute -top-2 left-0 transform -translate-x-1/2">
-                2
+                1
               </div>
               <div className="font-semibold text-sm text-center">
                 Person Accountable
@@ -194,7 +224,7 @@ const PaceForm: React.FC = () => {
             </div>
             <div className="p-3 border-r border-gray-300 relative">
               <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold absolute -top-2 left-0 transform -translate-x-1/2">
-                1
+                2
               </div>
               <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold absolute -top-2 right-0 transform translate-x-1/2">
                 3
