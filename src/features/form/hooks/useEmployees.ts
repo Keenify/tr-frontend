@@ -34,7 +34,7 @@ export function useEmployees(companyId: string) {
           company_id: user.company_id,
           is_employee: user.Is_Employed,
           profile_pic_url: user.profile_pic_url || null,
-        }));
+
         
         setEmployees(employeeData);
       } catch (error) {

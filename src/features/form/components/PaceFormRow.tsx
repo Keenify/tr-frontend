@@ -16,7 +16,9 @@ interface PaceFormRowProps {
 const EmployeeDropdown: React.FC<{
   value: string;
   onChange: (value: string) => void;
+
   employees: ExtendedEmployee[];
+
   disabled: boolean;
 }> = ({ value, onChange, employees, disabled }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -117,11 +119,13 @@ const PaceFormRow: React.FC<PaceFormRowProps> = ({
         rules={{ required: 'Required' }}
         render={({ field, fieldState }) => (
           <div>
+
             <EmployeeDropdown
               value={field.value}
               onChange={field.onChange}
               employees={employees}
               disabled={!selectedCompanyId}
+
             />
             {fieldState.error && (
               <div className="text-red-500 text-xs mt-1">{fieldState.error.message}</div>
