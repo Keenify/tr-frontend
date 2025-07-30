@@ -205,10 +205,10 @@ const FaceForm: React.FC = () => {
       // Try basic insert first - only with required fields
       console.log('Attempting basic insert with original rows:', allRows);
       
-      // Insert data with current authenticated session context
+      // Use upsert to handle duplicates and potential RLS issues
       const { data, error } = await supabase
         .from('face_form')
-        .insert(allRows)
+        .upsert(allRows, { onConflict: 'company_id,function_name' })
         .select();
       
       if (error) {
