@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import React, { useState, useEffect } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { supabase } from '../../../lib/supabase';
 import { useEmployees, ExtendedEmployee } from '../hooks/useEmployees';
-import { FaceFormValues, FaceFormRow, FaceFormDatabaseRow, BusinessUnitRow as BusinessUnitRowType } from '../types/faceFormTypes';
+import { FaceFormValues, FaceFormRow, FaceFormDatabaseRow, BusinessUnitRow } from '../types/faceFormTypes';
 import FaceFormRowComponent from './FaceFormRow';
-import BusinessUnitRow from './BusinessUnitRow';
+import BusinessUnitRowComponent from './BusinessUnitRow';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import { useSession } from '../../../shared/hooks/useSession';
 
@@ -33,13 +33,19 @@ const FaceForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<string | null>(null);
   
+  // New states for view/edit mode and data persistence
+  const [isEditMode, setIsEditMode] = useState(true);
+  const [hasSubmittedData, setHasSubmittedData] = useState(false);
+  const [submittedData, setSubmittedData] = useState<FaceFormDatabaseRow[]>([]);
+  const [loadingExistingData, setLoadingExistingData] = useState(false);
+  
   // Get session and company data
   const { session } = useSession();
   const userId = session?.user?.id;
   const { companyInfo, userInfo, isLoading: userDataLoading } = useUserAndCompanyData(userId || '');
   
   // React Hook Form setup
-  const { control, handleSubmit, watch, reset, setValue } = useForm<FaceFormValues>({
+  const { control, handleSubmit, setValue } = useForm<FaceFormValues>({
     defaultValues: {
       company_id: companyInfo?.id || '',
       functions: PREDEFINED_FUNCTIONS.map(func => ({
@@ -78,6 +84,102 @@ const FaceForm: React.FC = () => {
       setValue('company_id', companyInfo.id);
     }
   }, [companyInfo?.id, setValue]);
+
+  // Load existing form data on mount
+  const loadExistingData = async () => {
+    if (!companyInfo?.id) return;
+    
+    setLoadingExistingData(true);
+    try {
+      const { data, error } = await supabase
+        .from('face_form')
+        .select('*')
+        .eq('company_id', companyInfo.id);
+      
+      if (error) {
+        console.error('Error loading existing data:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        setSubmittedData(data);
+        setHasSubmittedData(true);
+        setIsEditMode(false); // Start in view mode if data exists
+        
+        // Populate form with existing data
+        populateFormWithExistingData(data);
+      }
+    } catch (error) {
+      console.error('Failed to load existing data:', error);
+    } finally {
+      setLoadingExistingData(false);
+    }
+  };
+
+  // Populate form fields with existing data
+  const populateFormWithExistingData = (data: FaceFormDatabaseRow[]) => {
+    const functionData: FaceFormRow[] = [];
+    const businessUnitData: BusinessUnitRow[] = [];
+    
+    data.forEach(row => {
+      // Check if it's a predefined function or business unit
+      const isPredefinedFunction = PREDEFINED_FUNCTIONS.includes(row.function_name);
+      
+      if (isPredefinedFunction) {
+        functionData.push({
+          function_name: row.function_name,
+          accountable_employee_id: row.accountable_employee_id,
+          kpi_list: row.kpi_list,
+          outcome_list: row.outcome_list,
+          business_unit_name: '',
+          head_employee_id: '',
+        });
+      } else {
+        businessUnitData.push({
+          business_unit_name: row.function_name,
+          head_employee_id: row.accountable_employee_id,
+          kpi_list: row.kpi_list,
+          outcome_list: row.outcome_list,
+        });
+      }
+    });
+    
+    // Update functions array with existing data
+    const updatedFunctions = PREDEFINED_FUNCTIONS.map(func => {
+      const existingData = functionData.find(f => f.function_name === func);
+      return existingData || {
+        function_name: func,
+        accountable_employee_id: '',
+        kpi_list: '',
+        outcome_list: '',
+        business_unit_name: '',
+        head_employee_id: '',
+      };
+    });
+    
+    setValue('functions', updatedFunctions);
+    
+    // Update business units array with existing data
+    const minBusinessUnits = Math.max(businessUnitData.length, MIN_BU_ROWS);
+    const updatedBusinessUnits: BusinessUnitRow[] = Array(minBusinessUnits).fill(null).map((_, index) => {
+      return businessUnitData[index] || {
+        business_unit_name: '',
+        head_employee_id: '',
+        kpi_list: '',
+        outcome_list: '',
+      };
+    });
+    
+    setValue('business_units', updatedBusinessUnits);
+  };
+
+  // Load existing data when component mounts and company info is available
+  useEffect(() => {
+    if (companyInfo?.id && !loadingExistingData) {
+      loadExistingData();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyInfo?.id]);
 
   // Add a new function row
   const handleAddRow = () => {
@@ -232,7 +334,9 @@ const FaceForm: React.FC = () => {
       console.log('Successfully inserted data:', data);
       
       setSubmitStatus('Form submitted successfully!');
-      reset();
+      setSubmittedData(allRows);
+      setHasSubmittedData(true);
+      setIsEditMode(false); // Switch to view mode after successful submission
     } catch (err: unknown) {
       console.error('Form submission error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -242,14 +346,114 @@ const FaceForm: React.FC = () => {
     }
   };
 
-  if (userDataLoading) {
+  if (userDataLoading || loadingExistingData) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
-        <p className="ml-3 text-orange-600 font-medium">Loading form...</p>
+        <p className="ml-3 text-orange-600 font-medium">
+          {loadingExistingData ? 'Loading existing data...' : 'Loading form...'}
+        </p>
       </div>
     );
   }
+
+  // Handle edit mode toggle
+  const handleEditModeToggle = () => {
+    setIsEditMode(!isEditMode);
+    setSubmitStatus(null); // Clear any previous status messages
+  };
+
+  // Render read-only view for submitted data
+  const renderReadOnlyView = () => {
+    if (!hasSubmittedData || submittedData.length === 0) return null;
+    
+    const functions = submittedData.filter(row => PREDEFINED_FUNCTIONS.includes(row.function_name));
+    const businessUnits = submittedData.filter(row => !PREDEFINED_FUNCTIONS.includes(row.function_name));
+    
+    return (
+      <div className="border border-gray-300 bg-gray-50">
+        {/* Table Header */}
+        <div className="grid grid-cols-4 bg-gray-200 border-b border-gray-300">
+          <div className="p-3 border-r border-gray-300">
+            <div className="font-semibold text-sm text-center">Functions</div>
+          </div>
+          <div className="p-3 border-r border-gray-300">
+            <div className="font-semibold text-sm text-center">Person Accountable</div>
+          </div>
+          <div className="p-3 border-r border-gray-300">
+            <div className="font-semibold text-sm text-center">Leading Indicators (KPIs)</div>
+          </div>
+          <div className="p-3">
+            <div className="font-semibold text-sm text-center">Results/Outcomes</div>
+          </div>
+        </div>
+        
+        {/* Functions Data */}
+        {functions.map((row, index) => {
+          const employee = employees.find(emp => emp.id === row.accountable_employee_id);
+          return (
+            <div key={`function-${index}`} className="grid grid-cols-4 border-b border-gray-300">
+              <div className="p-3 border-r border-gray-300">
+                <span className="text-sm">{row.function_name}</span>
+              </div>
+              <div className="p-3 border-r border-gray-300">
+                <span className="text-sm">
+                  {employee ? `${employee.first_name} ${employee.last_name}` : 'Unknown Employee'}
+                </span>
+              </div>
+              <div className="p-3 border-r border-gray-300">
+                <div className="text-sm whitespace-pre-line">{row.kpi_list}</div>
+              </div>
+              <div className="p-3">
+                <div className="text-sm whitespace-pre-line">{row.outcome_list}</div>
+              </div>
+            </div>
+          );
+        })}
+        
+        {/* Business Units Header */}
+        {businessUnits.length > 0 && (
+          <div className="grid grid-cols-4 border-b border-gray-300 bg-gray-200">
+            <div className="p-3 border-r border-gray-300">
+              <div className="font-semibold text-sm text-center">Heads of Business Units</div>
+            </div>
+            <div className="p-3 border-r border-gray-300">
+              <div className="font-semibold text-sm text-center">Person Accountable</div>
+            </div>
+            <div className="p-3 border-r border-gray-300">
+              <div className="font-semibold text-sm text-center">Leading Indicators (KPIs)</div>
+            </div>
+            <div className="p-3">
+              <div className="font-semibold text-sm text-center">Results/Outcomes</div>
+            </div>
+          </div>
+        )}
+        
+        {/* Business Units Data */}
+        {businessUnits.map((row, index) => {
+          const employee = employees.find(emp => emp.id === row.accountable_employee_id);
+          return (
+            <div key={`business-unit-${index}`} className="grid grid-cols-4 border-b border-gray-300">
+              <div className="p-3 border-r border-gray-300">
+                <span className="text-sm">{row.function_name}</span>
+              </div>
+              <div className="p-3 border-r border-gray-300">
+                <span className="text-sm">
+                  {employee ? `${employee.first_name} ${employee.last_name}` : 'Unknown Employee'}
+                </span>
+              </div>
+              <div className="p-3 border-r border-gray-300">
+                <div className="text-sm whitespace-pre-line">{row.kpi_list}</div>
+              </div>
+              <div className="p-3">
+                <div className="text-sm whitespace-pre-line">{row.outcome_list}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white">
@@ -260,6 +464,19 @@ const FaceForm: React.FC = () => {
             <span className="font-bold">People:</span> Function Accountability Chart (FaCe)
           </h1>
         </div>
+        {hasSubmittedData && (
+          <div className="flex items-center space-x-3">
+            <span className="text-sm">
+              {isEditMode ? 'Editing Mode' : 'View Mode'}
+            </span>
+            <button
+              onClick={handleEditModeToggle}
+              className="bg-white text-orange-400 px-4 py-1 rounded text-sm font-medium hover:bg-gray-100 transition-colors"
+            >
+              {isEditMode ? 'Switch to View' : 'Edit Form'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Instructions */}
@@ -290,7 +507,22 @@ const FaceForm: React.FC = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      {/* Show read-only view when not in edit mode */}
+      {!isEditMode && hasSubmittedData ? (
+        <div>
+          {renderReadOnlyView()}
+          
+          {/* Status Messages in View Mode */}
+          {submitStatus && (
+            <div className="p-4 bg-gray-50 border-l border-r border-gray-300">
+              <div className={`text-sm ${submitStatus.startsWith('Form') ? 'text-green-600' : 'text-red-600'}`}>
+                {submitStatus}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit(onSubmit)}>
         {/* Table */}
         <div className="border border-gray-300">
           {/* Table Header */}
@@ -372,7 +604,7 @@ const FaceForm: React.FC = () => {
 
           {/* Business Unit Rows */}
           {businessUnitFields.map((field, idx) => (
-            <BusinessUnitRow
+            <BusinessUnitRowComponent
               key={field.id}
               idx={idx}
               field={field}
@@ -424,6 +656,7 @@ const FaceForm: React.FC = () => {
           )}
         </div>
       </form>
+      )}
 
       {/* Footer */}
       <div className="bg-purple-600 p-4 border border-gray-300 rounded-b-lg text-white">
