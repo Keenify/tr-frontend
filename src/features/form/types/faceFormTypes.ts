@@ -17,7 +17,6 @@ export interface FaceFormRow {
   outcome_list: string;
   business_unit_name: string;
   head_employee_id: string;
-  enthusiastically_rehire: boolean;
 }
 
 export interface FaceFormDatabaseRow {
@@ -27,9 +26,6 @@ export interface FaceFormDatabaseRow {
   accountable_employee_id: string;
   kpi_list: string;
   outcome_list: string;
-  business_unit_name: string | null;
-  head_employee_id: string | null;
-  enthusiastically_rehire: boolean;
 }
 
 export interface BusinessUnitRow {

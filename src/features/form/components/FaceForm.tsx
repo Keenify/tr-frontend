@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import React, { useState, useEffect } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { supabase } from '../../../lib/supabase';
 import { useEmployees, ExtendedEmployee } from '../hooks/useEmployees';
-import { FaceFormValues, FaceFormRow, FaceFormDatabaseRow, BusinessUnitRow as BusinessUnitRowType } from '../types/faceFormTypes';
+import { FaceFormValues, FaceFormRow, FaceFormDatabaseRow, BusinessUnitRow } from '../types/faceFormTypes';
 import FaceFormRowComponent from './FaceFormRow';
-import BusinessUnitRow from './BusinessUnitRow';
+import BusinessUnitRowComponent from './BusinessUnitRow';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import { useSession } from '../../../shared/hooks/useSession';
 
@@ -16,6 +16,7 @@ const MAX_BU_ROWS = 10;
 // Predefined functions
 const PREDEFINED_FUNCTIONS = [
   'Head of Company',
+  'CEO',
   'Marketing',
   'R&D/Innovation',
   'Sales',
@@ -28,12 +29,48 @@ const PREDEFINED_FUNCTIONS = [
   'Customer Advocacy'
 ];
 
+// Helper function to determine if a function name should be categorized as a predefined function
+const isPredefinedFunction = (functionName: string): boolean => {
+  const normalizedName = functionName.trim().toLowerCase();
+  
+  // Check exact matches first
+  if (PREDEFINED_FUNCTIONS.some(func => func.toLowerCase() === normalizedName)) {
+    return true;
+  }
+  
+  // Check for common variations
+  const functionVariations: { [key: string]: string[] } = {
+    'ceo': ['chief executive officer', 'chief executive', 'ceo'],
+    'head of company': ['head of company', 'company head', 'ceo', 'chief executive officer'],
+    'marketing': ['marketing', 'marketing head', 'head of marketing', 'marketing director'],
+    'sales': ['sales', 'sales head', 'head of sales', 'sales director', 'sales manager'],
+    'operations': ['operations', 'operations head', 'head of operations', 'operations director', 'ops'],
+    'human resources': ['human resources', 'hr', 'head of hr', 'hr director', 'human resources director'],
+    'information technology': ['information technology', 'it', 'head of it', 'it director', 'technology'],
+    'treasury': ['treasury', 'treasurer', 'head of treasury', 'finance'],
+    'controller': ['controller', 'financial controller', 'finance controller']
+  };
+  
+  // Check if the function name matches any variation
+  for (const [baseFunction, variations] of Object.entries(functionVariations)) {
+    if (variations.some(variation => variation === normalizedName)) {
+      return true;
+    }
+  }
+  
+  return false;
+};
+
 const FaceForm: React.FC = () => {
   // State for loading and submit status
   const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<string | null>(null);
-  const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>('');
+  
+  // New states for view/edit mode and data persistence
+  const [isEditMode, setIsEditMode] = useState(true);
+  const [hasSubmittedData, setHasSubmittedData] = useState(false);
+  const [submittedData, setSubmittedData] = useState<FaceFormDatabaseRow[]>([]);
+  const [loadingExistingData, setLoadingExistingData] = useState(false);
   
   // Get session and company data
   const { session } = useSession();
@@ -41,7 +78,7 @@ const FaceForm: React.FC = () => {
   const { companyInfo, userInfo, isLoading: userDataLoading } = useUserAndCompanyData(userId || '');
   
   // React Hook Form setup
-  const { control, handleSubmit, watch, reset, setValue } = useForm<FaceFormValues>({
+  const { control, handleSubmit, setValue } = useForm<FaceFormValues>({
     defaultValues: {
       company_id: companyInfo?.id || '',
       functions: PREDEFINED_FUNCTIONS.map(func => ({
@@ -51,7 +88,6 @@ const FaceForm: React.FC = () => {
         outcome_list: '',
         business_unit_name: '',
         head_employee_id: '',
-        enthusiastically_rehire: true,
       })),
       business_units: Array(MIN_BU_ROWS).fill({
         business_unit_name: '',
@@ -82,6 +118,102 @@ const FaceForm: React.FC = () => {
     }
   }, [companyInfo?.id, setValue]);
 
+  // Load existing form data on mount
+  const loadExistingData = async () => {
+    if (!companyInfo?.id) return;
+    
+    setLoadingExistingData(true);
+    try {
+      const { data, error } = await supabase
+        .from('face_form')
+        .select('*')
+        .eq('company_id', companyInfo.id);
+      
+      if (error) {
+        console.error('Error loading existing data:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        setSubmittedData(data);
+        setHasSubmittedData(true);
+        setIsEditMode(false); // Start in view mode if data exists
+        
+        // Populate form with existing data
+        populateFormWithExistingData(data);
+      }
+    } catch (error) {
+      console.error('Failed to load existing data:', error);
+    } finally {
+      setLoadingExistingData(false);
+    }
+  };
+
+  // Populate form fields with existing data
+  const populateFormWithExistingData = (data: FaceFormDatabaseRow[]) => {
+    const functionData: FaceFormRow[] = [];
+    const businessUnitData: BusinessUnitRow[] = [];
+    
+    data.forEach(row => {
+      // Check if it's a predefined function or business unit
+      const isFunction = isPredefinedFunction(row.function_name);
+      
+      if (isFunction) {
+        functionData.push({
+          function_name: row.function_name,
+          accountable_employee_id: row.accountable_employee_id,
+          kpi_list: row.kpi_list,
+          outcome_list: row.outcome_list,
+          business_unit_name: '',
+          head_employee_id: '',
+        });
+      } else {
+        businessUnitData.push({
+          business_unit_name: row.function_name,
+          head_employee_id: row.accountable_employee_id,
+          kpi_list: row.kpi_list,
+          outcome_list: row.outcome_list,
+        });
+      }
+    });
+    
+    // Update functions array with existing data
+    const updatedFunctions = PREDEFINED_FUNCTIONS.map(func => {
+      const existingData = functionData.find(f => f.function_name === func);
+      return existingData || {
+        function_name: func,
+        accountable_employee_id: '',
+        kpi_list: '',
+        outcome_list: '',
+        business_unit_name: '',
+        head_employee_id: '',
+      };
+    });
+    
+    setValue('functions', updatedFunctions);
+    
+    // Update business units array with existing data
+    const minBusinessUnits = Math.max(businessUnitData.length, MIN_BU_ROWS);
+    const updatedBusinessUnits: BusinessUnitRow[] = Array(minBusinessUnits).fill(null).map((_, index) => {
+      return businessUnitData[index] || {
+        business_unit_name: '',
+        head_employee_id: '',
+        kpi_list: '',
+        outcome_list: '',
+      };
+    });
+    
+    setValue('business_units', updatedBusinessUnits);
+  };
+
+  // Load existing data when component mounts and company info is available
+  useEffect(() => {
+    if (companyInfo?.id && !loadingExistingData) {
+      loadExistingData();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyInfo?.id]);
+
   // Add a new function row
   const handleAddRow = () => {
     if (fields.length < MAX_ROWS) {
@@ -92,7 +224,6 @@ const FaceForm: React.FC = () => {
         outcome_list: '',
         business_unit_name: '',
         head_employee_id: '',
-        enthusiastically_rehire: true,
       });
     }
   };
@@ -123,88 +254,97 @@ const FaceForm: React.FC = () => {
     }
   };
 
-  // Helper function to translate database errors to user-friendly messages
-  const translateErrorMessage = (error: any): string => {
-    if (error.code === '23514') {
-      if (error.message.includes('check_kpi_not_empty')) {
-        return 'All submitted rows must have Key Performance Indicators (KPIs) filled in. Please ensure the "Leading Indicators" field is not empty for each function or business unit you want to submit.';
-      }
-      if (error.message.includes('check_outcome_not_empty')) {
-        return 'All submitted rows must have Results/Outcomes filled in. Please ensure the "Results/Outcomes" field is not empty for each function or business unit you want to submit.';
-      }
-      return 'Some required fields are missing. Please fill in all required information before submitting.';
-    }
-    if (error.code === '23505') {
-      if (error.message.includes('unique_function_per_company')) {
-        return 'Duplicate function detected. Each function can only be assigned once per company. Please check that you haven\'t already submitted this form, or remove any duplicate function entries before submitting again.';
-      }
-      return 'Duplicate entry detected. Please check for duplicate information and try again.';
-    }
-    if (error.code === '22P02') {
-      return 'Invalid data format detected. Please check that all fields are filled in correctly.';
-    }
-    if (error.message?.includes('RLS') || error.message?.includes('row-level security') || error.message?.includes('policy')) {
-      return 'You do not have permission to perform this action. This might be due to: 1) Not being logged in properly, 2) Not having access to the company data, or 3) Missing required user permissions. Please refresh the page and try again, or contact support.';
-    }
-    return `An error occurred: ${error.message}`;
-  };
-
-  // Form submission handler
+  // Form submission handler - with proper validation
   const onSubmit = async (values: FaceFormValues) => {
     if (!companyInfo?.id) {
-      setErrorMessage('Company information not available');
-      setShowErrorModal(true);
+      setSubmitStatus('Company information not available');
+      return;
+    }
+    
+    if (!userInfo?.id) {
+      setSubmitStatus('Employee information not available');
       return;
     }
     
     setLoading(true);
     setSubmitStatus(null);
     try {
-      // Prepare function rows for insertion
-      const functionRows = values.functions
-        .filter(row => row.accountable_employee_id && row.function_name.trim() && row.kpi_list?.trim() && row.outcome_list?.trim()) // Only submit rows with all required data
-        .map((row) => ({
-          company_id: companyInfo.id,
-          employee_id: userId, // Who submitted this form
-          function_name: row.function_name.trim(),
-          accountable_employee_id: row.accountable_employee_id,
-          kpi_list: row.kpi_list.trim(),
-          outcome_list: row.outcome_list.trim(),
-          business_unit_name: null, // Use null instead of empty string for UUID columns
-          head_employee_id: null, // Use null instead of empty string for UUID columns
-          enthusiastically_rehire: row.enthusiastically_rehire,
-        }));
-
-      // Prepare business unit rows for insertion
-      const businessUnitRows = values.business_units
-        .filter(row => row.head_employee_id && row.business_unit_name.trim() && row.kpi_list?.trim() && row.outcome_list?.trim()) // Only submit rows with all required data
-        .map((row) => ({
-          company_id: companyInfo.id,
-          employee_id: userId, // Who submitted this form
-          function_name: row.business_unit_name.trim(),
-          accountable_employee_id: row.head_employee_id,
-          kpi_list: row.kpi_list.trim(),
-          outcome_list: row.outcome_list.trim(),
-          business_unit_name: row.business_unit_name.trim(),
-          head_employee_id: row.head_employee_id,
-          enthusiastically_rehire: true,
-        }));
-
-      // Combine all rows
-      const allRows = [...functionRows, ...businessUnitRows];
+      // Validate functions - check for incomplete rows before filtering
+      const incompleteFunctions: string[] = [];
+      const validFunctionRows: any[] = [];
       
-      if (allRows.length === 0) {
-        setErrorMessage('Please fill in at least one function or business unit with all required information:\n\n• Person Accountable\n• Leading Indicators (KPIs)\n• Results/Outcomes\n\nAll fields must be completed to submit.');
-        setShowErrorModal(true);
+      values.functions.forEach((row, index) => {
+        // Check if row has any data filled
+        const hasData = row.accountable_employee_id || row.kpi_list?.trim() || row.outcome_list?.trim();
+        
+        if (hasData) {
+          // If row has some data, validate all required fields are filled
+          if (!row.accountable_employee_id) {
+            incompleteFunctions.push(`${row.function_name}: Missing Person Accountable`);
+          } else if (!row.kpi_list?.trim()) {
+            incompleteFunctions.push(`${row.function_name}: Missing Leading Indicators (KPIs)`);
+          } else if (!row.outcome_list?.trim()) {
+            incompleteFunctions.push(`${row.function_name}: Missing Results/Outcomes`);
+          } else {
+            // All required fields are filled
+            validFunctionRows.push({
+              company_id: companyInfo.id,
+              employee_id: userInfo.id,
+              function_name: row.function_name.trim(),
+              accountable_employee_id: row.accountable_employee_id,
+              kpi_list: row.kpi_list.trim(),
+              outcome_list: row.outcome_list.trim(),
+            });
+          }
+        }
+      });
+
+      // Validate business units - check for incomplete rows before filtering
+      const incompleteBusinessUnits: string[] = [];
+      const validBusinessUnitRows: any[] = [];
+      
+      values.business_units.forEach((row, index) => {
+        // Check if row has any data filled
+        const hasData = row.head_employee_id || row.business_unit_name?.trim() || row.kpi_list?.trim() || row.outcome_list?.trim();
+        
+        if (hasData) {
+          // If row has some data, validate all required fields are filled
+          if (!row.business_unit_name?.trim()) {
+            incompleteBusinessUnits.push(`Business Unit ${index + 1}: Missing Business Unit Name`);
+          } else if (!row.head_employee_id) {
+            incompleteBusinessUnits.push(`${row.business_unit_name}: Missing Person Accountable`);
+          } else if (!row.kpi_list?.trim()) {
+            incompleteBusinessUnits.push(`${row.business_unit_name}: Missing Leading Indicators (KPIs)`);
+          } else if (!row.outcome_list?.trim()) {
+            incompleteBusinessUnits.push(`${row.business_unit_name}: Missing Results/Outcomes`);
+          } else {
+            // All required fields are filled
+            validBusinessUnitRows.push({
+              company_id: companyInfo.id,
+              employee_id: userInfo.id,
+              function_name: row.business_unit_name.trim(),
+              accountable_employee_id: row.head_employee_id,
+              kpi_list: row.kpi_list.trim(),
+              outcome_list: row.outcome_list.trim(),
+            });
+          }
+        }
+      });
+
+      // Check for validation errors
+      const allErrors = [...incompleteFunctions, ...incompleteBusinessUnits];
+      if (allErrors.length > 0) {
+        setSubmitStatus(`Please complete the following required fields:\n${allErrors.join('\n')}`);
+        setLoading(false);
         return;
       }
+
+      // Combine all valid rows
+      const allRows = [...validFunctionRows, ...validBusinessUnitRows];
       
-      // Validate that all rows have required fields
-      const invalidRows = allRows.filter(row => !row.company_id);
-      if (invalidRows.length > 0) {
-        console.error('Invalid rows detected (missing company_id):', invalidRows);
-        setErrorMessage('Company information missing. Please refresh the page and try again.');
-        setShowErrorModal(true);
+      if (allRows.length === 0) {
+        setSubmitStatus('Please fill in at least one function or business unit with all required information: Person Accountable, Leading Indicators (KPIs), and Results/Outcomes');
+        setLoading(false);
         return;
       }
       
@@ -212,16 +352,7 @@ const FaceForm: React.FC = () => {
       
       // Verify user is authenticated
       if (!userId) {
-        setErrorMessage('User not authenticated. Please log in again.');
-        setShowErrorModal(true);
-        return;
-      }
-      
-      // Verify company access
-      if (!companyInfo?.id) {
-        setErrorMessage('Company information not available. Please refresh the page or contact support.');
-        setShowErrorModal(true);
-        return;
+        throw new Error('User not authenticated. Please log in again.');
       }
       
       // Ensure user session is set before database operation
@@ -229,94 +360,37 @@ const FaceForm: React.FC = () => {
       
       if (sessionError) {
         console.error('Session error:', sessionError);
-        setErrorMessage('Failed to get session. Please log in again.');
-        setShowErrorModal(true);
-        return;
+        throw new Error('Failed to get session. Please log in again.');
       }
       
       if (!currentSession?.session) {
-        setErrorMessage('No active session found. Please log in again.');
-        setShowErrorModal(true);
-        return;
+        throw new Error('No active session found. Please log in again.');
       }
       
       console.log('Current user ID:', currentSession.session.user.id);
+      console.log('Employee ID:', userInfo.id);
       console.log('Inserting with authenticated session');
       
-      // Debug: Check if user exists in employees table and get their company_id
-      console.log('Checking user in employees table...');
-      console.log('Looking for user ID:', currentSession.session.user.id);
-      
-      const { data: userEmployees, error: userEmployeeError } = await supabase
-        .from('employees')
-        .select('id, company_id, first_name, last_name, email')
-        .eq('id', currentSession.session.user.id);
-      
-      if (userEmployeeError) {
-        console.error('User employee check error:', userEmployeeError);
-        setErrorMessage(`Error checking employee table: ${userEmployeeError.message}`);
-        setShowErrorModal(true);
-        return;
-      }
-      
-      console.log('Employee query result:', userEmployees);
-      console.log('Number of employees found:', userEmployees?.length || 0);
-      
-      if (!userEmployees || userEmployees.length === 0) {
-        console.error('No employee record found for user:', currentSession.session.user.id);
-        setErrorMessage(`Your user account (${currentSession.session.user.email}) is not linked to any employee record. Please contact your administrator to add you to the employees table.`);
-        setShowErrorModal(true);
-        return;
-      }
-      
-      if (userEmployees.length > 1) {
-        console.error('Multiple employee records found for user:', currentSession.session.user.id);
-        console.error('Employee records:', userEmployees);
-        setErrorMessage(`Multiple employee records found for your account. Please contact your administrator to resolve this data inconsistency.`);
-        setShowErrorModal(true);
-        return;
-      }
-      
-      const userEmployee = userEmployees[0];
-      console.log('User employee data:', userEmployee);
-      console.log('User company_id:', userEmployee.company_id);
-      console.log('Form company_id:', companyInfo.id);
-      
-      // Check if user's company matches form company
-      if (userEmployee.company_id !== companyInfo.id) {
-        console.error('Company mismatch:', { userCompany: userEmployee.company_id, formCompany: companyInfo.id });
-        setErrorMessage(`Access denied: You don't have permission to submit data for this company. Your employee record is linked to a different company.`);
-        setShowErrorModal(true);
-        return;
-      }
-      
-      // Debug: Test RLS policy by trying a simple select first
-      console.log('Testing RLS policy with SELECT...');
-      const { data: testSelect, error: testSelectError } = await supabase
+      // First, let's try to check the table structure
+      console.log('Attempting to check table structure...');
+      const { data: tableCheck, error: tableError } = await supabase
         .from('face_form')
         .select('*')
-        .eq('company_id', companyInfo.id)
         .limit(1);
       
-      if (testSelectError) {
-        console.error('RLS SELECT test failed:', testSelectError);
-        setErrorMessage(`RLS SELECT test failed: ${testSelectError.message}. This indicates a policy issue.`);
-        setShowErrorModal(true);
-        return;
+      if (tableError) {
+        console.error('Table check error:', tableError);
       } else {
-        console.log('RLS SELECT test passed:', testSelect);
+        console.log('Table check result:', tableCheck);
       }
       
-      // Try basic insert with comprehensive logging
-      console.log('Attempting insert with rows:', allRows);
-      console.log('Sample row being inserted:', allRows[0]);
-      console.log('Auth uid():', currentSession.session.user.id);
-      console.log('Expected company_id in policy:', companyInfo.id);
+      // Try basic insert first - only with required fields
+      console.log('Attempting basic insert with original rows:', allRows);
       
-      // Insert data with current authenticated session context
+      // Use upsert to handle duplicates and potential RLS issues
       const { data, error } = await supabase
         .from('face_form')
-        .insert(allRows)
+        .upsert(allRows, { onConflict: 'company_id,function_name' })
         .select();
       
       if (error) {
@@ -330,58 +404,136 @@ const FaceForm: React.FC = () => {
         console.error('Failed rows data:', allRows);
         console.error('Current user session:', {
           userId: currentSession.session.user.id,
+          employeeId: userInfo.id,
           email: currentSession.session.user.email,
           role: currentSession.session.user.role
         });
-        
-        // Additional debugging for RLS
-        if (error.message?.includes('policy') || error.message?.includes('RLS') || error.message?.includes('row-level security')) {
-          console.error('RLS Policy violation details:');
-          console.error('- Current user ID (auth.uid()):', currentSession.session.user.id);
-          console.error('- Company ID being inserted:', companyInfo.id);
-          console.error('- User employee record company_id:', userEmployee?.company_id);
-          
-          // Test the policy condition manually
-          console.log('Testing policy condition manually...');
-          const { data: policyTest, error: policyTestError } = await supabase
-            .from('employees')
-            .select('company_id')
-            .eq('id', currentSession.session.user.id);
-          
-          console.log('Policy test result:', policyTest);
-          if (policyTestError) {
-            console.error('Policy test error:', policyTestError);
-          }
-        }
-        
-        const userFriendlyError = translateErrorMessage(error);
-        setErrorMessage(userFriendlyError);
-        setShowErrorModal(true);
-        return;
+        throw new Error(`Database insert failed: ${error.message} (Code: ${error.code})`);
       }
       
       console.log('Successfully inserted data:', data);
       
       setSubmitStatus('Form submitted successfully!');
-      reset();
+      setSubmittedData(allRows);
+      setHasSubmittedData(true);
+      setIsEditMode(false); // Switch to view mode after successful submission
     } catch (err: unknown) {
       console.error('Form submission error:', err);
-      const errorMsg = err instanceof Error ? err.message : 'Unknown error occurred';
-      setErrorMessage('Submission failed: ' + errorMsg);
-      setShowErrorModal(true);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setSubmitStatus('Submission failed: ' + errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  if (userDataLoading) {
+  if (userDataLoading || loadingExistingData) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
-        <p className="ml-3 text-orange-600 font-medium">Loading form...</p>
+        <p className="ml-3 text-orange-600 font-medium">
+          {loadingExistingData ? 'Loading existing data...' : 'Loading form...'}
+        </p>
       </div>
     );
   }
+
+  // Handle edit mode toggle
+  const handleEditModeToggle = () => {
+    setIsEditMode(!isEditMode);
+    setSubmitStatus(null); // Clear any previous status messages
+  };
+
+  // Render read-only view for submitted data
+  const renderReadOnlyView = () => {
+    if (!hasSubmittedData || submittedData.length === 0) return null;
+    
+    const functions = submittedData.filter(row => isPredefinedFunction(row.function_name));
+    const businessUnits = submittedData.filter(row => !isPredefinedFunction(row.function_name));
+    
+    return (
+      <div className="border border-gray-300 bg-gray-50">
+        {/* Table Header */}
+        <div className="grid grid-cols-4 bg-gray-200 border-b border-gray-300">
+          <div className="p-3 border-r border-gray-300">
+            <div className="font-semibold text-sm text-center">Functions</div>
+          </div>
+          <div className="p-3 border-r border-gray-300">
+            <div className="font-semibold text-sm text-center">Person Accountable</div>
+          </div>
+          <div className="p-3 border-r border-gray-300">
+            <div className="font-semibold text-sm text-center">Leading Indicators (KPIs)</div>
+          </div>
+          <div className="p-3">
+            <div className="font-semibold text-sm text-center">Results/Outcomes</div>
+          </div>
+        </div>
+        
+        {/* Functions Data */}
+        {functions.map((row, index) => {
+          const employee = employees.find(emp => emp.id === row.accountable_employee_id);
+          return (
+            <div key={`function-${index}`} className="grid grid-cols-4 border-b border-gray-300">
+              <div className="p-3 border-r border-gray-300">
+                <span className="text-sm">{row.function_name}</span>
+              </div>
+              <div className="p-3 border-r border-gray-300">
+                <span className="text-sm">
+                  {employee ? `${employee.first_name} ${employee.last_name}` : 'Unknown Employee'}
+                </span>
+              </div>
+              <div className="p-3 border-r border-gray-300">
+                <div className="text-sm whitespace-pre-line">{row.kpi_list}</div>
+              </div>
+              <div className="p-3">
+                <div className="text-sm whitespace-pre-line">{row.outcome_list}</div>
+              </div>
+            </div>
+          );
+        })}
+        
+        {/* Business Units Header */}
+        {businessUnits.length > 0 && (
+          <div className="grid grid-cols-4 border-b border-gray-300 bg-gray-200">
+            <div className="p-3 border-r border-gray-300">
+              <div className="font-semibold text-sm text-center">Heads of Business Units</div>
+            </div>
+            <div className="p-3 border-r border-gray-300">
+              <div className="font-semibold text-sm text-center">Person Accountable</div>
+            </div>
+            <div className="p-3 border-r border-gray-300">
+              <div className="font-semibold text-sm text-center">Leading Indicators (KPIs)</div>
+            </div>
+            <div className="p-3">
+              <div className="font-semibold text-sm text-center">Results/Outcomes</div>
+            </div>
+          </div>
+        )}
+        
+        {/* Business Units Data */}
+        {businessUnits.map((row, index) => {
+          const employee = employees.find(emp => emp.id === row.accountable_employee_id);
+          return (
+            <div key={`business-unit-${index}`} className="grid grid-cols-4 border-b border-gray-300">
+              <div className="p-3 border-r border-gray-300">
+                <span className="text-sm">{row.function_name}</span>
+              </div>
+              <div className="p-3 border-r border-gray-300">
+                <span className="text-sm">
+                  {employee ? `${employee.first_name} ${employee.last_name}` : 'Unknown Employee'}
+                </span>
+              </div>
+              <div className="p-3 border-r border-gray-300">
+                <div className="text-sm whitespace-pre-line">{row.kpi_list}</div>
+              </div>
+              <div className="p-3">
+                <div className="text-sm whitespace-pre-line">{row.outcome_list}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white">
@@ -389,9 +541,22 @@ const FaceForm: React.FC = () => {
       <div className="bg-orange-400 text-white p-4 rounded-t-lg flex justify-between items-center">
         <div>
           <h1 className="text-xl">
-            <span className="font-bold">People:</span> Function Accountability Chart (FaCe)
+            <span className="font-bold">People:</span> Function Accountability Chart (FACe)
           </h1>
         </div>
+        {hasSubmittedData && (
+          <div className="flex items-center space-x-3">
+            <span className="text-sm">
+              {isEditMode ? 'Editing Mode' : 'View Mode'}
+            </span>
+            <button
+              onClick={handleEditModeToggle}
+              className="bg-white text-orange-400 px-4 py-1 rounded text-sm font-medium hover:bg-gray-100 transition-colors"
+            >
+              {isEditMode ? 'Switch to View' : 'Edit Form'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Instructions */}
@@ -422,7 +587,24 @@ const FaceForm: React.FC = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      {/* Show read-only view when not in edit mode */}
+      {!isEditMode && hasSubmittedData ? (
+        <div>
+          {renderReadOnlyView()}
+          
+          {/* Status Messages in View Mode */}
+          {submitStatus && (
+            <div className="p-4 bg-gray-50 border-l border-r border-gray-300">
+              <div className={`text-sm ${submitStatus.startsWith('Form') ? 'text-green-600' : 'text-red-600'}`}>
+                {submitStatus.split('\n').map((line, index) => (
+                  <div key={index}>{line}</div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit(onSubmit)}>
         {/* Table */}
         <div className="border border-gray-300">
           {/* Table Header */}
@@ -477,7 +659,7 @@ const FaceForm: React.FC = () => {
           ))}
 
           {/* Heads of Business Units Header */}
-          <div className="grid grid-cols-4 border-b border-gray-300 bg-gray-100">
+          <div className="grid grid-cols-4 border-b border-gray-300 bg-gray-200">
             <div className="p-3 border-r border-gray-300">
               <div className="font-semibold text-sm text-center">
                 Heads of Business Units
@@ -504,7 +686,7 @@ const FaceForm: React.FC = () => {
 
           {/* Business Unit Rows */}
           {businessUnitFields.map((field, idx) => (
-            <BusinessUnitRow
+            <BusinessUnitRowComponent
               key={field.id}
               idx={idx}
               field={field}
@@ -549,13 +731,16 @@ const FaceForm: React.FC = () => {
           >
             {loading ? 'Submitting...' : 'Submit'}
           </button>
-          {submitStatus && submitStatus.startsWith('Form') && (
-            <div className="mt-3 text-sm text-green-600">
-              {submitStatus}
+          {submitStatus && (
+            <div className={`mt-3 text-sm ${submitStatus.startsWith('Form') ? 'text-green-600' : 'text-red-600'}`}>
+              {submitStatus.split('\n').map((line, index) => (
+                <div key={index}>{line}</div>
+              ))}
             </div>
           )}
         </div>
       </form>
+      )}
 
       {/* Footer */}
       <div className="bg-purple-600 p-4 border border-gray-300 rounded-b-lg text-white">
@@ -566,31 +751,6 @@ const FaceForm: React.FC = () => {
           <span className="text-sm font-medium">Identify: 1. More than 1 Person in a Seat; 2. Person in more than 1 seat; 3. Empty seats; 4. Enthusiastically Rehire?</span>
         </div>
       </div>
-
-      {/* Error Modal */}
-      {showErrorModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="flex items-center mb-4">
-              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
-                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Error</h3>
-            </div>
-            <p className="text-gray-700 mb-6 whitespace-pre-line">{errorMessage}</p>
-            <div className="flex justify-end">
-              <button
-                onClick={() => setShowErrorModal(false)}
-                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
