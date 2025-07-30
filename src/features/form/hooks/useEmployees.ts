@@ -5,7 +5,7 @@ import { Employee } from '../types/paceFormTypes';
 // Extend Employee type locally to include is_employee and profile_pic_url
 export interface ExtendedEmployee extends Employee {
   is_employee: boolean;
-  profile_pic_url: string | null; 
+  profile_pic_url: string | null;
 }
 
 export function useEmployees(companyId: string) {
