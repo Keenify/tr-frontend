@@ -2,44 +2,81 @@ import { supabase } from '../../../lib/supabase';
 import { SevenStrata, Company } from '../types';
 
 class StrataService {
-  // Get companies for a specific user using company_name column (much simpler!)
+  // Hybrid approach: Try seven_strata first (existing users), fallback to employees table (new users)
   async getCompaniesForUser(userId: string): Promise<Company[]> {
     try {
-      console.log('🔍 Testing: Fetching companies for userId using company_name:', userId);
+      console.log('🔍 Hybrid: Fetching companies for userId:', userId);
       
-      const { data, error } = await supabase
+      // STEP 1: Try seven_strata table first (preserve existing behavior)
+      const { data: strataData, error: strataError } = await supabase
         .from('seven_strata')
         .select('company_id, company_name')
         .eq('user_id', userId);
 
-      console.log('🔍 Testing: Raw query result:', { data, error });
+      console.log('🔍 Hybrid: Seven_strata query result:', { data: strataData, error: strataError });
 
-      if (error) {
-        console.error('🔍 Testing: Query error:', error);
-        throw error;
+      if (strataError) {
+        console.error('🔍 Hybrid: Seven_strata query error:', strataError);
+        throw strataError;
       }
       
-      if (!data || data.length === 0) {
-        console.log('🔍 Testing: No records found for user');
+      // If we found companies in seven_strata, use existing logic (no breaking changes)
+      if (strataData && strataData.length > 0) {
+        console.log('🔍 Hybrid: Found companies in seven_strata, using existing approach');
+        
+        const companies: Company[] = strataData
+          .filter(record => record.company_name) // Only records with company_name
+          .map(record => ({
+            id: record.company_id,
+            name: record.company_name
+          }))
+          .filter((company, index, self) => 
+            index === self.findIndex(c => c.id === company.id)
+          ); // Remove duplicates
+        
+        console.log('🔍 Hybrid: Final companies from seven_strata:', companies);
+        return companies.sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      // STEP 2: Fallback to employees table (new users)
+      console.log('🔍 Hybrid: No seven_strata data found, trying employees table');
+      
+      const { data: employeeData, error: employeeError } = await supabase
+        .from('employees')
+        .select(`
+          company_id,
+          companies(id, name)
+        `)
+        .eq('user_id', userId);
+
+      console.log('🔍 Hybrid: Employees query result:', { data: employeeData, error: employeeError });
+
+      if (employeeError) {
+        console.error('🔍 Hybrid: Employees query error:', employeeError);
+        throw employeeError;
+      }
+
+      if (!employeeData || employeeData.length === 0) {
+        console.log('🔍 Hybrid: No companies found in employees table either');
         return [];
       }
 
-      // Convert to Company format and remove duplicates
-      const companies: Company[] = data
-        .filter(record => record.company_name) // Only records with company_name
-        .map(record => ({
-          id: record.company_id,
-          name: record.company_name
+      // Convert employees data to same format as seven_strata
+      const companies: Company[] = employeeData
+        .filter((record: any) => record.companies && record.companies.name) // Only records with company data
+        .map((record: any) => ({
+          id: record.companies.id,
+          name: record.companies.name
         }))
         .filter((company, index, self) => 
           index === self.findIndex(c => c.id === company.id)
         ); // Remove duplicates
-      
-      console.log('🔍 Testing: Final companies array:', companies);
-      
+
+      console.log('🔍 Hybrid: Final companies from employees table:', companies);
       return companies.sort((a, b) => a.name.localeCompare(b.name));
+      
     } catch (error) {
-      console.error('🔍 Testing: Error fetching companies:', error);
+      console.error('🔍 Hybrid: Error in getCompaniesForUser:', error);
       return [];
     }
   }
