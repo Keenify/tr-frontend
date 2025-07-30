@@ -6,9 +6,6 @@ export interface FaceFormRow {
   accountable_employee_id: string;
   kpi_list: string;
   outcome_list: string;
-  business_unit_name: string;
-  head_employee_id: string;
-  enthusiastically_rehire: boolean;
 }
 
 /**
