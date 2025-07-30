@@ -306,16 +306,7 @@ const StrataPage: React.FC<StrataProps> = ({ session }) => {
     }
   }, [userInfo]);
 
-  // Separate effect to handle userInfo loading
-  useEffect(() => {
-    if (userInfo?.company_id && companies.length > 0) {
-      console.log('🔍 Testing: userInfo loaded, checking auto-select');
-      if (companies.some(c => c.id === userInfo.company_id)) {
-        console.log('🔍 Testing: Auto-selecting company after userInfo load:', userInfo.company_id);
-        setSelectedCompanyId(userInfo.company_id);
-      }
-    }
-  }, [userInfo, companies]);
+  // Auto-selection removed - users now manually select companies for better UX
 
   useEffect(() => {
     if (selectedCompanyId && userInfo?.user_id) {
@@ -488,8 +479,12 @@ const StrataPage: React.FC<StrataProps> = ({ session }) => {
     try {
       const success = await strataService.deleteStrata(userInfo.user_id, selectedCompanyId);
       if (success) {
-        const defaultData = strataService.getDefaultStrataData(userInfo.user_id, selectedCompanyId);
-        setStrataData(defaultData as SevenStrata);
+        // Reset to default UI state - show selector (UI change only)
+        setSelectedCompanyId('');
+        setStrataData(null);
+        setOriginalData(null);
+        setIsEditMode(true);
+        setHasUnsavedChanges(false);
         toast.success('Strata data deleted successfully');
       }
     } catch (error) {
@@ -511,89 +506,46 @@ const StrataPage: React.FC<StrataProps> = ({ session }) => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="max-w-7xl mx-auto p-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-lg shadow-sm">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold">7 Strata Strategic Planning</h1>
             <p className="text-blue-100 mt-1">Define your strategic framework across all seven dimensions</p>
           </div>
           
-          <div className="flex gap-3">
-            {/* Save/Edit/Cancel Buttons */}
-            {selectedCompanyId && (
-              <>
-                {isEditMode ? (
-                  <>
-                    <button
-                      onClick={handleSave}
-                      disabled={saving || !hasUnsavedChanges}
-                      className={`px-4 py-2 rounded transition-colors ${
-                        saving || !hasUnsavedChanges
-                          ? 'bg-gray-400 text-white cursor-not-allowed' 
-                          : 'bg-green-500 text-white hover:bg-green-600'
-                      }`}
-                    >
-                      {saving ? 'Saving...' : 'Save'}
-                    </button>
-                    {originalData && checkIfFormHasContent(originalData) && (
-                      <button
-                        onClick={handleCancel}
-                        disabled={saving}
-                        className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    )}
-                  </>
-                ) : (
-                  <button
-                    onClick={handleEdit}
-                    className="px-4 py-2 bg-white text-blue-600 border border-white rounded hover:bg-blue-50 transition-colors"
-                  >
-                    Edit
-                  </button>
-                )}
-                
-                {strataData && checkIfFormHasContent(strataData) && (
-                  <button
-                    onClick={() => setShowDeleteModal(true)}
-                    className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                  >
-                    Delete Form
-                  </button>
-                )}
-              </>
-            )}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            {/* Organization Selector */}
+            <div className="flex flex-col">
+              <label className="block text-sm font-medium text-blue-100 mb-2">
+                Select Organization
+              </label>
+              <select
+                value={selectedCompanyId}
+                onChange={(e) => setSelectedCompanyId(e.target.value)}
+                className={`w-full sm:w-64 p-3 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:border-white bg-white ${
+                  selectedCompanyId ? 'text-gray-900' : 'text-gray-500'
+                }`}
+              >
+                <option value="" disabled hidden>Select an organization...</option>
+                {companies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Form Container */}
-      <div className="bg-white rounded-lg shadow-lg border border-gray-200">
-        {/* Company Selector */}
-        <div className="p-6 border-b border-gray-200">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select Organization
-          </label>
-          <select
-            value={selectedCompanyId}
-            onChange={(e) => setSelectedCompanyId(e.target.value)}
-            className="w-full md:w-64 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">Select an organization...</option>
-            {companies.map((company) => (
-              <option key={company.id} value={company.id}>
-                {company.name}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="bg-white rounded-b-lg shadow-lg border border-gray-200 border-t-0">
 
         {/* Notification Banner - Only show if no company selected */}
         {!selectedCompanyId && (
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mx-6 rounded-md">
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 m-6 rounded-md">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
@@ -602,7 +554,7 @@ const StrataPage: React.FC<StrataProps> = ({ session }) => {
               </div>
               <div className="ml-3">
                 <p className="text-sm text-yellow-700">
-                  <strong>Please select an organization first</strong> to fill out the 7 Strata form.
+                  <strong>Please select an organization from the header</strong> to fill out the 7 Strata form.
                 </p>
               </div>
             </div>
@@ -611,7 +563,7 @@ const StrataPage: React.FC<StrataProps> = ({ session }) => {
 
         {/* Edit Mode Status Banner */}
         {selectedCompanyId && !isEditMode && (
-          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mx-6 rounded-md">
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 m-6 rounded-md">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
@@ -676,6 +628,54 @@ const StrataPage: React.FC<StrataProps> = ({ session }) => {
               </div>
             </div>
           ))}
+          </div>
+        )}
+        
+        {/* Action Buttons - Bottom Section */}
+        {selectedCompanyId && (
+          <div className="bg-white border-t border-gray-200 p-6 rounded-b-lg">
+            <div className="flex flex-col sm:flex-row justify-end gap-3">
+              {isEditMode ? (
+                <>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving || !hasUnsavedChanges}
+                    className={`px-6 py-2 rounded transition-colors ${
+                      saving || !hasUnsavedChanges
+                        ? 'bg-gray-400 text-white cursor-not-allowed' 
+                        : 'bg-green-500 text-white hover:bg-green-600'
+                    }`}
+                  >
+                    {saving ? 'Saving...' : 'Save'}
+                  </button>
+                  {originalData && checkIfFormHasContent(originalData) && (
+                    <button
+                      onClick={handleCancel}
+                      disabled={saving}
+                      className="px-6 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </>
+              ) : (
+                <button
+                  onClick={handleEdit}
+                  className="px-6 py-2 bg-blue-600 text-white border border-blue-600 rounded hover:bg-blue-700 transition-colors"
+                >
+                  Edit
+                </button>
+              )}
+              
+              {strataData && checkIfFormHasContent(strataData) && (
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="px-6 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                >
+                  Delete Form
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>

@@ -118,7 +118,7 @@ class StrataService {
     }
   }
 
-  async upsertStrata(strataData: Omit<SevenStrata, 'id' | 'created_at' | 'updated_at'>): Promise<SevenStrata | null> {
+  async upsertStrata(strataData: Omit<SevenStrata, 'created_at' | 'updated_at'>): Promise<SevenStrata | null> {
     try {
       // Check if this is an update (has id) or insert (no id)
       if (strataData.id) {
