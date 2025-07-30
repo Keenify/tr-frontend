@@ -20,6 +20,18 @@ export interface FaceFormRow {
   enthusiastically_rehire: boolean;
 }
 
+export interface FaceFormDatabaseRow {
+  company_id: string;
+  employee_id: string;
+  function_name: string;
+  accountable_employee_id: string;
+  kpi_list: string;
+  outcome_list: string;
+  business_unit_name: string | null;
+  head_employee_id: string | null;
+  enthusiastically_rehire: boolean;
+}
+
 export interface BusinessUnitRow {
   business_unit_name: string;
   head_employee_id: string;
