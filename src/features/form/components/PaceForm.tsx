@@ -93,9 +93,9 @@ const PaceForm: React.FC = () => {
       kpi_list: row.kpi_list,
     }));
     
-    // Ensure we have at least MIN_ROWS
-    const minProcesses = Math.max(processData.length, MIN_ROWS);
-    const updatedProcesses: ProcessRow[] = Array(minProcesses).fill(null).map((_, index) => {
+    // Ensure we have at least MIN_ROWS and at most MAX_ROWS
+    const clampedLength = Math.max(Math.min(processData.length, MAX_ROWS), MIN_ROWS);
+    const updatedProcesses: ProcessRow[] = Array(clampedLength).fill(null).map((_, index) => {
       return processData[index] || {
         employee_id: '',
         process_name: '',
@@ -132,6 +132,38 @@ const PaceForm: React.FC = () => {
     }
   };
 
+  // Function to compare existing data with new data
+  const hasDataChanged = (newRows: any[], existingData: PaceFormDatabaseRow[]): boolean => {
+    // If different number of rows, data has changed
+    if (newRows.length !== existingData.length) {
+      return true;
+    }
+    
+    // Sort both arrays by employee_id and process_name for consistent comparison
+    const sortedNew = [...newRows].sort((a, b) => 
+      a.employee_id.localeCompare(b.employee_id) || a.process_name.localeCompare(b.process_name)
+    );
+    const sortedExisting = [...existingData].sort((a, b) => 
+      a.employee_id.localeCompare(b.employee_id) || a.process_name.localeCompare(b.process_name)
+    );
+    
+    // Compare each row
+    for (let i = 0; i < sortedNew.length; i++) {
+      const newRow = sortedNew[i];
+      const existingRow = sortedExisting[i];
+      
+      if (
+        newRow.employee_id !== existingRow.employee_id ||
+        newRow.process_name !== existingRow.process_name ||
+        newRow.kpi_list !== existingRow.kpi_list
+      ) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+
   // Form submission handler
   const onSubmit = async (values: FormValues) => {
     if (!companyInfo?.id) {
@@ -152,17 +184,27 @@ const PaceForm: React.FC = () => {
           kpi_list: row.kpi_list?.trim() || '',
         }));
       
-      // Validate company-wide entry limits (4-9 entries)
-      if (rows.length < 4) {
-        setSubmitStatus('Company must have at least 4 processes. Please add more processes.');
+      // Validate company-wide entry limits (4-9 entries total)
+      if (rows.length < MIN_ROWS) {
+        setSubmitStatus(`Company must have at least ${MIN_ROWS} processes. Please add more processes.`);
         setLoading(false);
         return;
       }
       
-      if (rows.length > 9) {
-        setSubmitStatus('Company can have maximum 9 processes. Please remove some processes.');
+      if (rows.length > MAX_ROWS) {
+        setSubmitStatus(`Company can have maximum ${MAX_ROWS} processes. Please remove some processes.`);
         setLoading(false);
         return;
+      }
+      
+      // Check if data has actually changed before updating database
+      if (hasSubmittedData && submittedData.length > 0) {
+        const dataChanged = hasDataChanged(rows, submittedData);
+        if (!dataChanged) {
+          setSubmitStatus('No changes detected. Data is already up to date.');
+          setLoading(false);
+          return;
+        }
       }
       
       console.log('Submitting pace form data:', rows);
@@ -284,8 +326,8 @@ const PaceForm: React.FC = () => {
           <div className="p-3 border-r border-gray-300">
             <div className="font-semibold text-sm text-center">Name of Process</div>
           </div>
-          <div className="p-3">
-            <div className="font-semibold text-sm text-center">KPIs</div>
+          <div className="p-3 border-r border-gray-300">
+            <div className="font-semibold text-sm text-center">KPIs<br />(Better, Faster, Cheaper)</div>
           </div>
         </div>
         
@@ -399,10 +441,7 @@ const PaceForm: React.FC = () => {
               </div>
             </div>
             <div className="p-3 relative">
-              <div className="font-semibold text-sm text-center">
-                KPIs<br />
-                <span className="text-xs text-gray-600">(Better, Faster, Cheaper)</span>
-              </div>
+              <div className="font-semibold text-sm text-center">KPIs<br />(Better, Faster, Cheaper)</div>
             </div>
           </div>
 
