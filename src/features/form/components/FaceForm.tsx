@@ -539,7 +539,7 @@ const FaceForm: React.FC = () => {
   // Handle edit mode toggle
   const handleEditModeToggle = () => {
     setIsEditMode(!isEditMode);
-    setSubmitStatus(null); // Clear any previous status messages
+    setSubmitStatus(null); // Clear any previous status messages 
   };
 
   // Render read-only view for submitted data
