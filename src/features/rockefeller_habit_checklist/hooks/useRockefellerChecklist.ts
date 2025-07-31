@@ -47,7 +47,15 @@ export const useRockefellerChecklist = (userId: string, companyId: string) => {
         
         // If no habits exist, initialize from template
         if (existingHabits.length === 0) {
+          console.log('No existing habits found, initializing from template for new user');
           existingHabits = await initializeHabitsFromTemplate();
+          
+          // Verify initialization was successful
+          if (existingHabits.length === 0) {
+            throw new Error('Failed to initialize habits from template - no habits were created');
+          }
+          
+          console.log(`Successfully initialized ${existingHabits.length} habits for new user`);
         }
         
         setHabits(existingHabits);
