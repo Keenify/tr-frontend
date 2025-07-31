@@ -1,6 +1,12 @@
 {
   "permissions": {
     "allow": [
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(npm run lint)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
       "Bash(cd:*)"
     ],
     "deny": []

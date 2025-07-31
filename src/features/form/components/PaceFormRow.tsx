@@ -16,20 +16,27 @@ interface PaceFormRowProps {
 const EmployeeDropdown: React.FC<{
   value: string;
   onChange: (value: string) => void;
-
   employees: ExtendedEmployee[];
-
   disabled: boolean;
 }> = ({ value, onChange, employees, disabled }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const selectedEmployee = employees.find(emp => emp.id === value);
+
+  // Filter employees based on search term
+  const filteredEmployees = employees.filter(employee => {
+    const fullName = `${employee.first_name} ${employee.last_name}`.toLowerCase();
+    return fullName.includes(searchTerm.toLowerCase());
+  });
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setSearchTerm('');
       }
     };
 
@@ -37,12 +44,22 @@ const EmployeeDropdown: React.FC<{
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Focus search input when dropdown opens
+  useEffect(() => {
+    if (isOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isOpen]);
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         type="button"
         disabled={disabled}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          setIsOpen(!isOpen);
+          setSearchTerm('');
+        }}
         className="w-full p-1 text-sm text-left focus:outline-none bg-transparent flex items-center min-h-[32px]"
       >
         {selectedEmployee ? (
@@ -69,39 +86,52 @@ const EmployeeDropdown: React.FC<{
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 z-50 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
-          <div 
-            className="p-2 hover:bg-gray-50 cursor-pointer text-sm text-gray-500"
-            onClick={() => {
-              onChange('');
-              setIsOpen(false);
-            }}
-          >
-            Select employee...
+        <div className="absolute top-full left-0 right-0 z-50 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-hidden">
+          {/* Search Input */}
+          <div className="p-2 border-b border-gray-200">
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search employees..."
+              className="w-full p-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-orange-400"
+            />
           </div>
-          {employees.map((employee) => (
-            <div
-              key={employee.id}
-              className="p-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-2"
-              onClick={() => {
-                onChange(employee.id);
-                setIsOpen(false);
-              }}
-            >
-              <img
-                src={employee.profile_pic_url || '/default-avatar.png'}
-                alt={`${employee.first_name} ${employee.last_name}`}
-                className="w-6 h-6 rounded-full object-cover flex-shrink-0"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = '/default-avatar.png';
-                }}
-              />
-              <span className="text-sm truncate">
-                {employee.first_name} {employee.last_name}
-              </span>
-            </div>
-          ))}
+          
+          {/* Employee List */}
+          <div className="max-h-48 overflow-y-auto">
+            {filteredEmployees.length > 0 ? (
+              filteredEmployees.map((employee) => (
+                <div
+                  key={employee.id}
+                  className="p-2 hover:bg-gray-50 cursor-pointer flex items-center space-x-2"
+                  onClick={() => {
+                    onChange(employee.id);
+                    setIsOpen(false);
+                    setSearchTerm('');
+                  }}
+                >
+                  <img
+                    src={employee.profile_pic_url || '/default-avatar.png'}
+                    alt={`${employee.first_name} ${employee.last_name}`}
+                    className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/default-avatar.png';
+                    }}
+                  />
+                  <span className="text-sm truncate">
+                    {employee.first_name} {employee.last_name}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="p-2 text-sm text-gray-500 text-center">
+                No employees found
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

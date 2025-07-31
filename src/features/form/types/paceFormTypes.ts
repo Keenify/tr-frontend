@@ -17,6 +17,16 @@ export interface ProcessRow {
   kpi_list: string;
 }
 
+export interface PaceFormDatabaseRow {
+  id?: string;
+  company_id: string;
+  employee_id: string;
+  process_name: string;
+  kpi_list: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface FormValues {
   company_id: string;
   processes: ProcessRow[];
