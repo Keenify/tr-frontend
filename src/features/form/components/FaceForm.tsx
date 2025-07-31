@@ -78,7 +78,7 @@ const FaceForm: React.FC = () => {
   const { companyInfo, userInfo, isLoading: userDataLoading } = useUserAndCompanyData(userId || '');
   
   // React Hook Form setup
-  const { control, handleSubmit, setValue } = useForm<FaceFormValues>({
+  const { control, handleSubmit, setValue, watch } = useForm<FaceFormValues>({
     defaultValues: {
       company_id: companyInfo?.id || '',
       functions: PREDEFINED_FUNCTIONS.map(func => ({
@@ -214,6 +214,7 @@ const FaceForm: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyInfo?.id]);
 
+
   // Add a new function row
   const handleAddRow = () => {
     if (fields.length < MAX_ROWS) {
@@ -278,24 +279,15 @@ const FaceForm: React.FC = () => {
         const hasData = row.accountable_employee_id || row.kpi_list?.trim() || row.outcome_list?.trim();
         
         if (hasData) {
-          // If row has some data, validate all required fields are filled
-          if (!row.accountable_employee_id) {
-            incompleteFunctions.push(`${row.function_name}: Missing Person Accountable`);
-          } else if (!row.kpi_list?.trim()) {
-            incompleteFunctions.push(`${row.function_name}: Missing Leading Indicators (KPIs)`);
-          } else if (!row.outcome_list?.trim()) {
-            incompleteFunctions.push(`${row.function_name}: Missing Results/Outcomes`);
-          } else {
-            // All required fields are filled
-            validFunctionRows.push({
-              company_id: companyInfo.id,
-              employee_id: userInfo.id,
-              function_name: row.function_name.trim(),
-              accountable_employee_id: row.accountable_employee_id,
-              kpi_list: row.kpi_list.trim(),
-              outcome_list: row.outcome_list.trim(),
-            });
-          }
+          // Add row with whatever data is available
+          validFunctionRows.push({
+            company_id: companyInfo.id,
+            employee_id: userInfo.id,
+            function_name: row.function_name.trim(),
+            accountable_employee_id: row.accountable_employee_id || '',
+            kpi_list: row.kpi_list?.trim() || '',
+            outcome_list: row.outcome_list?.trim() || '',
+          });
         }
       });
 
@@ -307,45 +299,45 @@ const FaceForm: React.FC = () => {
         // Check if row has any data filled
         const hasData = row.head_employee_id || row.business_unit_name?.trim() || row.kpi_list?.trim() || row.outcome_list?.trim();
         
-        if (hasData) {
-          // If row has some data, validate all required fields are filled
-          if (!row.business_unit_name?.trim()) {
-            incompleteBusinessUnits.push(`Business Unit ${index + 1}: Missing Business Unit Name`);
-          } else if (!row.head_employee_id) {
-            incompleteBusinessUnits.push(`${row.business_unit_name}: Missing Person Accountable`);
-          } else if (!row.kpi_list?.trim()) {
-            incompleteBusinessUnits.push(`${row.business_unit_name}: Missing Leading Indicators (KPIs)`);
-          } else if (!row.outcome_list?.trim()) {
-            incompleteBusinessUnits.push(`${row.business_unit_name}: Missing Results/Outcomes`);
-          } else {
-            // All required fields are filled
-            validBusinessUnitRows.push({
-              company_id: companyInfo.id,
-              employee_id: userInfo.id,
-              function_name: row.business_unit_name.trim(),
-              accountable_employee_id: row.head_employee_id,
-              kpi_list: row.kpi_list.trim(),
-              outcome_list: row.outcome_list.trim(),
-            });
-          }
+        if (hasData && row.business_unit_name?.trim()) {
+          // Add row with whatever data is available (business unit name is still required)
+          validBusinessUnitRows.push({
+            company_id: companyInfo.id,
+            employee_id: userInfo.id,
+            function_name: row.business_unit_name.trim(),
+            accountable_employee_id: row.head_employee_id || '',
+            kpi_list: row.kpi_list?.trim() || '',
+            outcome_list: row.outcome_list?.trim() || '',
+          });
         }
       });
-
-      // Check for validation errors
-      const allErrors = [...incompleteFunctions, ...incompleteBusinessUnits];
-      if (allErrors.length > 0) {
-        setSubmitStatus(`Please complete the following required fields:\n${allErrors.join('\n')}`);
-        setLoading(false);
-        return;
-      }
 
       // Combine all valid rows
       const allRows = [...validFunctionRows, ...validBusinessUnitRows];
       
+      // Check if at least one function has a person accountable assigned
+      const hasAtLeastOneAccountable = allRows.some(row => row.accountable_employee_id && row.accountable_employee_id.trim() !== '');
+      
       if (allRows.length === 0) {
-        setSubmitStatus('Please fill in at least one function or business unit with all required information: Person Accountable, Leading Indicators (KPIs), and Results/Outcomes');
+        setSubmitStatus('Please fill in at least one function or business unit with some information.');
         setLoading(false);
         return;
+      }
+      
+      if (!hasAtLeastOneAccountable) {
+        setSubmitStatus('Please assign at least one person accountable to a function before submitting.');
+        setLoading(false);
+        return;
+      }
+      
+      // Check for duplicate submission
+      if (hasSubmittedData && submittedData.length > 0) {
+        const isDuplicate = checkForDuplicateData(allRows, submittedData);
+        if (isDuplicate) {
+          setSubmitStatus('This entry is already captured in the database. No changes detected.');
+          setLoading(false);
+          return;
+        }
       }
       
       console.log('Submitting face form data:', allRows);
@@ -426,6 +418,34 @@ const FaceForm: React.FC = () => {
     }
   };
 
+  // Function to check for duplicate data
+  const checkForDuplicateData = (newRows: any[], existingRows: FaceFormDatabaseRow[]): boolean => {
+    if (newRows.length !== existingRows.length) {
+      return false;
+    }
+    
+    // Sort both arrays by function_name for comparison
+    const sortedNew = [...newRows].sort((a, b) => a.function_name.localeCompare(b.function_name));
+    const sortedExisting = [...existingRows].sort((a, b) => a.function_name.localeCompare(b.function_name));
+    
+    // Compare each row
+    for (let i = 0; i < sortedNew.length; i++) {
+      const newRow = sortedNew[i];
+      const existingRow = sortedExisting[i];
+      
+      if (
+        newRow.function_name !== existingRow.function_name ||
+        newRow.accountable_employee_id !== existingRow.accountable_employee_id ||
+        (newRow.kpi_list || '') !== (existingRow.kpi_list || '') ||
+        (newRow.outcome_list || '') !== (existingRow.outcome_list || '')
+      ) {
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
   if (userDataLoading || loadingExistingData) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -482,10 +502,30 @@ const FaceForm: React.FC = () => {
                 </span>
               </div>
               <div className="p-3 border-r border-gray-300">
-                <div className="text-sm whitespace-pre-line">{row.kpi_list}</div>
+                <div className="text-sm">
+                  {row.kpi_list ? (
+                    <ul className="list-disc list-inside space-y-1">
+                      {row.kpi_list.split('\n').filter(item => item.trim()).map((item, idx) => (
+                        <li key={idx} className="text-sm">{item.trim()}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="text-gray-400 text-sm italic">No KPIs specified</span>
+                  )}
+                </div>
               </div>
               <div className="p-3">
-                <div className="text-sm whitespace-pre-line">{row.outcome_list}</div>
+                <div className="text-sm">
+                  {row.outcome_list ? (
+                    <ul className="list-disc list-inside space-y-1">
+                      {row.outcome_list.split('\n').filter(item => item.trim()).map((item, idx) => (
+                        <li key={idx} className="text-sm">{item.trim()}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="text-gray-400 text-sm italic">No outcomes specified</span>
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -523,10 +563,30 @@ const FaceForm: React.FC = () => {
                 </span>
               </div>
               <div className="p-3 border-r border-gray-300">
-                <div className="text-sm whitespace-pre-line">{row.kpi_list}</div>
+                <div className="text-sm">
+                  {row.kpi_list ? (
+                    <ul className="list-disc list-inside space-y-1">
+                      {row.kpi_list.split('\n').filter(item => item.trim()).map((item, idx) => (
+                        <li key={idx} className="text-sm">{item.trim()}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="text-gray-400 text-sm italic">No KPIs specified</span>
+                  )}
+                </div>
               </div>
               <div className="p-3">
-                <div className="text-sm whitespace-pre-line">{row.outcome_list}</div>
+                <div className="text-sm">
+                  {row.outcome_list ? (
+                    <ul className="list-disc list-inside space-y-1">
+                      {row.outcome_list.split('\n').filter(item => item.trim()).map((item, idx) => (
+                        <li key={idx} className="text-sm">{item.trim()}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="text-gray-400 text-sm italic">No outcomes specified</span>
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -748,7 +808,9 @@ const FaceForm: React.FC = () => {
           <div className="w-4 h-4 bg-white text-purple-600 rounded-full flex items-center justify-center text-[10px] font-bold mr-2 flex-shrink-0">
             2
           </div>
-          <span className="text-sm font-medium">Identify: 1. More than 1 Person in a Seat; 2. Person in more than 1 seat; 3. Empty seats; 4. Enthusiastically Rehire?</span>
+          <span className="text-sm font-medium">
+            Identify: 1. More than 1 Person in a Seat; 2. Person in more than 1 seat; 3. Empty seats; 4. Enthusiastically Rehire?
+          </span>
         </div>
       </div>
     </div>
