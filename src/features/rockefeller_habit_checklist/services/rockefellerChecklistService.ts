@@ -31,8 +31,7 @@ class RockefellerChecklistService {
       const { data, error } = await supabase
         .from('rockefeller_habit_checklist')
         .update({ 
-          sub_list: subList,
-          last_edited_at: new Date().toISOString()
+          sub_list: subList
         })
         .eq('user_id', userId)
         .eq('company_id', companyId)
@@ -81,6 +80,7 @@ class RockefellerChecklistService {
       
       if (habit) {
         const subItem = habit.sub_list.find(item => item.id === subItemId);
+        
         if (subItem) {
           subItem.complete = !subItem.complete;
           await this.updateHabit(userId, companyId, habitId, habit.sub_list);
