@@ -54,16 +54,25 @@ class RockefellerChecklistService {
     habits: RockefellerHabit[]
   ): Promise<RockefellerHabit[]> {
     try {
+      console.log(`Initializing ${habits.length} habits for user ${userId}, company ${companyId}`);
+      
       const { data, error } = await supabase
         .from('rockefeller_habit_checklist')
         .insert(habits)
         .select();
       
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        console.error('Database error during habit initialization:', error);
+        throw error;
+      }
+      
+      const result = data || [];
+      console.log(`Successfully created ${result.length} habits in database`);
+      return result;
     } catch (error) {
       console.error('Error initializing habits:', error);
-      return [];
+      // Don't return empty array, let the error bubble up
+      throw error;
     }
   }
 
