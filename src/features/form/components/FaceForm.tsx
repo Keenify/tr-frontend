@@ -83,15 +83,15 @@ const FaceForm: React.FC = () => {
       company_id: companyInfo?.id || '',
       functions: PREDEFINED_FUNCTIONS.map(func => ({
         function_name: func,
-        accountable_employee_id: '',
+        accountable_employee_id: null,
         kpi_list: '',
         outcome_list: '',
         business_unit_name: '',
-        head_employee_id: '',
+        head_employee_id: null,
       })),
       business_units: Array(MIN_BU_ROWS).fill({
         business_unit_name: '',
-        head_employee_id: '',
+        head_employee_id: null,
         kpi_list: '',
         outcome_list: '',
       }),
@@ -161,16 +161,16 @@ const FaceForm: React.FC = () => {
       if (isFunction) {
         functionData.push({
           function_name: row.function_name,
-          accountable_employee_id: row.accountable_employee_id,
+          accountable_employee_id: row.accountable_employee_id || null,
           kpi_list: row.kpi_list,
           outcome_list: row.outcome_list,
           business_unit_name: '',
-          head_employee_id: '',
+          head_employee_id: null,
         });
       } else {
         businessUnitData.push({
           business_unit_name: row.function_name,
-          head_employee_id: row.accountable_employee_id,
+          head_employee_id: row.accountable_employee_id || null,
           kpi_list: row.kpi_list,
           outcome_list: row.outcome_list,
         });
@@ -182,11 +182,11 @@ const FaceForm: React.FC = () => {
       const existingData = functionData.find(f => f.function_name === func);
       return existingData || {
         function_name: func,
-        accountable_employee_id: '',
+        accountable_employee_id: null,
         kpi_list: '',
         outcome_list: '',
         business_unit_name: '',
-        head_employee_id: '',
+        head_employee_id: null,
       };
     });
     
@@ -197,7 +197,7 @@ const FaceForm: React.FC = () => {
     const updatedBusinessUnits: BusinessUnitRow[] = Array(minBusinessUnits).fill(null).map((_, index) => {
       return businessUnitData[index] || {
         business_unit_name: '',
-        head_employee_id: '',
+        head_employee_id: null,
         kpi_list: '',
         outcome_list: '',
       };
@@ -220,11 +220,11 @@ const FaceForm: React.FC = () => {
     if (fields.length < MAX_ROWS) {
       append({
         function_name: '',
-        accountable_employee_id: '',
+        accountable_employee_id: null,
         kpi_list: '',
         outcome_list: '',
         business_unit_name: '',
-        head_employee_id: '',
+        head_employee_id: null,
       });
     }
   };
@@ -241,7 +241,7 @@ const FaceForm: React.FC = () => {
     if (businessUnitFields.length < MAX_BU_ROWS) {
       appendBusinessUnit({
         business_unit_name: '',
-        head_employee_id: '',
+        head_employee_id: null,
         kpi_list: '',
         outcome_list: '',
       });
@@ -270,63 +270,76 @@ const FaceForm: React.FC = () => {
     setLoading(true);
     setSubmitStatus(null);
     try {
-      // Process functions - include any row with either function name or person accountable
+      // Validate functions - allow submission without Person Accountable
+      const incompleteFunctions: string[] = [];
       const validFunctionRows: any[] = [];
       
       values.functions.forEach((row, index) => {
-        // Include row if it has function name OR person accountable (or both)
-        const hasFunctionName = row.function_name && row.function_name.trim();
-        const hasPersonAccountable = row.accountable_employee_id && row.accountable_employee_id.trim();
+        // Check if row has any data filled (excluding accountable_employee_id)
+        const hasData = row.kpi_list?.trim() || row.outcome_list?.trim();
         
-        if (hasFunctionName || hasPersonAccountable) {
-          validFunctionRows.push({
-            company_id: companyInfo.id,
-            employee_id: userInfo.id,
-            function_name: row.function_name?.trim() || '',
-            accountable_employee_id: row.accountable_employee_id || '',
-            kpi_list: row.kpi_list?.trim() || '',
-            outcome_list: row.outcome_list?.trim() || '',
-          });
+        if (hasData) {
+          // If row has KPI or outcome data, validate those fields are filled
+          if (!row.kpi_list?.trim()) {
+            incompleteFunctions.push(`${row.function_name}: Missing Leading Indicators (KPIs)`);
+          } else if (!row.outcome_list?.trim()) {
+            incompleteFunctions.push(`${row.function_name}: Missing Results/Outcomes`);
+          } else {
+            // KPI and outcome fields are filled, Person Accountable is optional
+            validFunctionRows.push({
+              company_id: companyInfo.id,
+              employee_id: userInfo.id,
+              function_name: row.function_name.trim(),
+              accountable_employee_id: row.accountable_employee_id || null, // Allow null for Person Accountable
+              kpi_list: row.kpi_list.trim(),
+              outcome_list: row.outcome_list.trim(),
+            });
+          }
         }
       });
 
-      // Process business units - include any row with business unit name OR person accountable
+      // Validate business units - allow submission without Person Accountable
+      const incompleteBusinessUnits: string[] = [];
       const validBusinessUnitRows: any[] = [];
       
       values.business_units.forEach((row, index) => {
-        const hasBusinessUnitName = row.business_unit_name && row.business_unit_name.trim();
-        const hasPersonAccountable = row.head_employee_id && row.head_employee_id.trim();
+        // Check if row has any data filled (excluding head_employee_id)
+        const hasData = row.business_unit_name?.trim() || row.kpi_list?.trim() || row.outcome_list?.trim();
         
-        if (hasBusinessUnitName || hasPersonAccountable) {
-          validBusinessUnitRows.push({
-            company_id: companyInfo.id,
-            employee_id: userInfo.id,
-            function_name: row.business_unit_name?.trim() || '',
-            accountable_employee_id: row.head_employee_id || '',
-            kpi_list: row.kpi_list?.trim() || '',
-            outcome_list: row.outcome_list?.trim() || '',
-          });
+        if (hasData) {
+          // If row has business unit name, KPI, or outcome data, validate those fields are filled
+          if (!row.business_unit_name?.trim()) {
+            incompleteBusinessUnits.push(`Business Unit ${index + 1}: Missing Business Unit Name`);
+          } else if (!row.kpi_list?.trim()) {
+            incompleteBusinessUnits.push(`${row.business_unit_name}: Missing Leading Indicators (KPIs)`);
+          } else if (!row.outcome_list?.trim()) {
+            incompleteBusinessUnits.push(`${row.business_unit_name}: Missing Results/Outcomes`);
+          } else {
+            // Business unit name, KPI and outcome fields are filled, Person Accountable is optional
+            validBusinessUnitRows.push({
+              company_id: companyInfo.id,
+              employee_id: userInfo.id,
+              function_name: row.business_unit_name.trim(),
+              accountable_employee_id: row.head_employee_id || null, // Allow null for Person Accountable
+              kpi_list: row.kpi_list.trim(),
+              outcome_list: row.outcome_list.trim(),
+            });
+          }
         }
       });
 
       // Combine all valid rows
       const allRows = [...validFunctionRows, ...validBusinessUnitRows];
       
-      // Check if at least one row has BOTH function name AND person accountable
-      const completeRows = allRows.filter(row => 
-        row.function_name && row.function_name.trim() !== '' && 
-        row.accountable_employee_id && row.accountable_employee_id.trim() !== ''
-      );
-      
-      if (completeRows.length === 0) {
-        setSubmitStatus('Please provide at least one complete entry with both a function name and person accountable.');
+      if (allRows.length === 0) {
+        setSubmitStatus('Please fill in at least one function or business unit with required information: Leading Indicators (KPIs) and Results/Outcomes (Person Accountable is optional)');
         setLoading(false);
         return;
       }
       
       // Check if there are changes from existing data
       if (hasSubmittedData && submittedData.length > 0) {
-        const hasChanges = checkForChangesFromExistingData(completeRows, submittedData);
+        const hasChanges = checkForChangesFromExistingData(allRows, submittedData);
         if (!hasChanges) {
           setSubmitStatus('No changes detected from existing data. Please make changes before submitting.');
           setLoading(false);
@@ -450,14 +463,14 @@ const FaceForm: React.FC = () => {
   };
 
   // Function to check for changes from existing data
-  const checkForChangesFromExistingData = (newCompleteRows: any[], existingRows: FaceFormDatabaseRow[]): boolean => {
-    // If there are no existing rows, any new complete row represents a change
+  const checkForChangesFromExistingData = (newRows: any[], existingRows: FaceFormDatabaseRow[]): boolean => {
+    // If there are no existing rows, any new row represents a change
     if (existingRows.length === 0) {
-      return newCompleteRows.length > 0;
+      return newRows.length > 0;
     }
     
-    // Check if any complete row is different from existing data
-    for (const newRow of newCompleteRows) {
+    // Check if any row is different from existing data
+    for (const newRow of newRows) {
       const existingRow = existingRows.find(existing => 
         existing.function_name === newRow.function_name
       );
@@ -477,18 +490,18 @@ const FaceForm: React.FC = () => {
       }
     }
     
-    // Check if any existing complete rows are being removed
-    const existingCompleteRows = existingRows.filter(row => 
+    // Check if any existing valid rows are being removed
+    const existingValidRows = existingRows.filter(row => 
       row.function_name && row.function_name.trim() !== '' && 
-      row.accountable_employee_id && row.accountable_employee_id.trim() !== ''
+      (row.kpi_list?.trim() || row.outcome_list?.trim())
     );
     
-    for (const existingRow of existingCompleteRows) {
-      const newRow = newCompleteRows.find(newR => 
+    for (const existingRow of existingValidRows) {
+      const newRow = newRows.find(newR => 
         newR.function_name === existingRow.function_name
       );
       
-      // If an existing complete row is not in the new data, it's being removed (change)
+      // If an existing valid row is not in the new data, it's being removed (change)
       if (!newRow) {
         return true;
       }
@@ -678,7 +691,7 @@ const FaceForm: React.FC = () => {
             </div>
           );
         })}
-      </div>
+      </div> 
     );
   };
 

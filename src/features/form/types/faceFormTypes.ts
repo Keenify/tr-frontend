@@ -12,25 +12,25 @@ export interface Employee {
 
 export interface FaceFormRow {
   function_name: string;
-  accountable_employee_id: string;
+  accountable_employee_id: string | null;
   kpi_list: string;
   outcome_list: string;
   business_unit_name: string;
-  head_employee_id: string;
+  head_employee_id: string | null;
 }
 
 export interface FaceFormDatabaseRow {
   company_id: string;
   employee_id: string;
   function_name: string;
-  accountable_employee_id: string;
+  accountable_employee_id: string | null;
   kpi_list: string;
   outcome_list: string;
 }
 
 export interface BusinessUnitRow {
   business_unit_name: string;
-  head_employee_id: string;
+  head_employee_id: string | null;
   kpi_list: string;
   outcome_list: string;
 }
