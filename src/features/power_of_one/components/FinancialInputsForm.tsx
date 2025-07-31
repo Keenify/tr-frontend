@@ -4,13 +4,11 @@ import { FinancialInputsFormProps, FinancialInputs } from '../types/powerOfOne';
 const FinancialInputsForm: React.FC<FinancialInputsFormProps> = ({
   inputs,
   onInputChange,
-  onSave,
   isExpanded,
-  onToggleExpanded,
-  loading = false
+  onToggleExpanded
 }) => {
   const handleInputChange = (field: keyof FinancialInputs, value: string) => {
-    const numericValue = parseFloat(value) || 0;
+    const numericValue = Math.max(0, parseFloat(value) || 0); // Prevent negative values
     onInputChange(field, numericValue);
   };
 
@@ -134,16 +132,6 @@ const FinancialInputsForm: React.FC<FinancialInputsFormProps> = ({
             </div>
           </div>
 
-          <div className="form-actions">
-            <button
-              type="button"
-              className="save-button"
-              onClick={onSave}
-              disabled={loading}
-            >
-              {loading ? 'Saving...' : 'Save'}
-            </button>
-          </div>
         </div>
       )}
     </div>

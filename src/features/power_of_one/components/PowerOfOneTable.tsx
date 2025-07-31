@@ -19,13 +19,6 @@ const PowerOfOneTable: React.FC<PowerOfOneTableProps> = ({
 
   return (
     <div className="power-of-one-table-container">
-      <div className="table-header">
-        <h3 className="table-title">Power of One Analysis</h3>
-        <p className="table-subtitle">
-          Adjust the levers below to see their impact on your cash flow and EBIT
-        </p>
-      </div>
-
       <div className="table-wrapper">
         <table className="power-of-one-table">
           <thead>
