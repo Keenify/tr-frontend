@@ -16,11 +16,10 @@ export const useRockefellerChecklist = (userId: string, companyId: string) => {
       habit_id: `habit_${template.id}`,
       habit_name: template.habit_name,
       sub_list: template.sub_items.map((text, index) => ({
-        id: index,
+        id: index, // Use simple index-based IDs to match existing database
         text,
         complete: false
       })),
-      last_edited_user: userId,
       last_edited_at: new Date().toISOString()
     }));
 
@@ -36,6 +35,12 @@ export const useRockefellerChecklist = (userId: string, companyId: string) => {
   // Load habits on mount
   useEffect(() => {
     const loadHabits = async () => {
+      // Don't load if we don't have valid user data
+      if (!userId || !companyId) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         let existingHabits = await rockefellerChecklistService.getHabits(userId, companyId);

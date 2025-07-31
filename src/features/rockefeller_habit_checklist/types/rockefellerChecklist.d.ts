@@ -10,7 +10,6 @@ export interface SubListItem {
     habit_id: string;
     habit_name: string;
     sub_list: SubListItem[];
-    last_edited_user?: string;
     last_edited_at?: string;
   }
   
@@ -31,9 +30,11 @@ export interface SubListItem {
     habitName: string;
     subItems: SubListItem[];
     onItemToggle: (itemId: number) => void;
+    habitId: string;
   }
   
   export interface ChecklistItemProps {
     item: SubListItem;
     onToggle: (itemId: number) => void;
+    habitId: string;
   }

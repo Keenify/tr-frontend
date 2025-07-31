@@ -1,14 +1,13 @@
 import React from 'react';
 import { ChecklistItemProps } from '../types/rockefellerChecklist';
 
-const ChecklistItem: React.FC<ChecklistItemProps> = ({ item, onToggle }) => {
+const ChecklistItem: React.FC<ChecklistItemProps> = ({ item, onToggle, habitId }) => {
   const handleToggle = () => {
     onToggle(item.id);
   };
 
-  const handleTextClick = () => {
-    onToggle(item.id);
-  };
+  // Create unique ID by combining habitId and item.id
+  const uniqueId = `item-${habitId}-${item.id}`;
 
   return (
     <div className="checklist-item">
@@ -17,12 +16,11 @@ const ChecklistItem: React.FC<ChecklistItemProps> = ({ item, onToggle }) => {
         className="item-checkbox"
         checked={item.complete}
         onChange={handleToggle}
-        id={`item-${item.id}`}
+        id={uniqueId}
       />
       <label 
-        htmlFor={`item-${item.id}`}
+        htmlFor={uniqueId}
         className={`item-text ${item.complete ? 'completed' : ''}`}
-        onClick={handleTextClick}
       >
         {item.text}
       </label>
