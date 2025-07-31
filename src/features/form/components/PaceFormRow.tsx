@@ -1,9 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Controller } from 'react-hook-form';
-import { Employee } from '../types/paceFormTypes';
 import { ExtendedEmployee } from '../hooks/useEmployees';
-import defaultAvatar from '../../../assets/images/sg-flag.png'; // Use a local default avatar or replace with a better default
-import Select from 'react-select';
 
 interface PaceFormRowProps {
   idx: number;
@@ -19,7 +16,9 @@ interface PaceFormRowProps {
 const EmployeeDropdown: React.FC<{
   value: string;
   onChange: (value: string) => void;
-  employees: Employee[];
+
+  employees: ExtendedEmployee[];
+
   disabled: boolean;
 }> = ({ value, onChange, employees, disabled }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -121,31 +120,12 @@ const PaceFormRow: React.FC<PaceFormRowProps> = ({
         render={({ field, fieldState }) => (
           <div>
 
-            <Select
-              value={employees.filter(e => e.is_employee).find(e => e.id === field.value) ? {
-                value: field.value,
-                label: `${employees.find(e => e.id === field.value)?.first_name} ${employees.find(e => e.id === field.value)?.last_name}`,
-                employee: employees.find(e => e.id === field.value)
-              } : null}
-              onChange={(option) => field.onChange(option?.value || '')}
-              options={employees.filter(e => e.is_employee).map(e => ({
-                value: e.id,
-                label: `${e.first_name} ${e.last_name}`,
-                employee: e
-              }))}
-              placeholder="Select employee..."
-              classNamePrefix="react-select"
-              isClearable
-              formatOptionLabel={(option) => (
-                <div className="flex items-center gap-2">
-                  <img 
-                    src={option.employee?.profile_pic_url || defaultAvatar} 
-                    alt="avatar" 
-                    className="w-6 h-6 rounded-full object-cover flex-shrink-0" 
-                  />
-                  <span className="text-sm">{option.label}</span>
-                </div>
-              )}
+            <EmployeeDropdown
+              value={field.value}
+              onChange={field.onChange}
+              employees={employees}
+              disabled={!selectedCompanyId}
+
             />
             {fieldState.error && (
               <div className="text-red-500 text-xs mt-1">{fieldState.error.message}</div>

@@ -60,6 +60,9 @@ import BusinessQuadrant from "./features/company/components/BusinessQuadrant";
 import CashAccelerationStrategies from "./features/cash/components/CashAccelerationStrategies";
 import TheRocksMain from "./features/theRocks/components/main";
 import PaceForm from "./features/form/components/PaceForm";
+import FaceForm from "./features/form/components/FaceForm";
+import StrataPage from "./features/strata/page";
+
 
 // Import the public daily huddle component
 import PublicDailyHuddle from "./features/dailyHuddle/components/PublicDailyHuddle";
@@ -764,6 +767,25 @@ const App: React.FC = () => {
                   }
                 />
                 <Route
+                  path="/:userId/strata"
+                  element={
+                    <ProtectedRoute
+                      session={session}
+                      element={
+                        <DashboardLayout
+                          session={session}
+                          signOut={signOut}
+                          activeTab="thePlan"
+                          activeSubTab="strata"
+                          onSubTabChange={() => {}}
+                        >
+                          <StrataPage session={session} />
+                        </DashboardLayout>
+                      }
+                    />
+                  }
+                />
+                <Route
                   path="/:userId/ccc"
                   element={
                     <ProtectedRoute
@@ -819,6 +841,25 @@ const App: React.FC = () => {
                           onSubTabChange={() => {}}
                         >
                           <PaceForm />
+                        </DashboardLayout>
+                      }
+                    />
+                  }
+                />
+                <Route
+                  path="/:userId/faceForm"
+                  element={
+                    <ProtectedRoute
+                      session={session}
+                      element={
+                        <DashboardLayout
+                          session={session}
+                          signOut={signOut}
+                          activeTab="process"
+                          activeSubTab="faceForm"
+                          onSubTabChange={() => {}}
+                        >
+                          <FaceForm />
                         </DashboardLayout>
                       }
                     />

@@ -124,6 +124,8 @@ const navigationConfig = [
     subTabs: [
       { id: "playbook", label: "Playbook", shortForm: "Pb", icon: ThumbsUp },
       { id: "todo", label: "Todo", shortForm: "Td", icon: ThumbsUp },
+      { id: "paceForm", label: "PACe Form", shortForm: "PF", icon: ThumbsUp },
+      { id: "faceForm", label: "FACe Form", shortForm: "FF", icon: ThumbsUp },
       { id: "rockefeller-habit-checklist", label: "Rockefeller Habit Checklist", shortForm: "RH", icon: ThumbsUp },
     ],
   },
@@ -175,7 +177,8 @@ const navigationConfig = [
       { id: "theRocks", label: "The Rocks", shortForm: "TR", icon: ThumbsUp },
       { id: "peak", label: "Peak", shortForm: "Pe", icon: ThumbsUp },
       { id: "vivid_vision", label: "Vivid Vision", shortForm: "Vv", icon: ThumbsUp },
-      { id: "businessQuadrant", label: "Business Quadrant", shortForm: "Bq", icon: ThumbsUp }
+      { id: "businessQuadrant", label: "Business Quadrant", shortForm: "Bq", icon: ThumbsUp },
+      { id: "strata", label: "7 Strata", shortForm: "7S", icon: ThumbsUp }
     ],
   },
 ]

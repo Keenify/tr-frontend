@@ -10,13 +10,16 @@ export interface ExtendedEmployee extends Employee {
 
 export function useEmployees(companyId: string) {
   const [employees, setEmployees] = useState<ExtendedEmployee[]>([]);
+  
   useEffect(() => {
     console.log('useEmployees called with companyId:', companyId);
+    
     if (!companyId) {
       console.log('No companyId provided, setting empty employees');
       setEmployees([]);
       return;
     }
+    
     const fetchEmployees = async () => {
       try {
         console.log('Fetching employees for company:', companyId);
@@ -29,7 +32,7 @@ export function useEmployees(companyId: string) {
           first_name: user.first_name,
           last_name: user.last_name,
           company_id: user.company_id,
-          is_employee: user.Is_Employed, // Map to is_employee
+          is_employee: user.Is_Employed,
           profile_pic_url: user.profile_pic_url || null,
         }));
         
@@ -39,7 +42,9 @@ export function useEmployees(companyId: string) {
         setEmployees([]);
       }
     };
+    
     fetchEmployees();
   }, [companyId]);
+  
   return employees;
 } 
