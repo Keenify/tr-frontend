@@ -342,19 +342,19 @@ const PaceForm: React.FC = () => {
           <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold mr-2 flex-shrink-0">
             1
           </div>
-          <span className="text-sm">Assign someone specific accountability for each process</span>
+          <span className="text-sm">Identify 4 to 9 processes that drive your business.</span>
         </div>
         <div className="flex items-center mb-2">
           <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold mr-2 flex-shrink-0">
             2
           </div>
-          <span className="text-sm"><strong>Identify exactly 4 to 9 processes</strong> that drive your business (company-wide limit)</span>
+          <span className="text-sm">Assign someone specific accountability for each process.</span>
         </div>
         <div className="flex items-center">
           <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold mr-2 flex-shrink-0">
             3
           </div>
-          <span className="text-sm">Set Key Performance Indicators (KPIs) for each process (enter each KPI on a new line)</span>
+          <span className="text-sm">List Key Performance Indicators (KPIs) for each process (better, faster, cheaper).</span>
         </div>
       </div>
 
