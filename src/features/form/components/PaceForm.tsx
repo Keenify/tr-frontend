@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { supabase } from '../../../lib/supabase';
 import { useEmployees, ExtendedEmployee } from '../hooks/useEmployees';
 import { FormValues, ProcessRow, PaceFormDatabaseRow } from '../types/paceFormTypes';
@@ -28,7 +28,7 @@ const PaceForm: React.FC = () => {
   
 
   // React Hook Form setup
-  const { control, handleSubmit, watch, reset, setValue } = useForm<FormValues>({
+  const { control, handleSubmit, setValue } = useForm<FormValues>({
     defaultValues: {
       company_id: companyInfo?.id || '',
       processes: Array(MIN_ROWS).fill({
@@ -133,7 +133,7 @@ const PaceForm: React.FC = () => {
   };
 
   // Function to compare existing data with new data
-  const hasDataChanged = (newRows: any[], existingData: PaceFormDatabaseRow[]): boolean => {
+  const hasDataChanged = (newRows: ProcessRow[], existingData: PaceFormDatabaseRow[]): boolean => {
     // If different number of rows, data has changed
     if (newRows.length !== existingData.length) {
       return true;
@@ -171,18 +171,26 @@ const PaceForm: React.FC = () => {
       return;
     }
     
+    if (!userInfo?.id) {
+      setSubmitStatus('Employee information not available');
+      return;
+    }
+    
     setLoading(true);
     setSubmitStatus(null);
     try {
       // Prepare rows for insertion - only include rows with required data
-      const rows = values.processes
+      const filteredRows = values.processes
         .filter(row => row.employee_id && row.process_name.trim()) // Only submit rows with required data
         .map((row) => ({
           company_id: companyInfo.id,
-          employee_id: row.employee_id,
+          employee_id: row.employee_id, // The person accountable for the process (matches database schema)
           process_name: row.process_name.trim(),
           kpi_list: row.kpi_list?.trim() || '',
         }));
+      
+      // Combine all valid rows - same as face form logic
+      const rows = filteredRows;
       
       // Validate company-wide entry limits (4-9 entries total)
       if (rows.length < MIN_ROWS) {
@@ -196,6 +204,9 @@ const PaceForm: React.FC = () => {
         setLoading(false);
         return;
       }
+      
+      // Note: Duplicate process names within the form will be handled by upsert
+      // The last occurrence in the form will be the final value for that process name
       
       // Check if data has actually changed before updating database
       if (hasSubmittedData && submittedData.length > 0) {
@@ -242,25 +253,10 @@ const PaceForm: React.FC = () => {
         console.log('Table check result:', tableCheck);
       }
       
-      // Try basic insert first - only with required fields
-      console.log('Attempting upsert with original rows:', rows);
-      
-      // Implement manual upsert: delete existing + insert new
-      // This ensures we replace all company data while handling duplicates
-      const { error: deleteError } = await supabase
-        .from('pace_form')
-        .delete()
-        .eq('company_id', companyInfo.id);
-      
-      if (deleteError) {
-        console.warn('Warning: Could not delete existing records:', deleteError);
-        // Continue with insert - may cause duplicates but better than failing
-      }
-      
-      // Insert all new records
+      // Use upsert to handle duplicates and potential RLS issues - same as face form
       const { data, error } = await supabase
         .from('pace_form')
-        .insert(rows)
+        .upsert(rows, { onConflict: 'company_id,process_name' })
         .select();
       
       if (error) {
@@ -272,15 +268,11 @@ const PaceForm: React.FC = () => {
           code: error.code
         });
         console.error('Failed rows data:', rows);
-        console.error('Current user session:', {
-          userId: currentSession.session.user.id,
-          email: currentSession.session.user.email,
-          role: currentSession.session.user.role
-        });
         throw new Error(`Database insert failed: ${error.message} (Code: ${error.code})`);
       }
       
-      console.log('Successfully inserted data:', data);
+      
+      console.log('Successfully saved data:', data);
       
       setSubmitStatus('Form submitted successfully!');
       setSubmittedData(data);
@@ -345,7 +337,17 @@ const PaceForm: React.FC = () => {
                 <span className="text-sm">{row.process_name}</span>
               </div>
               <div className="p-3">
-                <div className="text-sm whitespace-pre-line">{row.kpi_list}</div>
+                <div className="text-sm">
+                  {row.kpi_list ? (
+                    <ul className="list-disc list-inside space-y-1">
+                      {row.kpi_list.split('\n').filter(kpi => kpi.trim()).map((kpi, kpiIndex) => (
+                        <li key={kpiIndex} className="text-sm">{kpi.trim()}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="text-gray-400 italic">No KPIs specified</span>
+                  )}
+                </div>
               </div>
             </div>
           );
