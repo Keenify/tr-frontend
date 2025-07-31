@@ -270,20 +270,19 @@ const FaceForm: React.FC = () => {
     setLoading(true);
     setSubmitStatus(null);
     try {
-      // Validate functions - check for incomplete rows before filtering
-      const incompleteFunctions: string[] = [];
+      // Process functions - include any row with either function name or person accountable
       const validFunctionRows: any[] = [];
       
       values.functions.forEach((row, index) => {
-        // Check if row has any data filled
-        const hasData = row.accountable_employee_id || row.kpi_list?.trim() || row.outcome_list?.trim();
+        // Include row if it has function name OR person accountable (or both)
+        const hasFunctionName = row.function_name && row.function_name.trim();
+        const hasPersonAccountable = row.accountable_employee_id && row.accountable_employee_id.trim();
         
-        if (hasData) {
-          // Add row with whatever data is available
+        if (hasFunctionName || hasPersonAccountable) {
           validFunctionRows.push({
             company_id: companyInfo.id,
             employee_id: userInfo.id,
-            function_name: row.function_name.trim(),
+            function_name: row.function_name?.trim() || '',
             accountable_employee_id: row.accountable_employee_id || '',
             kpi_list: row.kpi_list?.trim() || '',
             outcome_list: row.outcome_list?.trim() || '',
@@ -291,20 +290,18 @@ const FaceForm: React.FC = () => {
         }
       });
 
-      // Validate business units - check for incomplete rows before filtering
-      const incompleteBusinessUnits: string[] = [];
+      // Process business units - include any row with business unit name OR person accountable
       const validBusinessUnitRows: any[] = [];
       
       values.business_units.forEach((row, index) => {
-        // Check if row has any data filled
-        const hasData = row.head_employee_id || row.business_unit_name?.trim() || row.kpi_list?.trim() || row.outcome_list?.trim();
+        const hasBusinessUnitName = row.business_unit_name && row.business_unit_name.trim();
+        const hasPersonAccountable = row.head_employee_id && row.head_employee_id.trim();
         
-        if (hasData && row.business_unit_name?.trim()) {
-          // Add row with whatever data is available (business unit name is still required)
+        if (hasBusinessUnitName || hasPersonAccountable) {
           validBusinessUnitRows.push({
             company_id: companyInfo.id,
             employee_id: userInfo.id,
-            function_name: row.business_unit_name.trim(),
+            function_name: row.business_unit_name?.trim() || '',
             accountable_employee_id: row.head_employee_id || '',
             kpi_list: row.kpi_list?.trim() || '',
             outcome_list: row.outcome_list?.trim() || '',
@@ -315,26 +312,23 @@ const FaceForm: React.FC = () => {
       // Combine all valid rows
       const allRows = [...validFunctionRows, ...validBusinessUnitRows];
       
-      // Check if at least one function has a person accountable assigned
-      const hasAtLeastOneAccountable = allRows.some(row => row.accountable_employee_id && row.accountable_employee_id.trim() !== '');
+      // Check if at least one row has BOTH function name AND person accountable
+      const completeRows = allRows.filter(row => 
+        row.function_name && row.function_name.trim() !== '' && 
+        row.accountable_employee_id && row.accountable_employee_id.trim() !== ''
+      );
       
-      if (allRows.length === 0) {
-        setSubmitStatus('Please fill in at least one function or business unit with some information.');
+      if (completeRows.length === 0) {
+        setSubmitStatus('Please provide at least one complete entry with both a function name and person accountable.');
         setLoading(false);
         return;
       }
       
-      if (!hasAtLeastOneAccountable) {
-        setSubmitStatus('Please assign at least one person accountable to a function before submitting.');
-        setLoading(false);
-        return;
-      }
-      
-      // Check for duplicate submission
+      // Check if there are changes from existing data
       if (hasSubmittedData && submittedData.length > 0) {
-        const isDuplicate = checkForDuplicateData(allRows, submittedData);
-        if (isDuplicate) {
-          setSubmitStatus('This entry is already captured in the database. No changes detected.');
+        const hasChanges = checkForChangesFromExistingData(completeRows, submittedData);
+        if (!hasChanges) {
+          setSubmitStatus('No changes detected from existing data. Please make changes before submitting.');
           setLoading(false);
           return;
         }
@@ -379,10 +373,35 @@ const FaceForm: React.FC = () => {
       // Try basic insert first - only with required fields
       console.log('Attempting basic insert with original rows:', allRows);
       
-      // Use upsert to handle duplicates and potential RLS issues
+      // Handle existing data by deleting and re-inserting
+      // First, delete existing face_form records for this company
+      console.log('Attempting to delete existing records for company:', companyInfo.id);
+      const { data: deleteResult, error: deleteError } = await supabase
+        .from('face_form')
+        .delete()
+        .eq('company_id', companyInfo.id)
+        .select();
+      
+      if (deleteError) {
+        console.error('Error deleting existing records:', deleteError);
+        console.error('Delete error details:', {
+          message: deleteError.message,
+          code: deleteError.code,
+          details: deleteError.details,
+          hint: deleteError.hint
+        });
+        if (deleteError.code === '42501') {
+          throw new Error('Permission denied: Unable to update existing form data. Please create a DELETE policy for face_form table.');
+        }
+        throw new Error(`Failed to update existing form data: ${deleteError.message} (Code: ${deleteError.code})`);
+      }
+      
+      console.log('Successfully deleted existing records:', deleteResult?.length || 0, 'records');
+      
+      // Now insert the new records
       const { data, error } = await supabase
         .from('face_form')
-        .upsert(allRows, { onConflict: 'company_id,function_name' })
+        .insert(allRows)
         .select();
       
       if (error) {
@@ -400,14 +419,26 @@ const FaceForm: React.FC = () => {
           email: currentSession.session.user.email,
           role: currentSession.session.user.role
         });
-        throw new Error(`Database insert failed: ${error.message} (Code: ${error.code})`);
+        
+        // Provide user-friendly error messages
+        if (error.code === '23505') {
+          throw new Error('This function already exists for your company. The system was unable to update the existing data. Please contact your administrator to resolve this issue.');
+        } else if (error.code === '42501') {
+          throw new Error('Permission denied: You do not have permission to save form data. Please contact your administrator to check your account permissions.');
+        } else if (error.code === '23503') {
+          throw new Error('Invalid data: One or more selected employees or company information is invalid. Please refresh the page and try again.');
+        } else {
+          throw new Error(`Unable to save form data. Please try again or contact support if the problem persists. (Error: ${error.code})`);
+        }
       }
       
       console.log('Successfully inserted data:', data);
       
       setSubmitStatus('Form submitted successfully!');
-      setSubmittedData(allRows);
-      setHasSubmittedData(true);
+      
+      // Reload the latest data from database to reflect all changes
+      await loadExistingData();
+      
       setIsEditMode(false); // Switch to view mode after successful submission
     } catch (err: unknown) {
       console.error('Form submission error:', err);
@@ -418,7 +449,55 @@ const FaceForm: React.FC = () => {
     }
   };
 
-  // Function to check for duplicate data
+  // Function to check for changes from existing data
+  const checkForChangesFromExistingData = (newCompleteRows: any[], existingRows: FaceFormDatabaseRow[]): boolean => {
+    // If there are no existing rows, any new complete row represents a change
+    if (existingRows.length === 0) {
+      return newCompleteRows.length > 0;
+    }
+    
+    // Check if any complete row is different from existing data
+    for (const newRow of newCompleteRows) {
+      const existingRow = existingRows.find(existing => 
+        existing.function_name === newRow.function_name
+      );
+      
+      // If function doesn't exist in database, it's a new entry (change)
+      if (!existingRow) {
+        return true;
+      }
+      
+      // If function exists but has different data, it's a change
+      if (
+        existingRow.accountable_employee_id !== newRow.accountable_employee_id ||
+        (existingRow.kpi_list || '') !== (newRow.kpi_list || '') ||
+        (existingRow.outcome_list || '') !== (newRow.outcome_list || '')
+      ) {
+        return true;
+      }
+    }
+    
+    // Check if any existing complete rows are being removed
+    const existingCompleteRows = existingRows.filter(row => 
+      row.function_name && row.function_name.trim() !== '' && 
+      row.accountable_employee_id && row.accountable_employee_id.trim() !== ''
+    );
+    
+    for (const existingRow of existingCompleteRows) {
+      const newRow = newCompleteRows.find(newR => 
+        newR.function_name === existingRow.function_name
+      );
+      
+      // If an existing complete row is not in the new data, it's being removed (change)
+      if (!newRow) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+
+  // Function to check for duplicate data (keeping for backward compatibility)
   const checkForDuplicateData = (newRows: any[], existingRows: FaceFormDatabaseRow[]): boolean => {
     if (newRows.length !== existingRows.length) {
       return false;
@@ -465,13 +544,21 @@ const FaceForm: React.FC = () => {
 
   // Render read-only view for submitted data
   const renderReadOnlyView = () => {
-    if (!hasSubmittedData || submittedData.length === 0) return null;
+    if (!hasSubmittedData || submittedData.length === 0) {
+      return (
+        <div className="border border-gray-300 bg-gray-50 p-8 text-center">
+          <p className="text-gray-500 text-lg">No data submitted yet</p>
+          <p className="text-gray-400 text-sm mt-2">Click "Edit Form" to add function assignments</p>
+        </div>
+      );
+    }
     
     const functions = submittedData.filter(row => isPredefinedFunction(row.function_name));
     const businessUnits = submittedData.filter(row => !isPredefinedFunction(row.function_name));
     
     return (
       <div className="border border-gray-300 bg-gray-50">
+        
         {/* Table Header */}
         <div className="grid grid-cols-4 bg-gray-200 border-b border-gray-300">
           <div className="p-3 border-r border-gray-300">
