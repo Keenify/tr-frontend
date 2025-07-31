@@ -39,6 +39,7 @@ export const usePowerOfOne = (userId: string, companyId?: string) => {
   const [changes, setChanges] = useState<PowerOfOneChanges>(DEFAULT_CHANGES);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [restarting, setRestarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isInputsExpanded, setIsInputsExpanded] = useState(false);
 
@@ -72,44 +73,53 @@ export const usePowerOfOne = (userId: string, companyId?: string) => {
     }
   }, [userId, companyId]);
 
-  // Save financial inputs
-  const saveFinancialInputs = useCallback(async () => {
+  // Save both financial inputs and changes together
+  const saveAllData = useCallback(async (): Promise<boolean> => {
     try {
       setSaving(true);
+      setError(null);
       
       const powerOfOneData: PowerOfOneData = {
         userId,
         companyId,
-        financialInputs,
-        changes
+        financialInputs, // 6 base values
+        changes // 7 simulation values - ALL PRESERVED!
       };
       
       const savedData = await powerOfOneService.savePowerOfOneData(powerOfOneData);
       
-      if (!savedData) {
-        throw new Error('Failed to save financial inputs');
-      }
+      // Update local state with saved data to ensure consistency
+      setFinancialInputs(savedData.financialInputs);
+      setChanges(savedData.changes);
       
-      setError(null);
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save financial inputs');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save Power of One data';
+      setError(errorMessage);
       return false;
     } finally {
       setSaving(false);
     }
   }, [userId, companyId, financialInputs, changes]);
 
-  // Update a single financial input
+  // Legacy method for backward compatibility
+  const saveFinancialInputs = useCallback(async () => {
+    return await saveAllData();
+  }, [saveAllData]);
+
+  // Update a single financial input with validation
   const updateFinancialInput = useCallback((field: keyof FinancialInputs, value: number) => {
+    // Prevent negative values
+    const sanitizedValue = Math.max(0, value || 0);
+    
     setFinancialInputs(prev => ({
       ...prev,
-      [field]: value
+      [field]: sanitizedValue
     }));
   }, []);
 
-  // Update a single change value
-  const updateChange = useCallback(async (rowId: string, value: number) => {
+  // Update a single change value (removed auto-save to prevent conflicts)
+  const updateChange = useCallback((rowId: string, value: number) => {
     const newChanges = { ...changes };
     
     // Map rowId to the correct field
@@ -127,41 +137,40 @@ export const usePowerOfOne = (userId: string, companyId?: string) => {
     if (field) {
       newChanges[field] = value;
       setChanges(newChanges);
-      
-      // Auto-save changes to database
-      try {
-        const success = await powerOfOneService.updateChanges(userId, newChanges, companyId);
-        if (!success) {
-          throw new Error('Failed to save changes');
-        }
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to save changes');
-      }
     }
-  }, [userId, companyId, changes]);
+  }, [changes]);
 
   // Toggle inputs expansion
   const toggleInputsExpanded = useCallback(() => {
     setIsInputsExpanded(prev => !prev);
   }, []);
 
-  // Reset all changes to zero
-  const resetChanges = useCallback(async () => {
+  // Restart analysis - clear all data
+  const restartAnalysis = useCallback(async (): Promise<boolean> => {
     try {
-      const resetChanges = DEFAULT_CHANGES;
-      setChanges(resetChanges);
-      
-      const success = await powerOfOneService.updateChanges(userId, resetChanges, companyId);
-      if (!success) {
-        throw new Error('Failed to reset changes');
-      }
-      
+      setRestarting(true);
       setError(null);
+      
+      const resetData = await powerOfOneService.restartPowerOfOneData(userId, companyId);
+      
+      // Update local state with reset data
+      setFinancialInputs(resetData.financialInputs);
+      setChanges(resetData.changes);
+      
+      return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reset changes');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to restart analysis';
+      setError(errorMessage);
+      return false;
+    } finally {
+      setRestarting(false);
     }
   }, [userId, companyId]);
+
+  // Reset all changes to zero (local state only)
+  const resetChanges = useCallback(() => {
+    setChanges(DEFAULT_CHANGES);
+  }, []);
 
   // Check if financial inputs are complete
   const hasCompleteFinancialInputs = useCallback(() => {
@@ -174,6 +183,7 @@ export const usePowerOfOne = (userId: string, companyId?: string) => {
     changes,
     loading,
     saving,
+    restarting,
     error,
     isInputsExpanded,
     
@@ -184,10 +194,12 @@ export const usePowerOfOne = (userId: string, companyId?: string) => {
     
     // Actions
     updateFinancialInput,
-    saveFinancialInputs,
+    saveFinancialInputs, // Legacy method
+    saveAllData, // New combined save method
     updateChange,
     toggleInputsExpanded,
-    resetChanges,
+    resetChanges, // Local state reset only
+    restartAnalysis, // Full database restart
     
     // Utilities
     hasCompleteFinancialInputs

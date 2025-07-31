@@ -7,23 +7,26 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: white;
   min-height: 100vh;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 /* Header Styles */
 .power-of-one-header {
-  text-align: center;
-  margin-bottom: 2rem;
-  background: #f8fafc;
+  text-align: left;
+  margin: -1rem -1rem 2rem -1rem;
+  background: #C7EA46;
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-radius: 12px 12px 0 0;
+  box-shadow: none;
 }
 
 .main-title {
   font-size: 2.5rem;
   font-weight: 700;
   margin: 0;
-  color: #1e293b;
+  color: white;
   margin-bottom: 0.5rem;
 }
 
@@ -71,6 +74,7 @@
 .error-content {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
 }
 
@@ -82,6 +86,23 @@
 .error-message {
   color: #dc2626;
   font-weight: 500;
+  flex: 1;
+}
+
+.error-dismiss {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.error-dismiss:hover {
+  background: rgba(220, 38, 38, 0.1);
 }
 
 /* Financial Inputs Section */
@@ -176,6 +197,7 @@
 .form-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 1rem;
 }
 
 .save-button {
@@ -186,11 +208,14 @@
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.1s;
+  position: relative;
+  overflow: hidden;
 }
 
 .save-button:hover:not(:disabled) {
   background: #2563eb;
+  transform: translateY(-1px);
 }
 
 .save-button:disabled {
@@ -198,42 +223,156 @@
   cursor: not-allowed;
 }
 
+.save-button.saving {
+  background: #6b7280;
+  cursor: not-allowed;
+}
+
+.save-button.success {
+  background: #059669;
+  color: white;
+}
+
+.save-button.error {
+  background: #dc2626;
+  color: white;
+}
+
+.restart-button {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  position: relative;
+  overflow: hidden;
+}
+
+.restart-button:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.restart-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.restart-button.restarting {
+  background: #6b7280;
+  cursor: not-allowed;
+}
+
+.restart-button.success {
+  background: #059669;
+  color: white;
+}
+
+.restart-button.error {
+  background: #dc2626;
+  color: white;
+}
+
+/* Analysis Actions Section */
+.analysis-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.analysis-actions .save-button {
+  background: #84CC16;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  font-size: 0.875rem;
+}
+
+.analysis-actions .save-button:hover:not(:disabled) {
+  background: #65A30D;
+  transform: translateY(-1px);
+}
+
+.analysis-actions .save-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.analysis-actions .save-button.saving {
+  background: #6b7280;
+  cursor: not-allowed;
+}
+
+.analysis-actions .save-button.success {
+  background: #059669;
+  color: white;
+}
+
+.analysis-actions .save-button.error {
+  background: #dc2626;
+  color: white;
+}
+
 /* Base Metrics Summary */
 .base-metrics-summary {
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.metric-card {
   background: white;
+  margin-bottom: 2rem;
+}
+
+.metrics-table {
+  width: 100%;
+}
+
+.metrics-header {
+  display: grid;
+  grid-template-columns: 35% 25% 20% 20%;
+  background: white;
+  color: black;
+  border-bottom: 2px solid black;
   padding: 1rem;
-  border-radius: 8px;
-  text-align: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.metric-label {
-  display: block;
-  font-size: 0.875rem;
-  color: #64748b;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-}
-
-.metric-value {
-  display: block;
-  font-size: 1.5rem;
   font-weight: 700;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metrics-row {
+  display: grid;
+  grid-template-columns: 35% 25% 20% 20%;
+  padding: 1rem;
+  font-size: 0.875rem;
+}
+
+.metrics-label {
+  text-align: left;
+  font-weight: 700;
+  color: #374151;
+}
+
+.metrics-spacer {
+  /* Empty spacer column */
+}
+
+.metrics-value-header {
+  text-align: right;
+  font-weight: 700;
+}
+
+.metrics-value {
+  text-align: right;
+  font-weight: 600;
   color: #1e293b;
+  background: #f5f5f5;
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
 }
 
 /* Power of One Table */
@@ -275,14 +414,15 @@
 }
 
 .table-header-row {
-  background: #1e293b;
-  color: white;
+  background: white;
+  color: black;
+  border-bottom: 2px solid black;
 }
 
 .table-header-row th {
   padding: 1rem;
   text-align: left;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -393,8 +533,8 @@
 }
 
 .adjusted-totals-row {
-  background: #e0f2fe;
-  border-top: 1px solid #b3e5fc;
+  background: white;
+  border-top: 1px solid black;
 }
 
 .adjusted-totals-row td {
@@ -407,13 +547,17 @@
 }
 
 .adjusted-impact-cell {
-  text-align: center;
+  text-align: right;
 }
 
 .adjusted-value {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  background: #F0F9D6;
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin: 0.25rem;
 }
 
 .adjusted-label {
