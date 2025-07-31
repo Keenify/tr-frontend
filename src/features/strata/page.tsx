@@ -306,7 +306,12 @@ const StrataPage: React.FC<StrataProps> = ({ session }) => {
     }
   }, [userInfo]);
 
-  // Auto-selection removed - users now manually select companies for better UX
+  // Auto-select company if user has only one company
+  useEffect(() => {
+    if (companies.length === 1 && !selectedCompanyId) {
+      setSelectedCompanyId(companies[0].id);
+    }
+  }, [companies, selectedCompanyId]);
 
   useEffect(() => {
     if (selectedCompanyId && userInfo?.user_id) {
@@ -479,12 +484,22 @@ const StrataPage: React.FC<StrataProps> = ({ session }) => {
     try {
       const success = await strataService.deleteStrata(userInfo.user_id, selectedCompanyId);
       if (success) {
-        // Reset to default UI state - show selector (UI change only)
-        setSelectedCompanyId('');
-        setStrataData(null);
-        setOriginalData(null);
-        setIsEditMode(true);
-        setHasUnsavedChanges(false);
+        // For single company users, keep company selected and reset form data
+        if (companies.length === 1) {
+          const defaultData = strataService.getDefaultStrataData(userInfo.user_id, selectedCompanyId);
+          setStrataData(defaultData as SevenStrata);
+          setOriginalData(defaultData as SevenStrata);
+          setIsEditMode(true);
+          setHasUnsavedChanges(false);
+          // Keep selectedCompanyId so single-company users don't need to reselect
+        } else {
+          // For multiple company users, reset to selector
+          setSelectedCompanyId('');
+          setStrataData(null);
+          setOriginalData(null);
+          setIsEditMode(true);
+          setHasUnsavedChanges(false);
+        }
         toast.success('Strata data deleted successfully');
       }
     } catch (error) {
@@ -519,22 +534,28 @@ const StrataPage: React.FC<StrataProps> = ({ session }) => {
             {/* Organization Selector */}
             <div className="flex flex-col">
               <label className="block text-sm font-medium text-blue-100 mb-2">
-                Select Organization
+                {companies.length === 1 ? 'Organization' : 'Select Organization'}
               </label>
-              <select
-                value={selectedCompanyId}
-                onChange={(e) => setSelectedCompanyId(e.target.value)}
-                className={`w-full sm:w-64 p-3 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:border-white bg-white ${
-                  selectedCompanyId ? 'text-gray-900' : 'text-gray-500'
-                }`}
-              >
-                <option value="" disabled hidden>Select an organization...</option>
-                {companies.map((company) => (
-                  <option key={company.id} value={company.id}>
-                    {company.name}
-                  </option>
-                ))}
-              </select>
+              {companies.length === 1 ? (
+                <div className="w-full sm:w-64 p-3 border border-blue-300 rounded-lg bg-white text-gray-900 font-medium">
+                  {companies[0].name}
+                </div>
+              ) : (
+                <select
+                  value={selectedCompanyId}
+                  onChange={(e) => setSelectedCompanyId(e.target.value)}
+                  className={`w-full sm:w-64 p-3 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:border-white bg-white ${
+                    selectedCompanyId ? 'text-gray-900' : 'text-gray-500'
+                  }`}
+                >
+                  <option value="" disabled hidden>Select an organization...</option>
+                  {companies.map((company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
         </div>
