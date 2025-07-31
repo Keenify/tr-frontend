@@ -26,8 +26,8 @@ export function useEmployees(companyId: string) {
         const userData = await getAllEmployees(companyId);
         console.log('Employees fetch result:', userData);
         
-        // Transform UserData to ExtendedEmployee format
-        const employeeData: ExtendedEmployee[] = userData.map((user: UserData) => ({
+        // Transform UserData to ExtendedEmployee format and filter only employees
+        const employeeData: ExtendedEmployee[] = userData.filter((user: UserData) => user.Is_Employed === true).map((user: UserData) => ({
           id: user.id,
           first_name: user.first_name,
           last_name: user.last_name,

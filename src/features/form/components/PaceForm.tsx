@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { supabase } from '../../../lib/supabase';
 import { useEmployees, ExtendedEmployee } from '../hooks/useEmployees';
-import { FormValues, ProcessRow } from '../types/paceFormTypes';
+import { FormValues, ProcessRow, PaceFormDatabaseRow } from '../types/paceFormTypes';
 import PaceFormRow from './PaceFormRow';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import { useSession } from '../../../shared/hooks/useSession';
@@ -14,6 +14,12 @@ const PaceForm: React.FC = () => {
   // State for loading and submit status
   const [loading, setLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<string | null>(null);
+  
+  // New states for view/edit mode and data persistence
+  const [isEditMode, setIsEditMode] = useState(true);
+  const [hasSubmittedData, setHasSubmittedData] = useState(false);
+  const [submittedData, setSubmittedData] = useState<PaceFormDatabaseRow[]>([]);
+  const [loadingExistingData, setLoadingExistingData] = useState(false);
   
   // Get session and company data
   const { session } = useSession();
@@ -47,6 +53,66 @@ const PaceForm: React.FC = () => {
       setValue('company_id', companyInfo.id);
     }
   }, [companyInfo?.id, setValue]);
+
+  // Load existing form data on mount
+  const loadExistingData = async () => {
+    if (!companyInfo?.id) return;
+    
+    setLoadingExistingData(true);
+    try {
+      const { data, error } = await supabase
+        .from('pace_form')
+        .select('*')
+        .eq('company_id', companyInfo.id);
+      
+      if (error) {
+        console.error('Error loading existing data:', error);
+        return;
+      }
+      
+      if (data && data.length > 0) {
+        setSubmittedData(data);
+        setHasSubmittedData(true);
+        setIsEditMode(false); // Start in view mode if data exists
+        
+        // Populate form with existing data
+        populateFormWithExistingData(data);
+      }
+    } catch (error) {
+      console.error('Failed to load existing data:', error);
+    } finally {
+      setLoadingExistingData(false);
+    }
+  };
+
+  // Populate form fields with existing data
+  const populateFormWithExistingData = (data: PaceFormDatabaseRow[]) => {
+    const processData: ProcessRow[] = data.map(row => ({
+      employee_id: row.employee_id,
+      process_name: row.process_name,
+      kpi_list: row.kpi_list,
+    }));
+    
+    // Ensure we have at least MIN_ROWS
+    const minProcesses = Math.max(processData.length, MIN_ROWS);
+    const updatedProcesses: ProcessRow[] = Array(minProcesses).fill(null).map((_, index) => {
+      return processData[index] || {
+        employee_id: '',
+        process_name: '',
+        kpi_list: '',
+      };
+    });
+    
+    setValue('processes', updatedProcesses);
+  };
+
+  // Load existing data when component mounts and company info is available
+  useEffect(() => {
+    if (companyInfo?.id && !loadingExistingData) {
+      loadExistingData();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyInfo?.id]);
 
   // Add a new process row
   const handleAddRow = () => {
@@ -86,8 +152,16 @@ const PaceForm: React.FC = () => {
           kpi_list: row.kpi_list?.trim() || '',
         }));
       
-      if (rows.length === 0) {
-        setSubmitStatus('Please fill in at least one process with employee and process name');
+      // Validate company-wide entry limits (4-9 entries)
+      if (rows.length < 4) {
+        setSubmitStatus('Company must have at least 4 processes. Please add more processes.');
+        setLoading(false);
+        return;
+      }
+      
+      if (rows.length > 9) {
+        setSubmitStatus('Company can have maximum 9 processes. Please remove some processes.');
+        setLoading(false);
         return;
       }
       
@@ -127,9 +201,21 @@ const PaceForm: React.FC = () => {
       }
       
       // Try basic insert first - only with required fields
-      console.log('Attempting basic insert with original rows:', rows);
+      console.log('Attempting upsert with original rows:', rows);
       
-      // Insert data with current authenticated session context
+      // Implement manual upsert: delete existing + insert new
+      // This ensures we replace all company data while handling duplicates
+      const { error: deleteError } = await supabase
+        .from('pace_form')
+        .delete()
+        .eq('company_id', companyInfo.id);
+      
+      if (deleteError) {
+        console.warn('Warning: Could not delete existing records:', deleteError);
+        // Continue with insert - may cause duplicates but better than failing
+      }
+      
+      // Insert all new records
       const { data, error } = await supabase
         .from('pace_form')
         .insert(rows)
@@ -155,7 +241,9 @@ const PaceForm: React.FC = () => {
       console.log('Successfully inserted data:', data);
       
       setSubmitStatus('Form submitted successfully!');
-      reset();
+      setSubmittedData(data);
+      setHasSubmittedData(true);
+      setIsEditMode(false); // Switch to view mode after successful submission
     } catch (err: unknown) {
       console.error('Form submission error:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -165,14 +253,64 @@ const PaceForm: React.FC = () => {
     }
   };
 
-  if (userDataLoading) {
+  if (userDataLoading || loadingExistingData) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
-        <p className="ml-3 text-orange-600 font-medium">Loading form...</p>
+        <p className="ml-3 text-orange-600 font-medium">
+          {loadingExistingData ? 'Loading existing data...' : 'Loading form...'}
+        </p>
       </div>
     );
   }
+
+  // Handle edit mode toggle
+  const handleEditModeToggle = () => {
+    setIsEditMode(!isEditMode);
+    setSubmitStatus(null); // Clear any previous status messages
+  };
+
+  // Render read-only view for submitted data
+  const renderReadOnlyView = () => {
+    if (!hasSubmittedData || submittedData.length === 0) return null;
+    
+    return (
+      <div className="border border-gray-300 bg-gray-50">
+        {/* Table Header */}
+        <div className="grid grid-cols-3 bg-gray-200 border-b border-gray-300">
+          <div className="p-3 border-r border-gray-300">
+            <div className="font-semibold text-sm text-center">Person Accountable</div>
+          </div>
+          <div className="p-3 border-r border-gray-300">
+            <div className="font-semibold text-sm text-center">Name of Process</div>
+          </div>
+          <div className="p-3">
+            <div className="font-semibold text-sm text-center">KPIs</div>
+          </div>
+        </div>
+        
+        {/* Process Data */}
+        {submittedData.map((row, index) => {
+          const employee = employees.find(emp => emp.id === row.employee_id);
+          return (
+            <div key={`process-${index}`} className="grid grid-cols-3 border-b border-gray-300">
+              <div className="p-3 border-r border-gray-300">
+                <span className="text-sm">
+                  {employee ? `${employee.first_name} ${employee.last_name}` : 'Unknown Employee'}
+                </span>
+              </div>
+              <div className="p-3 border-r border-gray-300">
+                <span className="text-sm">{row.process_name}</span>
+              </div>
+              <div className="p-3">
+                <div className="text-sm whitespace-pre-line">{row.kpi_list}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white">
@@ -183,7 +321,19 @@ const PaceForm: React.FC = () => {
             <span className="font-bold">People:</span> Process Accountability Chart (PACe)
           </h1>
         </div>
-
+        {hasSubmittedData && (
+          <div className="flex items-center space-x-3">
+            <span className="text-sm">
+              {isEditMode ? 'Editing Mode' : 'View Mode'}
+            </span>
+            <button
+              onClick={handleEditModeToggle}
+              className="bg-white text-orange-400 px-4 py-1 rounded text-sm font-medium hover:bg-gray-100 transition-colors"
+            >
+              {isEditMode ? 'Switch to View' : 'Edit Form'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Instructions */}
@@ -198,7 +348,7 @@ const PaceForm: React.FC = () => {
           <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold mr-2 flex-shrink-0">
             2
           </div>
-          <span className="text-sm">Identify 4 to 9 processes that drive your business</span>
+          <span className="text-sm"><strong>Identify exactly 4 to 9 processes</strong> that drive your business (company-wide limit)</span>
         </div>
         <div className="flex items-center">
           <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold mr-2 flex-shrink-0">
@@ -208,7 +358,22 @@ const PaceForm: React.FC = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      {/* Show read-only view when not in edit mode */}
+      {!isEditMode && hasSubmittedData ? (
+        <div>
+          {renderReadOnlyView()}
+          
+          {/* Status Messages in View Mode */}
+          {submitStatus && (
+            <div className="p-4 bg-gray-50 border-l border-r border-gray-300">
+              <div className={`text-sm ${submitStatus.startsWith('Form') ? 'text-green-600' : 'text-red-600'}`}>
+                {submitStatus}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit(onSubmit)}>
 
         {/* Table */}
         <div className="border border-gray-300">
@@ -285,7 +450,8 @@ const PaceForm: React.FC = () => {
             </div>
           )}
         </div>
-      </form>
+        </form>
+      )}
 
       {/* Footer */}
       <div className="bg-gray-50 p-4 border border-gray-300 rounded-b-lg text-xs text-gray-600">
