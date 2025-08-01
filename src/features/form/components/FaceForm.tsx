@@ -8,7 +8,7 @@ import BusinessUnitRowComponent from './BusinessUnitRow';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import { useSession } from '../../../shared/hooks/useSession';
 
-const MIN_ROWS = 1; // At least 1 function required
+const MIN_ROWS = 1; // At least 1 function required for the form to be submitted
 const MAX_ROWS = 20;
 const MIN_BU_ROWS = 4;
 const MAX_BU_ROWS = 10;
