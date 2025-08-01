@@ -16,11 +16,10 @@ export const useRockefellerChecklist = (userId: string, companyId: string) => {
       habit_id: `habit_${template.id}`,
       habit_name: template.habit_name,
       sub_list: template.sub_items.map((text, index) => ({
-        id: index,
+        id: index, // Use simple index-based IDs to match existing database
         text,
         complete: false
       })),
-      last_edited_user: userId,
       last_edited_at: new Date().toISOString()
     }));
 
@@ -36,13 +35,27 @@ export const useRockefellerChecklist = (userId: string, companyId: string) => {
   // Load habits on mount
   useEffect(() => {
     const loadHabits = async () => {
+      // Don't load if we don't have valid user data
+      if (!userId || !companyId) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         let existingHabits = await rockefellerChecklistService.getHabits(userId, companyId);
         
         // If no habits exist, initialize from template
         if (existingHabits.length === 0) {
+          console.log('No existing habits found, initializing from template for new user');
           existingHabits = await initializeHabitsFromTemplate();
+          
+          // Verify initialization was successful
+          if (existingHabits.length === 0) {
+            throw new Error('Failed to initialize habits from template - no habits were created');
+          }
+          
+          console.log(`Successfully initialized ${existingHabits.length} habits for new user`);
         }
         
         setHabits(existingHabits);

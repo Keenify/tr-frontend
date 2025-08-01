@@ -188,11 +188,16 @@ export const calculateTotals = (
   const totalCashFlowImpact = rows.reduce((sum, row) => sum + row.cashFlowImpact, 0);
   const totalEbitImpact = rows.reduce((sum, row) => sum + row.ebitImpact, 0);
   
+  // Calculate working capital impacts only (last 3 levers)
+  const workingCapitalImpact = rows
+    .filter(row => ['debtorDaysReduction', 'stockDaysReduction', 'creditorDaysIncrease'].includes(row.id))
+    .reduce((sum, row) => sum + row.cashFlowImpact, 0);
+  
   return {
     totalCashFlowImpact,
     totalEbitImpact,
     adjustedEbit: baseMetrics.ebit + totalEbitImpact,
-    adjustedCashFlow: baseMetrics.netCashFlow + totalCashFlowImpact
+    adjustedCashFlow: baseMetrics.ebit + workingCapitalImpact // Base EBIT + Working Capital Impacts
   };
 };
 

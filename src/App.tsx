@@ -12,6 +12,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // Hooks for session
 import { useSession } from "./shared/hooks/useSession";
 import FloatingMusicPlayer from "./shared/components/FloatingMusicPlayer";
+import { UserDataProvider } from "./shared/contexts/UserDataContext";
 
 // Not Found
 const NotFound = lazy(() => import("./shared/components/NotFound"));
@@ -61,6 +62,8 @@ import CashAccelerationStrategies from "./features/cash/components/CashAccelerat
 import TheRocksMain from "./features/theRocks/components/main";
 import PaceForm from "./features/form/components/PaceForm";
 import FaceForm from "./features/form/components/FaceForm";
+import StrataPage from "./features/strata/page";
+
 
 // Import the public daily huddle component
 import PublicDailyHuddle from "./features/dailyHuddle/components/PublicDailyHuddle";
@@ -72,8 +75,9 @@ const App: React.FC = () => {
   const { session, signOut } = useSession();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <Toaster position="top-right" />
+    <UserDataProvider>
+      <QueryClientProvider client={queryClient}>
+        <Toaster position="top-right" />
       <Router
         future={{
           v7_startTransition: true,
@@ -765,6 +769,25 @@ const App: React.FC = () => {
                   }
                 />
                 <Route
+                  path="/:userId/strata"
+                  element={
+                    <ProtectedRoute
+                      session={session}
+                      element={
+                        <DashboardLayout
+                          session={session}
+                          signOut={signOut}
+                          activeTab="thePlan"
+                          activeSubTab="strata"
+                          onSubTabChange={() => {}}
+                        >
+                          <StrataPage session={session} />
+                        </DashboardLayout>
+                      }
+                    />
+                  }
+                />
+                <Route
                   path="/:userId/ccc"
                   element={
                     <ProtectedRoute
@@ -852,7 +875,8 @@ const App: React.FC = () => {
           </Routes>
         </Suspense>
       </Router>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </UserDataProvider>
   );
 };
 

@@ -66,10 +66,8 @@ export interface PowerOfOneProps {
 export interface FinancialInputsFormProps {
   inputs: FinancialInputs;
   onInputChange: (field: keyof FinancialInputs, value: number) => void;
-  onSave: () => void;
   isExpanded: boolean;
   onToggleExpanded: () => void;
-  loading?: boolean;
 }
 
 export interface PowerOfOneTableProps {

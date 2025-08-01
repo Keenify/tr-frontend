@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PowerOfOneProps } from '../types/powerOfOne';
 import { usePowerOfOne } from '../hooks/usePowerOfOne';
 import FinancialInputsForm from './FinancialInputsForm';
@@ -12,38 +12,71 @@ const PowerOfOne: React.FC<PowerOfOneProps> = ({
 }) => {
   const {
     financialInputs,
+    changes,
     loading,
     saving,
+    restarting,
     error,
     isInputsExpanded,
     baseMetrics,
     rows,
     totals,
     updateFinancialInput,
-    saveFinancialInputs,
+    saveAllData,
     updateChange,
     toggleInputsExpanded,
+    restartAnalysis,
     hasCompleteFinancialInputs
   } = usePowerOfOne(userId, companyId);
 
-  const handleSaveInputs = async () => {
-    const success = await saveFinancialInputs();
+  // Handle save with user feedback
+  const handleSaveInputs = async (): Promise<boolean> => {
+    const success = await saveAllData();
     if (success && onUpdate) {
       onUpdate({
         userId,
         companyId,
-        financialInputs,
-        changes: {
-          priceIncreasePct: 0,
-          volumeIncreasePct: 0,
-          cogsReductionPct: 0,
-          overheadsReductionPct: 0,
-          debtorDaysReduction: 0,
-          stockDaysReduction: 0,
-          creditorDaysIncrease: 0
-        }
+        financialInputs, // Current values preserved
+        changes // Current simulation values preserved
       });
     }
+    return success;
+  };
+
+  // Handle restart with confirmation
+  const handleRestart = async (): Promise<boolean> => {
+    const confirmed = window.confirm(
+      'Are you sure you want to restart? This will clear all your financial inputs and simulation values.'
+    );
+    
+    if (confirmed) {
+      const success = await restartAnalysis();
+      if (success && onUpdate) {
+        onUpdate({
+          userId,
+          companyId,
+          financialInputs: {
+            revenue: 0,
+            cogs: 0,
+            overheads: 0,
+            debtorDays: 0,
+            stockDays: 0,
+            creditorDays: 0
+          },
+          changes: {
+            priceIncreasePct: 0,
+            volumeIncreasePct: 0,
+            cogsReductionPct: 0,
+            overheadsReductionPct: 0,
+            debtorDaysReduction: 0,
+            stockDaysReduction: 0,
+            creditorDaysIncrease: 0
+          }
+        });
+      }
+      return success;
+    }
+    return false;
   };
 
   if (loading) {
@@ -60,10 +93,7 @@ const PowerOfOne: React.FC<PowerOfOneProps> = ({
   return (
     <div className="power-of-one-container">
       <div className="power-of-one-header">
-        <h1 className="main-title">Power of One Analysis</h1>
-        <p className="main-subtitle">
-          Discover the impact of small improvements across key business levers
-        </p>
+        <h1 className="main-title">Cash: The Power of One</h1>
       </div>
 
       {error && (
@@ -71,6 +101,13 @@ const PowerOfOne: React.FC<PowerOfOneProps> = ({
           <div className="error-content">
             <span className="error-icon">⚠</span>
             <span className="error-message">{error}</span>
+            <button 
+              className="error-dismiss"
+              onClick={() => window.location.reload()}
+              aria-label="Dismiss error"
+            >
+              ×
+            </button>
           </div>
         </div>
       )}
@@ -79,27 +116,25 @@ const PowerOfOne: React.FC<PowerOfOneProps> = ({
         <FinancialInputsForm
           inputs={financialInputs}
           onInputChange={updateFinancialInput}
-          onSave={handleSaveInputs}
           isExpanded={isInputsExpanded}
           onToggleExpanded={toggleInputsExpanded}
-          loading={saving}
         />
 
         {hasCompleteFinancialInputs() ? (
           <div className="analysis-section">
             <div className="base-metrics-summary">
-              <div className="metrics-grid">
-                <div className="metric-card">
-                  <span className="metric-label">Current EBIT</span>
-                  <span className="metric-value">
-                    ${baseMetrics.ebit.toLocaleString()}
-                  </span>
+              <div className="metrics-table">
+                <div className="metrics-header">
+                  <span className="metrics-label">Your Power of One</span>
+                  <span className="metrics-spacer"></span>
+                  <span className="metrics-value-header">Net Cash Flow</span>
+                  <span className="metrics-value-header">EBIT $</span>
                 </div>
-                <div className="metric-card">
-                  <span className="metric-label">Current Net Cash Flow</span>
-                  <span className="metric-value">
-                    ${baseMetrics.netCashFlow.toLocaleString()}
-                  </span>
+                <div className="metrics-row">
+                  <span className="metrics-label">Your Current Position</span>
+                  <span className="metrics-spacer"></span>
+                  <span className="metrics-value">${baseMetrics.netCashFlow.toLocaleString()}</span>
+                  <span className="metrics-value">${baseMetrics.ebit.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -109,6 +144,11 @@ const PowerOfOne: React.FC<PowerOfOneProps> = ({
               totals={totals}
               onChangeUpdate={updateChange}
               loading={false}
+            />
+            
+            <AnalysisActions
+              onSave={handleSaveInputs}
+              saving={saving}
             />
           </div>
         ) : (
@@ -130,6 +170,53 @@ const PowerOfOne: React.FC<PowerOfOneProps> = ({
           </div>
         )}
       </div>
+    </div>
+  );
+};
+
+// Analysis Actions Component
+interface AnalysisActionsProps {
+  onSave: () => Promise<boolean>;
+  saving: boolean;
+}
+
+const AnalysisActions: React.FC<AnalysisActionsProps> = ({
+  onSave,
+  saving
+}) => {
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+
+  const handleSave = async () => {
+    setSaveStatus('saving');
+    try {
+      const success = await onSave();
+      setSaveStatus(success ? 'success' : 'error');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch {
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    }
+  };
+
+  const getSaveButtonText = () => {
+    switch (saveStatus) {
+      case 'saving': return 'Saving...';
+      case 'success': return 'Saved!';
+      case 'error': return 'Save Failed';
+      default: return 'Save All Values';
+    }
+  };
+
+  return (
+    <div className="analysis-actions">
+      <button
+        type="button"
+        className={`save-button ${saveStatus}`}
+        onClick={handleSave}
+        disabled={saving || saveStatus === 'saving'}
+      >
+        {getSaveButtonText()}
+      </button>
     </div>
   );
 };

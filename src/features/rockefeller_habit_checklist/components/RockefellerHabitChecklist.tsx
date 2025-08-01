@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import ChecklistSection from './ChecklistSection';
 import { useRockefellerChecklist } from '../hooks/useRockefellerChecklist';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
@@ -11,17 +11,20 @@ interface Props {
 }
 
 const RockefellerHabitChecklist: React.FC<Props> = ({ session, onUpdate }) => {
-  const { userInfo, companyInfo } = useUserAndCompanyData(session.user.id);
+  const { userInfo, companyInfo, isLoading: userDataLoading } = useUserAndCompanyData(session.user.id);
   
   // Get the actual user_id and company_id from the userInfo
   const userId = userInfo?.user_id;
   const companyId = userInfo?.company_id;
+  
+  // Only call the checklist hook when we have valid user data
+  const shouldLoadHabits = userId && companyId;
   const { habits, loading, error, toggleSubItem, overallProgress } = useRockefellerChecklist(
-    userId, 
-    companyId
+    shouldLoadHabits ? userId : '',
+    shouldLoadHabits ? companyId : ''
   );
 
-  const handleItemToggle = (habitId: string) => (itemId: number) => {
+  const handleItemToggle = useCallback((habitId: string) => (itemId: number) => {
     toggleSubItem(habitId, itemId);
     
     // Call onUpdate callback if provided
@@ -31,9 +34,9 @@ const RockefellerHabitChecklist: React.FC<Props> = ({ session, onUpdate }) => {
         onUpdate(habitId, habit.progress || 0);
       }
     }
-  };
+  }, [toggleSubItem, onUpdate, habits]);
 
-  if (loading || !userId || !companyId) {
+  if (userDataLoading || loading || !shouldLoadHabits) {
     return (
       <div className="rockefeller-checklist">
         <div className="checklist-header">
@@ -71,6 +74,7 @@ const RockefellerHabitChecklist: React.FC<Props> = ({ session, onUpdate }) => {
             habitName={habit.habit_name}
             subItems={habit.sub_list}
             onItemToggle={handleItemToggle(habit.habit_id)}
+            habitId={habit.habit_id}
           />
         ))}
       </div>
