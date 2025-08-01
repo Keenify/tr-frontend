@@ -48,7 +48,6 @@ const FaceFormRow: React.FC<FaceFormRowProps> = ({
       <Controller
         name={`functions.${idx}.accountable_employee_id`}
         control={control}
-        rules={{ required: 'Required' }}
         render={({ field, fieldState }) => (
           <div>
             <Select
@@ -57,7 +56,7 @@ const FaceFormRow: React.FC<FaceFormRowProps> = ({
                 label: `${employees.find(e => e.id === field.value)?.first_name} ${employees.find(e => e.id === field.value)?.last_name}`,
                 employee: employees.find(e => e.id === field.value)
               } : null}
-              onChange={(option) => field.onChange(option?.value || '')}
+              onChange={(option) => field.onChange(option?.value || null)}
               options={employees.filter(e => e.is_employee).map(e => ({
                 value: e.id,
                 label: `${e.first_name} ${e.last_name}`,
