@@ -6,7 +6,8 @@ const ChecklistSection: React.FC<ChecklistSectionProps> = ({
   habitNumber, 
   habitName, 
   subItems, 
-  onItemToggle 
+  onItemToggle,
+  habitId 
 }) => {
   const completedCount = subItems.filter(item => item.complete).length;
   const totalCount = subItems.length;
@@ -27,6 +28,7 @@ const ChecklistSection: React.FC<ChecklistSectionProps> = ({
             key={item.id}
             item={item}
             onToggle={onItemToggle}
+            habitId={habitId}
           />
         ))}
       </div>

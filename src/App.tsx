@@ -12,6 +12,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // Hooks for session
 import { useSession } from "./shared/hooks/useSession";
 import FloatingMusicPlayer from "./shared/components/FloatingMusicPlayer";
+import { UserDataProvider } from "./shared/contexts/UserDataContext";
 
 // Not Found
 const NotFound = lazy(() => import("./shared/components/NotFound"));
@@ -74,8 +75,9 @@ const App: React.FC = () => {
   const { session, signOut } = useSession();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <Toaster position="top-right" />
+    <UserDataProvider>
+      <QueryClientProvider client={queryClient}>
+        <Toaster position="top-right" />
       <Router
         future={{
           v7_startTransition: true,
@@ -873,7 +875,8 @@ const App: React.FC = () => {
           </Routes>
         </Suspense>
       </Router>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </UserDataProvider>
   );
 };
 

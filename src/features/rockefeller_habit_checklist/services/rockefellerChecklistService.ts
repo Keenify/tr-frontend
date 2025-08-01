@@ -31,8 +31,7 @@ class RockefellerChecklistService {
       const { data, error } = await supabase
         .from('rockefeller_habit_checklist')
         .update({ 
-          sub_list: subList,
-          last_edited_at: new Date().toISOString()
+          sub_list: subList
         })
         .eq('user_id', userId)
         .eq('company_id', companyId)
@@ -55,16 +54,25 @@ class RockefellerChecklistService {
     habits: RockefellerHabit[]
   ): Promise<RockefellerHabit[]> {
     try {
+      console.log(`Initializing ${habits.length} habits for user ${userId}, company ${companyId}`);
+      
       const { data, error } = await supabase
         .from('rockefeller_habit_checklist')
         .insert(habits)
         .select();
       
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        console.error('Database error during habit initialization:', error);
+        throw error;
+      }
+      
+      const result = data || [];
+      console.log(`Successfully created ${result.length} habits in database`);
+      return result;
     } catch (error) {
       console.error('Error initializing habits:', error);
-      return [];
+      // Don't return empty array, let the error bubble up
+      throw error;
     }
   }
 
@@ -81,6 +89,7 @@ class RockefellerChecklistService {
       
       if (habit) {
         const subItem = habit.sub_list.find(item => item.id === subItemId);
+        
         if (subItem) {
           subItem.complete = !subItem.complete;
           await this.updateHabit(userId, companyId, habitId, habit.sub_list);
