@@ -268,6 +268,12 @@ const PaceForm: React.FC = () => {
           code: error.code
         });
         console.error('Failed rows data:', rows);
+        
+        // Check for duplicate process name error
+        if (error.code === '21000' || error.message.includes('ON CONFLICT DO UPDATE command cannot affect row a second time')) {
+          throw new Error('There should not be duplicate names of processes. Please ensure each process has a unique name.');
+        }
+        
         throw new Error(`Database insert failed: ${error.message} (Code: ${error.code})`);
       }
       
