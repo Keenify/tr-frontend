@@ -53,7 +53,7 @@ const BusinessUnitRow: React.FC<BusinessUnitRowProps> = ({
                 label: `${employees.find(e => e.id === field.value)?.first_name} ${employees.find(e => e.id === field.value)?.last_name}`,
                 employee: employees.find(e => e.id === field.value)
               } : null}
-              onChange={(option) => field.onChange(option?.value || null)}
+              onChange={(option) => field.onChange(option?.value || '')}
               options={employees.filter(e => e.is_employee).map(e => ({
                 value: e.id,
                 label: `${e.first_name} ${e.last_name}`,
