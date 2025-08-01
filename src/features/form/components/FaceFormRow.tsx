@@ -26,7 +26,6 @@ const FaceFormRow: React.FC<FaceFormRowProps> = ({
       <Controller
         name={`functions.${idx}.function_name`}
         control={control}
-        rules={{ required: 'Required' }}
         render={({ field, fieldState }) => (
           <div>
             <input
@@ -48,7 +47,6 @@ const FaceFormRow: React.FC<FaceFormRowProps> = ({
       <Controller
         name={`functions.${idx}.accountable_employee_id`}
         control={control}
-        rules={{ required: 'Required' }}
         render={({ field, fieldState }) => (
           <div>
             <Select
