@@ -52,7 +52,7 @@ const isPredefinedFunction = (functionName: string): boolean => {
   };
   
   // Check if the function name matches any variation
-  for (const [baseFunction, variations] of Object.entries(functionVariations)) {
+  for (const [, variations] of Object.entries(functionVariations)) {
     if (variations.some(variation => variation === normalizedName)) {
       return true;
     }
@@ -160,24 +160,22 @@ const FaceForm: React.FC = () => {
     const businessUnitData: BusinessUnitRow[] = [];
     
     data.forEach(row => {
-      // Check if it's a predefined function or business unit
-      const isFunction = isPredefinedFunction(row.function_name);
-      
-      if (isFunction) {
+      // Use is_business_unit flag to distinguish between functions and business units
+      if (row.is_business_unit) {
+        businessUnitData.push({
+          business_unit_name: row.function_name,
+          head_employee_id: row.accountable_employee_id || '',
+          kpi_list: row.kpi_list,
+          outcome_list: row.outcome_list,
+        });
+      } else {
         functionData.push({
           function_name: row.function_name,
-          accountable_employee_id: row.accountable_employee_id,
+          accountable_employee_id: row.accountable_employee_id || '',
           kpi_list: row.kpi_list,
           outcome_list: row.outcome_list,
           business_unit_name: '',
           head_employee_id: '',
-        });
-      } else {
-        businessUnitData.push({
-          business_unit_name: row.function_name,
-          head_employee_id: row.accountable_employee_id,
-          kpi_list: row.kpi_list,
-          outcome_list: row.outcome_list,
         });
       }
     });
@@ -228,9 +226,17 @@ const FaceForm: React.FC = () => {
   
   // Track form changes
   useEffect(() => {
-    if (originalFormData && isEditMode) {
-      const hasChanges = JSON.stringify(watchedValues) !== JSON.stringify(originalFormData);
-      setHasUnsavedChanges(hasChanges);
+    if (isEditMode) {
+      if (originalFormData) {
+        // For existing data, check if there are changes
+        const hasChanges = JSON.stringify(watchedValues) !== JSON.stringify(originalFormData);
+        setHasUnsavedChanges(hasChanges);
+      } else {
+        // For new forms (no existing data), always allow submission if user has filled something
+        const hasContent = watchedValues.functions?.some(f => f.accountable_employee_id || f.kpi_list || f.outcome_list) ||
+                          watchedValues.business_units?.some(bu => bu.business_unit_name || bu.head_employee_id);
+        setHasUnsavedChanges(hasContent);
+      }
     }
   }, [watchedValues, originalFormData, isEditMode]);
 
@@ -291,14 +297,43 @@ const FaceForm: React.FC = () => {
     setLoading(true);
     setSubmitStatus(null);
     try {
+      // Validate functions - check if KPI/result requires person accountable
+      const functionValidationErrors: string[] = [];
+      values.functions.forEach((row, index) => {
+        const hasKpiOrResult = (row.kpi_list?.trim() || row.outcome_list?.trim());
+        if (hasKpiOrResult && !row.accountable_employee_id) {
+          const functionName = row.function_name?.trim() || `Function ${index + 1}`;
+          functionValidationErrors.push(`${functionName}: Person accountable is required when KPI or result is entered`);
+        }
+      });
+
+      // Validate business units - check if KPI/result requires head of business unit
+      const businessUnitValidationErrors: string[] = [];
+      values.business_units.forEach((row) => {
+        if (row.business_unit_name?.trim()) {
+          const hasKpiOrResult = (row.kpi_list?.trim() || row.outcome_list?.trim());
+          if (hasKpiOrResult && !row.head_employee_id) {
+            businessUnitValidationErrors.push(`${row.business_unit_name}: Head of business unit is required when KPI or result is entered`);
+          }
+        }
+      });
+
+      // Show validation errors if any
+      const allValidationErrors = [...functionValidationErrors, ...businessUnitValidationErrors];
+      if (allValidationErrors.length > 0) {
+        setSubmitStatus('Validation Error:\n' + allValidationErrors.join('\n'));
+        setLoading(false);
+        return;
+      }
+
       // First, check if we have at least one function with a person accountable
       const functionsWithPerson = values.functions.filter(row => row.accountable_employee_id);
       const hasAtLeastOnePersonAccountable = functionsWithPerson.length > 0;
       
       // Filter and validate functions
-      const validFunctionRows: any[] = [];
+      const validFunctionRows: FaceFormDatabaseRow[] = [];
       
-      values.functions.forEach((row, index) => {
+      values.functions.forEach((row) => {
         // Only include functions that have a person accountable (ignore empty ones)
         if (row.accountable_employee_id && row.function_name?.trim()) {
           validFunctionRows.push({
@@ -308,14 +343,15 @@ const FaceForm: React.FC = () => {
             accountable_employee_id: row.accountable_employee_id,
             kpi_list: row.kpi_list?.trim() || '',
             outcome_list: row.outcome_list?.trim() || '',
+            is_business_unit: false,
           });
         }
       });
 
       // Filter and validate business units (make heads optional)
-      const validBusinessUnitRows: any[] = [];
+      const validBusinessUnitRows: FaceFormDatabaseRow[] = [];
       
-      values.business_units.forEach((row, index) => {
+      values.business_units.forEach((row) => {
         // Only include business units that have a business unit name
         if (row.business_unit_name?.trim()) {
           validBusinessUnitRows.push({
@@ -325,6 +361,7 @@ const FaceForm: React.FC = () => {
             accountable_employee_id: row.head_employee_id || null,
             kpi_list: row.kpi_list?.trim() || '',
             outcome_list: row.outcome_list?.trim() || '',
+            is_business_unit: true,
           });
         }
       });
@@ -359,13 +396,18 @@ const FaceForm: React.FC = () => {
       }
       
       if (submissionDuplicates.length > 0) {
-        const duplicateNames = [...new Set(submissionDuplicates)].join(', ');
+        const duplicateNames = Array.from(new Set(submissionDuplicates)).join(', ');
         setSubmitStatus(`The entry already captured in database: ${duplicateNames}`);
         setLoading(false);
         return;
       }
       
-      // Delete existing records for this company first to allow complete updates
+      // Combine all valid rows - no business unit table needed
+      const finalRows = [...validFunctionRows, ...validBusinessUnitRows];
+      
+      console.log('Final simplified data:', finalRows);
+      
+      // Delete existing face form records for this company
       const { error: deleteError } = await supabase
         .from('face_form')
         .delete()
@@ -376,10 +418,10 @@ const FaceForm: React.FC = () => {
         throw new Error(`Failed to update existing records: ${deleteError.message}`);
       }
       
-      // Insert new data
+      // Insert new face form data
       const { data, error } = await supabase
         .from('face_form')
-        .insert(allRows)
+        .insert(finalRows)
         .select();
       
       if (error) {
@@ -390,7 +432,7 @@ const FaceForm: React.FC = () => {
       console.log('Successfully inserted data:', data);
       
       setSubmitStatus('Form submitted successfully!');
-      setSubmittedData(data || allRows);
+      setSubmittedData(data || finalRows);
       setHasSubmittedData(true);
       setIsEditMode(false);
       setHasUnsavedChanges(false);
@@ -426,34 +468,34 @@ const FaceForm: React.FC = () => {
     setSubmitStatus(null); // Clear any previous status messages
   };
   
-  // Handle delete record
-  const handleDeleteRecord = async (functionName: string) => {
-    if (!companyInfo?.id) return;
-    
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('face_form')
-        .delete()
-        .eq('company_id', companyInfo.id)
-        .eq('function_name', functionName);
-      
-      if (error) {
-        throw new Error(`Failed to delete record: ${error.message}`);
-      }
-      
-      setSubmitStatus(`Record for ${functionName} deleted successfully!`);
-      
-      // Reload existing data to reflect changes
-      await loadExistingData();
-    } catch (err: unknown) {
-      console.error('Delete error:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setSubmitStatus('Delete failed: ' + errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Handle delete record (currently unused but kept for future functionality)
+  // const handleDeleteRecord = async (functionName: string) => {
+  //   if (!companyInfo?.id) return;
+  //   
+  //   setLoading(true);
+  //   try {
+  //     const { error } = await supabase
+  //       .from('face_form')
+  //       .delete()
+  //       .eq('company_id', companyInfo.id)
+  //       .eq('function_name', functionName);
+  //     
+  //     if (error) {
+  //       throw new Error(`Failed to delete record: ${error.message}`);
+  //     }
+  //     
+  //     setSubmitStatus(`Record for ${functionName} deleted successfully!`);
+  //     
+  //     // Reload existing data to reflect changes
+  //     await loadExistingData();
+  //   } catch (err: unknown) {
+  //     console.error('Delete error:', err);
+  //     const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+  //     setSubmitStatus('Delete failed: ' + errorMessage);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   // Render read-only view for submitted data
   const renderReadOnlyView = () => {
@@ -759,10 +801,10 @@ const FaceForm: React.FC = () => {
           <div className="flex items-center space-x-4">
             <button
               type="submit"
-              disabled={loading || !hasUnsavedChanges}
+              disabled={loading || (!hasUnsavedChanges && hasSubmittedData)}
               className="bg-orange-400 text-white px-6 py-2 rounded hover:bg-orange-500 disabled:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400"
             >
-              {loading ? 'Submitting...' : 'Submit Changes'}
+              {loading ? 'Submitting...' : hasSubmittedData ? 'Submit Changes' : 'Submit Form'}
             </button>
             {!hasUnsavedChanges && hasSubmittedData && (
               <span className="text-sm text-gray-600">No changes to submit</span>
