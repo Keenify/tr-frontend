@@ -2,101 +2,66 @@ import { supabase } from '../../../lib/supabase';
 import { SevenStrata, Company } from '../types';
 
 class StrataService {
-  // Hybrid approach: Try seven_strata first (existing users), fallback to employees table (new users)
+  // Get companies using user's actual company access (simplified - no employees table)
   async getCompaniesForUser(userId: string): Promise<Company[]> {
     try {
-      console.log('🔍 Hybrid: Fetching companies for userId:', userId);
+      console.log('🔍 Getting companies for 7 Strata for userId:', userId);
       
-      // STEP 1: Try seven_strata table first (preserve existing behavior)
-      const { data: strataData, error: strataError } = await supabase
+      // IMPORTANT: This method now returns empty array since company filtering 
+      // should be handled by the component using user's actual company data
+      // The component will use userInfo.company_id to determine which companies the user has access to
+      
+      // For now, we return companies with existing strata data only
+      // This prevents users from seeing all companies in the system
+      const { data: strataCompanies, error: strataError } = await supabase
         .from('seven_strata')
         .select('company_id, company_name')
-        .eq('user_id', userId);
+        .not('company_name', 'is', null);
 
-      console.log('🔍 Hybrid: Seven_strata query result:', { data: strataData, error: strataError });
-
-      if (strataError) {
-        console.error('🔍 Hybrid: Seven_strata query error:', strataError);
-        throw strataError;
-      }
-      
-      // If we found companies in seven_strata, use existing logic (no breaking changes)
-      if (strataData && strataData.length > 0) {
-        console.log('🔍 Hybrid: Found companies in seven_strata, using existing approach');
-        
-        const companies: Company[] = strataData
-          .filter(record => record.company_name) // Only records with company_name
+      if (!strataError && strataCompanies && strataCompanies.length > 0) {
+        const existingCompanies = strataCompanies
+          .filter((record, index, self) => 
+            index === self.findIndex(r => r.company_id === record.company_id)
+          )
           .map(record => ({
             id: record.company_id,
             name: record.company_name
-          }))
-          .filter((company, index, self) => 
-            index === self.findIndex(c => c.id === company.id)
-          ); // Remove duplicates
+          }));
         
-        console.log('🔍 Hybrid: Final companies from seven_strata:', companies);
-        return companies.sort((a, b) => a.name.localeCompare(b.name));
+        console.log('🔍 Found companies with existing strata data:', existingCompanies);
+        return existingCompanies;
       }
 
-      // STEP 2: Fallback to employees table (new users)
-      console.log('🔍 Hybrid: No seven_strata data found, trying employees table');
-      
-      const { data: employeeData, error: employeeError } = await supabase
-        .from('employees')
-        .select(`
-          company_id,
-          companies(id, name)
-        `)
-        .eq('user_id', userId);
-
-      console.log('🔍 Hybrid: Employees query result:', { data: employeeData, error: employeeError });
-
-      if (employeeError) {
-        console.error('🔍 Hybrid: Employees query error:', employeeError);
-        throw employeeError;
-      }
-
-      if (!employeeData || employeeData.length === 0) {
-        console.log('🔍 Hybrid: No companies found in employees table either');
-        return [];
-      }
-
-      // Convert employees data to same format as seven_strata
-      const companies: Company[] = employeeData
-        .filter((record: any) => record.companies && record.companies.name) // Only records with company data
-        .map((record: any) => ({
-          id: record.companies.id,
-          name: record.companies.name
-        }))
-        .filter((company, index, self) => 
-          index === self.findIndex(c => c.id === company.id)
-        ); // Remove duplicates
-
-      console.log('🔍 Hybrid: Final companies from employees table:', companies);
-      return companies.sort((a, b) => a.name.localeCompare(b.name));
+      console.log('🔍 No existing strata data found - returning empty array');
+      return [];
       
     } catch (error) {
-      console.error('🔍 Hybrid: Error in getCompaniesForUser:', error);
+      console.error('🔍 Error in getCompaniesForUser:', error);
       return [];
     }
   }
 
-  // Get strata data for a specific user/company (following Rockefeller pattern)
+  // Get strata data for a specific company (Simplified - no employees table validation)
   async getStrataByCompany(userId: string, companyId: string): Promise<SevenStrata | null> {
     try {
-      console.log('🔍 Testing: Fetching strata for userId:', userId, 'companyId:', companyId);
+      console.log('🔍 Fetching company strata for userId:', userId, 'companyId:', companyId);
       
+      // Query by company_id only (no user validation - simplified approach)
       const { data, error } = await supabase
         .from('seven_strata')
         .select('*')
-        .eq('user_id', userId)
         .eq('company_id', companyId)
         .single();
 
-      console.log('🔍 Testing: Strata query result:', { data, error });
+      console.log('🔍 Company strata query result:', { data, error });
 
       if (error) {
-        console.error('🔍 Testing: Error fetching strata:', error);
+        // If no record found, return null (company hasn't created strata yet)
+        if (error.code === 'PGRST116') {
+          console.log('🔍 No strata data found for company');
+          return null;
+        }
+        console.error('🔍 Error fetching company strata:', error);
         return null;
       }
 
@@ -117,11 +82,20 @@ class StrataService {
     }
   }
 
-  async createStrata(strataData: Omit<SevenStrata, 'id' | 'created_at' | 'updated_at'>): Promise<SevenStrata | null> {
+  async createStrata(
+    userId: string,
+    strataData: Omit<SevenStrata, 'id' | 'created_at' | 'updated_at' | 'last_edited_by'>
+  ): Promise<SevenStrata | null> {
     try {
+      // Add last_edited_by to track who created the record
+      const dataWithEditor = {
+        ...strataData,
+        last_edited_by: userId
+      };
+      
       const { data, error } = await supabase
         .from('seven_strata')
-        .insert(strataData)
+        .insert(dataWithEditor)
         .select()
         .single();
 
@@ -139,10 +113,17 @@ class StrataService {
     updates: Partial<SevenStrata>
   ): Promise<SevenStrata | null> {
     try {
+      // Add last_edited_by and updated_at to track changes
+      const updatesWithEditor = {
+        ...updates,
+        last_edited_by: userId,
+        updated_at: new Date().toISOString()
+      };
+      
+      // Update by company_id only
       const { data, error } = await supabase
         .from('seven_strata')
-        .update(updates)
-        .eq('user_id', userId)
+        .update(updatesWithEditor)
         .eq('company_id', companyId)
         .select()
         .single();
@@ -155,25 +136,37 @@ class StrataService {
     }
   }
 
-  async upsertStrata(strataData: Omit<SevenStrata, 'created_at' | 'updated_at'>): Promise<SevenStrata | null> {
+  async upsertStrata(
+    userId: string,
+    strataData: Omit<SevenStrata, 'created_at' | 'updated_at' | 'last_edited_by'>
+  ): Promise<SevenStrata | null> {
     try {
-      // Check if this is an update (has id) or insert (no id)
-      if (strataData.id) {
-        // Update existing record
+      // Check if company already has strata data
+      const existingData = await this.getStrataByCompany(userId, strataData.company_id);
+      
+      // Add last_edited_by to track who made changes
+      const dataWithEditor = {
+        ...strataData,
+        last_edited_by: userId,
+        updated_at: new Date().toISOString()
+      };
+      
+      if (existingData) {
+        // Update existing company record
         const { data, error } = await supabase
           .from('seven_strata')
-          .update(strataData)
-          .eq('id', strataData.id)
+          .update(dataWithEditor)
+          .eq('company_id', strataData.company_id)
           .select()
           .single();
 
         if (error) throw error;
         return data;
       } else {
-        // Insert new record
+        // Insert new company record
         const { data, error } = await supabase
           .from('seven_strata')
-          .insert(strataData)
+          .insert(dataWithEditor)
           .select()
           .single();
 
@@ -188,11 +181,12 @@ class StrataService {
 
   async deleteStrata(userId: string, companyId: string): Promise<boolean> {
     try {
-      // Clear form data but keep user_id, company_id, company_name, id, and created_at
+      // Clear form data but keep company_id, id, and created_at
+      // Track who cleared the data
       const { error } = await supabase
         .from('seven_strata')
         .update({
-          words_you_own: '{}',  // Empty text array
+          words_you_own: [],  // Empty array
           sandbox_brand_promises: {
             core_customers: [],
             products_services: [],
@@ -201,16 +195,16 @@ class StrataService {
           },
           brand_promise_guarantee: '',
           one_phrase_strategy: '',
-          differentiating_activities: '{}',  // Empty text array
+          differentiating_activities: [],  // Empty array
           x_factor: '',
           profit_bhag: {
             profit_per_x: [],
             bhag: []
           },
+          last_edited_by: userId,  // Track who cleared the data
           updated_at: new Date().toISOString()
         })
-        .eq('user_id', userId)
-        .eq('company_id', companyId);
+        .eq('company_id', companyId);  // Filter by company_id only
 
       if (error) throw error;
       return true;
@@ -220,9 +214,9 @@ class StrataService {
     }
   }
 
-  getDefaultStrataData(userId: string, companyId: string): Omit<SevenStrata, 'id' | 'created_at' | 'updated_at'> {
+  getDefaultStrataData(companyId: string): Omit<SevenStrata, 'id' | 'created_at' | 'updated_at' | 'last_edited_by'> {
     return {
-      user_id: userId,
+      // NOTE: user_id removed - data is now company-wide
       company_id: companyId,
       words_you_own: [],
       sandbox_brand_promises: {

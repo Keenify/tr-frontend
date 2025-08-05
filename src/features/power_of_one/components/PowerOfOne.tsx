@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { PowerOfOneProps } from '../types/powerOfOne';
 import { usePowerOfOne } from '../hooks/usePowerOfOne';
 import FinancialInputsForm from './FinancialInputsForm';
@@ -34,8 +35,7 @@ const PowerOfOne: React.FC<PowerOfOneProps> = ({
     const success = await saveAllData();
     if (success && onUpdate) {
       onUpdate({
-        userId,
-        companyId,
+        companyId: companyId || '',
         financialInputs, // Current values preserved
         changes // Current simulation values preserved
       });
@@ -53,8 +53,7 @@ const PowerOfOne: React.FC<PowerOfOneProps> = ({
       const success = await restartAnalysis();
       if (success && onUpdate) {
         onUpdate({
-          userId,
-          companyId,
+          companyId: companyId || '',
           financialInputs: {
             revenue: 0,
             cogs: 0,
@@ -184,26 +183,16 @@ const AnalysisActions: React.FC<AnalysisActionsProps> = ({
   onSave,
   saving
 }) => {
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
-
   const handleSave = async () => {
-    setSaveStatus('saving');
     try {
       const success = await onSave();
-      setSaveStatus(success ? 'success' : 'error');
-      setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch {
-      setSaveStatus('error');
-      setTimeout(() => setSaveStatus('idle'), 2000);
-    }
-  };
-
-  const getSaveButtonText = () => {
-    switch (saveStatus) {
-      case 'saving': return 'Saving...';
-      case 'success': return 'Saved!';
-      case 'error': return 'Save Failed';
-      default: return 'Save All Values';
+      if (success) {
+        toast.success('Power of One data saved successfully');
+      } else {
+        toast.error('Failed to save Power of One data');
+      }
+    } catch (error) {
+      toast.error('Failed to save Power of One data');
     }
   };
 
@@ -211,11 +200,11 @@ const AnalysisActions: React.FC<AnalysisActionsProps> = ({
     <div className="analysis-actions">
       <button
         type="button"
-        className={`save-button ${saveStatus}`}
+        className="save-button"
         onClick={handleSave}
-        disabled={saving || saveStatus === 'saving'}
+        disabled={saving}
       >
-        {getSaveButtonText()}
+        {saving ? 'Saving...' : 'Save All Values'}
       </button>
     </div>
   );

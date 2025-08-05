@@ -80,13 +80,12 @@ export const usePowerOfOne = (userId: string, companyId?: string) => {
       setError(null);
       
       const powerOfOneData: PowerOfOneData = {
-        userId,
-        companyId,
+        companyId: companyId || '',
         financialInputs, // 6 base values
         changes // 7 simulation values - ALL PRESERVED!
       };
       
-      const savedData = await powerOfOneService.savePowerOfOneData(powerOfOneData);
+      const savedData = await powerOfOneService.savePowerOfOneData(userId, powerOfOneData);
       
       // Update local state with saved data to ensure consistency
       setFinancialInputs(savedData.financialInputs);
@@ -151,7 +150,7 @@ export const usePowerOfOne = (userId: string, companyId?: string) => {
       setRestarting(true);
       setError(null);
       
-      const resetData = await powerOfOneService.restartPowerOfOneData(userId, companyId);
+      const resetData = await powerOfOneService.restartPowerOfOneData(userId, companyId || '');
       
       // Update local state with reset data
       setFinancialInputs(resetData.financialInputs);

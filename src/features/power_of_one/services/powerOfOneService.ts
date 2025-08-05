@@ -1,6 +1,8 @@
 import { FinancialInputs, PowerOfOneChanges, PowerOfOneData } from '../types/powerOfOne';
 import { supabase } from '../../../lib/supabase';
 
+// Removed: Company membership validation error types (no longer needed)
+
 // Default values for reset operations
 const DEFAULT_FINANCIAL_INPUTS: FinancialInputs = {
   revenue: 0,
@@ -22,6 +24,9 @@ const DEFAULT_CHANGES: PowerOfOneChanges = {
 };
 
 class PowerOfOneService {
+  // REMOVED: Company membership validation methods
+  // Power of One now uses component-level company access control via PowerOfOneWithCompany wrapper
+  // This eliminates employees table dependency - same pattern as 7 Strata fix
   // Enhanced error handling for database operations
   private handleDatabaseError(error: any, operation: string): never {
     console.error(`Power of One ${operation} error:`, error);
@@ -59,26 +64,25 @@ class PowerOfOneService {
     }
   }
 
-  // Get Power of One data for a user
-  async getPowerOfOneData(userId: string, companyId?: string): Promise<PowerOfOneData | null> {
+  // Get Power of One data for a company (company-wide sharing, no employees table dependency)
+  async getPowerOfOneData(userId: string, companyId: string): Promise<PowerOfOneData | null> {
     try {
-      let query = supabase
+      console.log('📊 Fetching company Power of One data:', { userId, companyId });
+      
+      // Query by company_id only (no employees table validation needed)
+      const { data, error } = await supabase
         .from('power_of_one')
         .select('*')
-        .eq('user_id', userId);
-      
-      if (companyId) {
-        query = query.eq('company_id', companyId);
-      } else {
-        query = query.is('company_id', null);
-      }
-
-      const { data, error } = await query.single();
+        .eq('company_id', companyId)
+        .single();
       
       if (error) {
+        // If no record found, return null (company hasn't created Power of One data yet)
         if (error.code === 'PGRST116') {
-          return null; // No data found
+          console.log('📊 No Power of One data found for company');
+          return null;
         }
+        console.error('📊 Error fetching company Power of One data:', error);
         this.handleDatabaseError(error, 'fetch');
       }
       
@@ -86,8 +90,8 @@ class PowerOfOneService {
 
       return {
         id: data.id,
-        userId: data.user_id,
         companyId: data.company_id,
+        lastEditedBy: data.last_edited_by,
         financialInputs: {
           revenue: data.revenue || 0,
           cogs: data.cogs || 0,
@@ -116,15 +120,15 @@ class PowerOfOneService {
     }
   }
 
-  // Create or update Power of One data with enhanced error handling
-  async savePowerOfOneData(powerOfOneData: PowerOfOneData): Promise<PowerOfOneData> {
+  // Create or update Power of One data (collaborative, no employees table dependency)
+  async savePowerOfOneData(userId: string, powerOfOneData: PowerOfOneData): Promise<PowerOfOneData> {
     try {
       // Validate data before saving
       this.validatePowerOfOneData(powerOfOneData);
       
       const dbData = {
-        user_id: powerOfOneData.userId,
-        company_id: powerOfOneData.companyId || null,
+        company_id: powerOfOneData.companyId,
+        last_edited_by: userId,
         revenue: powerOfOneData.financialInputs.revenue,
         cogs: powerOfOneData.financialInputs.cogs,
         overheads: powerOfOneData.financialInputs.overheads,
@@ -146,33 +150,31 @@ class PowerOfOneService {
         (dbData as any).id = powerOfOneData.id;
       }
 
-      // First, try to find existing record
-      const existingQuery = supabase
-        .from('power_of_one')
-        .select('id')
-        .eq('user_id', powerOfOneData.userId);
-      
+      // NEW: Find existing record by company_id only
+      let existingData = null;
       if (powerOfOneData.companyId) {
-        existingQuery.eq('company_id', powerOfOneData.companyId);
-      } else {
-        existingQuery.is('company_id', null);
+        const existingQuery = supabase
+          .from('power_of_one')
+          .select('id')
+          .eq('company_id', powerOfOneData.companyId);
+        
+        const { data } = await existingQuery.single();
+        existingData = data;
       }
-      
-      const { data: existingData } = await existingQuery.single();
       
       let result;
       
       if (existingData) {
-        // Update existing record
+        // Update existing company record
         const { data, error } = await supabase
           .from('power_of_one')
           .update(dbData)
-          .eq('id', existingData.id)
+          .eq('company_id', powerOfOneData.companyId) // NEW: Update by company_id
           .select()
           .single();
         result = { data, error };
       } else {
-        // Insert new record
+        // Insert new company record
         const { data, error } = await supabase
           .from('power_of_one')
           .insert(dbData)
@@ -189,8 +191,8 @@ class PowerOfOneService {
 
       return {
         id: data.id,
-        userId: data.user_id,
         companyId: data.company_id,
+        lastEditedBy: data.last_edited_by,
         financialInputs: {
           revenue: data.revenue,
           cogs: data.cogs,
@@ -219,17 +221,17 @@ class PowerOfOneService {
     }
   }
 
-  // Restart functionality - clears all financial data while preserving system fields
-  async restartPowerOfOneData(userId: string, companyId?: string): Promise<PowerOfOneData> {
+  // Restart functionality - clears all financial data while preserving system fields (collaborative)
+  async restartPowerOfOneData(userId: string, companyId: string): Promise<PowerOfOneData> {
     try {
       // First, check if a record exists
       const existingData = await this.getPowerOfOneData(userId, companyId);
       
       const resetData: PowerOfOneData = {
-        userId,
         companyId,
         financialInputs: { ...DEFAULT_FINANCIAL_INPUTS },
-        changes: { ...DEFAULT_CHANGES }
+        changes: { ...DEFAULT_CHANGES },
+        lastEditedBy: userId
       };
       
       // If record exists, preserve the ID for update
@@ -237,8 +239,8 @@ class PowerOfOneService {
         resetData.id = existingData.id;
       }
       
-      // Save the reset data
-      return await this.savePowerOfOneData(resetData);
+      // Save the reset data with user context
+      return await this.savePowerOfOneData(userId, resetData);
     } catch (error) {
       if (error instanceof Error) {
         throw error;
@@ -260,22 +262,26 @@ class PowerOfOneService {
         throw new Error('Financial inputs must be non-negative values.');
       }
       
+      // NEW: Update by company_id only with last_edited_by tracking
+      const updateData = {
+        revenue: financialInputs.revenue,
+        cogs: financialInputs.cogs,
+        overheads: financialInputs.overheads,
+        debtor_days: financialInputs.debtorDays,
+        stock_days: financialInputs.stockDays,
+        creditor_days: financialInputs.creditorDays,
+        last_edited_by: userId,
+        updated_at: new Date().toISOString()
+      };
+
       let query = supabase
         .from('power_of_one')
-        .update({
-          revenue: financialInputs.revenue,
-          cogs: financialInputs.cogs,
-          overheads: financialInputs.overheads,
-          debtor_days: financialInputs.debtorDays,
-          stock_days: financialInputs.stockDays,
-          creditor_days: financialInputs.creditorDays,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', userId);
+        .update(updateData);
 
       if (companyId) {
         query = query.eq('company_id', companyId);
       } else {
+        // For legacy compatibility, still handle null company_id case
         query = query.is('company_id', null);
       }
 
@@ -300,23 +306,27 @@ class PowerOfOneService {
     companyId?: string
   ): Promise<boolean> {
     try {
+      // Update by company_id only with last_edited_by tracking
+      const updateData = {
+        price_increase_pct: changes.priceIncreasePct,
+        volume_increase_pct: changes.volumeIncreasePct,
+        cogs_reduction_pct: changes.cogsReductionPct,
+        overheads_reduction_pct: changes.overheadsReductionPct,
+        debtor_days_reduction: changes.debtorDaysReduction,
+        stock_days_reduction: changes.stockDaysReduction,
+        creditor_days_increase: changes.creditorDaysIncrease,
+        last_edited_by: userId,
+        updated_at: new Date().toISOString()
+      };
+
       let query = supabase
         .from('power_of_one')
-        .update({
-          price_increase_pct: changes.priceIncreasePct,
-          volume_increase_pct: changes.volumeIncreasePct,
-          cogs_reduction_pct: changes.cogsReductionPct,
-          overheads_reduction_pct: changes.overheadsReductionPct,
-          debtor_days_reduction: changes.debtorDaysReduction,
-          stock_days_reduction: changes.stockDaysReduction,
-          creditor_days_increase: changes.creditorDaysIncrease,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', userId);
+        .update(updateData);
 
       if (companyId) {
         query = query.eq('company_id', companyId);
       } else {
+        // For legacy compatibility, still handle null company_id case
         query = query.is('company_id', null);
       }
 
