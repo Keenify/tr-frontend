@@ -87,19 +87,19 @@ const ExploreModules = ({ onModalStateChange }: ExploreModulesProps) => {
       name: "Ikigai",
       description: "Discover your life's purpose through the Japanese philosophy of reason for being and fulfillment",
       detailedDescription: "Discover your reason for being through the Japanese concept of Ikigai. Explore the intersection of what you love, what you're good at, what the world needs, and what you can be paid for. Features interactive exercises and reflection tools.",
-      media: { type: "image", src: "/lovable-uploads/a5a312cb-e64c-4ef8-a123-fcf76bd6dbf1.png" }
+      media: { type: "video", src: "/lovable-uploads/18. Ikigai.mp4" }
     },
     {
       name: "Dreamboard",
       description: "Visualize aspirations with interactive mood boards, images, and creative elements for inspiration",
       detailedDescription: "Visualize your dreams and goals with our interactive dreamboard creator. Add images, drawings, text, and symbols to create a powerful visual representation of your aspirations. Features collaborative tools and export options.",
-      media: { type: "image", src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png" }
+      media: { type: "video", src: "/lovable-uploads/20. Dream Board.mp4" }
     },
     {
       name: "Let Me In",
       description: "AI-powered mental clarity zone to organize thoughts and unlock breakthrough insights for innovation",
       detailedDescription: "Transform your mental landscape with AI-powered guidance. This module helps you organize scattered thoughts, gain mental clarity, and unlock breakthrough insights through intelligent prompts and structured thinking exercises.",
-      media: { type: "image", src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png" }
+      media: { type: "video", src: "/lovable-uploads/19. Let Me In.mp4" }
     },
     {
       name: "Mindmap",

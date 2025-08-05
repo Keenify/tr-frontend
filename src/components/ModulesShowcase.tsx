@@ -249,8 +249,8 @@ const ModulesShowcase = () => {
       url: "/ikigai",
       media: [
         {
-          type: "image",
-          src: "/lovable-uploads/a5a312cb-e64c-4ef8-a123-fcf76bd6dbf1.png"
+          type: "video",
+          src: "/lovable-uploads/18. Ikigai.mp4"
         }
       ]
     },
@@ -261,8 +261,8 @@ const ModulesShowcase = () => {
       url: "/dreamboard",
       media: [
         {
-          type: "image",
-          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
+          type: "video",
+          src: "/lovable-uploads/20. Dream Board.mp4"
         }
       ]
     },
@@ -273,8 +273,8 @@ const ModulesShowcase = () => {
       url: "/ai-journal",
       media: [
         {
-          type: "image",
-          src: "/lovable-uploads/56f0c4ce-30d3-47dc-a1a2-e031c0a470b2.png"
+          type: "video",
+          src: "/lovable-uploads/19. Let Me In.mp4"
         }
       ]
     },
