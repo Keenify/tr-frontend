@@ -206,7 +206,7 @@ const ExploreModules = ({ onModalStateChange }: ExploreModulesProps) => {
       
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
         {/* Section Heading */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-8 lg:mb-16">
           <div className="transform transition-all duration-1000 hover:scale-105">
             <h3 className="text-3xl sm:text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight tracking-tight drop-shadow-lg">
               Explore All <span className="bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 bg-clip-text text-transparent">Modules</span>
@@ -219,6 +219,50 @@ const ExploreModules = ({ onModalStateChange }: ExploreModulesProps) => {
           </div>
         </div>
 
+        {/* Mobile Module Navigation - Only visible on mobile */}
+        <div className="lg:hidden mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => setCurrentModuleIndex(prev => prev > 0 ? prev - 1 : modules.length - 1)}
+              className="flex items-center justify-center w-10 h-10 bg-white/30 backdrop-blur-md rounded-full hover:bg-white/40 transition-all duration-300 shadow-lg"
+            >
+              <ChevronUp className="w-5 h-5 text-gray-700 rotate-[-90deg]" />
+            </button>
+            
+            <div className="flex-1 mx-4">
+              <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 shadow-lg">
+                <h4 className="text-lg font-bold text-gray-900 text-center mb-1">
+                  {currentModule.name}
+                </h4>
+                <p className="text-sm text-gray-700 text-center leading-relaxed">
+                  {currentModule.description}
+                </p>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => setCurrentModuleIndex(prev => prev < modules.length - 1 ? prev + 1 : 0)}
+              className="flex items-center justify-center w-10 h-10 bg-white/30 backdrop-blur-md rounded-full hover:bg-white/40 transition-all duration-300 shadow-lg"
+            >
+              <ChevronDown className="w-5 h-5 text-gray-700 rotate-[90deg]" />
+            </button>
+          </div>
+          
+          {/* Mobile Module Indicator Dots */}
+          <div className="flex justify-center gap-2 mb-4">
+            {modules.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentModuleIndex(index)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  index === currentModuleIndex 
+                    ? 'bg-purple-600 scale-125' 
+                    : 'bg-gray-400/50 hover:bg-gray-400'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
 
         {/* Single Module Display */}
         <div className="flex flex-col lg:flex-row items-start justify-center max-w-7xl mx-auto gap-6 lg:gap-8">
@@ -310,16 +354,16 @@ const ExploreModules = ({ onModalStateChange }: ExploreModulesProps) => {
             </div>
           </div>
           
-          {/* Redesigned Sidebar: All Modules in Single Vertical Line */}
-          <div className="w-full lg:w-80 flex-shrink-0 h-auto lg:h-[600px]">
+          {/* Desktop Sidebar: All Modules in Single Vertical Line - Hidden on mobile */}
+          <div className="hidden lg:block w-80 flex-shrink-0 h-[600px]">
             <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 shadow-lg h-full">
-              <div className="flex flex-row lg:flex-col gap-2 lg:gap-0 h-full justify-start lg:justify-between pt-1 overflow-x-auto lg:overflow-x-visible overflow-y-visible lg:overflow-y-auto scrollbar-hide">
+              <div className="flex flex-col gap-0 h-full justify-between pt-1 overflow-y-auto scrollbar-hide">
                 {modules.map((module, index) => (
                   <div key={index} className="flex flex-col">
                     <button
                       data-module-index={index}
                       onClick={() => setCurrentModuleIndex(index)}
-                      className={`flex items-center gap-2 px-3 py-2 lg:px-2 lg:py-1 rounded-lg transition-all duration-300 text-left whitespace-nowrap overflow-hidden text-ellipsis font-medium focus:outline-none focus:ring-2 focus:ring-purple-400/50 flex-shrink-0 min-w-0
+                      className={`flex items-center gap-2 px-2 py-1 rounded-lg transition-all duration-300 text-left whitespace-nowrap overflow-hidden text-ellipsis font-medium focus:outline-none focus:ring-2 focus:ring-purple-400/50 flex-shrink-0 min-w-0
                         ${index === currentModuleIndex
                           ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg scale-105'
                           : 'bg-transparent text-gray-800 hover:bg-white/30 hover:scale-105'}
@@ -330,7 +374,7 @@ const ExploreModules = ({ onModalStateChange }: ExploreModulesProps) => {
                       <span className="truncate text-sm font-semibold" title={module.name}>{module.name}</span>
                     </button>
                     {index < modules.length - 1 && (
-                      <div className="lg:h-px lg:w-auto w-px h-8 bg-gray-300/30 lg:mx-3 lg:my-0.5 mx-0.5 my-0"></div>
+                      <div className="h-px w-auto bg-gray-300/30 mx-3 my-0.5"></div>
                     )}
                   </div>
                 ))}
