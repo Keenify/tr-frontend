@@ -12,7 +12,6 @@ export interface ProfitBhag {
 
 export interface SevenStrata {
   id?: string;
-  user_id: string;
   company_id: string;
   words_you_own: string[];
   sandbox_brand_promises: SandboxBrandPromises;
@@ -21,6 +20,7 @@ export interface SevenStrata {
   differentiating_activities: string[];
   x_factor: string;
   profit_bhag: ProfitBhag;
+  last_edited_by?: string;
   created_at?: string;
   updated_at?: string;
 }
