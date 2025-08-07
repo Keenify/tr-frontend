@@ -4,6 +4,7 @@ import {
   Button,
   TextField,
   FormControl,
+  InputLabel,
   Select,
   MenuItem,
   Slider,
@@ -15,6 +16,7 @@ import {
   FormGroup,
   RadioGroup,
   Radio,
+  FormLabel,
   Chip,
   Stack,
   CircularProgress,
@@ -68,8 +70,6 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
   const [isFileUploading, setIsFileUploading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [customQuestions, setCustomQuestions] = useState<CustomQuestion[]>([]);
-  const [companyName, setCompanyName] = useState<string>('');
-  const [departmentName, setDepartmentName] = useState<string>('');
   const [snackbar, setSnackbar] = useState({ 
     open: false, 
     message: '', 
@@ -89,11 +89,10 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [customFieldErrors, setCustomFieldErrors] = useState<Record<string, string>>({});
 
-  // Fetch custom questions and company info when the form opens
+  // Fetch custom questions when the form opens
   React.useEffect(() => {
     if (open && jobId) {
       fetchCustomQuestions();
-      fetchCompanyInfo();
     }
   }, [open, jobId]);
 
@@ -116,7 +115,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         } else if (question.question_type === 'scale') {
           initialCustomFields[question.id] = question.min_value || 1;
         } else if (question.question_type === 'yes_no') {
-          initialCustomFields[question.id] = null; // No pre-selection
+          initialCustomFields[question.id] = false;
         } else {
           initialCustomFields[question.id] = '';
         }
@@ -126,47 +125,8 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         ...prev,
         custom_fields: initialCustomFields
       }));
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error fetching custom questions:', error);
-    }
-  };
-
-  const fetchCompanyInfo = async () => {
-    try {
-      // Try to fetch job details with company name from companies table
-      const { data, error } = await supabase
-        .from('jobs_opening')
-        .select(`
-          department,
-          companies (
-            name
-          )
-        `)
-        .eq('id', jobId)
-        .single();
-
-      if (error) {
-        // Fallback: get job details only
-        const { data: jobData, error: jobError } = await supabase
-          .from('jobs_opening')
-          .select('department')
-          .eq('id', jobId)
-          .single();
-
-        if (!jobError && jobData) {
-          setDepartmentName(jobData.department || '');
-        }
-        
-        setCompanyName('Company');
-      } else if (data) {
-        // Success with join
-        setDepartmentName(data.department || '');
-        setCompanyName((data.companies as any)?.name || 'Company');
-      }
-    } catch (error: unknown) {
-      console.error('Error fetching company info:', error);
-      // Set fallback company name if fetch fails
-      setCompanyName('Company');
     }
   };
 
@@ -190,9 +150,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         const value = formData.custom_fields[question.id];
         if (question.question_type === 'checkbox' && (!value || value.length === 0)) {
           newCustomErrors[question.id] = 'This field is required';
-        } else if (question.question_type === 'yes_no' && value === null) {
-          newCustomErrors[question.id] = 'This field is required';
-        } else if (question.question_type !== 'checkbox' && question.question_type !== 'yes_no' && !value && value !== 0) {
+        } else if (question.question_type !== 'checkbox' && !value && value !== 0 && value !== false) {
           newCustomErrors[question.id] = 'This field is required';
         }
       }
@@ -246,149 +204,79 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
     switch (question.question_type) {
       case 'text':
         return (
-          <Box>
-            <Typography 
-              variant="subtitle1" 
-              sx={{ 
-                fontWeight: 600, 
-                mb: 1,
-                color: 'text.primary',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1
-              }}
-            >
-              📝 {question.question_text} {question.is_required && <Chip label="Required" size="small" color="primary" />}
-            </Typography>
-            <TextField
-              fullWidth
-              placeholder="Enter your response..."
-              value={value || ''}
-              onChange={(e) => handleCustomFieldChange(question.id, e.target.value)}
-              error={!!error}
-              helperText={error}
-              multiline
-              rows={3}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  '&:hover fieldset': {
-                    borderColor: 'primary.main',
-                  },
-                },
-              }}
-            />
-          </Box>
+          <TextField
+            fullWidth
+            required={question.is_required}
+            label={question.question_text}
+            value={value || ''}
+            onChange={(e) => handleCustomFieldChange(question.id, e.target.value)}
+            error={!!error}
+            helperText={error}
+            multiline
+            rows={3}
+          />
         );
       
       case 'dropdown':
         return (
-          <Box>
-            <Typography 
-              variant="subtitle1" 
-              sx={{ 
-                fontWeight: 600, 
-                mb: 2,
-                color: 'text.primary',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1
-              }}
+          <FormControl fullWidth required={question.is_required} error={!!error}>
+            <InputLabel>{question.question_text}</InputLabel>
+            <Select
+              value={value || ''}
+              onChange={(e) => handleCustomFieldChange(question.id, e.target.value)}
+              label={question.question_text}
             >
-              🔽 {question.question_text} {question.is_required && <Chip label="Required" size="small" color="primary" />}
-            </Typography>
-            <FormControl fullWidth error={!!error}>
-              <Select
-                value={value || ''}
-                onChange={(e) => handleCustomFieldChange(question.id, e.target.value)}
-                displayEmpty
-                sx={{
-                  borderRadius: 2,
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'primary.main',
-                  },
-                }}
-              >
-                <MenuItem value="" disabled>
-                  <em>Please select an option...</em>
+              <MenuItem value="">None</MenuItem>
+              {question.options?.map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option}
                 </MenuItem>
-                {question.options?.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </Select>
-              {error && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                  {error}
-                </Typography>
-              )}
-            </FormControl>
-          </Box>
+              ))}
+            </Select>
+            {error && (
+              <Typography variant="caption" color="error" sx={{ ml: 2, mt: 0.5 }}>
+                {error}
+              </Typography>
+            )}
+          </FormControl>
         );
       
       case 'checkbox':
         return (
-          <Box>
-            <Typography 
-              variant="subtitle1" 
-              sx={{ 
-                fontWeight: 600, 
-                mb: 2,
-                color: 'text.primary',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1
-              }}
-            >
-              ☑️ {question.question_text} {question.is_required && <Chip label="Required" size="small" color="primary" />}
-            </Typography>
-            <FormControl error={!!error} sx={{ width: '100%' }}>
-              <Box sx={{ pl: 1 }}>
-                <FormGroup>
-                  {question.options?.map((option) => (
-                    <FormControlLabel
-                      key={option}
-                      sx={{ 
-                        mb: 1,
-                        '& .MuiFormControlLabel-label': {
-                          fontSize: '1rem',
-                          fontWeight: 500
+          <FormControl error={!!error}>
+            <FormLabel component="legend">
+              {question.question_text} {question.is_required && '*'}
+            </FormLabel>
+            <FormGroup>
+              {question.options?.map((option) => (
+                <FormControlLabel
+                  key={option}
+                  control={
+                    <Checkbox
+                      checked={value?.includes(option) || false}
+                      onChange={(e) => {
+                        const currentValues = value || [];
+                        if (e.target.checked) {
+                          handleCustomFieldChange(question.id, [...currentValues, option]);
+                        } else {
+                          handleCustomFieldChange(
+                            question.id,
+                            currentValues.filter((v: string) => v !== option)
+                          );
                         }
                       }}
-                      control={
-                        <Checkbox
-                          checked={value?.includes(option) || false}
-                          onChange={(e) => {
-                            const currentValues = value || [];
-                            if (e.target.checked) {
-                              handleCustomFieldChange(question.id, [...currentValues, option]);
-                            } else {
-                              handleCustomFieldChange(
-                                question.id,
-                                currentValues.filter((v: string) => v !== option)
-                              );
-                            }
-                          }}
-                          sx={{
-                            '&.Mui-checked': {
-                              color: 'primary.main',
-                            },
-                          }}
-                        />
-                      }
-                      label={option}
                     />
-                  ))}
-                </FormGroup>
-              </Box>
-              {error && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                  {error}
-                </Typography>
-              )}
-            </FormControl>
-          </Box>
+                  }
+                  label={option}
+                />
+              ))}
+            </FormGroup>
+            {error && (
+              <Typography variant="caption" color="error">
+                {error}
+              </Typography>
+            )}
+          </FormControl>
         );
       
       case 'scale':
@@ -396,92 +284,24 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         const max = question.max_value || 10;
         return (
           <Box>
-            <Typography 
-              variant="subtitle1" 
-              sx={{ 
-                fontWeight: 600, 
-                mb: 1,
-                color: 'text.primary',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1
-              }}
-            >
-              📊 {question.question_text} {question.is_required && <Chip label="Required" size="small" color="primary" />}
+            <Typography gutterBottom>
+              {question.question_text} {question.is_required && '*'}: {value || min}
             </Typography>
-            
-            {/* Current Value Display */}
-            <Box sx={{ 
-              textAlign: 'center', 
-              mb: 2, 
-              p: 2, 
-              bgcolor: 'primary.50', 
-              borderRadius: 2,
-              border: '2px solid',
-              borderColor: 'primary.200'
-            }}>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main', mb: 0.5 }}>
-                {value || min}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Current Selection ({min} - {max})
-              </Typography>
-            </Box>
-            
-            <Box sx={{ px: 2, py: 1 }}>
-              <Slider
-                value={value || min}
-                onChange={(_e, newValue) => handleCustomFieldChange(question.id, newValue as number)}
-                min={min}
-                max={max}
-                step={1}
-                marks={[
-                  { value: min, label: String(min) },
-                  { value: Math.floor((min + max) / 2), label: String(Math.floor((min + max) / 2)) },
-                  { value: max, label: String(max) }
-                ]}
-                valueLabelDisplay="auto"
-                sx={{
-                  height: 8,
-                  '& .MuiSlider-thumb': {
-                    height: 24,
-                    width: 24,
-                    backgroundColor: 'primary.main',
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-                    '&:hover': {
-                      boxShadow: '0 6px 12px rgba(0,0,0,0.3)',
-                    },
-                  },
-                  '& .MuiSlider-track': {
-                    height: 8,
-                    background: 'linear-gradient(90deg, #4CAF50, #FF9800, #F44336)',
-                  },
-                  '& .MuiSlider-rail': {
-                    height: 8,
-                    opacity: 0.3,
-                  },
-                  '& .MuiSlider-mark': {
-                    height: 12,
-                    width: 2,
-                    backgroundColor: 'grey.400',
-                  },
-                  '& .MuiSlider-markLabel': {
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    color: 'text.primary',
-                  },
-                  '& .MuiSlider-valueLabel': {
-                    backgroundColor: 'primary.main',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    fontSize: '1rem',
-                  },
-                }}
-              />
-            </Box>
-            
+            <Slider
+              value={value || min}
+              onChange={(e, newValue) => handleCustomFieldChange(question.id, newValue as number)}
+              min={min}
+              max={max}
+              step={1}
+              marks={[
+                { value: min, label: String(min) },
+                { value: Math.floor((min + max) / 2), label: String(Math.floor((min + max) / 2)) },
+                { value: max, label: String(max) }
+              ]}
+              valueLabelDisplay="auto"
+            />
             {error && (
-              <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+              <Typography variant="caption" color="error">
                 {error}
               </Typography>
             )}
@@ -490,74 +310,23 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
       
       case 'yes_no':
         return (
-          <Box>
-            <Typography 
-              variant="subtitle1" 
-              sx={{ 
-                fontWeight: 600, 
-                mb: 2,
-                color: 'text.primary',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1
-              }}
+          <FormControl error={!!error}>
+            <FormLabel component="legend">
+              {question.question_text} {question.is_required && '*'}
+            </FormLabel>
+            <RadioGroup
+              value={value === true ? 'yes' : value === false ? 'no' : ''}
+              onChange={(e) => handleCustomFieldChange(question.id, e.target.value === 'yes')}
             >
-              ❓ {question.question_text} {question.is_required && <Chip label="Required" size="small" color="primary" />}
-            </Typography>
-            <FormControl error={!!error} sx={{ width: '100%' }}>
-              <Box sx={{ pl: 1 }}>
-                <RadioGroup
-                  value={value === true ? 'yes' : value === false ? 'no' : ''}
-                  onChange={(e) => handleCustomFieldChange(question.id, e.target.value === 'yes')}
-                  sx={{ flexDirection: 'row', gap: 3 }}
-                >
-                  <FormControlLabel 
-                    value="yes" 
-                    control={
-                      <Radio 
-                        sx={{
-                          '&.Mui-checked': {
-                            color: 'success.main',
-                          },
-                        }}
-                      />
-                    } 
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography sx={{ fontSize: '1rem', fontWeight: 500 }}>
-                          ✅ Yes
-                        </Typography>
-                      </Box>
-                    }
-                  />
-                  <FormControlLabel 
-                    value="no" 
-                    control={
-                      <Radio 
-                        sx={{
-                          '&.Mui-checked': {
-                            color: 'error.main',
-                          },
-                        }}
-                      />
-                    } 
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography sx={{ fontSize: '1rem', fontWeight: 500 }}>
-                          ❌ No
-                        </Typography>
-                      </Box>
-                    }
-                  />
-                </RadioGroup>
-              </Box>
-              {error && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                  {error}
-                </Typography>
-              )}
-            </FormControl>
-          </Box>
+              <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+              <FormControlLabel value="no" control={<Radio />} label="No" />
+            </RadioGroup>
+            {error && (
+              <Typography variant="caption" color="error">
+                {error}
+              </Typography>
+            )}
+          </FormControl>
         );
       
       default:
@@ -639,7 +408,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         message: 'Resume uploaded successfully',
         severity: 'success'
       });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error uploading file:', error);
       setSnackbar({
         open: true,
@@ -691,12 +460,11 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
       }
 
       setShowSuccessModal(true);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error submitting application:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Please try again.';
       setSnackbar({
         open: true,
-        message: `Failed to submit application: ${errorMessage}`,
+        message: `Failed to submit application: ${error.message || 'Please try again.'}`,
         severity: 'error'
       });
     } finally {
@@ -713,87 +481,34 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
     <>
       <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
         <DialogTitle>
-          Apply for {jobTitle} at {companyName || 'Loading...'}
+          Apply for {jobTitle}
         </DialogTitle>
         <DialogContent>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
             <Grid container spacing={3}>
-              {/* Custom Questions - Show First with Enhanced Styling */}
+              {/* Custom Questions - Show First */}
               {customQuestions.length > 0 && (
                 <>
                   <Grid item xs={12}>
-                    <Paper 
-                      elevation={2} 
-                      sx={{ 
-                        p: 3, 
-                        mb: 2, 
-                        bgcolor: 'primary.50', 
-                        border: '2px solid', 
-                        borderColor: 'primary.200',
-                        borderRadius: 2
-                      }}
-                    >
-                      <Stack spacing={3}>
-                        <Box>
-                          <Typography 
-                            variant="h5" 
-                            gutterBottom 
-                            sx={{ 
-                              color: 'primary.main',
-                              fontWeight: 'bold',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 1
-                            }}
-                          >
-                            📋 Job-Specific Questions
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                            Please answer these questions specific to the "{jobTitle}" position
-                            {departmentName && ` in the ${departmentName} department`}
-                            {companyName && ` at ${companyName}`}:
-                          </Typography>
-                        </Box>
-                        
-                        <Stack spacing={3}>
-                          {customQuestions.map((question) => (
-                            <Box 
-                              key={question.id}
-                              sx={{ 
-                                p: 2, 
-                                bgcolor: 'white', 
-                                borderRadius: 1,
-                                border: '1px solid',
-                                borderColor: 'divider'
-                              }}
-                            >
-                              {renderCustomField(question)}
-                            </Box>
-                          ))}
-                        </Stack>
-                      </Stack>
-                    </Paper>
+                    <Typography variant="h6" gutterBottom>
+                      Job-Specific Questions
+                    </Typography>
                   </Grid>
+                  
+                  {customQuestions.map((question) => (
+                    <Grid item xs={12} key={question.id}>
+                      {renderCustomField(question)}
+                    </Grid>
+                  ))}
                 </>
               )}
 
               {/* Personal Information */}
               <Grid item xs={12}>
-                <Paper elevation={1} sx={{ p: 3, bgcolor: 'grey.50' }}>
-                  <Typography 
-                    variant="h6" 
-                    gutterBottom 
-                    sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: 1,
-                      mb: 3
-                    }}
-                  >
-                    👤 Personal Information
-                  </Typography>
-                  
-                  <Grid container spacing={3}>
+                <Typography variant="h6" gutterBottom sx={{ mt: customQuestions.length > 0 ? 2 : 0 }}>
+                  Personal Information
+                </Typography>
+              </Grid>
               
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -845,26 +560,13 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
                   error={!!errors.phone}
                   helperText={errors.phone}
                 />
-                  </Grid>
-                  </Grid>
-                </Paper>
               </Grid>
 
               {/* Resume Upload */}
               <Grid item xs={12}>
-                <Paper elevation={1} sx={{ p: 3, bgcolor: 'grey.50' }}>
-                  <Typography 
-                    variant="h6" 
-                    gutterBottom 
-                    sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: 1,
-                      mb: 3
-                    }}
-                  >
-                    📄 Resume
-                  </Typography>
+                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+                  Resume
+                </Typography>
                 <Box sx={{ border: '2px dashed #ccc', borderRadius: 2, p: 3, textAlign: 'center' }}>
                   {formData.resume_url ? (
                     <Box>
@@ -910,7 +612,6 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
                     </Box>
                   )}
                 </Box>
-                </Paper>
               </Grid>
             </Grid>
           </Box>
@@ -936,7 +637,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         <DialogTitle>Application Submitted Successfully! 🎉</DialogTitle>
         <DialogContent>
           <Typography>
-            Thank you for your application to {companyName}! We have received your information and will review it shortly.
+            Thank you for your application! We have received your information and will review it shortly.
             You should receive a confirmation email within the next few minutes.
           </Typography>
         </DialogContent>
