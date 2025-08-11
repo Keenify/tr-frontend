@@ -288,9 +288,6 @@ export function DashboardLayout({
 
   // Filter navigation items based on search and user role
   const filteredNavigation = useMemo(() => {
-    // Log user role for debugging
-    console.log("User role:", userInfo?.role);
-    
     if (!searchTerm.trim()) {
       // When not searching, filter based on user role
       return navigationConfig.map(tab => {
@@ -328,6 +325,13 @@ export function DashboardLayout({
         return matchesTab || matchesSubTabs;
       });
   }, [searchTerm, userInfo?.role]);
+
+  // Debug logging moved to useEffect to avoid render-time side effects
+  useEffect(() => {
+    if (userInfo?.role) {
+      console.log("User role:", userInfo.role);
+    }
+  }, [userInfo?.role]);
 
   // Update states when props change
   useEffect(() => {

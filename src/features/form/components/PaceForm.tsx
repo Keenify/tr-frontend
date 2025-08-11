@@ -205,9 +205,6 @@ const PaceForm: React.FC = () => {
         return;
       }
       
-      // Note: Duplicate process names within the form will be handled by upsert
-      // The last occurrence in the form will be the final value for that process name
-      
       // Check if data has actually changed before updating database
       if (hasSubmittedData && submittedData.length > 0) {
         const dataChanged = hasDataChanged(rows, submittedData);
@@ -240,23 +237,26 @@ const PaceForm: React.FC = () => {
       console.log('Current user ID:', currentSession.session.user.id);
       console.log('Inserting with authenticated session');
       
-      // First, let's try to check the table structure
-      console.log('Attempting to check table structure...');
-      const { data: tableCheck, error: tableError } = await supabase
+      // Delete all existing records for this company, then insert new ones
+      // This approach ensures that removed entries are properly deleted from the database
+      // Using upsert alone would not handle deletions when rows are removed from the form
+      console.log('Deleting existing records for company:', companyInfo.id);
+      const { error: deleteError } = await supabase
         .from('pace_form')
-        .select('*')
-        .limit(1);
+        .delete()
+        .eq('company_id', companyInfo.id);
       
-      if (tableError) {
-        console.error('Table check error:', tableError);
-      } else {
-        console.log('Table check result:', tableCheck);
+      if (deleteError) {
+        console.error('Error deleting existing records:', deleteError);
+        throw new Error(`Failed to delete existing records: ${deleteError.message}`);
       }
       
-      // Use upsert to handle duplicates and potential RLS issues - same as face form
+      console.log('Successfully deleted existing records');
+      
+      // Then insert the new records
       const { data, error } = await supabase
         .from('pace_form')
-        .upsert(rows, { onConflict: 'company_id,process_name' })
+        .insert(rows)
         .select();
       
       if (error) {
@@ -270,7 +270,6 @@ const PaceForm: React.FC = () => {
         console.error('Failed rows data:', rows);
         throw new Error(`Database insert failed: ${error.message} (Code: ${error.code})`);
       }
-      
       
       console.log('Successfully saved data:', data);
       
