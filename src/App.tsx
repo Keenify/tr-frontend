@@ -845,7 +845,7 @@ const App: React.FC = () => {
                           <PaceForm />
                         </DashboardLayout>
                       }
-                    />
+                    /> 
                   }
                 />
                 <Route
