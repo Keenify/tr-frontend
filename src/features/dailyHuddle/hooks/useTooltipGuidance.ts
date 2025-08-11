@@ -95,7 +95,7 @@ export function useTooltipGuidance<T>({
       guidanceTimeoutRef.current = null;
     }
     
-    // Small delay to ensure DOM is updated before calculating position
+    // Debounced delay to reduce excessive DOM calculations
     setTimeout(() => {
       if (element) {
         const rect = element.getBoundingClientRect();
@@ -116,7 +116,7 @@ export function useTooltipGuidance<T>({
           onShowGuidance(id);
         }
       }
-    }, 10);
+    }, 100); // Increased from 10ms to 100ms
   };
   
   const handleInputBlur = () => {
@@ -190,12 +190,12 @@ export function useTooltipGuidance<T>({
     const handleDocumentFocusChange = () => {
       // If the active element is not the one we're tracking and we're not dragging, hide the tooltip
       if (activeElement && document.activeElement !== activeElement && !isDragging) {
-        // Use a small timeout to allow click events to be processed first
+        // Use a longer timeout to reduce frequent state changes
         setTimeout(() => {
           if (!isDragging && activeTooltipId === tooltipId) {
             setActiveTooltipId(null);
           }
-        }, 100);
+        }, 200); // Increased from 100ms to 200ms
       }
     };
 
