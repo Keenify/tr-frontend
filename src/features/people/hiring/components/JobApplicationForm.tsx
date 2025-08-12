@@ -115,7 +115,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         } else if (question.question_type === 'scale') {
           initialCustomFields[question.id] = question.min_value || 1;
         } else if (question.question_type === 'yes_no') {
-          initialCustomFields[question.id] = false;
+          initialCustomFields[question.id] = null; // No pre-selection
         } else {
           initialCustomFields[question.id] = '';
         }
@@ -150,7 +150,9 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         const value = formData.custom_fields[question.id];
         if (question.question_type === 'checkbox' && (!value || value.length === 0)) {
           newCustomErrors[question.id] = 'This field is required';
-        } else if (question.question_type !== 'checkbox' && !value && value !== 0 && value !== false) {
+        } else if (question.question_type === 'yes_no' && value === null) {
+          newCustomErrors[question.id] = 'This field is required';
+        } else if (question.question_type !== 'checkbox' && question.question_type !== 'yes_no' && !value && value !== 0) {
           newCustomErrors[question.id] = 'This field is required';
         }
       }
@@ -486,29 +488,80 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         <DialogContent>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
             <Grid container spacing={3}>
-              {/* Custom Questions - Show First */}
+              {/* Custom Questions - Show First with Enhanced Styling */}
               {customQuestions.length > 0 && (
                 <>
                   <Grid item xs={12}>
-                    <Typography variant="h6" gutterBottom>
-                      Job-Specific Questions
-                    </Typography>
+                    <Paper 
+                      elevation={2} 
+                      sx={{ 
+                        p: 3, 
+                        mb: 2, 
+                        bgcolor: 'primary.50', 
+                        border: '2px solid', 
+                        borderColor: 'primary.200',
+                        borderRadius: 2
+                      }}
+                    >
+                      <Stack spacing={3}>
+                        <Box>
+                          <Typography 
+                            variant="h5" 
+                            gutterBottom 
+                            sx={{ 
+                              color: 'primary.main',
+                              fontWeight: 'bold',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1
+                            }}
+                          >
+                            📋 Job-Specific Questions
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                            Please answer these questions specific to the "{jobTitle}" position:
+                          </Typography>
+                        </Box>
+                        
+                        <Stack spacing={3}>
+                          {customQuestions.map((question) => (
+                            <Box 
+                              key={question.id}
+                              sx={{ 
+                                p: 2, 
+                                bgcolor: 'white', 
+                                borderRadius: 1,
+                                border: '1px solid',
+                                borderColor: 'divider'
+                              }}
+                            >
+                              {renderCustomField(question)}
+                            </Box>
+                          ))}
+                        </Stack>
+                      </Stack>
+                    </Paper>
                   </Grid>
-                  
-                  {customQuestions.map((question) => (
-                    <Grid item xs={12} key={question.id}>
-                      {renderCustomField(question)}
-                    </Grid>
-                  ))}
                 </>
               )}
 
               {/* Personal Information */}
               <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom sx={{ mt: customQuestions.length > 0 ? 2 : 0 }}>
-                  Personal Information
-                </Typography>
-              </Grid>
+                <Paper elevation={1} sx={{ p: 3, bgcolor: 'grey.50' }}>
+                  <Typography 
+                    variant="h6" 
+                    gutterBottom 
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 1,
+                      mb: 3
+                    }}
+                  >
+                    👤 Personal Information
+                  </Typography>
+                  
+                  <Grid container spacing={3}>
               
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -560,13 +613,26 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
                   error={!!errors.phone}
                   helperText={errors.phone}
                 />
+                  </Grid>
+                  </Grid>
+                </Paper>
               </Grid>
 
               {/* Resume Upload */}
               <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                  Resume
-                </Typography>
+                <Paper elevation={1} sx={{ p: 3, bgcolor: 'grey.50' }}>
+                  <Typography 
+                    variant="h6" 
+                    gutterBottom 
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 1,
+                      mb: 3
+                    }}
+                  >
+                    📄 Resume
+                  </Typography>
                 <Box sx={{ border: '2px dashed #ccc', borderRadius: 2, p: 3, textAlign: 'center' }}>
                   {formData.resume_url ? (
                     <Box>
@@ -612,6 +678,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
                     </Box>
                   )}
                 </Box>
+                </Paper>
               </Grid>
             </Grid>
           </Box>
