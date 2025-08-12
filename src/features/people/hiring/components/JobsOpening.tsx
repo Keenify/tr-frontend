@@ -66,6 +66,10 @@ const JobsOpening: React.FC = () => {
   const [previousJobsLoading, setPreviousJobsLoading] = useState(false);
   const [pendingQuestions, setPendingQuestions] = useState<any[]>([]);
   const [showCustomQuestionsDialog, setShowCustomQuestionsDialog] = useState<string | null>(null);
+  const [showApplicantsDialog, setShowApplicantsDialog] = useState<{ jobId: string; jobRole: string } | null>(null);
+  const [jobApplicants, setJobApplicants] = useState<JobOpeningApplication[]>([]);
+  const [applicantsLoading, setApplicantsLoading] = useState(false);
+  const { getApplicationsByJobId, getAllJobOpeningApplications, getResumeSignedUrl } = useJobOpeningApplications();
   const [formData, setFormData] = useState<JobFormData>({
     role: '',
     department: '',
@@ -712,6 +716,233 @@ const JobsOpening: React.FC = () => {
               jobId={showCustomQuestionsDialog}
               isNewJob={false}
             />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Applicants Dialog */}
+      <Dialog 
+        open={!!showApplicantsDialog} 
+        onClose={() => {
+          setShowApplicantsDialog(null);
+          setJobApplicants([]);
+        }}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>
+          Applicants for {showApplicantsDialog?.jobRole}
+          <IconButton
+            aria-label="close"
+            onClick={() => {
+              setShowApplicantsDialog(null);
+              setJobApplicants([]);
+            }}
+            sx={{ position: 'absolute', right: 8, top: 8 }}
+          >
+            <Close />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          {applicantsLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <Box sx={{ maxHeight: '60vh', overflow: 'auto' }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Total applicants for "{showApplicantsDialog?.jobRole}": {jobApplicants.length}
+              </Typography>
+              
+              {jobApplicants.length === 0 ? (
+                <Box sx={{ textAlign: 'center', p: 4 }}>
+                  <Typography variant="h6" color="text.secondary">
+                    No applicants yet for this position
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 3 }}>
+                    Share the job link to start receiving applications
+                  </Typography>
+                  
+                  {/* Debug tools for when no applicants found */}
+                  <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 1, mt: 2 }}>
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      <strong>Debug Tools:</strong> Use these to troubleshoot application issues
+                    </Typography>
+                  <Stack direction="row" spacing={1} flexWrap="wrap">
+                    <Button 
+                      size="small" 
+                      variant="outlined"
+                      onClick={async () => {
+                        try {
+                          const allApps = await getAllJobOpeningApplications();
+                          console.log('All job opening applications:', allApps.map(app => ({
+                            name: `${app.first_name} ${app.last_name}`,
+                            jobId: app.job_id,
+                            jobRole: app.job_role,
+                            id: app.id
+                          })));
+                          setJobApplicants(allApps);
+                        } catch (error) {
+                          console.error('Failed to fetch all applications:', error);
+                        }
+                      }}
+                    >
+                      Show All Applications
+                    </Button>
+                    <Button 
+                      size="small" 
+                      variant="contained"
+                      color="primary"
+                      onClick={async () => {
+                        try {
+                          // Retry fetching applications for this specific job
+                          if (showApplicantsDialog?.jobId) {
+                            const applications = await getApplicationsByJobId(showApplicantsDialog.jobId);
+                            console.log('Retry - Applications for job:', applications);
+                            setJobApplicants(applications);
+                          }
+                        } catch (error) {
+                          console.error('Failed to fetch applications:', error);
+                        }
+                      }}
+                    >
+                      Retry Job Applications
+                    </Button>
+                  </Stack>
+                  <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'text.secondary' }}>
+                    Tip: Check browser console for detailed matching information
+                  </Typography>
+                </Box>
+                </Box>
+              ) : (
+                <Grid container spacing={2}>
+                {jobApplicants.map((applicant) => (
+                  <Grid item xs={12} key={applicant.id}>
+                    <Card sx={{ p: 2 }}>
+                      <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12} sm={3}>
+                          <Typography variant="subtitle1" fontWeight="bold">
+                            {applicant.first_name} {applicant.last_name}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {applicant.email}
+                          </Typography>
+                          {applicant.phone && (
+                            <Typography variant="body2" color="text.secondary">
+                              {applicant.phone}
+                            </Typography>
+                          )}
+                        </Grid>
+                        <Grid item xs={12} sm={2}>
+                          <Typography variant="body2" color="text.secondary">
+                            Job Details
+                          </Typography>
+                          <Typography variant="body2">
+                            {applicant.job_department}
+                          </Typography>
+                          {applicant.job_locations && applicant.job_locations.length > 0 && (
+                            <Typography variant="body2" color="text.secondary">
+                              {applicant.job_locations.join(', ')}
+                            </Typography>
+                          )}
+                        </Grid>
+                        <Grid item xs={12} sm={2}>
+                          <Typography variant="body2" color="text.secondary">
+                            Work Type
+                          </Typography>
+                          <Chip 
+                            label={applicant.job_remote_status || 'Not specified'} 
+                            size="small" 
+                            variant="outlined"
+                            sx={{ mt: 0.5 }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={2}>
+                          <Typography variant="body2" color="text.secondary">
+                            Application Date
+                          </Typography>
+                          <Typography variant="body2">
+                            {new Date(applicant.created_at).toLocaleDateString()}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={3}>
+                          <Stack direction="row" spacing={1}>
+                            {applicant.resume_url && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={async () => {
+                                  try {
+                                    console.log('=== RESUME DEBUG ===');
+                                    console.log('Applicant resume_url:', applicant.resume_url);
+                                    console.log('Attempting to get signed URL...');
+                                    
+                                    const url = await getResumeSignedUrl(applicant.resume_url!);
+                                    console.log('Generated URL:', url);
+                                    
+                                    // Open in new tab instead of forcing download
+                                    const newWindow = window.open(url, '_blank');
+                                    if (newWindow) {
+                                      newWindow.focus();
+                                      console.log('Successfully opened resume in new tab');
+                                    } else {
+                                      console.warn('Failed to open new window (popup blocker?)');
+                                      setSnackbar({
+                                        open: true,
+                                        message: 'Please check popup blocker settings',
+                                        severity: 'warning'
+                                      });
+                                    }
+                                  } catch (error) {
+                                    console.error('Failed to open resume:', error);
+                                    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+                                    setSnackbar({
+                                      open: true,
+                                      message: `Failed to open resume: ${errorMessage}`,
+                                      severity: 'error'
+                                    });
+                                  }
+                                }}
+                              >
+                                View Resume
+                              </Button>
+                            )}
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => window.open(`mailto:${applicant.email}`, '_blank')}
+                            >
+                              Email
+                            </Button>
+                          </Stack>
+                        </Grid>
+                        {applicant.custom_fields && Object.keys(applicant.custom_fields).length > 0 && (
+                          <Grid item xs={12}>
+                            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'medium' }}>
+                              Additional Information:
+                            </Typography>
+                            {Object.entries(applicant.custom_fields).map(([key, value]) => (
+                              <Typography key={key} variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                                {key}: {String(value)}
+                              </Typography>
+                            ))}
+                          </Grid>
+                        )}
+                        <Grid item xs={12}>
+                          <Typography variant="caption" color="text.secondary">
+                            Applied on: {new Date(applicant.created_at).toLocaleString()}
+                            {applicant.updated_at !== applicant.created_at && (
+                              <span> (Updated: {new Date(applicant.updated_at).toLocaleString()})</span>
+                            )}
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </Card>
+                  </Grid>
+                ))}
+                </Grid>
+              )}
+            </Box>
           )}
         </DialogContent>
       </Dialog>
