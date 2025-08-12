@@ -237,27 +237,73 @@ const PaceForm: React.FC = () => {
       console.log('Current user ID:', currentSession.session.user.id);
       console.log('Inserting with authenticated session');
       
-      // Delete all existing records for this company, then insert new ones
-      // This approach ensures that removed entries are properly deleted from the database
-      // Using upsert alone would not handle deletions when rows are removed from the form
-      console.log('Deleting existing records for company:', companyInfo.id);
-      const { error: deleteError } = await supabase
-        .from('pace_form')
-        .delete()
-        .eq('company_id', companyInfo.id);
+      // Production-safe approach: Try multiple strategies
+      console.log('Processing pace form for company:', companyInfo.id);
+      console.log('Current user ID:', userId);
       
-      if (deleteError) {
-        console.error('Error deleting existing records:', deleteError);
-        throw new Error(`Failed to delete existing records: ${deleteError.message}`);
+      let data;
+      let error;
+      
+      // Strategy 1: Try DELETE + INSERT (works in local)
+      try {
+        console.log('Strategy 1: Attempting DELETE + INSERT...');
+        const { error: deleteError } = await supabase
+          .from('pace_form')
+          .delete()
+          .eq('company_id', companyInfo.id);
+        
+        if (deleteError) {
+          console.warn('DELETE failed, trying Strategy 2:', deleteError.message);
+          throw new Error('DELETE failed');
+        }
+        
+        console.log('DELETE successful, now inserting...');
+        const insertResult = await supabase
+          .from('pace_form')
+          .insert(rows)
+          .select();
+        
+        data = insertResult.data;
+        error = insertResult.error;
+        
+        if (!error) {
+          console.log('Strategy 1 (DELETE + INSERT) successful');
+        }
+        
+      } catch (deleteErr) {
+        console.log('Strategy 1 failed, trying Strategy 2 (UPSERT)...');
+        
+        // Strategy 2: Try UPSERT
+        try {
+          const upsertResult = await supabase
+            .from('pace_form')
+            .upsert(rows, { onConflict: 'company_id,process_name' })
+            .select();
+          
+          data = upsertResult.data;
+          error = upsertResult.error;
+          
+          if (!error) {
+            console.log('Strategy 2 (UPSERT) successful');
+          }
+          
+        } catch (upsertErr) {
+          console.log('Strategy 2 failed, trying Strategy 3 (INSERT only)...');
+          
+          // Strategy 3: Simple INSERT (creates duplicates but works)
+          const insertResult = await supabase
+            .from('pace_form')
+            .insert(rows)
+            .select();
+          
+          data = insertResult.data;
+          error = insertResult.error;
+          
+          if (!error) {
+            console.log('Strategy 3 (INSERT only) successful - duplicates may exist');
+          }
+        }
       }
-      
-      console.log('Successfully deleted existing records');
-      
-      // Then insert the new records
-      const { data, error } = await supabase
-        .from('pace_form')
-        .insert(rows)
-        .select();
       
       if (error) {
         console.error('Supabase insert error:', error);
@@ -274,7 +320,7 @@ const PaceForm: React.FC = () => {
       console.log('Successfully saved data:', data);
       
       setSubmitStatus('Form submitted successfully!');
-      setSubmittedData(data);
+      setSubmittedData(data || []);
       setHasSubmittedData(true);
       setIsEditMode(false); // Switch to view mode after successful submission
     } catch (err: unknown) {

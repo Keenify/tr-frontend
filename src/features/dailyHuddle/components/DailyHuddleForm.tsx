@@ -64,6 +64,8 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
   const [isDragging, setIsDragging] = useState(false);
   const [startAngle, setStartAngle] = useState(0);
   const [effectiveDate, setEffectiveDate] = useState<string>(getEffectiveDate());
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
+  const [initialAnswers, setInitialAnswers] = useState<{ [key: string]: string }>({});
   
   // Refs for tooltip guidance
   const tooltipRef = useRef<HTMLDivElement | null>(null);
@@ -171,6 +173,13 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
               [response.question_id]: response.answer_text,
             }), {});
             setAnswers(previousAnswers);
+            setInitialAnswers(previousAnswers); // Track initial state for change detection
+            setHasUnsavedChanges(false); // Clear any false positives during initialization
+          } else {
+            // Initialize with empty answers for change detection
+            const emptyAnswers: { [key: string]: string } = {};
+            setInitialAnswers(emptyAnswers);
+            setHasUnsavedChanges(false); // Clear any false positives during initialization
           }
         }
       } catch (error) {
@@ -183,6 +192,42 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
     initializeForm();
   }, [session.user.id]);
 
+  // Add beforeunload warning for unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return 'You have unsaved changes. Are you sure you want to leave?';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
+
+  /**
+   * Check if the current answers differ from initial answers
+   */
+  const checkForUnsavedChanges = (currentAnswers: { [key: string]: string }) => {
+    // Compare current answers with initial answers
+    for (const questionId in currentAnswers) {
+      if (currentAnswers[questionId] !== (initialAnswers[questionId] || '')) {
+        return true;
+      }
+    }
+    // Also check if initial answers have keys that current doesn't
+    for (const questionId in initialAnswers) {
+      if ((initialAnswers[questionId] || '') !== (currentAnswers[questionId] || '')) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   /**
    * Updates the answers state when user inputs change
    * 
@@ -190,10 +235,16 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
    * @param {string} answerText - The text input by the user
    */
   const handleInputChange = (questionId: string, answerText: string) => {
-    setAnswers((prevAnswers) => ({
-      ...prevAnswers,
+    const newAnswers = {
+      ...answers,
       [questionId]: answerText,
-    }));
+    };
+    
+    setAnswers(newAnswers);
+    
+    // Check for unsaved changes
+    const hasChanges = checkForUnsavedChanges(newAnswers);
+    setHasUnsavedChanges(hasChanges);
   };
 
   /**
@@ -256,6 +307,8 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
       
       setHasSubmitted(true);
       setIsEditing(false); // Reset editing state after successful submission
+      setHasUnsavedChanges(false); // Clear unsaved changes after successful submission
+      setInitialAnswers(answers); // Update initial state to current answers
     } catch (error) {
       console.error("Submission failed:", error);
       alert("Failed to submit your response. Please try again.");
@@ -310,30 +363,38 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
     return replacements[text] || text;
   };
 
-  // Update the useEffect for scroll handling
+  // Debounced scroll and resize handling to reduce excessive re-renders
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    
     const handleScrollOrResize = () => {
+      // Clear previous timeout to debounce
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      
+      // Only reposition if actively showing guidance
       if (showGuidance && activeQuestionId !== null && tooltipRef.current && document.activeElement) {
-        const questionElement = document.querySelector(`input[title="${questions.find(q => q.id === activeQuestionId)?.question_text}"]`);
-        
-        if (questionElement && document.activeElement === questionElement) {
-          // Use a small timeout to ensure DOM is updated
-          setTimeout(() => {
+        timeoutId = setTimeout(() => {
+          const questionElement = document.querySelector(`input[title="${questions.find(q => q.id === activeQuestionId)?.question_text}"]`);
+          
+          if (questionElement && document.activeElement === questionElement) {
             handleTooltipFocus(questionElement as HTMLElement, activeQuestionId);
-          }, 10);
-        }
+          }
+        }, 150); // Debounced timeout
       }
     };
 
-    window.addEventListener('scroll', handleScrollOrResize);
-    window.addEventListener('resize', handleScrollOrResize);
-    
-    // Call immediately to position correctly
-    handleScrollOrResize();
+    // Use passive listeners to improve performance
+    window.addEventListener('scroll', handleScrollOrResize, { passive: true });
+    window.addEventListener('resize', handleScrollOrResize, { passive: true });
     
     return () => {
       window.removeEventListener('scroll', handleScrollOrResize);
       window.removeEventListener('resize', handleScrollOrResize);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     };
   }, [showGuidance, activeQuestionId, questions, handleTooltipFocus]);
 
@@ -384,6 +445,7 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
           onClick={() => {
             setIsEditing(true);
             setHasSubmitted(false);
+            setHasUnsavedChanges(false); // Don't treat existing data as unsaved changes
           }}
           className="edit-button"
         >
@@ -402,6 +464,16 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
             Submitting for: <span className="effective-date-value">
               {new Date(effectiveDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </span>
+            {hasUnsavedChanges && (
+              <span className="unsaved-changes-indicator" style={{ 
+                marginLeft: '10px', 
+                color: '#ff6b35', 
+                fontSize: '12px',
+                fontWeight: 'bold'
+              }}>
+                • Unsaved changes
+              </span>
+            )}
           </span>
         </div>
         

@@ -32,10 +32,10 @@ export interface LeverImpact {
 
 export interface PowerOfOneData {
   id?: string;
-  userId: string;
-  companyId?: string;
+  companyId: string; // Required for company-wide sharing
   financialInputs: FinancialInputs;
   changes: PowerOfOneChanges;
+  lastEditedBy?: string; // Track who last edited this record
   createdAt?: string;
   updatedAt?: string;
 }
@@ -59,7 +59,7 @@ export interface PowerOfOneTotals {
 
 export interface PowerOfOneProps {
   userId: string;
-  companyId?: string;
+  companyId: string; // Required for company-wide sharing
   onUpdate?: (data: PowerOfOneData) => void;
 }
 

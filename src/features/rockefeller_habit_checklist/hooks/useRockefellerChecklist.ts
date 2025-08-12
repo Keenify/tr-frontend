@@ -1,41 +1,45 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RockefellerHabit, SubListItem } from '../types/rockefellerChecklist';
+import { RockefellerHabitLegacy, SubListItem } from '../types/rockefellerChecklist';
 import { rockefellerChecklistService } from '../services/rockefellerChecklistService';
 import { ROCKEFELLER_HABITS } from '../constants';
 
 export const useRockefellerChecklist = (userId: string, companyId: string) => {
-  const [habits, setHabits] = useState<RockefellerHabit[]>([]);
+  const [habits, setHabits] = useState<RockefellerHabitLegacy[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastEditorInfo, setLastEditorInfo] = useState<{ userId: string; timestamp: string } | null>(null);
 
   // Initialize habits from template if they don't exist
   const initializeHabitsFromTemplate = useCallback(async () => {
-    const initialHabits: RockefellerHabit[] = ROCKEFELLER_HABITS.map(template => ({
-      user_id: userId,
-      company_id: companyId,
-      habit_id: `habit_${template.id}`,
-      habit_name: template.habit_name,
-      sub_list: template.sub_items.map((text, index) => ({
-        id: index, // Use simple index-based IDs to match existing database
-        text,
-        complete: false
-      })),
-      last_edited_at: new Date().toISOString()
-    }));
+    if (!userId || !companyId) {
+      throw new Error('User ID and Company ID are required for initialization');
+    }
 
     const initialized = await rockefellerChecklistService.initializeHabits(
       userId, 
       companyId, 
-      initialHabits
+      ROCKEFELLER_HABITS
     );
     
     return initialized;
   }, [userId, companyId]);
 
+  // Load last editor info
+  const loadLastEditorInfo = useCallback(async () => {
+    if (!companyId) return;
+    
+    try {
+      const editorInfo = await rockefellerChecklistService.getLastEditorInfo(companyId);
+      setLastEditorInfo(editorInfo);
+    } catch (error) {
+      console.error('Failed to load last editor info:', error);
+    }
+  }, [companyId]);
+
   // Load habits on mount
   useEffect(() => {
     const loadHabits = async () => {
-      // Don't load if we don't have valid user data
+      // Don't load if we don't have valid user and company data
       if (!userId || !companyId) {
         setLoading(false);
         return;
@@ -43,11 +47,14 @@ export const useRockefellerChecklist = (userId: string, companyId: string) => {
 
       try {
         setLoading(true);
+        setError(null);
+        
+        // Load existing habits for the company
         let existingHabits = await rockefellerChecklistService.getHabits(userId, companyId);
         
         // If no habits exist, initialize from template
         if (existingHabits.length === 0) {
-          console.log('No existing habits found, initializing from template for new user');
+          console.log('No existing habits found, initializing from template for company');
           existingHabits = await initializeHabitsFromTemplate();
           
           // Verify initialization was successful
@@ -55,12 +62,16 @@ export const useRockefellerChecklist = (userId: string, companyId: string) => {
             throw new Error('Failed to initialize habits from template - no habits were created');
           }
           
-          console.log(`Successfully initialized ${existingHabits.length} habits for new user`);
+          console.log(`Successfully initialized ${existingHabits.length} habits for company ${companyId}`);
         }
         
         setHabits(existingHabits);
-        setError(null);
+        
+        // Load collaboration info
+        await loadLastEditorInfo();
+        
       } catch (err) {
+        console.error('Error loading habits:', err);
         setError(err instanceof Error ? err.message : 'Failed to load habits');
       } finally {
         setLoading(false);
@@ -68,11 +79,18 @@ export const useRockefellerChecklist = (userId: string, companyId: string) => {
     };
 
     loadHabits();
-  }, [userId, companyId, initializeHabitsFromTemplate]);
+  }, [userId, companyId, initializeHabitsFromTemplate, loadLastEditorInfo]);
 
   // Toggle a sub-item
   const toggleSubItem = useCallback(async (habitId: string, subItemId: number) => {
+    if (!userId || !companyId) {
+      setError('User ID and Company ID are required');
+      return;
+    }
+
     try {
+      setError(null);
+      
       const success = await rockefellerChecklistService.toggleSubItem(
         userId, 
         companyId, 
@@ -81,7 +99,7 @@ export const useRockefellerChecklist = (userId: string, companyId: string) => {
       );
       
       if (success) {
-        // Update local state
+        // Update local state optimistically
         setHabits(prevHabits => 
           prevHabits.map(habit => {
             if (habit.habit_id === habitId) {
@@ -97,14 +115,21 @@ export const useRockefellerChecklist = (userId: string, companyId: string) => {
             return habit;
           })
         );
+
+        // Update last editor info to reflect current user made this change
+        setLastEditorInfo({
+          userId: userId,
+          timestamp: new Date().toISOString()
+        });
       }
     } catch (err) {
+      console.error('Error toggling sub-item:', err);
       setError(err instanceof Error ? err.message : 'Failed to toggle item');
     }
   }, [userId, companyId]);
 
   // Calculate progress for a habit
-  const getHabitProgress = useCallback((habit: RockefellerHabit): number => {
+  const getHabitProgress = useCallback((habit: RockefellerHabitLegacy): number => {
     const completedItems = habit.sub_list.filter(item => item.complete).length;
     return habit.sub_list.length > 0 ? (completedItems / habit.sub_list.length) * 100 : 0;
   }, []);
@@ -116,6 +141,21 @@ export const useRockefellerChecklist = (userId: string, companyId: string) => {
     const totalProgress = habits.reduce((sum, habit) => sum + getHabitProgress(habit), 0);
     return totalProgress / habits.length;
   }, [habits, getHabitProgress]);
+
+  // Refresh habits (for manual refresh when needed)
+  const refreshHabits = useCallback(async () => {
+    if (!userId || !companyId) return;
+    
+    try {
+      setError(null);
+      const refreshedHabits = await rockefellerChecklistService.getHabits(userId, companyId);
+      setHabits(refreshedHabits);
+      await loadLastEditorInfo();
+    } catch (err) {
+      console.error('Error refreshing habits:', err);
+      setError(err instanceof Error ? err.message : 'Failed to refresh habits');
+    }
+  }, [userId, companyId, loadLastEditorInfo]);
 
   // Get habits with progress
   const habitsWithProgress = habits.map(habit => ({
@@ -129,8 +169,7 @@ export const useRockefellerChecklist = (userId: string, companyId: string) => {
     error,
     toggleSubItem,
     overallProgress: getOverallProgress(),
-    refreshHabits: () => {
-      // Trigger re-fetch if needed
-    }
+    lastEditorInfo, // New: collaboration info
+    refreshHabits
   };
 };

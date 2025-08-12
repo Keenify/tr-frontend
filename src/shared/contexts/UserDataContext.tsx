@@ -20,7 +20,6 @@ interface UserDataContextType {
     error: Error | null;
     isLoading: boolean;
   };
-  triggerFetch: (userId: string) => void;
   invalidateCache: (userId: string) => void;
   clearAllCache: () => void;
 }
@@ -65,77 +64,65 @@ export const UserDataProvider: React.FC<{ children: ReactNode }> = ({ children }
       };
     }
 
-    // Return initial loading state - the actual fetch will be triggered by useEffect
+    // Schedule data loading for next render cycle to avoid setState during render
+    setTimeout(() => {
+      // Start loading data
+      setCache(prev => ({
+        ...prev,
+        [userId]: {
+          userInfo: null,
+          companyInfo: null,
+          error: null,
+          isLoading: true,
+          timestamp: now,
+        },
+      }));
+
+      // Fetch data
+      const fetchData = async () => {
+        try {
+          console.log('Fetching user data for ID:', userId);
+          const userData = await getUserData(userId);
+          console.log('User data received:', userData);
+          
+          const companyData = await getCompanyData(userData.company_id) as CompanyData;
+
+          setCache(prev => ({
+            ...prev,
+            [userId]: {
+              userInfo: userData,
+              companyInfo: companyData,
+              error: null,
+              isLoading: false,
+              timestamp: Date.now(),
+            },
+          }));
+        } catch (err) {
+          console.error('Error fetching data:', err);
+          setCache(prev => ({
+            ...prev,
+            [userId]: {
+              userInfo: null,
+              companyInfo: null,
+              error: err as Error,
+              isLoading: false,
+              timestamp: Date.now(),
+            },
+          }));
+        }
+      };
+
+      fetchData();
+    }, 0); // Execute in next tick to avoid setState during render
+
+    // Return initial loading state
     return {
       userInfo: null,
       companyInfo: null,
       error: null,
-      isLoading: false, // Start as false, will be set to true by useEffect
+      isLoading: true,
     };
   }, [cache]);
-
-  // Separate useEffect to handle data fetching
-  const [pendingFetches, setPendingFetches] = useState<Set<string>>(new Set());
-
-  const triggerFetch = useCallback((userId: string) => {
-    if (pendingFetches.has(userId)) return; // Already fetching
-    
-    setPendingFetches(prev => new Set(prev).add(userId));
-    
-    // Start loading data
-    setCache(prev => ({
-      ...prev,
-      [userId]: {
-        userInfo: null,
-        companyInfo: null,
-        error: null,
-        isLoading: true,
-        timestamp: Date.now(),
-      },
-    }));
-
-    // Fetch data
-    const fetchData = async () => {
-      try {
-        console.log('Fetching user data for ID:', userId);
-        const userData = await getUserData(userId);
-        console.log('User data received:', userData);
-        
-        const companyData = await getCompanyData(userData.company_id) as CompanyData;
-
-        setCache(prev => ({
-          ...prev,
-          [userId]: {
-            userInfo: userData,
-            companyInfo: companyData,
-            error: null,
-            isLoading: false,
-            timestamp: Date.now(),
-          },
-        }));
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setCache(prev => ({
-          ...prev,
-          [userId]: {
-            userInfo: null,
-            companyInfo: null,
-            error: err as Error,
-            isLoading: false,
-            timestamp: Date.now(),
-          },
-        }));
-      } finally {
-        setPendingFetches(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(userId);
-          return newSet;
-        });
-      }
-    };
-
-    fetchData();
-  }, [pendingFetches]);
 
   const invalidateCache = useCallback((userId: string) => {
     setCache(prev => {
@@ -150,7 +137,7 @@ export const UserDataProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, []);
 
   return (
-    <UserDataContext.Provider value={{ getCachedUserData, triggerFetch, invalidateCache, clearAllCache }}>
+    <UserDataContext.Provider value={{ getCachedUserData, invalidateCache, clearAllCache }}>
       {children}
     </UserDataContext.Provider>
   );

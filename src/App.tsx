@@ -42,6 +42,7 @@ import Feedback from "./features/people/feedback/components/Feedback";
 import AnonymousFeedbackPage from "./features/people/feedback/components/AnonymousFeedbackPage";
 import Finance from "./features/finance/components/dashboard/Finance";
 import PowerOfOne from "./features/power_of_one/components/PowerOfOne";
+import { useUserAndCompanyData } from "./shared/hooks/useUserAndCompanyData";
 import Playbook from "./features/playbook/components/Playbook";
 import Calendar from "./features/people/calendar/components/Calendar";
 import Accountability from "./features/people/accountability_matrix/components/Accountability";
@@ -70,6 +71,17 @@ import PublicDailyHuddle from "./features/dailyHuddle/components/PublicDailyHudd
 import ResetPassword from "./features/auth/components/ResetPassword";
 // Create a client
 const queryClient = new QueryClient();
+
+// PowerOfOne wrapper component that provides companyId
+const PowerOfOneWithCompany: React.FC<{ userId: string }> = ({ userId }) => {
+  const { companyInfo } = useUserAndCompanyData(userId);
+  
+  if (!companyInfo?.id) {
+    return <div>Loading company information...</div>;
+  }
+  
+  return <PowerOfOne userId={userId} companyId={companyInfo.id} />;
+};
 
 const App: React.FC = () => {
   const { session, signOut } = useSession();
@@ -477,7 +489,7 @@ const App: React.FC = () => {
                           activeSubTab="power-of-one"
                           onSubTabChange={() => {}}
                         >
-                          <PowerOfOne userId={session?.user.id || ''} />
+                          <PowerOfOneWithCompany userId={session?.user.id || ''} />
                         </DashboardLayout>
                       }
                     />

@@ -116,6 +116,21 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
 
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description || '');
+
+  // Debug logging for modal lifecycle and changes
+  useEffect(() => {
+    console.log('📝 [TrelloCardModal] Modal opened for card:', { cardId: card.id, title: card.title });
+    return () => {
+      console.log('📝 [TrelloCardModal] Modal unmounting - form data will be lost:', { 
+        originalTitle: card.title, 
+        currentTitle: title,
+        originalDescription: card.description || '',
+        currentDescription: description,
+        hasUnsavedTitleChanges: title !== card.title,
+        hasUnsavedDescriptionChanges: description !== (card.description || '')
+      });
+    };
+  }, []); // Only run on mount/unmount
   const [colorCode, setColorCode] = useState(card.colorCode || card.color_code || '#ffffff');
   const [attachments, setAttachments] = useState<CardAttachment[]>([]);
   const [assignees, setAssignees] = useState<string[]>(card.assignees || []);

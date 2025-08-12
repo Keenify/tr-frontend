@@ -23,9 +23,10 @@ export interface FaceFormDatabaseRow {
   company_id: string;
   employee_id: string;
   function_name: string;
-  accountable_employee_id: string;
+  accountable_employee_id: string | null;
   kpi_list: string;
   outcome_list: string;
+  is_business_unit: boolean;
 }
 
 export interface BusinessUnitRow {

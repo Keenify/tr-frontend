@@ -57,6 +57,8 @@ interface TrelloBoardProps {
   userRole: string;
   session?: Session;
   onRefresh?: () => Promise<void>;
+  onCardModalOpen?: (listId: string, cardId: string) => void;
+  onCardModalClose?: () => void;
 }
 
 /**
@@ -85,7 +87,9 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   onListDelete,
   userRole,
   session,
-  onRefresh
+  onRefresh,
+  onCardModalOpen,
+  onCardModalClose
 }) => {
   // Get the current user's ID from the session
   const userId = session?.user?.id || '';
@@ -133,6 +137,14 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
 
   // Make sure this is defined at the component level
   const [employees, setEmployees] = useState<Employee[]>([]);
+
+  // Debug logging for component lifecycle
+  useEffect(() => {
+    console.log('🔄 [TrelloBoard] Component mounted');
+    return () => {
+      console.log('💀 [TrelloBoard] Component unmounting - selectedCard will be lost:', selectedCard ? `Card: ${selectedCard.card.title}` : 'No card selected');
+    };
+  }, [selectedCard]);
 
   // Extract unique countries from lists
   const countries = useMemo(() => {
@@ -209,10 +221,15 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
 
   // Handle card click to open modal
   const handleCardClick = (listId: string, card: Card) => {
+    console.log('🎯 [TrelloBoard] Opening card modal:', { cardId: card.id, title: card.title });
     setSelectedCard({
       listId,
       card
     });
+    // Notify parent that modal is opening
+    if (onCardModalOpen) {
+      onCardModalOpen(listId, card.id);
+    }
   };
 
   // Handle refresh button click
@@ -570,7 +587,14 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
       {selectedCard && (
         <TrelloCardModal
           isOpen={true}
-          onClose={() => setSelectedCard(null)}
+          onClose={() => {
+            console.log('❌ [TrelloBoard] Closing card modal');
+            setSelectedCard(null);
+            // Notify parent that modal is closing
+            if (onCardModalClose) {
+              onCardModalClose();
+            }
+          }}
           onSave={(updatedCard) => {
             // Create a version of updates compatible with the hook
             const updatesForHook: Partial<TrelloCard> = {
@@ -623,6 +647,10 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
             } else {
               // For regular updates, close the modal
               setSelectedCard(null);
+              // Notify parent that modal is closing
+              if (onCardModalClose) {
+                onCardModalClose();
+              }
             }
           }}
           card={selectedCard.card}

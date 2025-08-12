@@ -1,45 +1,38 @@
-const API_DOMAIN = import.meta.env.VITE_BACKEND_API_DOMAIN;
+import { supabase } from '../../../lib/supabase';
 
 export interface FaceFormRow {
   company_id: string;
   function_name: string;
-  accountable_employee_id: string;
+  accountable_employee_id: string | null;
   kpi_list: string;
   outcome_list: string;
+  is_business_unit: boolean;
 }
 
 /**
- * Submits face form data to the API
+ * Submits face form data to Supabase
  * @param {FaceFormRow[]} rows - Array of face form rows to submit
- * @returns {Promise<any>} - Promise that resolves to the API response
+ * @returns {Promise<any>} - Promise that resolves to the submission result
  */
-export async function submitFaceForm(rows: FaceFormRow[]): Promise<any> {
-  const endpoint = `${API_DOMAIN}/face-form/submit`;
-  
-  console.log('Submitting face form to endpoint:', endpoint);
-  console.log('Face form data:', rows);
+export async function submitFaceForm(rows: FaceFormRow[]): Promise<{ success: boolean; data?: unknown }> {
+  console.log('Submitting face form to Supabase:', rows);
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ functions: rows }),
-  });
+  try {
+    // Insert all face form rows into the database
+    const { data, error } = await supabase
+      .from('face_form')
+      .insert(rows)
+      .select();
 
-  const data = await response.json();
+    if (error) {
+      console.error('❌ Face form submission failed:', error);
+      throw new Error(`Failed to submit face form: ${error.message}`);
+    }
 
-  if (!response.ok) {
-    console.error('❌ Face form submission failed:', {
-      status: response.status,
-      statusText: response.statusText,
-      data,
-      endpoint
-    });
-    throw new Error(`Failed to submit face form: ${data.message || response.statusText}`);
+    console.log('✅ Face form submitted successfully:', data);
+    return { success: true, data };
+  } catch (error) {
+    console.error('❌ Face form submission error:', error);
+    throw error;
   }
-
-  console.log('✅ Face form submitted successfully:', data);
-  return data;
 }
