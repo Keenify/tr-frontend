@@ -4,7 +4,6 @@ import {
   Button,
   TextField,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
   Slider,
@@ -16,7 +15,6 @@ import {
   FormGroup,
   RadioGroup,
   Radio,
-  FormLabel,
   Chip,
   Stack,
   CircularProgress,
@@ -70,6 +68,8 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
   const [isFileUploading, setIsFileUploading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [customQuestions, setCustomQuestions] = useState<CustomQuestion[]>([]);
+  const [companyName, setCompanyName] = useState<string>('');
+  const [departmentName, setDepartmentName] = useState<string>('');
   const [snackbar, setSnackbar] = useState({ 
     open: false, 
     message: '', 
@@ -89,10 +89,11 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [customFieldErrors, setCustomFieldErrors] = useState<Record<string, string>>({});
 
-  // Fetch custom questions when the form opens
+  // Fetch custom questions and company info when the form opens
   React.useEffect(() => {
     if (open && jobId) {
       fetchCustomQuestions();
+      fetchCompanyInfo();
     }
   }, [open, jobId]);
 
@@ -125,8 +126,47 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         ...prev,
         custom_fields: initialCustomFields
       }));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching custom questions:', error);
+    }
+  };
+
+  const fetchCompanyInfo = async () => {
+    try {
+      // Try to fetch job details with company name from companies table
+      const { data, error } = await supabase
+        .from('jobs_opening')
+        .select(`
+          department,
+          companies (
+            name
+          )
+        `)
+        .eq('id', jobId)
+        .single();
+
+      if (error) {
+        // Fallback: get job details only
+        const { data: jobData, error: jobError } = await supabase
+          .from('jobs_opening')
+          .select('department')
+          .eq('id', jobId)
+          .single();
+
+        if (!jobError && jobData) {
+          setDepartmentName(jobData.department || '');
+        }
+        
+        setCompanyName('Company');
+      } else if (data) {
+        // Success with join
+        setDepartmentName(data.department || '');
+        setCompanyName((data.companies as any)?.name || 'Company');
+      }
+    } catch (error: unknown) {
+      console.error('Error fetching company info:', error);
+      // Set fallback company name if fetch fails
+      setCompanyName('Company');
     }
   };
 
@@ -391,7 +431,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
             <Box sx={{ px: 2, py: 1 }}>
               <Slider
                 value={value || min}
-                onChange={(e, newValue) => handleCustomFieldChange(question.id, newValue as number)}
+                onChange={(_e, newValue) => handleCustomFieldChange(question.id, newValue as number)}
                 min={min}
                 max={max}
                 step={1}
@@ -599,7 +639,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         message: 'Resume uploaded successfully',
         severity: 'success'
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error uploading file:', error);
       setSnackbar({
         open: true,
@@ -651,11 +691,12 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
       }
 
       setShowSuccessModal(true);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error submitting application:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Please try again.';
       setSnackbar({
         open: true,
-        message: `Failed to submit application: ${error.message || 'Please try again.'}`,
+        message: `Failed to submit application: ${errorMessage}`,
         severity: 'error'
       });
     } finally {
@@ -672,7 +713,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
     <>
       <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
         <DialogTitle>
-          Apply for {jobTitle}
+          Apply for {jobTitle} at {companyName || 'Loading...'}
         </DialogTitle>
         <DialogContent>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
@@ -708,7 +749,9 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
                             📋 Job-Specific Questions
                           </Typography>
                           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                            Please answer these questions specific to the "{jobTitle}" position:
+                            Please answer these questions specific to the "{jobTitle}" position
+                            {departmentName && ` in the ${departmentName} department`}
+                            {companyName && ` at ${companyName}`}:
                           </Typography>
                         </Box>
                         
@@ -893,7 +936,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         <DialogTitle>Application Submitted Successfully! 🎉</DialogTitle>
         <DialogContent>
           <Typography>
-            Thank you for your application! We have received your information and will review it shortly.
+            Thank you for your application to {companyName}! We have received your information and will review it shortly.
             You should receive a confirmation email within the next few minutes.
           </Typography>
         </DialogContent>

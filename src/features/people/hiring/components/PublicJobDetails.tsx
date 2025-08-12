@@ -8,7 +8,6 @@ import {
   Stack,
   Divider,
   Button,
-  Paper,
   Skeleton,
   Alert,
   AlertTitle,
@@ -29,13 +28,7 @@ import {
   Groups,
   EmojiEvents,
   TrendingUp,
-  AccountBalance,
-  Handshake,
-  School,
-  Flight,
-  LocalHospital,
-  SportsEsports,
-  Restaurant
+  Handshake
 } from '@mui/icons-material';
 import { supabase } from '../../../../lib/supabase';
 import JobApplicationForm from './JobApplicationForm';
@@ -63,6 +56,7 @@ const PublicJobDetails: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const theme = useTheme();
 
   useEffect(() => {
     fetchJobDetails();
@@ -70,26 +64,46 @@ const PublicJobDetails: React.FC = () => {
 
   const fetchJobDetails = async () => {
     try {
+      // Try to fetch job details with company name from companies table
       const { data, error } = await supabase
         .from('jobs_opening')
         .select(`
           *,
-          company:companies(name)
+          companies (
+            name
+          )
         `)
         .eq('id', jobId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Fallback: get job details only
+        const { data: jobData, error: jobError } = await supabase
+          .from('jobs_opening')
+          .select('*')
+          .eq('id', jobId)
+          .single();
 
-      if (data) {
-        // Ensure company object exists even if join failed
-        const jobData = {
-          ...data,
-          company: data.company || { name: 'Company' }
+        if (jobError) throw jobError;
+
+        const finalJobData = {
+          ...jobData,
+          company: { name: 'Company' }
         };
-        setJob(jobData as JobDetails);
+        
+        setJob(finalJobData as JobDetails);
+      } else if (data) {
+        // Success with join - company data should be in data.companies
+        const finalJobData = {
+          ...data,
+          company: { 
+            name: (data.companies as any)?.name || 'Company' 
+          }
+        };
+        
+        setJob(finalJobData as JobDetails);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching job details:', error);
       setError('Job not found or no longer available');
     } finally {
@@ -140,8 +154,6 @@ const PublicJobDetails: React.FC = () => {
       default: return status;
     }
   };
-
-  const theme = useTheme();
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
