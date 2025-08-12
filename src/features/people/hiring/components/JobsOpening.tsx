@@ -69,7 +69,7 @@ const JobsOpening: React.FC = () => {
   const [showApplicantsDialog, setShowApplicantsDialog] = useState<{ jobId: string; jobRole: string } | null>(null);
   const [jobApplicants, setJobApplicants] = useState<JobOpeningApplication[]>([]);
   const [applicantsLoading, setApplicantsLoading] = useState(false);
-  const { getApplicationsByJobId, getAllJobOpeningApplications, getResumeSignedUrl } = useJobOpeningApplications();
+  const { getApplicationsByJobId, getResumeSignedUrl } = useJobOpeningApplications();
   const [formData, setFormData] = useState<JobFormData>({
     role: '',
     department: '',
@@ -750,8 +750,48 @@ const JobsOpening: React.FC = () => {
             </Box>
           ) : (
             <Box sx={{ maxHeight: '60vh', overflow: 'auto' }}>
+              {/* Job Information Header - Display Once */}
+              {jobApplicants.length > 0 && (
+                <Paper sx={{ p: 2, mb: 3, bgcolor: 'grey.50' }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={4}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Position
+                      </Typography>
+                      <Typography variant="h6">
+                        {showApplicantsDialog?.jobRole}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Department & Location
+                      </Typography>
+                      <Typography variant="body1">
+                        {jobApplicants[0]?.job_department}
+                      </Typography>
+                      {jobApplicants[0]?.job_locations && jobApplicants[0].job_locations.length > 0 && (
+                        <Typography variant="body2" color="text.secondary">
+                          {jobApplicants[0].job_locations.join(', ')}
+                        </Typography>
+                      )}
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Work Type
+                      </Typography>
+                      <Chip 
+                        label={jobApplicants[0]?.job_remote_status || 'Not specified'} 
+                        size="medium" 
+                        color="primary"
+                        variant="outlined"
+                      />
+                    </Grid>
+                  </Grid>
+                </Paper>
+              )}
+              
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Total applicants for "{showApplicantsDialog?.jobRole}": {jobApplicants.length}
+                Total applicants: {jobApplicants.length}
               </Typography>
               
               {jobApplicants.length === 0 ? (
@@ -762,110 +802,43 @@ const JobsOpening: React.FC = () => {
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 3 }}>
                     Share the job link to start receiving applications
                   </Typography>
-                  
-                  {/* Debug tools for when no applicants found */}
-                  <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 1, mt: 2 }}>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      <strong>Debug Tools:</strong> Use these to troubleshoot application issues
-                    </Typography>
-                  <Stack direction="row" spacing={1} flexWrap="wrap">
-                    <Button 
-                      size="small" 
-                      variant="outlined"
-                      onClick={async () => {
-                        try {
-                          const allApps = await getAllJobOpeningApplications();
-                          console.log('All job opening applications:', allApps.map(app => ({
-                            name: `${app.first_name} ${app.last_name}`,
-                            jobId: app.job_id,
-                            jobRole: app.job_role,
-                            id: app.id
-                          })));
-                          setJobApplicants(allApps);
-                        } catch (error) {
-                          console.error('Failed to fetch all applications:', error);
-                        }
-                      }}
-                    >
-                      Show All Applications
-                    </Button>
-                    <Button 
-                      size="small" 
-                      variant="contained"
-                      color="primary"
-                      onClick={async () => {
-                        try {
-                          // Retry fetching applications for this specific job
-                          if (showApplicantsDialog?.jobId) {
-                            const applications = await getApplicationsByJobId(showApplicantsDialog.jobId);
-                            console.log('Retry - Applications for job:', applications);
-                            setJobApplicants(applications);
-                          }
-                        } catch (error) {
-                          console.error('Failed to fetch applications:', error);
-                        }
-                      }}
-                    >
-                      Retry Job Applications
-                    </Button>
-                  </Stack>
-                  <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'text.secondary' }}>
-                    Tip: Check browser console for detailed matching information
-                  </Typography>
-                </Box>
                 </Box>
               ) : (
                 <Grid container spacing={2}>
-                {jobApplicants.map((applicant) => (
+                {jobApplicants.map((applicant, index) => (
                   <Grid item xs={12} key={applicant.id}>
                     <Card sx={{ p: 2 }}>
                       <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={3}>
+                        <Grid item xs={12} sm={1}>
+                          <Typography variant="h6" color="text.secondary">
+                            #{index + 1}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
                           <Typography variant="subtitle1" fontWeight="bold">
                             {applicant.first_name} {applicant.last_name}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            {applicant.email}
+                            ✉️ {applicant.email}
                           </Typography>
                           {applicant.phone && (
                             <Typography variant="body2" color="text.secondary">
-                              {applicant.phone}
+                              📞 {applicant.phone}
                             </Typography>
                           )}
-                        </Grid>
-                        <Grid item xs={12} sm={2}>
-                          <Typography variant="body2" color="text.secondary">
-                            Job Details
-                          </Typography>
-                          <Typography variant="body2">
-                            {applicant.job_department}
-                          </Typography>
-                          {applicant.job_locations && applicant.job_locations.length > 0 && (
-                            <Typography variant="body2" color="text.secondary">
-                              {applicant.job_locations.join(', ')}
-                            </Typography>
-                          )}
-                        </Grid>
-                        <Grid item xs={12} sm={2}>
-                          <Typography variant="body2" color="text.secondary">
-                            Work Type
-                          </Typography>
-                          <Chip 
-                            label={applicant.job_remote_status || 'Not specified'} 
-                            size="small" 
-                            variant="outlined"
-                            sx={{ mt: 0.5 }}
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={2}>
-                          <Typography variant="body2" color="text.secondary">
-                            Application Date
-                          </Typography>
-                          <Typography variant="body2">
-                            {new Date(applicant.created_at).toLocaleDateString()}
-                          </Typography>
                         </Grid>
                         <Grid item xs={12} sm={3}>
+                          <Typography variant="body2" color="text.secondary">
+                            Applied
+                          </Typography>
+                          <Typography variant="body1">
+                            {new Date(applicant.created_at).toLocaleDateString()}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {new Date(applicant.created_at).toLocaleTimeString()}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
                           <Stack direction="row" spacing={1}>
                             {applicant.resume_url && (
                               <Button
@@ -918,24 +891,23 @@ const JobsOpening: React.FC = () => {
                         </Grid>
                         {applicant.custom_fields && Object.keys(applicant.custom_fields).length > 0 && (
                           <Grid item xs={12}>
-                            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'medium' }}>
-                              Additional Information:
-                            </Typography>
-                            {Object.entries(applicant.custom_fields).map(([key, value]) => (
-                              <Typography key={key} variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                                {key}: {String(value)}
+                            <Box sx={{ bgcolor: 'grey.50', p: 1.5, borderRadius: 1 }}>
+                              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                📝 Responses to Job Questions:
                               </Typography>
-                            ))}
+                              {Object.entries(applicant.custom_fields).map(([key, value]) => (
+                                <Box key={key} sx={{ ml: 2, mb: 0.5 }}>
+                                  <Typography variant="body2" component="span" sx={{ fontWeight: 'medium' }}>
+                                    {key}:
+                                  </Typography>
+                                  <Typography variant="body2" component="span" color="text.primary" sx={{ ml: 1 }}>
+                                    {String(value)}
+                                  </Typography>
+                                </Box>
+                              ))}
+                            </Box>
                           </Grid>
                         )}
-                        <Grid item xs={12}>
-                          <Typography variant="caption" color="text.secondary">
-                            Applied on: {new Date(applicant.created_at).toLocaleString()}
-                            {applicant.updated_at !== applicant.created_at && (
-                              <span> (Updated: {new Date(applicant.updated_at).toLocaleString()})</span>
-                            )}
-                          </Typography>
-                        </Grid>
                       </Grid>
                     </Card>
                   </Grid>
