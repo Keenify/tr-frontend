@@ -25,7 +25,6 @@ import {
   Business,
   Star,
   Schedule,
-  Groups,
   EmojiEvents,
   TrendingUp,
   Handshake
@@ -451,52 +450,6 @@ const PublicJobDetails: React.FC = () => {
                 </Card>
               )}
 
-              {/* Quick Apply Card */}
-              <Card elevation={3} sx={{ textAlign: 'center' }}>
-                <CardContent sx={{ p: 4 }}>
-                  <Avatar 
-                    sx={{ 
-                      bgcolor: 'primary.main', 
-                      width: 64, 
-                      height: 64, 
-                      mx: 'auto',
-                      mb: 2
-                    }}
-                  >
-                    <Groups sx={{ fontSize: 32 }} />
-                  </Avatar>
-                  <Typography variant="h6" gutterBottom fontWeight="bold">
-                    Ready to Join Us?
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                    Take the next step in your career journey
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    size="large"
-                    startIcon={<Email />}
-                    onClick={handleApply}
-                    sx={{ 
-                      py: 1.5,
-                      fontSize: '1.1rem',
-                      fontWeight: 'bold',
-                      textTransform: 'none',
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-                      '&:hover': {
-                        transform: 'translateY(-1px)',
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.15)'
-                      },
-                      transition: 'all 0.3s ease'
-                    }}
-                  >
-                    Apply Now
-                  </Button>
-                  <Typography variant="caption" display="block" sx={{ mt: 2, opacity: 0.7 }}>
-                    Quick & easy application process
-                  </Typography>
-                </CardContent>
-              </Card>
 
             </Stack>
           </Grid>
