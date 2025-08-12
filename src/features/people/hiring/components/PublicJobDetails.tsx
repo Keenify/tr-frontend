@@ -11,9 +11,32 @@ import {
   Paper,
   Skeleton,
   Alert,
-  AlertTitle
+  AlertTitle,
+  Grid,
+  Card,
+  CardContent,
+  Avatar,
+  Fade,
+  useTheme
 } from '@mui/material';
-import { Email, LocationOn, Work } from '@mui/icons-material';
+import { 
+  Email, 
+  LocationOn, 
+  Work, 
+  Business,
+  Star,
+  Schedule,
+  Groups,
+  EmojiEvents,
+  TrendingUp,
+  AccountBalance,
+  Handshake,
+  School,
+  Flight,
+  LocalHospital,
+  SportsEsports,
+  Restaurant
+} from '@mui/icons-material';
 import { supabase } from '../../../../lib/supabase';
 import JobApplicationForm from './JobApplicationForm';
 
@@ -118,154 +141,354 @@ const PublicJobDetails: React.FC = () => {
     }
   };
 
+  const theme = useTheme();
+
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: 4 }}>
-      <Container maxWidth="lg">
-        <Paper elevation={0} sx={{ p: { xs: 3, md: 6 } }}>
-          <Stack spacing={4}>
-            {/* Header */}
-            <Box>
-              <Typography variant="h3" component="h1" gutterBottom fontWeight="bold">
-                {job.role}
-              </Typography>
-              <Typography variant="h5" color="text.secondary" gutterBottom>
-                {job.company?.name || 'Company'} • {job.department}
-              </Typography>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+      {/* Hero Section */}
+      <Box 
+        sx={{ 
+          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+          color: 'white',
+          py: { xs: 6, md: 10 },
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
+        <Container maxWidth="lg">
+          <Fade in={true} timeout={1000}>
+            <Grid container spacing={4} alignItems="center">
+              <Grid item xs={12} md={8}>
+                <Box>
+                  <Typography 
+                    variant="h2" 
+                    component="h1" 
+                    gutterBottom 
+                    fontWeight="bold"
+                    sx={{ 
+                      fontSize: { xs: '2.5rem', md: '3.5rem' },
+                      lineHeight: 1.2,
+                      mb: 2
+                    }}
+                  >
+                    {job.role}
+                  </Typography>
+                  
+                  <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+                    <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}>
+                      <Business />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                        {job.company?.name || 'Company'}
+                      </Typography>
+                      <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
+                        {job.department} Department
+                      </Typography>
+                    </Box>
+                  </Stack>
+                  
+                  <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ mb: 4 }}>
+                    <Chip 
+                      icon={<Work />}
+                      label={getRemoteStatusLabel(job.remote_status)} 
+                      sx={{ 
+                        bgcolor: 'rgba(255,255,255,0.2)', 
+                        color: 'white',
+                        backdropFilter: 'blur(10px)',
+                        '& .MuiChip-icon': { color: 'white' }
+                      }}
+                      size="medium"
+                    />
+                    <Chip 
+                      icon={<Schedule />}
+                      label={`Posted ${new Date(job.created_at).toLocaleDateString()}`}
+                      sx={{ 
+                        bgcolor: 'rgba(255,255,255,0.2)', 
+                        color: 'white',
+                        backdropFilter: 'blur(10px)',
+                        '& .MuiChip-icon': { color: 'white' }
+                      }}
+                      size="medium"
+                    />
+                  </Stack>
+                  
+                  <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                    <LocationOn sx={{ color: 'rgba(255,255,255,0.8)' }} />
+                    {job.locations.map((location, index) => (
+                      <Chip 
+                        key={index} 
+                        label={location} 
+                        variant="outlined"
+                        sx={{ 
+                          borderColor: 'rgba(255,255,255,0.3)',
+                          color: 'white',
+                          mb: 1
+                        }}
+                        size="small"
+                      />
+                    ))}
+                  </Stack>
+                </Box>
+              </Grid>
               
-              <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 3, mb: 2 }}>
-                <Chip 
-                  icon={<Work />}
-                  label={getRemoteStatusLabel(job.remote_status)} 
-                  color="success" 
-                  size="medium"
-                />
-                <Typography variant="body2" color="text.secondary">
-                  Posted {new Date(job.created_at).toLocaleDateString()}
-                </Typography>
-              </Stack>
-              
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                <LocationOn sx={{ color: 'text.secondary', mt: 0.5 }} />
-                {job.locations.map((location, index) => (
-                  <Chip 
-                    key={index} 
-                    label={location} 
-                    variant="outlined" 
-                    size="small"
-                    sx={{ mb: 1 }}
-                  />
-                ))}
-              </Stack>
-            </Box>
+              <Grid item xs={12} md={4}>
+                <Box sx={{ textAlign: 'center', position: 'relative', zIndex: 10 }}>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    startIcon={<Email />}
+                    onClick={handleApply}
+                    sx={{ 
+                      bgcolor: 'white',
+                      color: 'primary.main',
+                      px: 4,
+                      py: 2,
+                      fontSize: '1.2rem',
+                      fontWeight: 'bold',
+                      textTransform: 'none',
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                      position: 'relative',
+                      zIndex: 10,
+                      '&:hover': {
+                        bgcolor: 'grey.100',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 12px 40px rgba(0,0,0,0.15)'
+                      },
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    Apply Now
+                  </Button>
+                  <Typography 
+                    variant="caption" 
+                    display="block" 
+                    sx={{ mt: 2, opacity: 0.8 }}
+                  >
+                    Join our amazing team!
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </Fade>
+        </Container>
+        
+        {/* Decorative Elements */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '-50%',
+            right: '-10%',
+            width: '60%',
+            height: '200%',
+            background: 'rgba(255,255,255,0.05)',
+            borderRadius: '50%',
+            transform: 'rotate(15deg)',
+            zIndex: 1,
+            pointerEvents: 'none'
+          }}
+        />
+      </Box>
 
-            <Divider />
+      {/* Main Content */}
+      <Container maxWidth="lg" sx={{ py: 6 }}>
+        <Grid container spacing={4}>
+          {/* Left Column - Main Content */}
+          <Grid item xs={12} md={8}>
+            <Stack spacing={4}>
+              {/* Company Info */}
+              {job.company_info && (
+                <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+                  <CardContent sx={{ p: 4 }}>
+                    <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+                      <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
+                        <Business />
+                      </Avatar>
+                      <Typography variant="h4" fontWeight="bold" color="primary.main">
+                        About {job.company?.name || 'the Company'}
+                      </Typography>
+                    </Stack>
+                    <Typography 
+                      variant="body1" 
+                      sx={{ 
+                        whiteSpace: 'pre-wrap', 
+                        lineHeight: 1.8,
+                        color: 'text.primary',
+                        fontSize: '1.1rem'
+                      }}
+                    >
+                      {job.company_info}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              )}
 
-            {/* Company Info */}
-            {job.company_info && (
-              <Box>
-                <Typography variant="h4" gutterBottom fontWeight="medium">
-                  About {job.company?.name || 'the Company'}
-                </Typography>
-                <Typography 
-                  variant="body1" 
-                  paragraph 
-                  sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.8 }}
-                >
-                  {job.company_info}
-                </Typography>
-              </Box>
-            )}
+              {/* Mission */}
+              {job.mission && (
+                <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+                  <CardContent sx={{ p: 4 }}>
+                    <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+                      <Avatar sx={{ bgcolor: 'secondary.main', width: 48, height: 48 }}>
+                        <Star />
+                      </Avatar>
+                      <Typography variant="h4" fontWeight="bold" color="secondary.main">
+                        The Mission
+                      </Typography>
+                    </Stack>
+                    <Typography 
+                      variant="body1" 
+                      sx={{ 
+                        whiteSpace: 'pre-wrap', 
+                        lineHeight: 1.8,
+                        color: 'text.primary',
+                        fontSize: '1.1rem'
+                      }}
+                    >
+                      {job.mission}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              )}
 
-            {/* Mission */}
-            {job.mission && (
-              <Box>
-                <Typography variant="h4" gutterBottom fontWeight="medium">
-                  The Mission
-                </Typography>
-                <Typography 
-                  variant="body1" 
-                  paragraph 
-                  sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.8 }}
-                >
-                  {job.mission}
-                </Typography>
-              </Box>
-            )}
+              {/* Required Skills */}
+              {job.skills && (
+                <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+                  <CardContent sx={{ p: 4 }}>
+                    <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+                      <Avatar sx={{ bgcolor: 'success.main', width: 48, height: 48 }}>
+                        <TrendingUp />
+                      </Avatar>
+                      <Typography variant="h4" fontWeight="bold" color="success.main">
+                        What We're Looking For
+                      </Typography>
+                    </Stack>
+                    <Typography 
+                      variant="body1" 
+                      sx={{ 
+                        whiteSpace: 'pre-wrap', 
+                        lineHeight: 1.8,
+                        color: 'text.primary',
+                        fontSize: '1.1rem'
+                      }}
+                    >
+                      {job.skills}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              )}
 
-            {/* Required Skills */}
-            {job.skills && (
-              <Box>
-                <Typography variant="h4" gutterBottom fontWeight="medium">
-                  What We're Looking For
-                </Typography>
-                <Typography 
-                  variant="body1" 
-                  paragraph 
-                  sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.8 }}
-                >
-                  {job.skills}
-                </Typography>
-              </Box>
-            )}
+              {/* Application Process */}
+              {job.application_process && (
+                <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+                  <CardContent sx={{ p: 4 }}>
+                    <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+                      <Avatar sx={{ bgcolor: 'info.main', width: 48, height: 48 }}>
+                        <Handshake />
+                      </Avatar>
+                      <Typography variant="h4" fontWeight="bold" color="info.main">
+                        Application Process
+                      </Typography>
+                    </Stack>
+                    <Typography 
+                      variant="body1" 
+                      sx={{ 
+                        whiteSpace: 'pre-wrap', 
+                        lineHeight: 1.8,
+                        color: 'text.primary',
+                        fontSize: '1.1rem'
+                      }}
+                    >
+                      {job.application_process}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              )}
+            </Stack>
+          </Grid>
 
-            {/* Perks & Benefits */}
-            {job.perks && (
-              <Box>
-                <Typography variant="h4" gutterBottom fontWeight="medium">
-                  Perks & Benefits
-                </Typography>
-                <Typography 
-                  variant="body1" 
-                  paragraph 
-                  sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.8 }}
-                >
-                  {job.perks}
-                </Typography>
-              </Box>
-            )}
-
-            {/* Application Process */}
-            {job.application_process && (
-              <Box>
-                <Typography variant="h4" gutterBottom fontWeight="medium">
-                  Application Process
-                </Typography>
-                <Typography 
-                  variant="body1" 
-                  paragraph 
-                  sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.8 }}
-                >
-                  {job.application_process}
-                </Typography>
-              </Box>
-            )}
-
-            <Divider sx={{ my: 4 }} />
-
-            {/* Apply Section */}
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Stack spacing={3} alignItems="center">
-                <Button
-                  variant="contained"
-                  size="large"
-                  startIcon={<Email />}
-                  onClick={handleApply}
+          {/* Right Column - Sidebar */}
+          <Grid item xs={12} md={4}>
+            <Stack spacing={3}>
+              {/* Perks & Benefits */}
+              {job.perks && (
+                <Card 
+                  elevation={2} 
                   sx={{ 
-                    px: 6, 
-                    py: 2,
-                    fontSize: '1.1rem',
-                    textTransform: 'none'
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white'
                   }}
                 >
-                  Apply for this Position
-                </Button>
-                <Typography variant="body2" color="text.secondary">
-                  By applying, you agree to share your information with {job.company?.name || 'the company'}
-                </Typography>
-              </Stack>
-            </Box>
-          </Stack>
-        </Paper>
+                  <CardContent sx={{ p: 3 }}>
+                    <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+                      <EmojiEvents sx={{ fontSize: 32 }} />
+                      <Typography variant="h5" fontWeight="bold">
+                        Perks & Benefits
+                      </Typography>
+                    </Stack>
+                    <Typography 
+                      variant="body1" 
+                      sx={{ 
+                        whiteSpace: 'pre-wrap', 
+                        lineHeight: 1.6,
+                        opacity: 0.95
+                      }}
+                    >
+                      {job.perks}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Quick Apply Card */}
+              <Card elevation={3} sx={{ textAlign: 'center' }}>
+                <CardContent sx={{ p: 4 }}>
+                  <Avatar 
+                    sx={{ 
+                      bgcolor: 'primary.main', 
+                      width: 64, 
+                      height: 64, 
+                      mx: 'auto',
+                      mb: 2
+                    }}
+                  >
+                    <Groups sx={{ fontSize: 32 }} />
+                  </Avatar>
+                  <Typography variant="h6" gutterBottom fontWeight="bold">
+                    Ready to Join Us?
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                    Take the next step in your career journey
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    size="large"
+                    startIcon={<Email />}
+                    onClick={handleApply}
+                    sx={{ 
+                      py: 1.5,
+                      fontSize: '1.1rem',
+                      fontWeight: 'bold',
+                      textTransform: 'none',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                      '&:hover': {
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.15)'
+                      },
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    Apply Now
+                  </Button>
+                  <Typography variant="caption" display="block" sx={{ mt: 2, opacity: 0.7 }}>
+                    Quick & easy application process
+                  </Typography>
+                </CardContent>
+              </Card>
+
+            </Stack>
+          </Grid>
+        </Grid>
       </Container>
       
       {/* Job Application Form */}

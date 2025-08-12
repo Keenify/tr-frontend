@@ -206,79 +206,149 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
     switch (question.question_type) {
       case 'text':
         return (
-          <TextField
-            fullWidth
-            required={question.is_required}
-            label={question.question_text}
-            value={value || ''}
-            onChange={(e) => handleCustomFieldChange(question.id, e.target.value)}
-            error={!!error}
-            helperText={error}
-            multiline
-            rows={3}
-          />
+          <Box>
+            <Typography 
+              variant="subtitle1" 
+              sx={{ 
+                fontWeight: 600, 
+                mb: 1,
+                color: 'text.primary',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}
+            >
+              📝 {question.question_text} {question.is_required && <Chip label="Required" size="small" color="primary" />}
+            </Typography>
+            <TextField
+              fullWidth
+              placeholder="Enter your response..."
+              value={value || ''}
+              onChange={(e) => handleCustomFieldChange(question.id, e.target.value)}
+              error={!!error}
+              helperText={error}
+              multiline
+              rows={3}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  '&:hover fieldset': {
+                    borderColor: 'primary.main',
+                  },
+                },
+              }}
+            />
+          </Box>
         );
       
       case 'dropdown':
         return (
-          <FormControl fullWidth required={question.is_required} error={!!error}>
-            <InputLabel>{question.question_text}</InputLabel>
-            <Select
-              value={value || ''}
-              onChange={(e) => handleCustomFieldChange(question.id, e.target.value)}
-              label={question.question_text}
+          <Box>
+            <Typography 
+              variant="subtitle1" 
+              sx={{ 
+                fontWeight: 600, 
+                mb: 2,
+                color: 'text.primary',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}
             >
-              <MenuItem value="">None</MenuItem>
-              {question.options?.map((option) => (
-                <MenuItem key={option} value={option}>
-                  {option}
+              🔽 {question.question_text} {question.is_required && <Chip label="Required" size="small" color="primary" />}
+            </Typography>
+            <FormControl fullWidth error={!!error}>
+              <Select
+                value={value || ''}
+                onChange={(e) => handleCustomFieldChange(question.id, e.target.value)}
+                displayEmpty
+                sx={{
+                  borderRadius: 2,
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'primary.main',
+                  },
+                }}
+              >
+                <MenuItem value="" disabled>
+                  <em>Please select an option...</em>
                 </MenuItem>
-              ))}
-            </Select>
-            {error && (
-              <Typography variant="caption" color="error" sx={{ ml: 2, mt: 0.5 }}>
-                {error}
-              </Typography>
-            )}
-          </FormControl>
+                {question.options?.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </Select>
+              {error && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                  {error}
+                </Typography>
+              )}
+            </FormControl>
+          </Box>
         );
       
       case 'checkbox':
         return (
-          <FormControl error={!!error}>
-            <FormLabel component="legend">
-              {question.question_text} {question.is_required && '*'}
-            </FormLabel>
-            <FormGroup>
-              {question.options?.map((option) => (
-                <FormControlLabel
-                  key={option}
-                  control={
-                    <Checkbox
-                      checked={value?.includes(option) || false}
-                      onChange={(e) => {
-                        const currentValues = value || [];
-                        if (e.target.checked) {
-                          handleCustomFieldChange(question.id, [...currentValues, option]);
-                        } else {
-                          handleCustomFieldChange(
-                            question.id,
-                            currentValues.filter((v: string) => v !== option)
-                          );
+          <Box>
+            <Typography 
+              variant="subtitle1" 
+              sx={{ 
+                fontWeight: 600, 
+                mb: 2,
+                color: 'text.primary',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}
+            >
+              ☑️ {question.question_text} {question.is_required && <Chip label="Required" size="small" color="primary" />}
+            </Typography>
+            <FormControl error={!!error} sx={{ width: '100%' }}>
+              <Box sx={{ pl: 1 }}>
+                <FormGroup>
+                  {question.options?.map((option) => (
+                    <FormControlLabel
+                      key={option}
+                      sx={{ 
+                        mb: 1,
+                        '& .MuiFormControlLabel-label': {
+                          fontSize: '1rem',
+                          fontWeight: 500
                         }
                       }}
+                      control={
+                        <Checkbox
+                          checked={value?.includes(option) || false}
+                          onChange={(e) => {
+                            const currentValues = value || [];
+                            if (e.target.checked) {
+                              handleCustomFieldChange(question.id, [...currentValues, option]);
+                            } else {
+                              handleCustomFieldChange(
+                                question.id,
+                                currentValues.filter((v: string) => v !== option)
+                              );
+                            }
+                          }}
+                          sx={{
+                            '&.Mui-checked': {
+                              color: 'primary.main',
+                            },
+                          }}
+                        />
+                      }
+                      label={option}
                     />
-                  }
-                  label={option}
-                />
-              ))}
-            </FormGroup>
-            {error && (
-              <Typography variant="caption" color="error">
-                {error}
-              </Typography>
-            )}
-          </FormControl>
+                  ))}
+                </FormGroup>
+              </Box>
+              {error && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                  {error}
+                </Typography>
+              )}
+            </FormControl>
+          </Box>
         );
       
       case 'scale':
@@ -286,24 +356,92 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         const max = question.max_value || 10;
         return (
           <Box>
-            <Typography gutterBottom>
-              {question.question_text} {question.is_required && '*'}: {value || min}
+            <Typography 
+              variant="subtitle1" 
+              sx={{ 
+                fontWeight: 600, 
+                mb: 1,
+                color: 'text.primary',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}
+            >
+              📊 {question.question_text} {question.is_required && <Chip label="Required" size="small" color="primary" />}
             </Typography>
-            <Slider
-              value={value || min}
-              onChange={(e, newValue) => handleCustomFieldChange(question.id, newValue as number)}
-              min={min}
-              max={max}
-              step={1}
-              marks={[
-                { value: min, label: String(min) },
-                { value: Math.floor((min + max) / 2), label: String(Math.floor((min + max) / 2)) },
-                { value: max, label: String(max) }
-              ]}
-              valueLabelDisplay="auto"
-            />
+            
+            {/* Current Value Display */}
+            <Box sx={{ 
+              textAlign: 'center', 
+              mb: 2, 
+              p: 2, 
+              bgcolor: 'primary.50', 
+              borderRadius: 2,
+              border: '2px solid',
+              borderColor: 'primary.200'
+            }}>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main', mb: 0.5 }}>
+                {value || min}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Current Selection ({min} - {max})
+              </Typography>
+            </Box>
+            
+            <Box sx={{ px: 2, py: 1 }}>
+              <Slider
+                value={value || min}
+                onChange={(e, newValue) => handleCustomFieldChange(question.id, newValue as number)}
+                min={min}
+                max={max}
+                step={1}
+                marks={[
+                  { value: min, label: String(min) },
+                  { value: Math.floor((min + max) / 2), label: String(Math.floor((min + max) / 2)) },
+                  { value: max, label: String(max) }
+                ]}
+                valueLabelDisplay="auto"
+                sx={{
+                  height: 8,
+                  '& .MuiSlider-thumb': {
+                    height: 24,
+                    width: 24,
+                    backgroundColor: 'primary.main',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                    '&:hover': {
+                      boxShadow: '0 6px 12px rgba(0,0,0,0.3)',
+                    },
+                  },
+                  '& .MuiSlider-track': {
+                    height: 8,
+                    background: 'linear-gradient(90deg, #4CAF50, #FF9800, #F44336)',
+                  },
+                  '& .MuiSlider-rail': {
+                    height: 8,
+                    opacity: 0.3,
+                  },
+                  '& .MuiSlider-mark': {
+                    height: 12,
+                    width: 2,
+                    backgroundColor: 'grey.400',
+                  },
+                  '& .MuiSlider-markLabel': {
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    color: 'text.primary',
+                  },
+                  '& .MuiSlider-valueLabel': {
+                    backgroundColor: 'primary.main',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    fontSize: '1rem',
+                  },
+                }}
+              />
+            </Box>
+            
             {error && (
-              <Typography variant="caption" color="error">
+              <Typography variant="caption" color="error" sx={{ mt: 1 }}>
                 {error}
               </Typography>
             )}
@@ -312,23 +450,74 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
       
       case 'yes_no':
         return (
-          <FormControl error={!!error}>
-            <FormLabel component="legend">
-              {question.question_text} {question.is_required && '*'}
-            </FormLabel>
-            <RadioGroup
-              value={value === true ? 'yes' : value === false ? 'no' : ''}
-              onChange={(e) => handleCustomFieldChange(question.id, e.target.value === 'yes')}
+          <Box>
+            <Typography 
+              variant="subtitle1" 
+              sx={{ 
+                fontWeight: 600, 
+                mb: 2,
+                color: 'text.primary',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}
             >
-              <FormControlLabel value="yes" control={<Radio />} label="Yes" />
-              <FormControlLabel value="no" control={<Radio />} label="No" />
-            </RadioGroup>
-            {error && (
-              <Typography variant="caption" color="error">
-                {error}
-              </Typography>
-            )}
-          </FormControl>
+              ❓ {question.question_text} {question.is_required && <Chip label="Required" size="small" color="primary" />}
+            </Typography>
+            <FormControl error={!!error} sx={{ width: '100%' }}>
+              <Box sx={{ pl: 1 }}>
+                <RadioGroup
+                  value={value === true ? 'yes' : value === false ? 'no' : ''}
+                  onChange={(e) => handleCustomFieldChange(question.id, e.target.value === 'yes')}
+                  sx={{ flexDirection: 'row', gap: 3 }}
+                >
+                  <FormControlLabel 
+                    value="yes" 
+                    control={
+                      <Radio 
+                        sx={{
+                          '&.Mui-checked': {
+                            color: 'success.main',
+                          },
+                        }}
+                      />
+                    } 
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography sx={{ fontSize: '1rem', fontWeight: 500 }}>
+                          ✅ Yes
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                  <FormControlLabel 
+                    value="no" 
+                    control={
+                      <Radio 
+                        sx={{
+                          '&.Mui-checked': {
+                            color: 'error.main',
+                          },
+                        }}
+                      />
+                    } 
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography sx={{ fontSize: '1rem', fontWeight: 500 }}>
+                          ❌ No
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                </RadioGroup>
+              </Box>
+              {error && (
+                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                  {error}
+                </Typography>
+              )}
+            </FormControl>
+          </Box>
         );
       
       default:
