@@ -131,6 +131,10 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
     // We only want to fetch questions once on mount.
   }, []);
 
+  // Track calendar requests to prevent duplicates
+  const calendarRequestRef = React.useRef<string | null>(null);
+  const lastCalendarFetchRef = React.useRef<string | null>(null);
+
   /**
    * Fetch calendar events when the selected date or companyInfo changes
    */
@@ -138,7 +142,24 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
     const fetchCalendarEvents = async () => {
       if (!companyInfo?.id) return;
       
+      // Create unique request identifier
+      const requestId = `calendar-${companyInfo.id}-${selectedDate}`;
+      
+      // Prevent duplicate requests
+      if (calendarRequestRef.current === requestId) {
+        console.log(`🔄 [DailyHuddleResponse] Skipping duplicate calendar request for ${requestId}`);
+        return;
+      }
+      
+      // Don't fetch if we just fetched the same data
+      if (lastCalendarFetchRef.current === requestId) {
+        console.log(`✅ [DailyHuddleResponse] Using cached calendar data for ${requestId}`);
+        return;
+      }
+      
+      calendarRequestRef.current = requestId;
       setLoading(true); // Show loading state while fetching
+      console.log(`🚀 [DailyHuddleResponse] Fetching calendar events for ${requestId}`);
       
       try {
         // Use the selectedDate directly as YYYY-MM-DD format to match your API
@@ -151,12 +172,14 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
           selectedDate  // Same date for from_time and to_time
         );
         
-        console.log(`Received ${events.length} calendar events for ${selectedDate}:`, events);
+        console.log(`✅ [DailyHuddleResponse] Successfully fetched ${events.length} calendar events for ${selectedDate}`);
         setCalendarEvents(events as CalendarEvent[]);
+        lastCalendarFetchRef.current = requestId;
       } catch (error) {
-        console.error("Failed to fetch calendar events:", error);
+        console.error("❌ [DailyHuddleResponse] Failed to fetch calendar events:", error);
         setCalendarEvents([]); // Reset events on error
       } finally {
+        calendarRequestRef.current = null;
         setLoading(false); // Hide loading state after fetching
       }
     };
