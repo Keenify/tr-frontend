@@ -351,7 +351,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
             <Box sx={{ px: 2, py: 1 }}>
               <Slider
                 value={value || min}
-                onChange={(e, newValue) => handleCustomFieldChange(question.id, newValue as number)}
+                onChange={(_e, newValue) => handleCustomFieldChange(question.id, newValue as number)}
                 min={min}
                 max={max}
                 step={1}
