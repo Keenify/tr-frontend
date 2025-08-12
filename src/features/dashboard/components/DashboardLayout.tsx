@@ -58,6 +58,7 @@ const navigationConfig = [
         icon: ThumbsUp,
       },
       { id: "leaves", label: "Leaves", shortForm: "Le", icon: Calendar },
+      { id: "paceForm", label: "PACe Form", shortForm: "PF", icon: ThumbsUp },
     ],
   },
   {
@@ -124,7 +125,6 @@ const navigationConfig = [
     subTabs: [
       { id: "playbook", label: "Playbook", shortForm: "Pb", icon: ThumbsUp },
       { id: "todo", label: "Todo", shortForm: "Td", icon: ThumbsUp },
-      { id: "paceForm", label: "PACe Form", shortForm: "PF", icon: ThumbsUp },
       { id: "faceForm", label: "FACe Form", shortForm: "FF", icon: ThumbsUp },
       { id: "rockefeller-habit-checklist", label: "Rockefeller Habit Checklist", shortForm: "RH", icon: ThumbsUp },
     ],
@@ -288,6 +288,9 @@ export function DashboardLayout({
 
   // Filter navigation items based on search and user role
   const filteredNavigation = useMemo(() => {
+    // Log user role for debugging
+    console.log("User role:", userInfo?.role);
+    
     if (!searchTerm.trim()) {
       // When not searching, filter based on user role
       return navigationConfig.map(tab => {
@@ -325,13 +328,6 @@ export function DashboardLayout({
         return matchesTab || matchesSubTabs;
       });
   }, [searchTerm, userInfo?.role]);
-
-  // Debug logging moved to useEffect to avoid render-time side effects
-  useEffect(() => {
-    if (userInfo?.role) {
-      console.log("User role:", userInfo.role);
-    }
-  }, [userInfo?.role]);
 
   // Update states when props change
   useEffect(() => {
