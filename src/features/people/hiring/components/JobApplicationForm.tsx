@@ -4,7 +4,6 @@ import {
   Button,
   TextField,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
   Slider,
@@ -16,7 +15,6 @@ import {
   FormGroup,
   RadioGroup,
   Radio,
-  FormLabel,
   Chip,
   Stack,
   CircularProgress,
@@ -70,6 +68,8 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
   const [isFileUploading, setIsFileUploading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [customQuestions, setCustomQuestions] = useState<CustomQuestion[]>([]);
+  const [companyName, setCompanyName] = useState<string>('');
+  const [departmentName, setDepartmentName] = useState<string>('');
   const [snackbar, setSnackbar] = useState({ 
     open: false, 
     message: '', 
@@ -89,10 +89,11 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [customFieldErrors, setCustomFieldErrors] = useState<Record<string, string>>({});
 
-  // Fetch custom questions when the form opens
+  // Fetch custom questions and company info when the form opens
   React.useEffect(() => {
     if (open && jobId) {
       fetchCustomQuestions();
+      fetchCompanyInfo();
     }
   }, [open, jobId]);
 
@@ -125,8 +126,47 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         ...prev,
         custom_fields: initialCustomFields
       }));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching custom questions:', error);
+    }
+  };
+
+  const fetchCompanyInfo = async () => {
+    try {
+      // Try to fetch job details with company name from companies table
+      const { data, error } = await supabase
+        .from('jobs_opening')
+        .select(`
+          department,
+          companies (
+            name
+          )
+        `)
+        .eq('id', jobId)
+        .single();
+
+      if (error) {
+        // Fallback: get job details only
+        const { data: jobData, error: jobError } = await supabase
+          .from('jobs_opening')
+          .select('department')
+          .eq('id', jobId)
+          .single();
+
+        if (!jobError && jobData) {
+          setDepartmentName(jobData.department || '');
+        }
+        
+        setCompanyName('Company');
+      } else if (data) {
+        // Success with join
+        setDepartmentName(data.department || '');
+        setCompanyName((data.companies as any)?.name || 'Company');
+      }
+    } catch (error: unknown) {
+      console.error('Error fetching company info:', error);
+      // Set fallback company name if fetch fails
+      setCompanyName('Company');
     }
   };
 
@@ -289,19 +329,77 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
             <Typography gutterBottom>
               {question.question_text} {question.is_required && '*'}: {value || min}
             </Typography>
-            <Slider
-              value={value || min}
-              onChange={(e, newValue) => handleCustomFieldChange(question.id, newValue as number)}
-              min={min}
-              max={max}
-              step={1}
-              marks={[
-                { value: min, label: String(min) },
-                { value: Math.floor((min + max) / 2), label: String(Math.floor((min + max) / 2)) },
-                { value: max, label: String(max) }
-              ]}
-              valueLabelDisplay="auto"
-            />
+            
+            {/* Current Value Display */}
+            <Box sx={{ 
+              textAlign: 'center', 
+              mb: 2, 
+              p: 2, 
+              bgcolor: 'primary.50', 
+              borderRadius: 2,
+              border: '2px solid',
+              borderColor: 'primary.200'
+            }}>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main', mb: 0.5 }}>
+                {value || min}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Current Selection ({min} - {max})
+              </Typography>
+            </Box>
+            
+            <Box sx={{ px: 2, py: 1 }}>
+              <Slider
+                value={value || min}
+                onChange={(e, newValue) => handleCustomFieldChange(question.id, newValue as number)}
+                min={min}
+                max={max}
+                step={1}
+                marks={[
+                  { value: min, label: String(min) },
+                  { value: Math.floor((min + max) / 2), label: String(Math.floor((min + max) / 2)) },
+                  { value: max, label: String(max) }
+                ]}
+                valueLabelDisplay="auto"
+                sx={{
+                  height: 8,
+                  '& .MuiSlider-thumb': {
+                    height: 24,
+                    width: 24,
+                    backgroundColor: 'primary.main',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                    '&:hover': {
+                      boxShadow: '0 6px 12px rgba(0,0,0,0.3)',
+                    },
+                  },
+                  '& .MuiSlider-track': {
+                    height: 8,
+                    background: 'linear-gradient(90deg, #4CAF50, #FF9800, #F44336)',
+                  },
+                  '& .MuiSlider-rail': {
+                    height: 8,
+                    opacity: 0.3,
+                  },
+                  '& .MuiSlider-mark': {
+                    height: 12,
+                    width: 2,
+                    backgroundColor: 'grey.400',
+                  },
+                  '& .MuiSlider-markLabel': {
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    color: 'text.primary',
+                  },
+                  '& .MuiSlider-valueLabel': {
+                    backgroundColor: 'primary.main',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    fontSize: '1rem',
+                  },
+                }}
+              />
+            </Box>
+            
             {error && (
               <Typography variant="caption" color="error">
                 {error}
@@ -410,7 +508,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         message: 'Resume uploaded successfully',
         severity: 'success'
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error uploading file:', error);
       setSnackbar({
         open: true,
@@ -462,11 +560,12 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
       }
 
       setShowSuccessModal(true);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error submitting application:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Please try again.';
       setSnackbar({
         open: true,
-        message: `Failed to submit application: ${error.message || 'Please try again.'}`,
+        message: `Failed to submit application: ${errorMessage}`,
         severity: 'error'
       });
     } finally {
@@ -483,7 +582,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
     <>
       <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
         <DialogTitle>
-          Apply for {jobTitle}
+          Apply for {jobTitle} at {companyName || 'Loading...'}
         </DialogTitle>
         <DialogContent>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
@@ -519,7 +618,9 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
                             📋 Job-Specific Questions
                           </Typography>
                           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                            Please answer these questions specific to the "{jobTitle}" position:
+                            Please answer these questions specific to the "{jobTitle}" position
+                            {departmentName && ` in the ${departmentName} department`}
+                            {companyName && ` at ${companyName}`}:
                           </Typography>
                         </Box>
                         
@@ -704,7 +805,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         <DialogTitle>Application Submitted Successfully! 🎉</DialogTitle>
         <DialogContent>
           <Typography>
-            Thank you for your application! We have received your information and will review it shortly.
+            Thank you for your application to {companyName}! We have received your information and will review it shortly.
             You should receive a confirmation email within the next few minutes.
           </Typography>
         </DialogContent>
