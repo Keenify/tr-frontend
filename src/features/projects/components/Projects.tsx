@@ -43,6 +43,8 @@ const Project: React.FC<ProjectProps> = ({
   const [error, setError] = useState<string | null>(null);
   const { companyInfo, isLoading: isLoadingCompany } = useUserAndCompanyData(session.user.id);
   const [userRole, setUserRole] = useState<string>('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [activelyEditing, setActivelyEditing] = useState<{cardId?: string, listId?: string} | null>(null);
 
   // Extract fetchBoardDetails into a reusable function
   const fetchBoardDetails = useCallback(async () => {
@@ -73,10 +75,16 @@ const Project: React.FC<ProjectProps> = ({
     }
   }, [boardId]);
 
-  // Use the fetchBoardDetails function in useEffect
+  // Load board details on mount and when boardId changes, but prevent auto-refresh during editing
   useEffect(() => {
-    fetchBoardDetails();
-  }, [fetchBoardDetails]);
+    // Only fetch if not actively editing to prevent data loss
+    if (!activelyEditing) {
+      fetchBoardDetails();
+    }
+  }, [boardId]); // Include boardId dependency for proper functionality
+  
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // fetchBoardDetails is intentionally not included to prevent auto-refresh loops
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -92,12 +100,38 @@ const Project: React.FC<ProjectProps> = ({
 
   // Create a refresh handler for the TrelloBoard - moved up before conditional returns
   const handleRefresh = useCallback(async () => {
+    // Check for unsaved changes before refreshing
+    if (hasUnsavedChanges || activelyEditing) {
+      const confirmRefresh = window.confirm(
+        'You have unsaved changes. Refreshing will lose these changes. Continue?'
+      );
+      if (!confirmRefresh) {
+        return;
+      }
+      // Clear unsaved changes state if user confirms
+      setHasUnsavedChanges(false);
+      setActivelyEditing(null);
+    }
+    
     try {
       await fetchBoardDetails();
     } catch (error) {
       console.error('Failed to refresh board data:', error);
     }
-  }, [fetchBoardDetails]);
+  }, [fetchBoardDetails, hasUnsavedChanges, activelyEditing]);
+
+  // Handler for when card modal opens - track as actively editing
+  const handleCardModalOpen = useCallback((listId: string, cardId: string) => {
+    console.log('🎯 [Projects] Card modal opened, marking as actively editing:', { listId, cardId });
+    setActivelyEditing({ cardId, listId });
+  }, []);
+
+  // Handler for when card modal closes - clear actively editing
+  const handleCardModalClose = useCallback(() => {
+    console.log('❌ [Projects] Card modal closed, clearing actively editing');
+    setActivelyEditing(null);
+    setHasUnsavedChanges(false);
+  }, []);
 
   if (isLoading || isLoadingCompany) {
     return <div>Loading...</div>;
@@ -144,6 +178,10 @@ const Project: React.FC<ProjectProps> = ({
   };
 
   const handleCardUpdate = async (listId: string, cardId: string, updates: CardUpdate) => {
+    // Mark as having changes and track the editing card
+    setHasUnsavedChanges(true);
+    setActivelyEditing({ cardId, listId });
+    
     try {
       const apiUpdates = {
         ...updates,
@@ -159,16 +197,30 @@ const Project: React.FC<ProjectProps> = ({
       delete apiUpdates.colorCode;
       
       await updateCard(cardId, apiUpdates);
+      
+      // Clear unsaved changes after successful update
+      setHasUnsavedChanges(false);
+      setActivelyEditing(null);
     } catch (error) {
       console.error('Failed to update card:', error);
+      // Keep unsaved changes state if update failed
     }
   };
 
   const handleListTitleChange = async (listId: string, newTitle: string) => {
+    // Mark as having changes and track the editing list
+    setHasUnsavedChanges(true);
+    setActivelyEditing({ listId });
+    
     try {
       await updateList(listId, { name: newTitle });
+      
+      // Clear unsaved changes after successful update
+      setHasUnsavedChanges(false);
+      setActivelyEditing(null);
     } catch (error) {
       console.error('Failed to update list title:', error);
+      // Keep unsaved changes state if update failed
     }
   };
 
@@ -244,6 +296,8 @@ const Project: React.FC<ProjectProps> = ({
         userRole={userRole}
         session={session}
         onRefresh={handleRefresh}
+        onCardModalOpen={handleCardModalOpen}
+        onCardModalClose={handleCardModalClose}
       />
     </div>
   );

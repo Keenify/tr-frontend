@@ -64,53 +64,56 @@ export const UserDataProvider: React.FC<{ children: ReactNode }> = ({ children }
       };
     }
 
-    // Start loading data
-    setCache(prev => ({
-      ...prev,
-      [userId]: {
-        userInfo: null,
-        companyInfo: null,
-        error: null,
-        isLoading: true,
-        timestamp: now,
-      },
-    }));
+    // Schedule data loading for next render cycle to avoid setState during render
+    setTimeout(() => {
+      // Start loading data
+      setCache(prev => ({
+        ...prev,
+        [userId]: {
+          userInfo: null,
+          companyInfo: null,
+          error: null,
+          isLoading: true,
+          timestamp: now,
+        },
+      }));
 
-    // Fetch data
-    const fetchData = async () => {
-      try {
-        console.log('Fetching user data for ID:', userId);
-        const userData = await getUserData(userId);
-        console.log('User data received:', userData);
-        
-        const companyData = await getCompanyData(userData.company_id) as CompanyData;
+      // Fetch data
+      const fetchData = async () => {
+        try {
+          console.log('Fetching user data for ID:', userId);
+          const userData = await getUserData(userId);
+          console.log('User data received:', userData);
+          
+          const companyData = await getCompanyData(userData.company_id) as CompanyData;
 
-        setCache(prev => ({
-          ...prev,
-          [userId]: {
-            userInfo: userData,
-            companyInfo: companyData,
-            error: null,
-            isLoading: false,
-            timestamp: Date.now(),
-          },
-        }));
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setCache(prev => ({
-          ...prev,
-          [userId]: {
-            userInfo: null,
-            companyInfo: null,
-            error: err as Error,
-            isLoading: false,
-            timestamp: Date.now(),
-          },
-        }));
-      }
-    };
+          setCache(prev => ({
+            ...prev,
+            [userId]: {
+              userInfo: userData,
+              companyInfo: companyData,
+              error: null,
+              isLoading: false,
+              timestamp: Date.now(),
+            },
+          }));
+        } catch (err) {
+          console.error('Error fetching data:', err);
+          setCache(prev => ({
+            ...prev,
+            [userId]: {
+              userInfo: null,
+              companyInfo: null,
+              error: err as Error,
+              isLoading: false,
+              timestamp: Date.now(),
+            },
+          }));
+        }
+      };
 
-    fetchData();
+      fetchData();
+    }, 0); // Execute in next tick to avoid setState during render
 
     // Return initial loading state
     return {
