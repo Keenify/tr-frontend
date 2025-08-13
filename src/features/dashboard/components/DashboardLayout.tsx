@@ -275,21 +275,10 @@ export function DashboardLayout({
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Company data with error boundary
-  let companyInfo = null;
-  let userInfo = null;
-  let companyError = null;
-  
-  try {
-    const result = useUserAndCompanyData(session.user.id);
-    companyInfo = result.companyInfo;
-    userInfo = result.userInfo;
-    companyError = result.error;
-  } catch (error) {
-    console.warn("UserDataContext not available (likely during HMR):", error);
-    companyError = error as Error;
-  }
-  
+  // Company data
+  const { companyInfo, userInfo, error: companyError } = useUserAndCompanyData(
+    session.user.id
+  );
   if (companyError) {
     console.error("Error fetching company data:", companyError);
   }
