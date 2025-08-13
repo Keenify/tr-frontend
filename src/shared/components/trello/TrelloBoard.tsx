@@ -9,7 +9,7 @@ import { useUserAndCompanyData } from '../../hooks/useUserAndCompanyData';
 import { directoryService } from '../../../shared/services/directoryService';
 import { Employee } from '@/shared/types/directory.types';
 import { Card, CardUpdate } from './types/card.types';
-import { Card as TrelloCard } from './types/card.types';
+import { Card as TrelloCard } from './types/card.types';  
 import { Tab, Menu, Transition } from '@headlessui/react';
 import { Label } from '../../types/label.types';
 import { labelService } from '../../services/labelService';
@@ -91,7 +91,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   onCardModalOpen,
   onCardModalClose
 }) => {
-  // Get the current user's ID from the session
+  // Get the current user's ID from the session   
   const userId = session?.user?.id || '';
   
   const { 
