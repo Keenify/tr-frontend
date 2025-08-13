@@ -248,6 +248,7 @@ export const useTrelloBoard = (
     // Convert nulls to undefined for internal state and API call consistency
     const updatesForStateAndApi: Partial<TrelloCard> = {
       ...updatedCard,
+      list_id: listId, // Ensure list_id is always included
       description: updatedCard.description === null ? undefined : updatedCard.description,
       start_date: updatedCard.start_date === null ? undefined : updatedCard.start_date,
       end_date: updatedCard.end_date === null ? undefined : updatedCard.end_date,
@@ -278,9 +279,9 @@ export const useTrelloBoard = (
         return list;
       }));
 
-      // API call using the original updatedCard (let the receiver handle its own types)
+      // API call using the cleaned object with list_id included
       if (onCardUpdate) {
-        await onCardUpdate(listId, cardId, updatedCard);
+        await onCardUpdate(listId, cardId, updatesForStateAndApi);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
