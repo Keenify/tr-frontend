@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Button,
@@ -24,13 +24,33 @@ import {
   CardActions,
   Tabs,
   Tab,
+  SelectChangeEvent,
 } from '@mui/material';
-import { ContentCopy, Visibility, Close, Delete, Settings, People } from '@mui/icons-material';
+import { 
+  ContentCopy, 
+  Visibility, 
+  Close, 
+  Delete, 
+  Settings, 
+  People,
+  Email as EmailIcon,
+  Description,
+  Phone,
+  LocationOn,
+  WorkOutline,
+  CalendarToday
+} from '@mui/icons-material';
 import { supabase } from '../../../../lib/supabase';
 import { useUserAndCompanyData } from '../../../../shared/hooks/useUserAndCompanyData';
 import { useSession } from '../../../../shared/hooks/useSession';
 import CustomQuestionManager from './CustomQuestionManager';
 import useJobOpeningApplications, { JobOpeningApplication } from '../services/useJobOpeningApplications';
+
+// Extended interface for applicants that might have additional fields
+interface ExtendedJobOpeningApplication extends JobOpeningApplication {
+  location?: string;
+  cover_letter?: string;
+}
 
 interface JobFormData {
   role: string;
@@ -56,6 +76,7 @@ interface PreviousJob {
 const JobsOpening: React.FC = () => {
   const { session } = useSession();
   const { userInfo, companyInfo } = useUserAndCompanyData(session?.user?.id || '');
+  const { getApplicationsByJobId } = useJobOpeningApplications();
   const [isLoading, setIsLoading] = useState(false);
   const [locationInput, setLocationInput] = useState('');
   const [postedJobId, setPostedJobId] = useState<string | null>(null);
@@ -64,7 +85,15 @@ const JobsOpening: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [previousJobs, setPreviousJobs] = useState<PreviousJob[]>([]);
   const [previousJobsLoading, setPreviousJobsLoading] = useState(false);
-  const [pendingQuestions, setPendingQuestions] = useState<any[]>([]);
+  const [pendingQuestions, setPendingQuestions] = useState<{
+    id?: string;
+    question_text: string;
+    question_type: 'text' | 'textarea' | 'radio' | 'checkbox';
+    options?: string[];
+    is_required: boolean;
+    min_value?: number | null;
+    max_value?: number | null;
+  }[]>([]);
   const [showCustomQuestionsDialog, setShowCustomQuestionsDialog] = useState<string | null>(null);
   const [showApplicantsDialog, setShowApplicantsDialog] = useState<{ jobId: string; jobRole: string } | null>(null);
   const [jobApplicants, setJobApplicants] = useState<JobOpeningApplication[]>([]);
@@ -81,15 +110,9 @@ const JobsOpening: React.FC = () => {
     perks: '',
     application_process: ''
   });
-  const [errors, setErrors] = useState<Partial<JobFormData>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof JobFormData, string>>>({});
 
-  useEffect(() => {
-    if (userInfo?.company_id && tabValue === 1) {
-      fetchPreviousJobs();
-    }
-  }, [userInfo?.company_id, tabValue]);
-
-  const fetchPreviousJobs = async () => {
+  const fetchPreviousJobs = useCallback(async () => {
     if (!userInfo?.company_id) return;
     
     setPreviousJobsLoading(true);
@@ -113,7 +136,13 @@ const JobsOpening: React.FC = () => {
     } finally {
       setPreviousJobsLoading(false);
     }
-  };
+  }, [userInfo?.company_id]);
+
+  useEffect(() => {
+    if (userInfo?.company_id && tabValue === 1) {
+      fetchPreviousJobs();
+    }
+  }, [userInfo?.company_id, tabValue, fetchPreviousJobs]);
 
   const handleDeleteJob = async (jobId: string) => {
     if (!window.confirm('Are you sure you want to delete this job posting? This will also delete all associated custom questions and applications.')) {
@@ -142,11 +171,11 @@ const JobsOpening: React.FC = () => {
         message: 'Job posting deleted successfully',
         severity: 'success'
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error deleting job:', error);
       setSnackbar({
         open: true,
-        message: `Failed to delete job posting: ${error.message || 'Unknown error'}`,
+        message: `Failed to delete job posting: ${error instanceof Error ? error.message : 'Unknown error'}`,
         severity: 'error'
       });
     }
@@ -168,10 +197,10 @@ const JobsOpening: React.FC = () => {
   };
 
   const validateForm = () => {
-    const newErrors: Partial<JobFormData> = {};
+    const newErrors: Partial<Record<keyof JobFormData, string>> = {};
     if (!formData.role.trim()) newErrors.role = 'Role is required';
     if (!formData.department.trim()) newErrors.department = 'Department is required';
-    if (formData.locations.length === 0) newErrors.locations = ['At least one location is required'] as any;
+    if (formData.locations.length === 0) newErrors.locations = 'At least one location is required';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -185,9 +214,11 @@ const JobsOpening: React.FC = () => {
     }
   };
 
-  const handleSelectChange = (e: any) => {
+  const handleSelectChange = (e: SelectChangeEvent) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name) {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleAddLocation = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -593,7 +624,13 @@ const JobsOpening: React.FC = () => {
                             size="small" 
                             startIcon={<People />}
                             onClick={async () => {
-                              setShowApplicantsDialog({ jobId: job.id, jobRole: job.role });
+                              setShowApplicantsDialog({ 
+                                jobId: job.id, 
+                                jobRole: job.role,
+                                department: job.department,
+                                remote_status: job.remote_status,
+                                created_at: job.created_at
+                              });
                               setApplicantsLoading(true);
                               try {
                                 console.log('=== JOB OPENING APPLICATIONS DEBUG ===');

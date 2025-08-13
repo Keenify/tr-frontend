@@ -4,6 +4,8 @@ import {
   Button,
   TextField,
   FormControl,
+  FormLabel,
+  InputLabel,
   Select,
   MenuItem,
   Slider,
@@ -128,6 +130,8 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
       }));
     } catch (error: unknown) {
       console.error('Error fetching custom questions:', error);
+      // Don't prevent the dialog from opening even if custom questions fail
+      setCustomQuestions([]);
     }
   };
 
@@ -177,11 +181,18 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
     if (!formData.first_name.trim()) newErrors.first_name = 'First name is required';
     if (!formData.last_name.trim()) newErrors.last_name = 'Last name is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
     
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.email && !emailRegex.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
+    }
+    
+    // Phone validation (basic format check)
+    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    if (formData.phone && !phoneRegex.test(formData.phone.replace(/[\s\-\(\)]/g, ''))) {
+      newErrors.phone = 'Please enter a valid phone number';
     }
     
     // Validate custom questions
@@ -243,92 +254,173 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
     const value = formData.custom_fields[question.id];
     const error = customFieldErrors[question.id];
 
+    const questionWrapper = (children: React.ReactNode) => (
+      <Box sx={{ mt: 1 }}>
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            mb: 2, 
+            fontWeight: 600,
+            color: 'text.primary',
+            fontSize: '1.1rem',
+            lineHeight: 1.4
+          }}
+        >
+          {question.question_text}
+          {question.is_required && (
+            <Typography component="span" sx={{ color: 'error.main', ml: 0.5 }}>
+              *
+            </Typography>
+          )}
+        </Typography>
+        {children}
+      </Box>
+    );
+
     switch (question.question_type) {
       case 'text':
-        return (
+        return questionWrapper(
           <TextField
             fullWidth
-            required={question.is_required}
-            label={question.question_text}
+            placeholder="Type your answer here..."
             value={value || ''}
             onChange={(e) => handleCustomFieldChange(question.id, e.target.value)}
             error={!!error}
-            helperText={error}
+            helperText={error || 'Share your thoughts in detail'}
             multiline
-            rows={3}
+            rows={4}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                backgroundColor: 'grey.50',
+                '&:hover': {
+                  backgroundColor: 'white'
+                },
+                '&.Mui-focused': {
+                  backgroundColor: 'white'
+                }
+              }
+            }}
           />
         );
       
       case 'dropdown':
-        return (
-          <FormControl fullWidth required={question.is_required} error={!!error}>
-            <InputLabel>{question.question_text}</InputLabel>
+        return questionWrapper(
+          <FormControl fullWidth error={!!error}>
             <Select
               value={value || ''}
               onChange={(e) => handleCustomFieldChange(question.id, e.target.value)}
-              label={question.question_text}
+              displayEmpty
+              sx={{
+                borderRadius: 2,
+                backgroundColor: 'grey.50',
+                '&:hover': {
+                  backgroundColor: 'white'
+                },
+                '&.Mui-focused': {
+                  backgroundColor: 'white'
+                }
+              }}
             >
-              <MenuItem value="">None</MenuItem>
+              <MenuItem value="" disabled>
+                <Typography sx={{ color: 'text.secondary' }}>
+                  Select an option...
+                </Typography>
+              </MenuItem>
               {question.options?.map((option) => (
                 <MenuItem key={option} value={option}>
                   {option}
                 </MenuItem>
               ))}
             </Select>
-            {error && (
-              <Typography variant="caption" color="error" sx={{ ml: 2, mt: 0.5 }}>
+            {error ? (
+              <Typography variant="caption" color="error" sx={{ mt: 1 }}>
                 {error}
+              </Typography>
+            ) : (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                Choose the option that best applies to you
               </Typography>
             )}
           </FormControl>
         );
       
       case 'checkbox':
-        return (
-          <FormControl error={!!error}>
-            <FormLabel component="legend">
-              {question.question_text} {question.is_required && '*'}
-            </FormLabel>
-            <FormGroup>
+        return questionWrapper(
+          <Box>
+            <FormGroup sx={{ gap: 1 }}>
               {question.options?.map((option) => (
-                <FormControlLabel
+                <Box
                   key={option}
-                  control={
-                    <Checkbox
-                      checked={value?.includes(option) || false}
-                      onChange={(e) => {
-                        const currentValues = value || [];
-                        if (e.target.checked) {
-                          handleCustomFieldChange(question.id, [...currentValues, option]);
-                        } else {
-                          handleCustomFieldChange(
-                            question.id,
-                            currentValues.filter((v: string) => v !== option)
-                          );
-                        }
-                      }}
-                    />
-                  }
-                  label={option}
-                />
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: value?.includes(option) ? 'primary.main' : 'grey.300',
+                    backgroundColor: value?.includes(option) ? 'primary.50' : 'grey.50',
+                    transition: 'all 0.2s ease',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      borderColor: 'primary.main',
+                      backgroundColor: 'primary.50'
+                    }
+                  }}
+                  onClick={() => {
+                    const currentValues = value || [];
+                    if (currentValues.includes(option)) {
+                      handleCustomFieldChange(
+                        question.id,
+                        currentValues.filter((v: string) => v !== option)
+                      );
+                    } else {
+                      handleCustomFieldChange(question.id, [...currentValues, option]);
+                    }
+                  }}
+                >
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={value?.includes(option) || false}
+                        onChange={() => {}} // Empty onChange since Box handles the click
+                        sx={{
+                          color: 'primary.main',
+                          '&.Mui-checked': {
+                            color: 'primary.main'
+                          },
+                          pointerEvents: 'none' // Disable checkbox click to let Box handle it
+                        }}
+                      />
+                    }
+                    label={
+                      <Typography sx={{ 
+                        fontWeight: value?.includes(option) ? 600 : 400,
+                        pointerEvents: 'none' // Disable label click to let Box handle it
+                      }}>
+                        {option}
+                      </Typography>
+                    }
+                    sx={{ pointerEvents: 'none', margin: 0 }} // Disable FormControlLabel click to let Box handle it
+                  />
+                </Box>
               ))}
             </FormGroup>
-            {error && (
-              <Typography variant="caption" color="error">
+            {error ? (
+              <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
                 {error}
               </Typography>
+            ) : (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                Select all that apply
+              </Typography>
             )}
-          </FormControl>
+          </Box>
         );
       
       case 'scale':
         const min = question.min_value || 1;
         const max = question.max_value || 10;
-        return (
+        return questionWrapper(
           <Box>
-            <Typography gutterBottom>
-              {question.question_text} {question.is_required && '*'}: {value || min}
-            </Typography>
             
             {/* Current Value Display */}
             <Box sx={{ 
@@ -400,33 +492,121 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
               />
             </Box>
             
-            {error && (
-              <Typography variant="caption" color="error">
+            {error ? (
+              <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
                 {error}
+              </Typography>
+            ) : (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                Drag the slider to select your rating
               </Typography>
             )}
           </Box>
         );
       
       case 'yes_no':
-        return (
-          <FormControl error={!!error}>
-            <FormLabel component="legend">
-              {question.question_text} {question.is_required && '*'}
-            </FormLabel>
+        return questionWrapper(
+          <Box>
             <RadioGroup
               value={value === true ? 'yes' : value === false ? 'no' : ''}
               onChange={(e) => handleCustomFieldChange(question.id, e.target.value === 'yes')}
+              sx={{ gap: 1 }}
             >
-              <FormControlLabel value="yes" control={<Radio />} label="Yes" />
-              <FormControlLabel value="no" control={<Radio />} label="No" />
+              <Box
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: value === true ? 'success.main' : 'grey.300',
+                  backgroundColor: value === true ? 'success.50' : 'grey.50',
+                  transition: 'all 0.2s ease',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    borderColor: 'success.main',
+                    backgroundColor: 'success.50'
+                  }
+                }}
+                onClick={() => handleCustomFieldChange(question.id, true)}
+              >
+                <FormControlLabel 
+                  value="yes" 
+                  control={
+                    <Radio 
+                      checked={value === true}
+                      onChange={() => {}} // Empty onChange since Box handles the click
+                      sx={{
+                        color: 'success.main',
+                        '&.Mui-checked': {
+                          color: 'success.main'
+                        },
+                        pointerEvents: 'none' // Disable radio click to let Box handle it
+                      }}
+                    />
+                  } 
+                  label={
+                    <Typography sx={{ 
+                      fontWeight: value === true ? 600 : 400,
+                      pointerEvents: 'none' // Disable label click to let Box handle it
+                    }}>
+                      ✓ Yes
+                    </Typography>
+                  }
+                  sx={{ pointerEvents: 'none', margin: 0 }} // Disable FormControlLabel click to let Box handle it
+                />
+              </Box>
+              <Box
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: value === false ? 'error.main' : 'grey.300',
+                  backgroundColor: value === false ? 'error.50' : 'grey.50',
+                  transition: 'all 0.2s ease',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    borderColor: 'error.main',
+                    backgroundColor: 'error.50'
+                  }
+                }}
+                onClick={() => handleCustomFieldChange(question.id, false)}
+              >
+                <FormControlLabel 
+                  value="no" 
+                  control={
+                    <Radio 
+                      checked={value === false}
+                      onChange={() => {}} // Empty onChange since Box handles the click
+                      sx={{
+                        color: 'error.main',
+                        '&.Mui-checked': {
+                          color: 'error.main'
+                        },
+                        pointerEvents: 'none' // Disable radio click to let Box handle it
+                      }}
+                    />
+                  } 
+                  label={
+                    <Typography sx={{ 
+                      fontWeight: value === false ? 600 : 400,
+                      pointerEvents: 'none' // Disable label click to let Box handle it
+                    }}>
+                      ✗ No
+                    </Typography>
+                  }
+                  sx={{ pointerEvents: 'none', margin: 0 }} // Disable FormControlLabel click to let Box handle it
+                />
+              </Box>
             </RadioGroup>
-            {error && (
-              <Typography variant="caption" color="error">
+            {error ? (
+              <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
                 {error}
               </Typography>
+            ) : (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                Please select one option
+              </Typography>
             )}
-          </FormControl>
+          </Box>
         );
       
       default:
@@ -615,7 +795,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
                               gap: 1
                             }}
                           >
-                            📋 Job-Specific Questions
+                            🎯 Job-Specific Questions
                           </Typography>
                           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                             Please answer these questions specific to the "{jobTitle}" position
@@ -624,18 +804,62 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
                           </Typography>
                         </Box>
                         
-                        <Stack spacing={3}>
-                          {customQuestions.map((question) => (
+                        <Stack spacing={4}>
+                          {customQuestions.map((question, index) => (
                             <Box 
                               key={question.id}
                               sx={{ 
-                                p: 2, 
+                                p: 4, 
                                 bgcolor: 'white', 
-                                borderRadius: 1,
-                                border: '1px solid',
-                                borderColor: 'divider'
+                                borderRadius: 3,
+                                border: '2px solid',
+                                borderColor: 'grey.200',
+                                boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                  borderColor: 'primary.300',
+                                  boxShadow: '0 4px 20px rgba(0,0,0,0.12)'
+                                },
+                                position: 'relative'
                               }}
                             >
+                              {/* Question Number Badge */}
+                              <Box
+                                sx={{
+                                  position: 'absolute',
+                                  top: -12,
+                                  left: 20,
+                                  bgcolor: 'primary.main',
+                                  color: 'white',
+                                  borderRadius: '50%',
+                                  width: 24,
+                                  height: 24,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 'bold'
+                                }}
+                              >
+                                {index + 1}
+                              </Box>
+                              
+                              {/* Required Badge */}
+                              {question.is_required && (
+                                <Chip
+                                  label="Required"
+                                  size="small"
+                                  color="error"
+                                  sx={{
+                                    position: 'absolute',
+                                    top: 12,
+                                    right: 12,
+                                    fontSize: '0.65rem',
+                                    height: 20
+                                  }}
+                                />
+                              )}
+                              
                               {renderCustomField(question)}
                             </Box>
                           ))}
@@ -707,12 +931,14 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
+                  required
                   label="Phone"
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
                   error={!!errors.phone}
-                  helperText={errors.phone}
+                  helperText={errors.phone || 'Enter your phone number with country code if international'}
+                  placeholder="+1 (555) 123-4567"
                 />
                   </Grid>
                   </Grid>

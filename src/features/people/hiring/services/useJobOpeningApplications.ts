@@ -1,6 +1,28 @@
 import { useState } from 'react';
 import { supabase } from '../../../../lib/supabase';
 
+interface JobOpeningData {
+  role?: string;
+  department?: string;
+  locations?: string[];
+  remote_status?: string;
+}
+
+interface ApplicationWithJoinedData {
+  id: string;
+  job_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string | null;
+  resume_url?: string | null;
+  status?: string | null;
+  created_at: string;
+  updated_at: string;
+  custom_fields?: Record<string, unknown> | null;
+  jobs_opening?: JobOpeningData;
+}
+
 export interface JobOpeningApplication {
   id: string;
   job_id: string;
@@ -9,9 +31,10 @@ export interface JobOpeningApplication {
   email: string;
   phone?: string | null;
   resume_url?: string | null;
+  status?: string | null;
   created_at: string;
   updated_at: string;
-  custom_fields?: any | null;
+  custom_fields?: Record<string, unknown> | null;
   // Joined job data
   job_role?: string;
   job_department?: string;
@@ -76,7 +99,7 @@ export const useJobOpeningApplications = () => {
       }, {} as Record<string, string>);
 
       // Transform the data to flatten the job information and resolve custom questions
-      const transformedData: JobOpeningApplication[] = (applicationsData || []).map(app => {
+      const transformedData: JobOpeningApplication[] = (applicationsData as ApplicationWithJoinedData[] || []).map(app => {
         let resolvedCustomFields = {};
         
         // If there are custom fields, try to resolve question IDs to question text
@@ -86,7 +109,7 @@ export const useJobOpeningApplications = () => {
             const questionText = questionsMap[key] || key; // Use question text if found, otherwise use the key
             resolved[questionText] = value;
             return resolved;
-          }, {} as Record<string, any>);
+          }, {} as Record<string, unknown>);
         }
 
         return {
@@ -100,16 +123,17 @@ export const useJobOpeningApplications = () => {
           created_at: app.created_at,
           updated_at: app.updated_at,
           custom_fields: resolvedCustomFields,
-          job_role: (app.jobs_opening as any)?.role,
-          job_department: (app.jobs_opening as any)?.department,
-          job_locations: (app.jobs_opening as any)?.locations,
-          job_remote_status: (app.jobs_opening as any)?.remote_status
+          job_role: app.jobs_opening?.role,
+          job_department: app.jobs_opening?.department,
+          job_locations: app.jobs_opening?.locations,
+          job_remote_status: app.jobs_opening?.remote_status
         };
       });
 
       return transformedData;
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Unknown error occurred');
+      console.error('Error in getApplicationsByJobId:', err);
       setError(error);
       throw error;
     } finally {
@@ -151,7 +175,7 @@ export const useJobOpeningApplications = () => {
       if (error) throw error;
 
       // Transform the data to flatten the job information
-      const transformedData: JobOpeningApplication[] = (data || []).map(app => ({
+      const transformedData: JobOpeningApplication[] = (data as ApplicationWithJoinedData[] || []).map(app => ({
         id: app.id,
         job_id: app.job_id,
         first_name: app.first_name,
@@ -162,10 +186,10 @@ export const useJobOpeningApplications = () => {
         created_at: app.created_at,
         updated_at: app.updated_at,
         custom_fields: app.custom_fields,
-        job_role: (app.jobs_opening as any)?.role,
-        job_department: (app.jobs_opening as any)?.department,
-        job_locations: (app.jobs_opening as any)?.locations,
-        job_remote_status: (app.jobs_opening as any)?.remote_status
+        job_role: app.jobs_opening?.role,
+        job_department: app.jobs_opening?.department,
+        job_locations: app.jobs_opening?.locations,
+        job_remote_status: app.jobs_opening?.remote_status
       }));
 
       return transformedData;
