@@ -4,8 +4,6 @@ import {
   Button,
   TextField,
   FormControl,
-  FormLabel,
-  InputLabel,
   Select,
   MenuItem,
   Slider,
