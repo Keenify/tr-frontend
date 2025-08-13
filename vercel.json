@@ -8,7 +8,13 @@
     ],
     "git": {
         "deploymentEnabled": {
-            "main": true
+            "main": true,
+            "feature/frontend-projects": true
+        }
+    },
+    "build": {
+        "env": {
+            "NODE_ENV": "production"
         }
     }
 }
