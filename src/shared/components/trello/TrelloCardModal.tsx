@@ -30,7 +30,7 @@ const placeholderLabelService = {
 interface TrelloCardModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (updatedCard: CardUpdate) => void;
+  onSave: (updatedCard: CardUpdate) => Promise<void>;
   onThumbnailChange?: (updatedCard: CardUpdate) => void;
   card: Card & { attachments?: CardAttachment[] };
   isLoadingAttachments: boolean;
@@ -144,6 +144,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   const [isLocked, setIsLocked] = useState(card.is_locked || false);
   const [lockedBy, setLockedBy] = useState(card.locked_by || '');
   const [isUpdatingThumbnailId, setIsUpdatingThumbnailId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Label State
   const [companyLabels, setCompanyLabels] = useState<Label[]>([]);
@@ -512,7 +513,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
           const labelUpdatePayload: CardUpdate = {
             label_ids: nextAssignedLabelIds
           };
-          onSave(labelUpdatePayload); // Call onSave with just the label update
+          await onSave(labelUpdatePayload); // Call onSave with just the label update
           console.log('[TrelloCardModal] Called onSave with label update:', labelUpdatePayload);
 
           // Show appropriate toast
@@ -573,31 +574,69 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
 
   // --- End Label Handlers ---
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isEditable) {
       showToast('Cannot modify a locked card', 'error');
       return;
     }
-    const updatedCard: CardUpdate = {
-      title,
-      description,
-      colorCode,
-      color_code: colorCode,
-      assignees,
-      start_date: startDate || "",
-      end_date: endDate || "",
-      attachments,
-      attachmentCount: attachments.length,
-      is_locked: isLocked,
-      locked_by: isLocked ? userInfo?.id : "",
-      list_id: card.list_id || "",
-      position: card.position || 0,
-    };
+    
+    setIsSaving(true);
+    
+    try {
+      // Create partial update payload with only changed fields
+      const updatedCard: CardUpdate = {};
+      
+      // Only include fields that have actually changed
+      if (title !== card.title) {
+        updatedCard.title = title;
+      }
+      
+      if (description !== (card.description || '')) {
+        updatedCard.description = description;
+      }
+      
+      if (colorCode !== (card.colorCode || card.color_code || '')) {
+        updatedCard.colorCode = colorCode;
+        updatedCard.color_code = colorCode;
+      }
+      
+      if (startDate !== (card.start_date || '')) {
+        updatedCard.start_date = startDate || undefined;
+      }
+      
+      if (endDate !== (card.end_date || '')) {
+        updatedCard.end_date = endDate || undefined;
+      }
+      
+      // Only include lock fields if they changed
+      if (isLocked !== card.is_locked) {
+        updatedCard.is_locked = isLocked;
+        updatedCard.locked_by = isLocked ? userInfo?.id : undefined;
+      }
+      
+      // Always include these if they exist (for consistency)
+      if (Object.keys(updatedCard).length > 0) {
+        updatedCard.list_id = card.list_id || "";
+        updatedCard.position = card.position || 0;
+      }
 
-    console.log('Card Update Payload:', updatedCard);
-    onSave(updatedCard);
-    onClose();
+      console.log('Card Update Payload (partial):', updatedCard);
+      
+      // Only call onSave if there are actual changes
+      if (Object.keys(updatedCard).length > 2) { // More than just list_id and position
+        await onSave(updatedCard);
+        showToast('Card updated successfully', 'success');
+      } else {
+        console.log('No changes detected, skipping update');
+        onClose();
+      }
+    } catch (error) {
+      console.error('Failed to save card:', error);
+      showToast('Failed to save card changes', 'error');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Find the employee who locked the card
@@ -1115,9 +1154,20 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
             {isEditable && (
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 rounded-md"
+                disabled={isSaving}
+                className={`px-4 py-2 text-white rounded-md flex items-center gap-2 ${
+                  isSaving 
+                    ? 'bg-blue-400 cursor-not-allowed' 
+                    : 'bg-blue-500 hover:bg-blue-600'
+                }`}
               >
-                Save
+                {isSaving && (
+                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                )}
+                {isSaving ? 'Saving...' : 'Save'}
               </button>
             )}
           </div>
