@@ -10,13 +10,21 @@ interface CreateListRequest {
 }
 
 /**
- * Updates a Trello list by ID
+ * Updates a Trello list by ID with company validation
  * @param {string} listId - The ID of the list to update
- * @param {UpdateListPayload} updateData - The data to update (name and/or position and/or country)
- * @returns {Promise<TrelloList>} - A promise that resolves to the updated list data
+ * @param {UpdateListRequest} updateData - The data to update (name and/or position and/or country)
+ * @param {string} [companyId] - The company ID for secure access (recommended for Projects)
+ * @returns {Promise<ListResponse>} - A promise that resolves to the updated list data
  */
-export async function updateList(listId: string, updateData: UpdateListRequest): Promise<ListResponse> {
-    const endpoint = `${API_DOMAIN}/trello/lists/${encodeURIComponent(listId)}`;
+export async function updateList(listId: string, updateData: UpdateListRequest, companyId?: string): Promise<ListResponse> {
+    // Use secure company-based endpoint if companyId is provided
+    const endpoint = companyId 
+        ? `${API_DOMAIN}/trello/lists/${encodeURIComponent(listId)}/company/${encodeURIComponent(companyId)}`
+        : `${API_DOMAIN}/trello/lists/${encodeURIComponent(listId)}`;
+
+    if (!companyId) {
+        console.warn('⚠️ updateList called without companyId - using legacy endpoint. Consider updating to company-based access for better security.');
+    }
 
     const response = await fetch(endpoint, {
         method: 'PATCH',
@@ -26,16 +34,23 @@ export async function updateList(listId: string, updateData: UpdateListRequest):
         },
         body: JSON.stringify(updateData),
     });
-    
 
     const data = await response.json();
 
     if (!response.ok) {
-        console.error('❌ API request failed:', {
+        console.error('❌ List update API request failed:', {
             status: response.status,
             statusText: response.statusText,
-            data
+            data,
+            listId,
+            companyId: companyId || 'not provided',
+            endpoint
         });
+        
+        if (response.status === 403) {
+            throw new Error('Access denied: You do not have permission to update this list');
+        }
+        
         throw new Error('Failed to update list');
     }
 
@@ -43,12 +58,20 @@ export async function updateList(listId: string, updateData: UpdateListRequest):
 }
 
 /**
- * Creates a new Trello list
+ * Creates a new Trello list with company validation
  * @param {CreateListRequest} createData - The data for the new list (name, position, country, and board_id)
+ * @param {string} [companyId] - The company ID for secure access (recommended for Projects)
  * @returns {Promise<ListResponse>} - A promise that resolves to the created list data
  */
-export async function createList(createData: CreateListRequest): Promise<ListResponse> {
-    const endpoint = `${API_DOMAIN}/trello/lists`;
+export async function createList(createData: CreateListRequest, companyId?: string): Promise<ListResponse> {
+    // Use secure company-based endpoint if companyId is provided
+    const endpoint = companyId 
+        ? `${API_DOMAIN}/trello/company/${encodeURIComponent(companyId)}/lists`
+        : `${API_DOMAIN}/trello/lists`;
+
+    if (!companyId) {
+        console.warn('⚠️ createList called without companyId - using legacy endpoint. Consider updating to company-based access for better security.');
+    }
 
     const response = await fetch(endpoint, {
         method: 'POST',
@@ -58,14 +81,23 @@ export async function createList(createData: CreateListRequest): Promise<ListRes
         },
         body: JSON.stringify(createData),
     });
+    
     const data = await response.json();
 
     if (!response.ok) {
-        console.error('❌ API request failed:', {
+        console.error('❌ List creation API request failed:', {
             status: response.status,
             statusText: response.statusText,
-            data
+            data,
+            createData,
+            companyId: companyId || 'not provided',
+            endpoint
         });
+        
+        if (response.status === 403) {
+            throw new Error('Access denied: You do not have permission to create lists in this company');
+        }
+        
         throw new Error('Failed to create list');
     }
 
@@ -73,12 +105,20 @@ export async function createList(createData: CreateListRequest): Promise<ListRes
 }
 
 /**
- * Deletes a Trello list by ID
+ * Deletes a Trello list by ID with company validation
  * @param {string} listId - The ID of the list to delete
+ * @param {string} [companyId] - The company ID for secure access (recommended for Projects)
  * @returns {Promise<boolean>} - A promise that resolves to true if deletion was successful
  */
-export async function deleteList(listId: string): Promise<boolean> {
-    const endpoint = `${API_DOMAIN}/trello/lists/${encodeURIComponent(listId)}`;
+export async function deleteList(listId: string, companyId?: string): Promise<boolean> {
+    // Use secure company-based endpoint if companyId is provided
+    const endpoint = companyId 
+        ? `${API_DOMAIN}/trello/lists/${encodeURIComponent(listId)}/company/${encodeURIComponent(companyId)}`
+        : `${API_DOMAIN}/trello/lists/${encodeURIComponent(listId)}`;
+
+    if (!companyId) {
+        console.warn('⚠️ deleteList called without companyId - using legacy endpoint. Consider updating to company-based access for better security.');
+    }
 
     const response = await fetch(endpoint, {
         method: 'DELETE',
@@ -88,10 +128,18 @@ export async function deleteList(listId: string): Promise<boolean> {
     });
 
     if (!response.ok) {
-        console.error('❌ API request failed:', {
+        console.error('❌ List deletion API request failed:', {
             status: response.status,
             statusText: response.statusText,
+            listId,
+            companyId: companyId || 'not provided',
+            endpoint
         });
+        
+        if (response.status === 403) {
+            throw new Error('Access denied: You do not have permission to delete this list');
+        }
+        
         throw new Error('Failed to delete list');
     }
 

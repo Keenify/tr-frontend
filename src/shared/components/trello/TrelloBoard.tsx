@@ -9,7 +9,7 @@ import { useUserAndCompanyData } from '../../hooks/useUserAndCompanyData';
 import { directoryService } from '../../../shared/services/directoryService';
 import { Employee } from '@/shared/types/directory.types';
 import { Card, CardUpdate } from './types/card.types';
-import { Card as TrelloCard } from './types/card.types';
+import { Card as TrelloCard } from './types/card.types';  
 import { Tab, Menu, Transition } from '@headlessui/react';
 import { Label } from '../../types/label.types';
 import { labelService } from '../../services/labelService';
@@ -91,7 +91,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   onCardModalOpen,
   onCardModalClose
 }) => {
-  // Get the current user's ID from the session
+  // Get the current user's ID from the session   
   const userId = session?.user?.id || '';
   
   const { 
@@ -595,7 +595,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
               onCardModalClose();
             }
           }}
-          onSave={(updatedCard) => {
+          onSave={async (updatedCard) => {
             // Create a version of updates compatible with the hook
             const updatesForHook: Partial<TrelloCard> = {
               ...updatedCard,
@@ -616,41 +616,33 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
               'is_locked' in updatedCard && 
               'locked_by' in updatedCard;
             
-            // Apply the update via the hook regardless
-            handleCardUpdate(selectedCard.listId, selectedCard.card.id, updatesForHook);
+            try {
+              // Apply the update via the hook and wait for completion
+              await handleCardUpdate(selectedCard.listId, selectedCard.card.id, updatesForHook);
 
-            // Update local state or close modal based on operation type
-            if (isLockOperation) {
-              // Update the selected card state to reflect the lock changes
+              // Update local selectedCard state to reflect the changes immediately
               setSelectedCard(prev => prev ? {
                 ...prev,
                 card: {
                   ...prev.card,
-                  is_locked: updatedCard.is_locked ?? false,
-                  locked_by: updatedCard.locked_by ?? undefined 
+                  ...updatesForHook,
+                  // Preserve label_ids if updated
+                  label_ids: updatedCard.label_ids !== undefined ? updatedCard.label_ids : prev.card.label_ids
                 }
               } : null);
-              // Keep modal open for lock changes
-            } else if (isLabelOnlyUpdate) {
-              // Update the selected card state to reflect the label changes
-              setSelectedCard(prev => prev ? {
-                ...prev,
-                card: {
-                  ...prev.card,
-                  // We need the full Label objects here, not just IDs.
-                  // Fetching them again or getting them from the PATCH response is needed.
-                  // For now, just updating the IDs for consistency if Card type includes label_ids
-                  label_ids: updatedCard.label_ids 
+
+              // For lock and label operations, keep modal open for immediate feedback
+              // For regular updates, close modal after successful backend update
+              if (!isLockOperation && !isLabelOnlyUpdate) {
+                setSelectedCard(null);
+                // Notify parent that modal is closing
+                if (onCardModalClose) {
+                  onCardModalClose();
                 }
-              } : null);
-              // Keep modal open for label changes
-            } else {
-              // For regular updates, close the modal
-              setSelectedCard(null);
-              // Notify parent that modal is closing
-              if (onCardModalClose) {
-                onCardModalClose();
               }
+            } catch (error) {
+              console.error('Failed to update card:', error);
+              // Keep modal open on error so user can retry
             }
           }}
           card={selectedCard.card}
