@@ -10,7 +10,7 @@ import { useSession } from '../../../shared/hooks/useSession';
 
 const MIN_ROWS = 1; // At least 1 function required for the form to be submitted
 const MAX_ROWS = 20;
-const MIN_BU_ROWS = 4;
+const MIN_BU_ROWS = 0; // Allow removing all business units
 const MAX_BU_ROWS = 10;
 
 // Predefined functions
@@ -74,10 +74,37 @@ const FaceForm: React.FC = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [originalFormData, setOriginalFormData] = useState<FaceFormValues | null>(null);
   
+  // State to track removed functions persistently
+  const [removedFunctions, setRemovedFunctions] = useState<string[]>([]);
+  
   // Get session and company data
   const { session } = useSession();
   const userId = session?.user?.id;
   const { companyInfo, userInfo, isLoading: userDataLoading } = useUserAndCompanyData(userId || '');
+  
+  // Load removed functions from localStorage on mount
+  useEffect(() => {
+    if (companyInfo?.id) {
+      const storageKey = `faceform_removed_functions_${companyInfo.id}`;
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        try {
+          const removedFuncs = JSON.parse(stored);
+          setRemovedFunctions(removedFuncs);
+        } catch (e) {
+          console.error('Error parsing removed functions from localStorage:', e);
+        }
+      }
+    }
+  }, [companyInfo?.id]);
+  
+  // Save removed functions to localStorage whenever it changes
+  useEffect(() => {
+    if (companyInfo?.id && removedFunctions.length > 0) {
+      const storageKey = `faceform_removed_functions_${companyInfo.id}`;
+      localStorage.setItem(storageKey, JSON.stringify(removedFunctions));
+    }
+  }, [removedFunctions, companyInfo?.id]);
   
   // React Hook Form setup
   const { control, handleSubmit, setValue, watch, formState } = useForm<FaceFormValues>({
@@ -91,12 +118,7 @@ const FaceForm: React.FC = () => {
         business_unit_name: '',
         head_employee_id: '',
       })),
-      business_units: Array(MIN_BU_ROWS).fill({
-        business_unit_name: '',
-        head_employee_id: '',
-        kpi_list: '',
-        outcome_list: '',
-      }),
+      business_units: [],
     },
   });
   
@@ -180,31 +202,15 @@ const FaceForm: React.FC = () => {
       }
     });
     
-    // Update functions array with existing data
-    const updatedFunctions = PREDEFINED_FUNCTIONS.map(func => {
-      const existingData = functionData.find(f => f.function_name === func);
-      return existingData || {
-        function_name: func,
-        accountable_employee_id: '',
-        kpi_list: '',
-        outcome_list: '',
-        business_unit_name: '',
-        head_employee_id: '',
-      };
-    });
+    // Update functions array with only the functions that exist in the database
+    const updatedFunctions = functionData.filter(f => 
+      !removedFunctions.includes(f.function_name)
+    );
     
     setValue('functions', updatedFunctions);
     
     // Update business units array with existing data
-    const minBusinessUnits = Math.max(businessUnitData.length, MIN_BU_ROWS);
-    const updatedBusinessUnits: BusinessUnitRow[] = Array(minBusinessUnits).fill(null).map((_, index) => {
-      return businessUnitData[index] || {
-        business_unit_name: '',
-        head_employee_id: '',
-        kpi_list: '',
-        outcome_list: '',
-      };
-    });
+    const updatedBusinessUnits: BusinessUnitRow[] = businessUnitData.length > 0 ? businessUnitData : [];
     
     setValue('business_units', updatedBusinessUnits);
     
@@ -216,6 +222,20 @@ const FaceForm: React.FC = () => {
     });
   };
 
+  // Update form when removed functions change
+  useEffect(() => {
+    if (removedFunctions.length > 0) {
+      // Get current form values
+      const currentValues = watch();
+      // Filter out removed functions
+      const filteredFunctions = currentValues.functions?.filter(
+        (func: any) => !removedFunctions.includes(func.function_name)
+      ) || [];
+      // Update the form
+      setValue('functions', filteredFunctions);
+    }
+  }, [removedFunctions, setValue, watch]);
+  
   // Load existing data when component mounts and company info is available
   useEffect(() => {
     if (companyInfo?.id && !loadingExistingData) {
@@ -254,9 +274,22 @@ const FaceForm: React.FC = () => {
     }
   };
 
-  // Remove a function row (allow removing any function as long as MIN_ROWS is maintained)
+  // Remove a function row and track it persistently
   const handleRemoveRow = (idx: number) => {
     if (fields.length > MIN_ROWS) {
+      const functionToRemove = fields[idx].function_name;
+      // Add to removed functions list to persist across refreshes
+      if (PREDEFINED_FUNCTIONS.includes(functionToRemove)) {
+        setRemovedFunctions(prev => {
+          const newRemoved = [...prev, functionToRemove];
+          // Save to localStorage immediately
+          if (companyInfo?.id) {
+            const storageKey = `faceform_removed_functions_${companyInfo.id}`;
+            localStorage.setItem(storageKey, JSON.stringify(newRemoved));
+          }
+          return newRemoved;
+        });
+      }
       remove(idx);
     }
   };
@@ -273,10 +306,16 @@ const FaceForm: React.FC = () => {
     }
   };
 
-  // Remove a business unit row
+  // Remove a business unit row (allow removing all)
   const handleRemoveBusinessUnitRow = (idx: number) => {
-    if (businessUnitFields.length > MIN_BU_ROWS) {
-      removeBusinessUnit(idx);
+    removeBusinessUnit(idx);
+  };
+  
+  // Remove all business units
+  const handleRemoveAllBusinessUnits = () => {
+    // Remove all business units
+    for (let i = businessUnitFields.length - 1; i >= 0; i--) {
+      removeBusinessUnit(i);
     }
   };
 
@@ -501,8 +540,8 @@ const FaceForm: React.FC = () => {
   const renderReadOnlyView = () => {
     if (!hasSubmittedData || submittedData.length === 0) return null;
     
-    const functions = submittedData.filter(row => isPredefinedFunction(row.function_name));
-    const businessUnits = submittedData.filter(row => !isPredefinedFunction(row.function_name));
+    const functions = submittedData.filter(row => !row.is_business_unit);
+    const businessUnits = submittedData.filter(row => row.is_business_unit);
     
     return (
       <div className="border border-gray-300 bg-gray-50">
@@ -732,12 +771,35 @@ const FaceForm: React.FC = () => {
             />
           ))}
 
+          {/* Add Function Button - below all function entries */}
+          <div className="p-2 bg-gray-50 border-b border-gray-300">
+            {fields.length < MAX_ROWS && (
+              <button
+                type="button"
+                onClick={handleAddRow}
+                className="bg-orange-400 text-white px-3 py-1 rounded text-sm hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-400"
+              >
+                + Add Function
+              </button>
+            )}
+          </div>
+
           {/* Heads of Business Units Header */}
           <div className="grid grid-cols-4 border-b border-gray-300 bg-gray-200">
-            <div className="p-3 border-r border-gray-300">
+            <div className="p-3 border-r border-gray-300 relative">
               <div className="font-semibold text-sm text-center">
                 Heads of Business Units
               </div>
+              {businessUnitFields.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleRemoveAllBusinessUnits}
+                  className="absolute top-1 right-1 text-red-500 text-xs hover:text-red-700"
+                  title="Remove all business units"
+                >
+                  ✕
+                </button>
+              )}
             </div>
             <div className="p-3 border-r border-gray-300">
               <div className="font-semibold text-sm text-center">
@@ -758,6 +820,19 @@ const FaceForm: React.FC = () => {
             </div>
           </div>
 
+          {/* Add Business Units Button - moved below header */}
+          <div className="p-2 bg-gray-50 border-b border-gray-300">
+            {businessUnitFields.length < MAX_BU_ROWS && (
+              <button
+                type="button"
+                onClick={handleAddBusinessUnitRow}
+                className="bg-blue-400 text-white px-3 py-1 rounded text-sm hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                + Add Business Unit
+              </button>
+            )}
+          </div>
+
           {/* Business Unit Rows */}
           {businessUnitFields.map((field, idx) => (
             <BusinessUnitRowComponent
@@ -774,27 +849,7 @@ const FaceForm: React.FC = () => {
           ))}
         </div>
 
-        {/* Add Row Buttons */}
-        <div className="p-4 bg-gray-50 border-l border-r border-gray-300 space-x-3">
-          {fields.length < MAX_ROWS && (
-            <button
-              type="button"
-              onClick={handleAddRow}
-              className="bg-orange-400 text-white px-4 py-2 rounded hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-400"
-            >
-              + Add Function
-            </button>
-          )}
-          {businessUnitFields.length < MAX_BU_ROWS && (
-            <button
-              type="button"
-              onClick={handleAddBusinessUnitRow}
-              className="bg-blue-400 text-white px-4 py-2 rounded hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            >
-              + Add Business Unit
-            </button>
-          )}
-        </div>
+        {/* Add Row Buttons section removed - buttons moved to above headers */}
 
         {/* Submit Button */}
         <div className="p-4 bg-gray-50 border-l border-r border-gray-300">
