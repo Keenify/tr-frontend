@@ -850,7 +850,7 @@ const App: React.FC = () => {
                         <DashboardLayout
                           session={session}
                           signOut={signOut}
-                          activeTab="process"
+                          activeTab="people"
                           activeSubTab="paceForm"
                           onSubTabChange={() => {}}
                         >

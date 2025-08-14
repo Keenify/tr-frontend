@@ -205,9 +205,6 @@ const PaceForm: React.FC = () => {
         return;
       }
       
-      // Note: Duplicate process names within the form will be handled by upsert
-      // The last occurrence in the form will be the final value for that process name
-      
       // Check if data has actually changed before updating database
       if (hasSubmittedData && submittedData.length > 0) {
         const dataChanged = hasDataChanged(rows, submittedData);
@@ -240,24 +237,73 @@ const PaceForm: React.FC = () => {
       console.log('Current user ID:', currentSession.session.user.id);
       console.log('Inserting with authenticated session');
       
-      // First, let's try to check the table structure
-      console.log('Attempting to check table structure...');
-      const { data: tableCheck, error: tableError } = await supabase
-        .from('pace_form')
-        .select('*')
-        .limit(1);
+      // Production-safe approach: Try multiple strategies
+      console.log('Processing pace form for company:', companyInfo.id);
+      console.log('Current user ID:', userId);
       
-      if (tableError) {
-        console.error('Table check error:', tableError);
-      } else {
-        console.log('Table check result:', tableCheck);
+      let data;
+      let error;
+      
+      // Strategy 1: Try DELETE + INSERT (works in local)
+      try {
+        console.log('Strategy 1: Attempting DELETE + INSERT...');
+        const { error: deleteError } = await supabase
+          .from('pace_form')
+          .delete()
+          .eq('company_id', companyInfo.id);
+        
+        if (deleteError) {
+          console.warn('DELETE failed, trying Strategy 2:', deleteError.message);
+          throw new Error('DELETE failed');
+        }
+        
+        console.log('DELETE successful, now inserting...');
+        const insertResult = await supabase
+          .from('pace_form')
+          .insert(rows)
+          .select();
+        
+        data = insertResult.data;
+        error = insertResult.error;
+        
+        if (!error) {
+          console.log('Strategy 1 (DELETE + INSERT) successful');
+        }
+        
+      } catch (deleteErr) {
+        console.log('Strategy 1 failed, trying Strategy 2 (UPSERT)...');
+        
+        // Strategy 2: Try UPSERT
+        try {
+          const upsertResult = await supabase
+            .from('pace_form')
+            .upsert(rows, { onConflict: 'company_id,process_name' })
+            .select();
+          
+          data = upsertResult.data;
+          error = upsertResult.error;
+          
+          if (!error) {
+            console.log('Strategy 2 (UPSERT) successful');
+          }
+          
+        } catch (upsertErr) {
+          console.log('Strategy 2 failed, trying Strategy 3 (INSERT only)...');
+          
+          // Strategy 3: Simple INSERT (creates duplicates but works)
+          const insertResult = await supabase
+            .from('pace_form')
+            .insert(rows)
+            .select();
+          
+          data = insertResult.data;
+          error = insertResult.error;
+          
+          if (!error) {
+            console.log('Strategy 3 (INSERT only) successful - duplicates may exist');
+          }
+        }
       }
-      
-      // Use upsert to handle duplicates and potential RLS issues - same as face form
-      const { data, error } = await supabase
-        .from('pace_form')
-        .upsert(rows, { onConflict: 'company_id,process_name' })
-        .select();
       
       if (error) {
         console.error('Supabase insert error:', error);
@@ -271,11 +317,10 @@ const PaceForm: React.FC = () => {
         throw new Error(`Database insert failed: ${error.message} (Code: ${error.code})`);
       }
       
-      
       console.log('Successfully saved data:', data);
       
       setSubmitStatus('Form submitted successfully!');
-      setSubmittedData(data);
+      setSubmittedData(data || []);
       setHasSubmittedData(true);
       setIsEditMode(false); // Switch to view mode after successful submission
     } catch (err: unknown) {

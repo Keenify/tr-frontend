@@ -58,6 +58,7 @@ const navigationConfig = [
         icon: ThumbsUp,
       },
       { id: "leaves", label: "Leaves", shortForm: "Le", icon: Calendar },
+      { id: "paceForm", label: "PACe Form", shortForm: "PF", icon: ThumbsUp },
     ],
   },
   {
@@ -124,7 +125,6 @@ const navigationConfig = [
     subTabs: [
       { id: "playbook", label: "Playbook", shortForm: "Pb", icon: ThumbsUp },
       { id: "todo", label: "Todo", shortForm: "Td", icon: ThumbsUp },
-      { id: "paceForm", label: "PACe Form", shortForm: "PF", icon: ThumbsUp },
       { id: "faceForm", label: "FACe Form", shortForm: "FF", icon: ThumbsUp },
       { id: "rockefeller-habit-checklist", label: "Rockefeller Habit Checklist", shortForm: "RH", icon: ThumbsUp },
     ],
