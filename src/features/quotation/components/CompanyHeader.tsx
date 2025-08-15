@@ -8,7 +8,8 @@ interface CompanyHeaderProps {
 }
 
 const CompanyHeader: React.FC<CompanyHeaderProps> = ({ companyInfo, branch }) => {
-    const formatUrl = (url: string) => {
+    const formatUrl = (url: string | null) => {
+        if (!url) return '';
         return url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
     };
 
@@ -26,14 +27,16 @@ const CompanyHeader: React.FC<CompanyHeaderProps> = ({ companyInfo, branch }) =>
             <h1 style={{ margin: '0 0 5px 0', textAlign: 'center' }}>{branchInfo.name}</h1>
             <p style={{ margin: '0 0 5px 0', textAlign: 'center', whiteSpace: 'pre-line' }}>{branchInfo.address}</p>
             <p style={{ margin: '0 0 5px 0', textAlign: 'center' }}>{branchInfo.phone}</p>
-            <a 
-                href={formatUrl(companyInfo.website_url)} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                style={{ margin: 0, textAlign: 'center' }}
-            >
-                {companyInfo.website_url}
-            </a>
+            {companyInfo.website_url && (
+                <a 
+                    href={formatUrl(companyInfo.website_url)} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    style={{ margin: 0, textAlign: 'center' }}
+                >
+                    {companyInfo.website_url}
+                </a>
+            )}
         </div>
     );
 };
