@@ -5,13 +5,14 @@ import { createList, updateList, deleteList } from "../../../shared/components/t
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { CardUpdate, Card as TrelloCard } from "../../../shared/components/trello/types/card.types";
 import { Label } from "../../../shared/types/label.types";
-import { getCompanyBoardDetails } from "../services/useBoard";
+import { getBoardDetails, HARDCODED_BOARD_ID } from "../services/useBoard";
 import { List, Card as ProjectCard } from "../types/board";
-import { useSafeCompanyId, useCompanyContext } from "../../../shared/hooks/useCompanyContext";
+import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 import { getUserData } from '../../../services/useUser';
 
 interface ProjectProps {
   session: Session;
+  boardId?: string;
 }
 
 // Type for the board's expected list structure
@@ -33,45 +34,23 @@ interface ModifiedList extends Omit<List, 'cards'> {
   })[];
 }
 
-const Project: React.FC<ProjectProps> = ({ session }) => {
+const Project: React.FC<ProjectProps> = ({ 
+  session, 
+  boardId = HARDCODED_BOARD_ID 
+}) => {
   const [lists, setLists] = useState<ModifiedList[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { companyId, isLoading: isLoadingCompany, error: companyError, isReady } = useSafeCompanyId(session);
-  const { companyInfo } = useCompanyContext(session);
-  
-  // Debug logging (disabled for performance)
-  // console.log('🔍 [Projects] Company context state:', {
-  //   companyId,
-  //   isLoadingCompany,
-  //   companyError: companyError?.message,
-  //   isReady,
-  //   companyInfo: companyInfo?.name
-  // });
-  
-  // Debug session directly in Projects component
-  // console.log('🔍 [Projects] Direct session check:', {
-  //   sessionExists: !!session,
-  //   sessionUser: session?.user,
-  //   sessionUserId: session?.user?.id,
-  //   sessionUserEmail: session?.user?.email
-  // });
+  const { companyInfo, isLoading: isLoadingCompany } = useUserAndCompanyData(session.user.id);
   const [userRole, setUserRole] = useState<string>('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [activelyEditing, setActivelyEditing] = useState<{cardId?: string, listId?: string} | null>(null);
 
   // Extract fetchBoardDetails into a reusable function
   const fetchBoardDetails = useCallback(async () => {
-    if (!companyId) {
-      setError('Company ID not available');
-      setIsLoading(false);
-      return;
-    }
-
     try {
       setIsLoading(true);
-      setError(null);
-      const boardDetails = await getCompanyBoardDetails(companyId);
+      const boardDetails = await getBoardDetails(boardId);
       const transformedLists = boardDetails.map(list => ({
         ...list,
         title: list.name,
@@ -89,22 +68,23 @@ const Project: React.FC<ProjectProps> = ({ session }) => {
       setLists(transformedLists as ModifiedList[]);
       return transformedLists;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load projects board';
-      setError(errorMessage);
-      console.error('Failed to load company board:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load board details');
       throw err;
     } finally {
       setIsLoading(false);
     }
-  }, [companyId]);
+  }, [boardId]);
 
-  // Load board details when company is ready and not actively editing
+  // Load board details on mount and when boardId changes, but prevent auto-refresh during editing
   useEffect(() => {
-    // Only fetch if company data is ready and not actively editing to prevent data loss
-    if (isReady && !activelyEditing) {
+    // Only fetch if not actively editing to prevent data loss
+    if (!activelyEditing) {
       fetchBoardDetails();
     }
-  }, [isReady, fetchBoardDetails, activelyEditing]);
+  }, [boardId]); // Include boardId dependency for proper functionality
+  
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // fetchBoardDetails is intentionally not included to prevent auto-refresh loops
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -153,45 +133,15 @@ const Project: React.FC<ProjectProps> = ({ session }) => {
     setHasUnsavedChanges(false);
   }, []);
 
-  if (isLoadingCompany) {
-    return <div>Loading company data...</div>;
-  }
-
-  if (companyError) {
-    return <div>Error loading company: {companyError.message}</div>;
-  }
-
-  if (!isReady) {
-    return <div>Company data not available</div>;
-  }
-
-  if (isLoading) {
-    return <div>Loading projects board...</div>;
+  if (isLoading || isLoadingCompany) {
+    return <div>Loading...</div>;
   }
 
   if (error) {
-    return (
-      <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <h3 className="text-red-800 font-semibold">Error loading projects board</h3>
-          <p className="text-red-600 mt-1">{error}</p>
-          <button 
-            onClick={() => fetchBoardDetails()} 
-            className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
+    return <div>Error: {error}</div>;
   }
 
   const handleListMove = async (sourceIndex: number, destinationIndex: number) => {
-    if (!companyId) {
-      console.error('Cannot move list: Company ID not available');
-      return;
-    }
-
     try {
       // Create a new array reflecting the new order
       const newLists = Array.from(lists);
@@ -201,7 +151,7 @@ const Project: React.FC<ProjectProps> = ({ session }) => {
       // Update all lists with their new positions (1-based index)
       await Promise.all(
         newLists.map((list, idx) =>
-          updateList(list.id, { position: idx + 1 }, companyId) // Pass company ID for secure access
+          updateList(list.id, { position: idx + 1 })
         )
       );
       setLists(newLists);
@@ -228,11 +178,6 @@ const Project: React.FC<ProjectProps> = ({ session }) => {
   };
 
   const handleCardUpdate = async (listId: string, cardId: string, updates: CardUpdate) => {
-    if (!companyId) {
-      console.error('Cannot update card: Company ID not available');
-      return;
-    }
-
     // Mark as having changes and track the editing card
     setHasUnsavedChanges(true);
     setActivelyEditing({ cardId, listId });
@@ -251,7 +196,7 @@ const Project: React.FC<ProjectProps> = ({ session }) => {
       };
       delete apiUpdates.colorCode;
       
-      await updateCard(cardId, apiUpdates, companyId); // Pass company ID for secure access
+      await updateCard(cardId, apiUpdates);
       
       // Clear unsaved changes after successful update
       setHasUnsavedChanges(false);
@@ -263,17 +208,12 @@ const Project: React.FC<ProjectProps> = ({ session }) => {
   };
 
   const handleListTitleChange = async (listId: string, newTitle: string) => {
-    if (!companyId) {
-      console.error('Cannot update list title: Company ID not available');
-      return;
-    }
-
     // Mark as having changes and track the editing list
     setHasUnsavedChanges(true);
     setActivelyEditing({ listId });
     
     try {
-      await updateList(listId, { name: newTitle }, companyId); // Pass company ID for secure access
+      await updateList(listId, { name: newTitle });
       
       // Clear unsaved changes after successful update
       setHasUnsavedChanges(false);
@@ -285,23 +225,14 @@ const Project: React.FC<ProjectProps> = ({ session }) => {
   };
 
   const handleListCountryChange = async (listId: string, newCountry: string) => {
-    if (!companyId) {
-      console.error('Cannot update list country: Company ID not available');
-      return;
-    }
-
     try {
-      await updateList(listId, { country: newCountry }, companyId); // Pass company ID for secure access
+      await updateList(listId, { country: newCountry });
     } catch (error) {
       console.error('Failed to update list country:', error);
     }
   };
 
   const handleCardAdd = async (listId: string, title: string) => {
-    if (!companyId) {
-      throw new Error('Company ID not available');
-    }
-
     try {
       if (!title) throw new Error('Card title is required');
       const list = lists.find(l => l.id === listId);
@@ -310,7 +241,7 @@ const Project: React.FC<ProjectProps> = ({ session }) => {
         list_id: listId,
         title,
         position,
-      }, companyId); // Pass company ID for secure access
+      });
       return newCard.id;
     } catch (error) {
       console.error('Failed to create card:', error);
@@ -319,10 +250,6 @@ const Project: React.FC<ProjectProps> = ({ session }) => {
   };
 
   const handleListAdd = async (title: string, country: string = '') => {
-    if (!companyId) {
-      throw new Error('Company ID not available');
-    }
-
     try {
       if (!title) throw new Error('List title is required');
       const maxPosition = lists.reduce((max, list) => 
@@ -331,8 +258,8 @@ const Project: React.FC<ProjectProps> = ({ session }) => {
         name: title,
         position: maxPosition + 1,
         country: country,
-        board_id: companyId // This will be handled by the backend to use the company's board
-      }, companyId); // Pass company ID for secure access
+        board_id: HARDCODED_BOARD_ID
+      });
       return newList.id;
     } catch (error) {
       console.error('Failed to create list:', error);
@@ -341,13 +268,8 @@ const Project: React.FC<ProjectProps> = ({ session }) => {
   };
 
   const handleListDelete = async (listId: string) => {
-    if (!companyId) {
-      console.error('Cannot delete list: Company ID not available');
-      return;
-    }
-
     try {
-      await deleteList(listId, companyId); // Pass company ID for secure access
+      await deleteList(listId);
     } catch (error) {
       console.error('Error deleting list:', error);
     }

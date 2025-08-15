@@ -8,7 +8,7 @@ import { Label } from '../../types/label.types';
 import { Employee } from '@/shared/types/directory.types';
 import '../../styles/TrelloCardDescription.css';
 
-// Safe HTML renderer component 
+// Safe HTML renderer component
 const HtmlContent: React.FC<{ html: string; className?: string }> = ({ html, className }) => {
   // Basic HTML sanitization to prevent XSS
   const sanitizeHtml = (htmlContent: string): string => {
@@ -63,7 +63,7 @@ interface TrelloCardProps {
 }
 
 /**
- * TrelloCard Component 
+ * TrelloCard Component
  * 
  * Responsibility:
  * - Represents a draggable card in the Trello-like board
@@ -140,7 +140,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
 
   const canManageCard = true; // Everyone can edit
 
-  // Add check for locked state 
+  // Add check for locked state
   const isLocked = is_locked || false;
 
   // Prevent page scroll when dragging
@@ -562,7 +562,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
         <TrelloCardModal
           isOpen={true}
           onClose={() => setIsModalOpen(false)}
-          onSave={async (updatedCard) => {
+          onSave={(updatedCard) => {
             if (onUpdate) {
               // onUpdate in TrelloCard should handle general card updates, not label-specific ones
               // Labels are updated via updateCardLabels in the modal

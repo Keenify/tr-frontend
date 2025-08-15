@@ -12,30 +12,19 @@ import { supabase } from "../../lib/supabase";
  */
 export function useSession() {
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Fetch the current session from Supabase and set it in state
     const fetchSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        // console.log('🔍 [useSession] Fetched session:', { session, error, user: session?.user });
-        setSession(session);
-      } catch (error) {
-        // console.error('🔍 [useSession] Error fetching session:', error);
-        setSession(null);
-      } finally {
-        setIsLoading(false);
-      }
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
     };
 
     fetchSession();
 
     // Subscribe to authentication state changes and update session
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      // console.log('🔍 [useSession] Auth state changed:', { event: _event, session, user: session?.user });
       setSession(session);
-      setIsLoading(false);
     });
 
     // Cleanup subscription on component unmount
@@ -50,5 +39,5 @@ export function useSession() {
     setSession(null);
   };
 
-  return { session, signOut, isLoading };
+  return { session, signOut };
 }
