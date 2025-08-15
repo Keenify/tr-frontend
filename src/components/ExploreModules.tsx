@@ -244,7 +244,7 @@ const ExploreModules = ({ onModalStateChange }: ExploreModulesProps) => {
               onClick={() => setCurrentModuleIndex(prev => prev < modules.length - 1 ? prev + 1 : 0)}
               className="flex items-center justify-center w-10 h-10 bg-white/30 backdrop-blur-md rounded-full hover:bg-white/40 transition-all duration-300 shadow-lg"
             >
-              <ChevronDown className="w-5 h-5 text-gray-700 rotate-[90deg]" />
+              <ChevronUp className="w-5 h-5 text-gray-700 rotate-[90deg]" />
             </button>
           </div>
           
