@@ -5,7 +5,7 @@ import { createList, updateList, deleteList } from "../../../shared/components/t
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { CardUpdate, Card as TrelloCard } from "../../../shared/components/trello/types/card.types";
 import { Label } from "../../../shared/types/label.types";
-import { getBoardDetails, HARDCODED_BOARD_ID } from "../services/useBoard";
+import { getBoardDetails, getCompanyProjectsBoard, HARDCODED_BOARD_ID } from "../services/useBoard";
 import { List, Card as ProjectCard } from "../types/board";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 import { getUserData } from '../../../services/useUser';
@@ -36,7 +36,7 @@ interface ModifiedList extends Omit<List, 'cards'> {
 
 const Project: React.FC<ProjectProps> = ({ 
   session, 
-  boardId = HARDCODED_BOARD_ID 
+  boardId 
 }) => {
   const [lists, setLists] = useState<ModifiedList[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,12 +45,36 @@ const Project: React.FC<ProjectProps> = ({
   const [userRole, setUserRole] = useState<string>('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [activelyEditing, setActivelyEditing] = useState<{cardId?: string, listId?: string} | null>(null);
+  const [companyBoardId, setCompanyBoardId] = useState<string | null>(null);
+
+  // Get or create company-specific Projects board
+  const getCompanyBoard = useCallback(async () => {
+    if (!companyInfo?.id) {
+      throw new Error('Company information not available');
+    }
+
+    try {
+      const boardResponse = await getCompanyProjectsBoard(companyInfo.id);
+      setCompanyBoardId(boardResponse.board_id);
+      return boardResponse.board_id;
+    } catch (error) {
+      console.error('Failed to get company Projects board:', error);
+      throw error;
+    }
+  }, [companyInfo?.id]);
 
   // Extract fetchBoardDetails into a reusable function
   const fetchBoardDetails = useCallback(async () => {
     try {
       setIsLoading(true);
-      const boardDetails = await getBoardDetails(boardId);
+      
+      // Determine which board to use: provided boardId, company board, or fallback
+      let targetBoardId = boardId;
+      if (!targetBoardId) {
+        targetBoardId = companyBoardId || await getCompanyBoard();
+      }
+      
+      const boardDetails = await getBoardDetails(targetBoardId);
       const transformedLists = boardDetails.map(list => ({
         ...list,
         title: list.name,
@@ -73,15 +97,15 @@ const Project: React.FC<ProjectProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [boardId]);
+  }, [boardId, companyBoardId, getCompanyBoard]);
 
-  // Load board details on mount and when boardId changes, but prevent auto-refresh during editing
+  // Load board details on mount and when company data is available
   useEffect(() => {
-    // Only fetch if not actively editing to prevent data loss
-    if (!activelyEditing) {
+    // Only fetch if not actively editing and company info is available
+    if (!activelyEditing && companyInfo?.id && !isLoadingCompany) {
       fetchBoardDetails();
     }
-  }, [boardId]); // Include boardId dependency for proper functionality
+  }, [companyInfo?.id, isLoadingCompany, activelyEditing, fetchBoardDetails]);
   
   // eslint-disable-next-line react-hooks/exhaustive-deps
   // fetchBoardDetails is intentionally not included to prevent auto-refresh loops
@@ -252,13 +276,20 @@ const Project: React.FC<ProjectProps> = ({
   const handleListAdd = async (title: string, country: string = '') => {
     try {
       if (!title) throw new Error('List title is required');
+      
+      // Get the target board ID (company-specific or provided)
+      let targetBoardId = boardId;
+      if (!targetBoardId) {
+        targetBoardId = companyBoardId || await getCompanyBoard();
+      }
+      
       const maxPosition = lists.reduce((max, list) => 
         Math.max(max, list.position || 0), -1);
       const newList = await createList({
         name: title,
         position: maxPosition + 1,
         country: country,
-        board_id: HARDCODED_BOARD_ID
+        board_id: targetBoardId
       });
       return newList.id;
     } catch (error) {

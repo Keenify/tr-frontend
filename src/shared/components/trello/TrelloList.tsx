@@ -402,9 +402,21 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                       <path d="M2 12h20" />
                     </svg>
                     {country}
-                    {lookup.byIso(country)?.country && (
+                    {country && country.trim() && (() => {
+                      try {
+                        return lookup.byIso(country)?.country;
+                      } catch (e) {
+                        return null;
+                      }
+                    })() && (
                       <span className="text-xs text-gray-500 ml-1">
-                        ({lookup.byIso(country)?.country})
+                        ({(() => {
+                          try {
+                            return lookup.byIso(country)?.country;
+                          } catch (e) {
+                            return '';
+                          }
+                        })()})
                       </span>
                     )}
                   </span>
