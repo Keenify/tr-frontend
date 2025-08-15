@@ -58,6 +58,8 @@ const navigationConfig = [
         icon: ThumbsUp,
       },
       { id: "leaves", label: "Leaves", shortForm: "Le", icon: Calendar },
+      { id: "paceForm", label: "PACe Form", shortForm: "PF", icon: ThumbsUp },
+      { id: "faceForm", label: "FACe Form", shortForm: "FF", icon: ThumbsUp },
     ],
   },
   {
@@ -124,8 +126,6 @@ const navigationConfig = [
     subTabs: [
       { id: "playbook", label: "Playbook", shortForm: "Pb", icon: ThumbsUp },
       { id: "todo", label: "Todo", shortForm: "Td", icon: ThumbsUp },
-      { id: "paceForm", label: "PACe Form", shortForm: "PF", icon: ThumbsUp },
-      { id: "faceForm", label: "FACe Form", shortForm: "FF", icon: ThumbsUp },
       { id: "rockefeller-habit-checklist", label: "Rockefeller Habit Checklist", shortForm: "RH", icon: ThumbsUp },
     ],
   },
@@ -275,21 +275,10 @@ export function DashboardLayout({
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Company data with error boundary
-  let companyInfo = null;
-  let userInfo = null;
-  let companyError = null;
-  
-  try {
-    const result = useUserAndCompanyData(session.user.id);
-    companyInfo = result.companyInfo;
-    userInfo = result.userInfo;
-    companyError = result.error;
-  } catch (error) {
-    console.warn("UserDataContext not available (likely during HMR):", error);
-    companyError = error as Error;
-  }
-  
+  // Company data
+  const { companyInfo, userInfo, error: companyError } = useUserAndCompanyData(
+    session.user.id
+  );
   if (companyError) {
     console.error("Error fetching company data:", companyError);
   }

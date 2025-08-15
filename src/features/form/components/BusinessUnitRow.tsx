@@ -112,15 +112,13 @@ const BusinessUnitRow: React.FC<BusinessUnitRowProps> = ({
             />
           )}
         />
-        {fieldsLength > minRows && (
-          <button
-            type="button"
-            onClick={() => onRemove(idx)}
-            className="text-red-500 text-xs hover:text-red-700 mt-1"
-          >
-            ✕ Remove
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => onRemove(idx)}
+          className="text-red-500 text-xs hover:text-red-700 mt-1"
+        >
+          ✕ Remove
+        </button>
       </div>
     </div>
   </div>

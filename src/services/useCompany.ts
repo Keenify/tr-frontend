@@ -8,18 +8,10 @@ export interface CompanyData {
     company_brand_color: string | null;
     id: string;
     created_at: string;
-    address: string | null;
-    website_url: string | null;
-    phone: string | null;
-    logo_url: string | null;
-    business_quadrant?: {
-        create_value: string;
-        defend_value: string;
-        capture_value: string;
-        deliver_value: string;
-    };
-    cash_acceleration_strategies?: any;
-    cash_conversion_map?: any;
+    address: string;
+    website_url: string;
+    phone: string;
+    logo_url: string;
 }
 
 /**

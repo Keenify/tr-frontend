@@ -31,21 +31,13 @@ export interface UpdateCardPayload {
 }
 
 /**
- * Updates a card by ID with company validation.
+ * Updates a card by ID.
  * @param {string} cardId - The ID of the card to update.
  * @param {UpdateCardPayload} updateData - The data to update the card with.
- * @param {string} [companyId] - The company ID for secure access (recommended for Projects).
  * @returns {Promise<CardData>} - A promise that resolves to the updated card data.
  */
-export async function updateCard(cardId: string, updateData: UpdateCardPayload, companyId?: string): Promise<CardData> {
-    // Use secure company-based endpoint if companyId is provided
-    const endpoint = companyId 
-        ? `${API_DOMAIN}/trello/cards/${encodeURIComponent(cardId)}/company/${encodeURIComponent(companyId)}`
-        : `${API_DOMAIN}/trello/cards/${encodeURIComponent(cardId)}`;
-
-    if (!companyId) {
-        console.warn('⚠️ updateCard called without companyId - using legacy endpoint. Consider updating to company-based access for better security.');
-    }
+export async function updateCard(cardId: string, updateData: UpdateCardPayload): Promise<CardData> {
+    const endpoint = `${API_DOMAIN}/trello/cards/${encodeURIComponent(cardId)}`;
 
     const response = await fetch(endpoint, {
         method: 'PATCH',
@@ -59,19 +51,11 @@ export async function updateCard(cardId: string, updateData: UpdateCardPayload, 
     const data = await response.json();
 
     if (!response.ok) {
-        console.error('❌ Card update API request failed:', {
+        console.error('❌ API request failed:', {
             status: response.status,
             statusText: response.statusText,
-            data,
-            cardId,
-            companyId: companyId || 'not provided',
-            endpoint
+            data
         });
-        
-        if (response.status === 403) {
-            throw new Error('Access denied: You do not have permission to update this card');
-        }
-        
         throw new Error('Failed to update card');
     }
 
@@ -79,20 +63,12 @@ export async function updateCard(cardId: string, updateData: UpdateCardPayload, 
 }
 
 /**
- * Creates a new card with company validation.
+ * Creates a new card.
  * @param {Pick<CardData, 'list_id' | 'title' | 'position'>} cardData - The minimal required data for the new card.
- * @param {string} [companyId] - The company ID for secure access (recommended for Projects).
  * @returns {Promise<CardData>} - A promise that resolves to the created card data.
  */
-export async function createCard(cardData: Pick<CardData, 'list_id' | 'title' | 'position'>, companyId?: string): Promise<CardData> {
-    // Use secure company-based endpoint if companyId is provided
-    const endpoint = companyId 
-        ? `${API_DOMAIN}/trello/company/${encodeURIComponent(companyId)}/cards`
-        : `${API_DOMAIN}/trello/cards`;
-
-    if (!companyId) {
-        console.warn('⚠️ createCard called without companyId - using legacy endpoint. Consider updating to company-based access for better security.');
-    }
+export async function createCard(cardData: Pick<CardData, 'list_id' | 'title' | 'position'>): Promise<CardData> {
+    const endpoint = `${API_DOMAIN}/trello/cards`;
 
     const response = await fetch(endpoint, {
         method: 'POST',
@@ -106,19 +82,12 @@ export async function createCard(cardData: Pick<CardData, 'list_id' | 'title' | 
     const data = await response.json();
 
     if (!response.ok) {
-        console.error('❌ Card creation API request failed:', {
+        console.error('❌ API request failed:', {
             status: response.status,
             statusText: response.statusText,
             data,
-            sentData: cardData,
-            companyId: companyId || 'not provided',
-            endpoint
+            sentData: cardData
         });
-        
-        if (response.status === 403) {
-            throw new Error('Access denied: You do not have permission to create cards in this company');
-        }
-        
         throw new Error(data.detail || 'Failed to create card');
     }
 
@@ -126,20 +95,12 @@ export async function createCard(cardData: Pick<CardData, 'list_id' | 'title' | 
 }
 
 /**
- * Deletes a card by ID with company validation.
+ * Deletes a card by ID.
  * @param {string} cardId - The ID of the card to delete.
- * @param {string} [companyId] - The company ID for secure access (recommended for Projects).
  * @returns {Promise<boolean>} - A promise that resolves to true if deletion was successful, false otherwise.
  */
-export async function deleteCard(cardId: string, companyId?: string): Promise<boolean> {
-    // Use secure company-based endpoint if companyId is provided
-    const endpoint = companyId 
-        ? `${API_DOMAIN}/trello/cards/${encodeURIComponent(cardId)}/company/${encodeURIComponent(companyId)}`
-        : `${API_DOMAIN}/trello/cards/${encodeURIComponent(cardId)}`;
-
-    if (!companyId) {
-        console.warn('⚠️ deleteCard called without companyId - using legacy endpoint. Consider updating to company-based access for better security.');
-    }
+export async function deleteCard(cardId: string): Promise<boolean> {
+    const endpoint = `${API_DOMAIN}/trello/cards/${encodeURIComponent(cardId)}`;
 
     try {
         const response = await fetch(endpoint, {
@@ -150,18 +111,10 @@ export async function deleteCard(cardId: string, companyId?: string): Promise<bo
         });
 
         if (!response.ok) {
-            console.error('❌ Card deletion API request failed:', {
+            console.error('❌ API request failed:', {
                 status: response.status,
                 statusText: response.statusText,
-                cardId,
-                companyId: companyId || 'not provided',
-                endpoint
             });
-            
-            if (response.status === 403) {
-                console.error('Access denied: You do not have permission to delete this card');
-            }
-            
             return false;
         }
 
