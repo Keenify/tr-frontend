@@ -17,18 +17,34 @@ interface QuotationExportProps {
 
 export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => {
     // --- Base State ---
-    const [selections, setSelections] = useState<ProductExportSelection[]>([]);
+    const [selections, setSelections] = useState<ProductExportSelection[]>(() => {
+        const saved = localStorage.getItem('export_selections');
+        console.log('[localStorage] Loading export_selections:', saved);
+        return saved ? JSON.parse(saved) : [];
+    });
     const [editingCell, setEditingCell] = useState<{ id: number, field: string } | null>(null);
     const { companyInfo, isLoading: isLoadingCompany, error: companyError } = useUserAndCompanyData(session.user.id); // Renamed isLoading
-    const [collapsedRows, setCollapsedRows] = useState<Set<number>>(new Set());
+    const [collapsedRows, setCollapsedRows] = useState<Set<number>>(() => {
+        const saved = localStorage.getItem('export_collapsedRows');
+        console.log('[localStorage] Loading export_collapsedRows:', saved);
+        return saved ? new Set(JSON.parse(saved)) : new Set();
+    });
     const [customerCompanyName, setCustomerCompanyName] = useState<string>(() => {
         return localStorage.getItem('export_customer_name') || '';
     });
     const [salesAccountManager, setSalesAccountManager] = useState<string>(() => {
         return localStorage.getItem('export_sales_manager') || '';
     });
-    const [showFOBPricePerUnit, setShowFOBPricePerUnit] = useState<boolean>(true);
-    const [showCartonBarcode, setShowCartonBarcode] = useState<boolean>(false);
+    const [showFOBPricePerUnit, setShowFOBPricePerUnit] = useState<boolean>(() => {
+        const saved = localStorage.getItem('export_showFOBPricePerUnit');
+        console.log('[localStorage] Loading export_showFOBPricePerUnit:', saved);
+        return saved !== null ? JSON.parse(saved) : true;
+    });
+    const [showCartonBarcode, setShowCartonBarcode] = useState<boolean>(() => {
+        const saved = localStorage.getItem('export_showCartonBarcode');
+        console.log('[localStorage] Loading export_showCartonBarcode:', saved);
+        return saved !== null ? JSON.parse(saved) : false;
+    });
     const [selectedCurrency, setSelectedCurrency] = useState<'USD' | 'SGD'>('USD');
     const currentDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
     const [isGeneratingPDF, setIsGeneratingPDF] = useState<boolean>(false);
@@ -39,13 +55,55 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     const [isTierEditModalOpen, setIsTierEditModalOpen] = useState<boolean>(false);
 
     // --- UI Toggles State ---
-    const [showProductBarcode, setShowProductBarcode] = useState<boolean>(true);
-    const [showShelfLife, setShowShelfLife] = useState<boolean>(true);
-    const [showHsCode, setShowHsCode] = useState<boolean>(true);
-    const [showCartonDimensions, setShowCartonDimensions] = useState<boolean>(true);
-    const [showNetWeight, setShowNetWeight] = useState<boolean>(true);
-    const [showGrossWeight, setShowGrossWeight] = useState<boolean>(true);
-    const [showCountryOfOrigin, setShowCountryOfOrigin] = useState<boolean>(true);
+    const [showProductBarcode, setShowProductBarcode] = useState<boolean>(() => {
+        const saved = localStorage.getItem('export_showProductBarcode');
+        console.log('[localStorage] Loading export_showProductBarcode:', saved);
+        return saved !== null ? JSON.parse(saved) : true;
+    });
+    const [showShelfLife, setShowShelfLife] = useState<boolean>(() => {
+        const saved = localStorage.getItem('export_showShelfLife');
+        console.log('[localStorage] Loading export_showShelfLife:', saved);
+        return saved !== null ? JSON.parse(saved) : true;
+    });
+    const [showHsCode, setShowHsCode] = useState<boolean>(() => {
+        const saved = localStorage.getItem('export_showHsCode');
+        console.log('[localStorage] Loading export_showHsCode:', saved);
+        return saved !== null ? JSON.parse(saved) : true;
+    });
+    const [showCartonDimensions, setShowCartonDimensions] = useState<boolean>(() => {
+        const saved = localStorage.getItem('export_showCartonDimensions');
+        console.log('[localStorage] Loading export_showCartonDimensions:', saved);
+        return saved !== null ? JSON.parse(saved) : true;
+    });
+    const [showNetWeight, setShowNetWeight] = useState<boolean>(() => {
+        const saved = localStorage.getItem('export_showNetWeight');
+        console.log('[localStorage] Loading export_showNetWeight:', saved);
+        return saved !== null ? JSON.parse(saved) : true;
+    });
+    const [showGrossWeight, setShowGrossWeight] = useState<boolean>(() => {
+        const saved = localStorage.getItem('export_showGrossWeight');
+        console.log('[localStorage] Loading export_showGrossWeight:', saved);
+        return saved !== null ? JSON.parse(saved) : true;
+    });
+    const [showCountryOfOrigin, setShowCountryOfOrigin] = useState<boolean>(() => {
+        const saved = localStorage.getItem('export_showCountryOfOrigin');
+        console.log('[localStorage] Loading export_showCountryOfOrigin:', saved);
+        return saved !== null ? JSON.parse(saved) : true;
+    });
+
+    // Helper functions for localStorage persistence
+    const updateSelections = (newSelections: ProductExportSelection[]) => {
+        setSelections(newSelections);
+        localStorage.setItem('export_selections', JSON.stringify(newSelections));
+        console.log('[localStorage] Saving export_selections:', newSelections.length, 'items');
+    };
+
+    const updateCollapsedRows = (newCollapsedRows: Set<number>) => {
+        setCollapsedRows(newCollapsedRows);
+        const rowsArray = Array.from(newCollapsedRows);
+        localStorage.setItem('export_collapsedRows', JSON.stringify(rowsArray));
+        console.log('[localStorage] Saving export_collapsedRows:', rowsArray);
+    };
 
     // --- Input Validation State & Refs ---
     const [customerNameError, setCustomerNameError] = useState<boolean>(false);
@@ -132,8 +190,13 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
 
                 // 3. Transform data, passing in the detailed variants map
                 const transformedData = transformToSelectableFormat(exportDetailsData, variantsMap);
-                setSelections(transformedData);
-                setCollapsedRows(new Set(transformedData.map(p => p.product_id)));
+                // Only set initial data if we don't have localStorage data
+                if (selections.length === 0) {
+                    setSelections(transformedData);
+                }
+                if (collapsedRows.size === 0) {
+                    setCollapsedRows(new Set(transformedData.map(p => p.product_id)));
+                }
 
                 // 4. Fetch tiers only after successfully getting products
                 await fetchAndSetTiers(transformedData);
@@ -142,7 +205,7 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                 console.error('Failed to fetch initial export details or variants:', err);
                 const errorMessage = (err instanceof Error) ? err.message : 'Failed to load product export details.';
                 setFetchError(errorMessage);
-                setSelections([]); // Clear selections on error
+                updateSelections([]); // Clear selections on error
             }
         };
         if (companyInfo?.id) { // Only run if companyInfo is available
@@ -216,17 +279,29 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
     // --- Event Handlers ---
     const handleGlobalTierChange = (event: React.ChangeEvent<HTMLSelectElement>) => { setSelectedGlobalTierName(event.target.value); };
     const handleTiersUpdated = useCallback(() => { fetchAndSetTiers(selections); }, [fetchAndSetTiers, selections]);
-    const handleProductSelect = (productId: number, isSelected: boolean) => { setSelections(prev => prev.map(p => p.product_id === productId ? { ...p, isSelected, variants: p.variants.map(v => ({ ...v, isSelected })) } : p)); };
-    const handleVariantSelect = (productId: number, variantId: number, isSelected: boolean) => { setSelections(prev => prev.map(p => { if (p.product_id === productId) { const updatedV = p.variants.map(v => v.variant_id === variantId ? { ...v, isSelected } : v); const allVUnselected = updatedV.every(v => !v.isSelected); return { ...p, isSelected: !allVUnselected, variants: updatedV }; } return p; })); };
+    const handleProductSelect = (productId: number, isSelected: boolean) => { 
+        const newSelections = selections.map(p => p.product_id === productId ? { ...p, isSelected, variants: p.variants.map(v => ({ ...v, isSelected })) } : p);
+        updateSelections(newSelections);
+    };
+    const handleVariantSelect = (productId: number, variantId: number, isSelected: boolean) => { 
+        const newSelections = selections.map(p => { 
+            if (p.product_id === productId) { 
+                const updatedV = p.variants.map(v => v.variant_id === variantId ? { ...v, isSelected } : v); 
+                const allVUnselected = updatedV.every(v => !v.isSelected); 
+                return { ...p, isSelected: !allVUnselected, variants: updatedV }; 
+            } 
+            return p; 
+        });
+        updateSelections(newSelections);
+    };
     const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
         const isChecked = event.target.checked;
-        setSelections(prev => 
-            prev.map(p => ({
-                ...p,
-                isSelected: isChecked,
-                variants: p.variants.map(v => ({ ...v, isSelected: isChecked }))
-            }))
-        );
+        const newSelections = selections.map(p => ({
+            ...p,
+            isSelected: isChecked,
+            variants: p.variants.map(v => ({ ...v, isSelected: isChecked }))
+        }));
+        updateSelections(newSelections);
     };
     const handleCellEdit = (productId: number, field: string, value: string) => {
         setSelections(prev => prev.map(p => {
@@ -399,15 +474,78 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
         setIsTierEditModalOpen(true);
     };
     const closeTierEditModal = () => { setIsTierEditModalOpen(false); };
-    const toggleFOBPricePerUnit = () => { setShowFOBPricePerUnit(prev => !prev); };
-    const toggleCartonBarcode = () => { setShowCartonBarcode(prev => !prev); };
-    const toggleProductBarcode = () => { setShowProductBarcode(prev => !prev); };
-    const toggleShelfLife = () => { setShowShelfLife(prev => !prev); };
-    const toggleHsCode = () => { setShowHsCode(prev => !prev); };
-    const toggleCartonDimensions = () => { setShowCartonDimensions(prev => !prev); };
-    const toggleNetWeight = () => { setShowNetWeight(prev => !prev); };
-    const toggleGrossWeight = () => { setShowGrossWeight(prev => !prev); };
-    const toggleCountryOfOrigin = () => { setShowCountryOfOrigin(prev => !prev); };
+    const toggleFOBPricePerUnit = () => { 
+        setShowFOBPricePerUnit(prev => {
+            const newValue = !prev;
+            localStorage.setItem('export_showFOBPricePerUnit', JSON.stringify(newValue));
+            console.log('[localStorage] Saving export_showFOBPricePerUnit:', newValue);
+            return newValue;
+        });
+    };
+    const toggleCartonBarcode = () => { 
+        setShowCartonBarcode(prev => {
+            const newValue = !prev;
+            localStorage.setItem('export_showCartonBarcode', JSON.stringify(newValue));
+            console.log('[localStorage] Saving export_showCartonBarcode:', newValue);
+            return newValue;
+        });
+    };
+    const toggleProductBarcode = () => { 
+        setShowProductBarcode(prev => {
+            const newValue = !prev;
+            localStorage.setItem('export_showProductBarcode', JSON.stringify(newValue));
+            console.log('[localStorage] Saving export_showProductBarcode:', newValue);
+            return newValue;
+        });
+    };
+    const toggleShelfLife = () => { 
+        setShowShelfLife(prev => {
+            const newValue = !prev;
+            localStorage.setItem('export_showShelfLife', JSON.stringify(newValue));
+            console.log('[localStorage] Saving export_showShelfLife:', newValue);
+            return newValue;
+        });
+    };
+    const toggleHsCode = () => { 
+        setShowHsCode(prev => {
+            const newValue = !prev;
+            localStorage.setItem('export_showHsCode', JSON.stringify(newValue));
+            console.log('[localStorage] Saving export_showHsCode:', newValue);
+            return newValue;
+        });
+    };
+    const toggleCartonDimensions = () => { 
+        setShowCartonDimensions(prev => {
+            const newValue = !prev;
+            localStorage.setItem('export_showCartonDimensions', JSON.stringify(newValue));
+            console.log('[localStorage] Saving export_showCartonDimensions:', newValue);
+            return newValue;
+        });
+    };
+    const toggleNetWeight = () => { 
+        setShowNetWeight(prev => {
+            const newValue = !prev;
+            localStorage.setItem('export_showNetWeight', JSON.stringify(newValue));
+            console.log('[localStorage] Saving export_showNetWeight:', newValue);
+            return newValue;
+        });
+    };
+    const toggleGrossWeight = () => { 
+        setShowGrossWeight(prev => {
+            const newValue = !prev;
+            localStorage.setItem('export_showGrossWeight', JSON.stringify(newValue));
+            console.log('[localStorage] Saving export_showGrossWeight:', newValue);
+            return newValue;
+        });
+    };
+    const toggleCountryOfOrigin = () => { 
+        setShowCountryOfOrigin(prev => {
+            const newValue = !prev;
+            localStorage.setItem('export_showCountryOfOrigin', JSON.stringify(newValue));
+            console.log('[localStorage] Saving export_showCountryOfOrigin:', newValue);
+            return newValue;
+        });
+    };
     const getTableColumns = () => {
          const base = ['container_size', 'cartons_per_container', 'pack_size_per_carton', 'fob_price_per_carton', 'recommended_retail_price_usd'];
         if (showFOBPricePerUnit) { const i = base.indexOf('fob_price_per_carton'); if (i !== -1) base.splice(i + 1, 0, 'fob_price_per_unit'); }
