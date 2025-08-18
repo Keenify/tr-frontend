@@ -58,18 +58,50 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
   }>({});
   const [productPriceTiers, setProductPriceTiers] = React.useState<{
     [key: number]: ProductPriceTier[];
-  }>({});
-  const [selectedProducts, setSelectedProducts] = React.useState<Set<number>>(
-    new Set()
-  );
+  }>(() => {
+    const saved = localStorage.getItem('b2b_productPriceTiers');
+    console.log('[localStorage] Loading b2b_productPriceTiers:', saved);
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [selectedProducts, setSelectedProducts] = React.useState<Set<number>>(() => {
+    const saved = localStorage.getItem('b2b_selectedProducts');
+    console.log('[localStorage] Loading b2b_selectedProducts:', saved);
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
   const [selectedFlavors, setSelectedFlavors] = React.useState<{
     [key: number]: Set<string>;
-  }>({});
-  const [showPackCount, setShowPackCount] = React.useState<boolean>(true);
-  const [showRetailPrice, setShowRetailPrice] = React.useState<boolean>(true);
+  }>(() => {
+    const saved = localStorage.getItem('b2b_selectedFlavors');
+    console.log('[localStorage] Loading b2b_selectedFlavors:', saved);
+    if (!saved) return {};
+    
+    try {
+      const parsed = JSON.parse(saved);
+      return Object.fromEntries(
+        Object.entries(parsed).map(([key, value]) => [parseInt(key), new Set(value as string[])])
+      );
+    } catch (error) {
+      console.error('[localStorage] Error parsing b2b_selectedFlavors:', error);
+      return {};
+    }
+  });
+  const [showPackCount, setShowPackCount] = React.useState<boolean>(() => {
+    const saved = localStorage.getItem('b2b_showPackCount');
+    console.log('[localStorage] Loading b2b_showPackCount:', saved);
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [showRetailPrice, setShowRetailPrice] = React.useState<boolean>(() => {
+    const saved = localStorage.getItem('b2b_showRetailPrice');
+    console.log('[localStorage] Loading b2b_showRetailPrice:', saved);
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   const [visibleCartonColumns, setVisibleCartonColumns] = React.useState<
     Set<number>
-  >(new Set());
+  >(() => {
+    const saved = localStorage.getItem('b2b_visibleCartonColumns');
+    console.log('[localStorage] Loading b2b_visibleCartonColumns:', saved);
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
   const [editingCell, setEditingCell] = React.useState<{
     productId: number;
     field: string;
@@ -96,7 +128,11 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
   });
 
   // Add new state for toggling between carton and pack count
-  const [displayPackCount, setDisplayPackCount] = React.useState<boolean>(false);
+  const [displayPackCount, setDisplayPackCount] = React.useState<boolean>(() => {
+    const saved = localStorage.getItem('b2b_displayPackCount');
+    console.log('[localStorage] Loading b2b_displayPackCount:', saved);
+    return saved !== null ? JSON.parse(saved) : false;
+  });
 
   // Update the currency state to use branch
   const [selectedCurrency, setSelectedCurrency] = React.useState<'SGD' | 'MYR'>(branch === 'SG' ? 'SGD' : 'MYR');
@@ -111,6 +147,15 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
 
   // Add state for Select All checkbox
   const [selectAllStatus, setSelectAllStatus] = React.useState<'none' | 'some' | 'all'>('none');
+
+  // Helper function to update selectedProducts with localStorage
+  const updateSelectedProducts = (newProducts: Set<number>) => {
+    setSelectedProducts(newProducts);
+    const productsArray = Array.from(newProducts);
+    localStorage.setItem('b2b_selectedProducts', JSON.stringify(productsArray));
+    console.log('[localStorage] Saving b2b_selectedProducts:', productsArray);
+  };
+
 
   // Add effect to update currency when branch changes
   React.useEffect(() => {
@@ -154,8 +199,10 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
       getProductsByCompany(userCompanyInfo.id)
         .then((products) => {
           setProducts(products);
-          // Initialize all products as unselected (empty Set)
-          setSelectedProducts(new Set());
+          // Only clear products if we don't have localStorage data
+          if (selectedProducts.size === 0) {
+            updateSelectedProducts(new Set());
+          }
 
           return Promise.all(
             products.map((product) => {
@@ -211,8 +258,14 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
           });
 
           setProductVariants(newProductVariants);
-          setProductPriceTiers(newProductPriceTiers);
-          setSelectedFlavors(initialSelectedFlavors);
+          // Only set initial price tiers if we don't have localStorage data
+          if (Object.keys(productPriceTiers).length === 0) {
+            setProductPriceTiers(newProductPriceTiers);
+          }
+          // Only set initial flavors if we don't have localStorage data
+          if (Object.keys(selectedFlavors).length === 0) {
+            setSelectedFlavors(initialSelectedFlavors);
+          }
         })
         .catch(() => {
           setFetchError("Failed to load products, variants, or price tiers");
@@ -251,12 +304,12 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
 
   // Update the useEffect to initialize visible columns only on first render
   React.useEffect(() => {
-    // Only initialize on first render
-    if (initialRenderRef.current) {
+    // Only initialize on first render and if no localStorage data
+    if (initialRenderRef.current && visibleCartonColumns.size === 0) {
       setVisibleCartonColumns(new Set(priceTierHeaders));
       initialRenderRef.current = false;
     }
-  }, [priceTierHeaders]); // Add priceTierHeaders as dependency
+  }, [priceTierHeaders, visibleCartonColumns.size]); // Add priceTierHeaders as dependency
 
   // Separate effect to handle display toggle changes
   React.useEffect(() => {
@@ -307,7 +360,7 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
     const isChecked = event.target.checked;
     if (isChecked) {
       const allProductIds = new Set(products.map(p => p.id));
-      setSelectedProducts(allProductIds);
+      updateSelectedProducts(allProductIds);
 
       // Select all flavors for non-gift box items
       const newFlavors: { [key: number]: Set<string> } = {};
@@ -321,12 +374,21 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
         }
       });
       setSelectedFlavors(newFlavors);
+      // Save to localStorage
+      const serializable = Object.fromEntries(
+        Object.entries(newFlavors).map(([key, value]) => [key, Array.from(value)])
+      );
+      localStorage.setItem('b2b_selectedFlavors', JSON.stringify(serializable));
+      console.log('[localStorage] Saving b2b_selectedFlavors:', serializable);
       // Check if any selected product is a gift box
       const hasGiftBox = products.some(p => p.name.toLowerCase().includes('gift box'));
       setIsGiftBox(hasGiftBox);
     } else {
-      setSelectedProducts(new Set());
+      updateSelectedProducts(new Set());
       setSelectedFlavors({});
+      // Save to localStorage
+      localStorage.setItem('b2b_selectedFlavors', JSON.stringify({}));
+      console.log('[localStorage] Saving b2b_selectedFlavors:', {});
       setIsGiftBox(false); // No products selected, so no gift box
       setGiftBoxConfiguration(null); // Clear gift box config
     }
@@ -334,46 +396,66 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
 
   // Function to toggle product selection
   const toggleProductSelection = (productId: number) => {
-    setSelectedProducts((prev) => {
-      const newSelection = new Set(prev);
-      const product = products.find(p => p.id === productId);
-      const isGiftBox = product?.name.toLowerCase().includes('gift box');
+    const newSelection = new Set(selectedProducts);
+    const product = products.find(p => p.id === productId);
+    const isGiftBox = product?.name.toLowerCase().includes('gift box');
 
-      if (newSelection.has(productId)) {
-        newSelection.delete(productId);
-        setSelectedFlavors((prevFlavors) => {
-          const newFlavors = { ...prevFlavors };
-          newFlavors[productId] = new Set(); // Deselect all flavors
-          return newFlavors;
-        });
+    if (newSelection.has(productId)) {
+      newSelection.delete(productId);
+      setSelectedFlavors((prevFlavors) => {
+        const newFlavors = { ...prevFlavors };
+        newFlavors[productId] = new Set(); // Deselect all flavors
         
-        // Clear gift box configuration if gift box is deselected
-        if (isGiftBox) {
-          setGiftBoxConfiguration(null);
-        }
-      } else {
-        newSelection.add(productId);
-        setSelectedFlavors((prevFlavors) => {
-          const newFlavors = { ...prevFlavors };
-          // If it's a gift box product, initialize with empty selection
-          // Otherwise, select all flavors as before
-          newFlavors[productId] = isGiftBox 
-            ? new Set() 
-            : new Set(productVariants[productId]?.map((variant) => variant.name) || []);
-          return newFlavors;
-        });
-      }
-
-      // Check if any selected product contains "gift box"
-      const selectedProductsList = Array.from(newSelection);
-      const hasGiftBoxProduct = selectedProductsList.some(id => {
-        const product = products.find(p => p.id === id);
-        return product?.name.toLowerCase().includes('gift box');
+        // Save to localStorage
+        const serializable = Object.fromEntries(
+          Object.entries(newFlavors).map(([key, value]) => [key, Array.from(value)])
+        );
+        localStorage.setItem('b2b_selectedFlavors', JSON.stringify(serializable));
+        console.log('[localStorage] Saving b2b_selectedFlavors:', serializable);
+        
+        return newFlavors;
       });
-      setIsGiftBox(hasGiftBoxProduct);
+      
+      // Clear gift box configuration if gift box is deselected
+      if (isGiftBox) {
+        setGiftBoxConfiguration(null);
+      }
+    } else {
+      newSelection.add(productId);
+      setSelectedFlavors((prevFlavors) => {
+        const newFlavors = { ...prevFlavors };
+        // If it's a gift box product, initialize with empty selection
+        // Otherwise, preserve existing flavors or select all if none exist
+        if (isGiftBox) {
+          newFlavors[productId] = new Set();
+        } else {
+          // Preserve existing flavor selections, or select all if none exist
+          newFlavors[productId] = prevFlavors[productId] && prevFlavors[productId].size > 0
+            ? prevFlavors[productId]
+            : new Set(productVariants[productId]?.map((variant) => variant.name) || []);
+        }
+        
+        // Save to localStorage
+        const serializable = Object.fromEntries(
+          Object.entries(newFlavors).map(([key, value]) => [key, Array.from(value)])
+        );
+        localStorage.setItem('b2b_selectedFlavors', JSON.stringify(serializable));
+        console.log('[localStorage] Saving b2b_selectedFlavors:', serializable);
+        
+        return newFlavors;
+      });
+    }
 
-      return newSelection;
+    // Check if any selected product contains "gift box"
+    const selectedProductsList = Array.from(newSelection);
+    const hasGiftBoxProduct = selectedProductsList.some(id => {
+      const product = products.find(p => p.id === id);
+      return product?.name.toLowerCase().includes('gift box');
     });
+    setIsGiftBox(hasGiftBoxProduct);
+
+    // Update with localStorage persistence
+    updateSelectedProducts(newSelection);
   };
 
   // Function to toggle flavor selection for a given product
@@ -406,6 +488,13 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
           newFlavors[productId].add(flavor); // Check flavor
         }
       }
+      
+      // Save to localStorage
+      const serializable = Object.fromEntries(
+        Object.entries(newFlavors).map(([key, value]) => [key, Array.from(value)])
+      );
+      localStorage.setItem('b2b_selectedFlavors', JSON.stringify(serializable));
+      console.log('[localStorage] Saving b2b_selectedFlavors:', serializable);
       
       return newFlavors;
     });
@@ -508,14 +597,15 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
       }
 
       if (foundTier || (!foundTier && isValidNumber)) {
-        setProductPriceTiers((prev) => ({
-          ...prev,
-          [productId]: updatedTiers,
-        }));
+        setProductPriceTiers((prev) => {
+          const newTiers = { ...prev, [productId]: updatedTiers };
+          localStorage.setItem('b2b_productPriceTiers', JSON.stringify(newTiers));
+          return newTiers;
+        });
       }
     } else {
-      setProducts((prevProducts) =>
-        prevProducts.map((p) => {
+      setProducts((prevProducts) => {
+        const newProducts = prevProducts.map((p) => {
           if (p.id === productId) {
             const newValue = (field === "pack_count_per_box" && (isNaN(parseInt(editValue)) || editValue.trim() === "")) 
               ? p[field] 
@@ -523,8 +613,10 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
             return { ...p, [field]: newValue };
           }
           return p;
-        })
-      );
+        });
+        localStorage.setItem('b2b_products', JSON.stringify(newProducts));
+        return newProducts;
+      });
     }
 
     setEditingCell(null);
@@ -748,6 +840,12 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
       } else {
         newSet.add(carton);
       }
+      
+      // Save to localStorage
+      const columnsArray = Array.from(newSet);
+      localStorage.setItem('b2b_visibleCartonColumns', JSON.stringify(columnsArray));
+      console.log('[localStorage] Saving b2b_visibleCartonColumns:', columnsArray);
+      
       return newSet;
     });
   };
@@ -853,7 +951,12 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
               <input
                 type="checkbox"
                 checked={displayPackCount}
-                onChange={() => setDisplayPackCount((prev) => !prev)}
+                onChange={() => {
+                  const newValue = !displayPackCount;
+                  setDisplayPackCount(newValue);
+                  localStorage.setItem('b2b_displayPackCount', JSON.stringify(newValue));
+                  console.log('[localStorage] Saving b2b_displayPackCount:', newValue);
+                }}
               />
               Display Pack Count
             </label>
@@ -861,7 +964,12 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
               <input
                 type="checkbox"
                 checked={showPackCount}
-                onChange={() => setShowPackCount((prev) => !prev)}
+                onChange={() => {
+                  const newValue = !showPackCount;
+                  setShowPackCount(newValue);
+                  localStorage.setItem('b2b_showPackCount', JSON.stringify(newValue));
+                  console.log('[localStorage] Saving b2b_showPackCount:', newValue);
+                }}
               />
               Show Pack Count Per Box
             </label>
@@ -881,7 +989,12 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
               <input
                 type="checkbox"
                 checked={showRetailPrice}
-                onChange={() => setShowRetailPrice((prev) => !prev)}
+                onChange={() => {
+                  const newValue = !showRetailPrice;
+                  setShowRetailPrice(newValue);
+                  localStorage.setItem('b2b_showRetailPrice', JSON.stringify(newValue));
+                  console.log('[localStorage] Saving b2b_showRetailPrice:', newValue);
+                }}
               />
               Show Recommended Retail Price
             </label>
@@ -1284,32 +1397,39 @@ export const QuotationB2B: React.FC<QuotationB2BProps> = ({
       </div>
 
       {/* Price Tier and Generate PDF buttons */}
-      <div className="button-container">
-        <Button
-          variant="contained"
-          color="secondary"
+      <div className="mt-4 flex justify-end space-x-2">
+        <button
           onClick={() => setIsPriceTierModalOpen(true)}
-          className="action-button price-tier-button"
           disabled={isGeneratingPDF}
+          className={`font-bold py-2 px-4 rounded ${
+            isGeneratingPDF
+              ? 'bg-purple-300 text-white cursor-not-allowed opacity-50'
+              : 'bg-purple-500 hover:bg-purple-700 text-white'
+          }`}
         >
           Price Tier
-        </Button>
-        <Button
-          variant="contained"
-          color="primary"
+        </button>
+        <button
           onClick={handleGeneratePDF}
-          className={`action-button generate-pdf-button`} // Removed disabled class logic here
-          disabled={isGeneratingPDF} // Only disable when generating
+          disabled={isGeneratingPDF}
+          className={`font-bold py-2 px-4 rounded ${
+            isGeneratingPDF
+              ? 'bg-blue-300 text-white cursor-not-allowed opacity-50'
+              : 'bg-blue-500 hover:bg-blue-700 text-white'
+          }`}
         >
           {isGeneratingPDF ? (
-            <>
-              <span className="loading-spinner"></span>
+            <span className="flex items-center">
+              <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+              </svg>
               Generating...
-            </>
+            </span>
           ) : (
-            "Generate PDF"
+            'Generate PDF'
           )}
-        </Button>
+        </button>
       </div>
 
       {/* Modals */}

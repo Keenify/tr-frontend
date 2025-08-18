@@ -101,11 +101,13 @@ const Project: React.FC<ProjectProps> = ({
 
   // Load board details on mount and when company data is available
   useEffect(() => {
+
     // Only fetch if company info is available and loading is complete
     if (companyInfo?.id && !isLoadingCompany) {
       fetchBoardDetails();
     }
   }, [companyInfo?.id, isLoadingCompany]);
+
   
   // eslint-disable-next-line react-hooks/exhaustive-deps
   // fetchBoardDetails is intentionally not included to prevent auto-refresh loops

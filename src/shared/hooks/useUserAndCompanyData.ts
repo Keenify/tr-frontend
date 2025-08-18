@@ -1,16 +1,16 @@
 import { useUserDataContext } from '../contexts/UserDataContext';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export function useUserAndCompanyData(userId: string) {
-  const { getCachedUserData, triggerFetch } = useUserDataContext();
-  const data = getCachedUserData(userId);
+  const { getCachedUserData } = useUserDataContext();
+  const [data, setData] = useState(() => getCachedUserData(userId));
   
-  // Trigger fetch if data is not loading and we don't have data
   useEffect(() => {
-    if (userId && !data.isLoading && !data.userInfo && !data.error) {
-      triggerFetch(userId);
+    if (userId) {
+      const newData = getCachedUserData(userId);
+      setData(newData);
     }
-  }, [userId, data.isLoading, data.userInfo, data.error, triggerFetch]);
+  }, [userId, getCachedUserData]);
   
   return data;
 } 
