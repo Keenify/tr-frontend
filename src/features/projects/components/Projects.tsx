@@ -101,11 +101,11 @@ const Project: React.FC<ProjectProps> = ({
 
   // Load board details on mount and when company data is available
   useEffect(() => {
-    // Only fetch if not actively editing and company info is available
-    if (!activelyEditing && companyInfo?.id && !isLoadingCompany) {
+    // Only fetch if company info is available and loading is complete
+    if (companyInfo?.id && !isLoadingCompany) {
       fetchBoardDetails();
     }
-  }, [companyInfo?.id, isLoadingCompany, activelyEditing, fetchBoardDetails]);
+  }, [companyInfo?.id, isLoadingCompany]);
   
   // eslint-disable-next-line react-hooks/exhaustive-deps
   // fetchBoardDetails is intentionally not included to prevent auto-refresh loops
@@ -142,7 +142,7 @@ const Project: React.FC<ProjectProps> = ({
     } catch (error) {
       console.error('Failed to refresh board data:', error);
     }
-  }, [fetchBoardDetails, hasUnsavedChanges, activelyEditing]);
+  }, [hasUnsavedChanges, activelyEditing]);
 
   // Handler for when card modal opens - track as actively editing
   const handleCardModalOpen = useCallback((listId: string, cardId: string) => {
