@@ -5,7 +5,7 @@ export interface CompanyData {
   id: string;
   created_at: string;
   address: string;
-  website_url: string;
+  website_url: string | null;
   phone: string;
   logo_url: string;
 }
