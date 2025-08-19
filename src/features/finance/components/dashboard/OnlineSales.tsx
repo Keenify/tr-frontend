@@ -51,6 +51,8 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const [isRedmartManualEntryOpen, setIsRedmartManualEntryOpen] = useState<boolean>(false);
   const [isFoodpandaManualEntryOpen, setIsFoodpandaManualEntryOpen] = useState<boolean>(false);
   const [isShopeeManualEntryOpen, setIsShopeeManualEntryOpen] = useState<boolean>(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
 
   // Get user and company data
   const { companyInfo, error: userDataError, isLoading: userDataLoading } = 
@@ -471,9 +473,6 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         }`}>
           {isAllSG ? 'All (SG)' : isAllMY ? 'All (MY)' : selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} Data
         </span>
-
-        {/* Manual Entry Buttons */}
-        {showManualEntry()}
       </div>
 
       {/* Controls section - reorganized into two main sections */}
