@@ -23,6 +23,7 @@ import GrabManualEntryModal from "../manual-entry/GrabManualEntryModal";
 import RedmartManualEntryModal from "../manual-entry/RedmartManualEntryModal";
 import FoodpandaManualEntryModal from "../manual-entry/FoodpandaManualEntryModal";
 import ShopeeManualEntryModal from "../manual-entry/ShopeeManualEntryModal";
+import CompileSalesModal, { CompileParams } from "../CompileSalesModal";
 
 // Import types
 import { ShopeeMetric } from '../../services/useShopeeMetrics';
@@ -269,6 +270,223 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const handleCompileSalesModalClose = () => {
     setIsCompileSalesModalOpen(false);
     setIsCompiling(false);
+  };
+
+  const handleCompileExport = async (params: CompileParams) => {
+    setIsCompiling(true);
+    
+    try {
+      // Fetch data based on selected parameters
+      const { 
+        filteredMetrics: compiledData,
+        totalRevenue: compiledRevenue,
+        totalOrders: compiledOrders,
+        totalAdsExpense: compiledAdsExpense
+      } = await fetchMetricsData(params);
+
+      if (params.format === 'csv') {
+        downloadCSV(compiledData, params);
+      } else if (params.format === 'pdf') {
+        downloadPDF(compiledData, params, {
+          totalRevenue: compiledRevenue,
+          totalOrders: compiledOrders,
+          totalAdsExpense: compiledAdsExpense
+        });
+      }
+      
+      // Close modal and refresh data
+      setIsCompileSalesModalOpen(false);
+      refreshData();
+    } catch (error) {
+      console.error('Error compiling sales data:', error);
+      alert('Failed to compile sales data. Please try again.');
+    } finally {
+      setIsCompiling(false);
+    }
+  };
+
+  const fetchMetricsData = async (params: CompileParams) => {
+    // This simulates fetching data for the selected platform and date range
+    // In a real implementation, you'd call your API here
+    
+    // For now, return current filtered data as demo
+    return {
+      filteredMetrics,
+      totalRevenue,
+      totalOrders,
+      totalAdsExpense
+    };
+  };
+
+  const downloadCSV = (data: any[], params: CompileParams) => {
+    if (!data.length) {
+      alert('No data available for the selected criteria');
+      return;
+    }
+
+    // Generate CSV headers based on platform
+    let headers: string[] = [];
+    if (params.platform === 'shopee') {
+      headers = ['Date', 'Shop ID', 'Revenue', 'Orders', 'Ads Expense', 'Currency'];
+    } else if (params.platform === 'lazada') {
+      headers = ['Date', 'Account ID', 'Revenue', 'Orders', 'Ads Expense', 'Currency'];
+    } else if (params.platform === 'shopify') {
+      headers = ['Date', 'Store ID', 'Revenue', 'Orders', 'Currency'];
+    } else if (params.platform === 'foodpanda') {
+      headers = ['Date', 'Shop ID', 'Revenue', 'Total Orders'];
+    } else if (params.platform === 'grab') {
+      headers = ['Date', 'Store Name', 'Revenue', 'Completed Orders', 'Cancelled Orders'];
+    } else {
+      headers = ['Date', 'Platform', 'Entity', 'Revenue', 'Orders', 'Currency'];
+    }
+
+    // Generate CSV content
+    const csvContent = [
+      headers.join(','),
+      ...data.map(row => {
+        if (params.platform === 'shopee') {
+          return [
+            row.date,
+            row.shop_id,
+            row.revenue,
+            row.total_orders,
+            row.ads_expense || 0,
+            row.currency || 'SGD'
+          ].join(',');
+        } else if (params.platform === 'lazada') {
+          return [
+            row.date,
+            row.account_id,
+            row.revenue,
+            row.total_orders,
+            row.ads_expense || 0,
+            row.currency || 'SGD'
+          ].join(',');
+        } else if (params.platform === 'shopify') {
+          return [
+            row.date,
+            row.store_id,
+            row.revenue,
+            row.total_orders,
+            row.currency || 'SGD'
+          ].join(',');
+        } else if (params.platform === 'foodpanda') {
+          return [
+            row.date,
+            row.shop_id,
+            row.revenue,
+            row.total_orders
+          ].join(',');
+        } else if (params.platform === 'grab') {
+          return [
+            row.date,
+            row.store_name,
+            row.revenue,
+            row.completed_order,
+            row.cancelled_order
+          ].join(',');
+        } else {
+          return [
+            row.date,
+            params.platform,
+            row.shop_id || row.account_id || row.store_id || row.store_name,
+            row.revenue,
+            row.total_orders || row.completed_order,
+            row.currency || 'SGD'
+          ].join(',');
+        }
+      })
+    ].join('\n');
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${params.platform}_sales_${params.startDate.toISOString().split('T')[0]}_to_${params.endDate.toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const downloadPDF = (data: any[], params: CompileParams, summary: { totalRevenue: number, totalOrders: number, totalAdsExpense: number }) => {
+    if (!data.length) {
+      alert('No data available for the selected criteria');
+      return;
+    }
+
+    // Create PDF content as HTML (basic implementation)
+    const htmlContent = `
+      <html>
+        <head>
+          <title>Sales Report - ${params.platform.toUpperCase()}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { color: #333; text-align: center; }
+            .summary { background: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; font-weight: bold; }
+            tr:nth-child(even) { background-color: #f9f9f9; }
+            .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+          </style>
+        </head>
+        <body>
+          <h1>Sales Report - ${params.platform.toUpperCase()}</h1>
+          <div class="summary">
+            <h3>Summary (${params.startDate.toLocaleDateString()} - ${params.endDate.toLocaleDateString()})</h3>
+            <p><strong>Total Revenue:</strong> $${summary.totalRevenue.toLocaleString()}</p>
+            <p><strong>Total Orders:</strong> ${summary.totalOrders.toLocaleString()}</p>
+            ${summary.totalAdsExpense > 0 ? `<p><strong>Total Ads Expense:</strong> $${summary.totalAdsExpense.toLocaleString()}</p>` : ''}
+            <p><strong>Total Records:</strong> ${data.length}</p>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>${params.platform === 'shopee' ? 'Shop ID' : params.platform === 'lazada' ? 'Account ID' : params.platform === 'shopify' ? 'Store ID' : params.platform === 'grab' ? 'Store Name' : 'Entity'}</th>
+                <th>Revenue</th>
+                <th>Orders</th>
+                ${(['shopee', 'lazada'].includes(params.platform)) ? '<th>Ads Expense</th>' : ''}
+                <th>Currency</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.map(row => `
+                <tr>
+                  <td>${row.date}</td>
+                  <td>${row.shop_id || row.account_id || row.store_id || row.store_name}</td>
+                  <td>$${(row.revenue || 0).toLocaleString()}</td>
+                  <td>${(row.total_orders || row.completed_order || 0).toLocaleString()}</td>
+                  ${(['shopee', 'lazada'].includes(params.platform)) ? `<td>$${(row.ads_expense || 0).toLocaleString()}</td>` : ''}
+                  <td>${row.currency || 'SGD'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div class="footer">
+            Generated on ${new Date().toLocaleString()}
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Create and download PDF
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${params.platform}_sales_${params.startDate.toISOString().split('T')[0]}_to_${params.endDate.toISOString().split('T')[0]}.html`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Note: This creates an HTML file. For true PDF generation, you'd need a library like jsPDF or puppeteer
+    alert('HTML report downloaded. You can print this as PDF from your browser.');
   };
 
   // Determine if manual entry should be shown
@@ -719,6 +937,17 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
           isOpen={isShopeeManualEntryOpen}
           onClose={handleShopeeManualEntryClose}
           companyId={companyInfo.id}
+        />
+      )}
+
+      {/* Compile Sales Modal */}
+      {companyInfo?.id && isCompileSalesModalOpen && (
+        <CompileSalesModal
+          isOpen={isCompileSalesModalOpen}
+          onClose={handleCompileSalesModalClose}
+          companyId={companyInfo.id}
+          onCompile={handleCompileExport}
+          isCompiling={isCompiling}
         />
       )}
     </div>
