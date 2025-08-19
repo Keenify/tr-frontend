@@ -13,7 +13,7 @@ interface CompileSalesModalProps {
 }
 
 export interface CompileParams {
-  platform: Platform;
+  platforms: Platform[];
   startDate: Date;
   endDate: Date;
   format: 'csv' | 'pdf';
@@ -26,7 +26,7 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
   onCompile,
   isCompiling
 }) => {
-  const [selectedPlatform, setSelectedPlatform] = useState<Platform>("shopee");
+  const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(["shopee"]);
   const [startDate, setStartDate] = useState<Date>(subDays(new Date(), 7));
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [format, setFormat] = useState<'csv' | 'pdf'>('csv');
@@ -37,16 +37,32 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
     { value: "redmart", label: "Redmart", color: "text-red-600" },
     { value: "foodpanda", label: "Foodpanda", color: "text-purple-600" },
     { value: "shopify", label: "Shopify", color: "text-green-600" },
-    { value: "grab", label: "Grab", color: "text-green-700" },
-    { value: "all_sg", label: "All (Singapore)", color: "text-gray-800" },
-    { value: "all_my", label: "All (Malaysia)", color: "text-yellow-700" }
+    { value: "grab", label: "Grab", color: "text-green-700" }
   ];
+
+  const handlePlatformToggle = (platform: Platform) => {
+    setSelectedPlatforms(prev => {
+      if (prev.includes(platform)) {
+        return prev.filter(p => p !== platform);
+      } else {
+        return [...prev, platform];
+      }
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedPlatforms.length === platforms.length) {
+      setSelectedPlatforms([]);
+    } else {
+      setSelectedPlatforms(platforms.map(p => p.value));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedPlatform || !startDate || !endDate) {
-      alert('Please fill in all required fields');
+    if (selectedPlatforms.length === 0 || !startDate || !endDate) {
+      alert('Please select at least one platform and fill in all required fields');
       return;
     }
 
@@ -56,7 +72,7 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
     }
 
     await onCompile({
-      platform: selectedPlatform,
+      platforms: selectedPlatforms,
       startDate,
       endDate,
       format
@@ -86,22 +102,35 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Platform Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Platform *
-              </label>
-              <select
-                value={selectedPlatform}
-                onChange={(e) => setSelectedPlatform(e.target.value as Platform)}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                required
-                disabled={isCompiling}
-              >
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Platforms * ({selectedPlatforms.length} selected)
+                </label>
+                <button
+                  type="button"
+                  onClick={handleSelectAll}
+                  className="text-sm text-indigo-600 hover:text-indigo-800 focus:outline-none"
+                  disabled={isCompiling}
+                >
+                  {selectedPlatforms.length === platforms.length ? 'Deselect All' : 'Select All'}
+                </button>
+              </div>
+              <div className="border border-gray-300 rounded-md p-3 max-h-40 overflow-y-auto">
                 {platforms.map((platform) => (
-                  <option key={platform.value} value={platform.value}>
-                    {platform.label}
-                  </option>
+                  <label key={platform.value} className="flex items-center mb-2 last:mb-0">
+                    <input
+                      type="checkbox"
+                      checked={selectedPlatforms.includes(platform.value)}
+                      onChange={() => handlePlatformToggle(platform.value)}
+                      className="mr-3 focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                      disabled={isCompiling}
+                    />
+                    <span className={`text-sm ${platform.color} font-medium`}>
+                      {platform.label}
+                    </span>
+                  </label>
                 ))}
-              </select>
+              </div>
             </div>
 
             {/* Date Range */}

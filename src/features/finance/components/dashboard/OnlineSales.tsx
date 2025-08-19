@@ -306,10 +306,11 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   };
 
   const fetchMetricsData = async (params: CompileParams) => {
-    // This simulates fetching data for the selected platform and date range
-    // In a real implementation, you'd call your API here
+    // This simulates fetching data for the selected platforms and date range
+    // In a real implementation, you'd call your API here for each platform
     
     // For now, return current filtered data as demo
+    // In production, you would merge data from multiple platforms
     return {
       filteredMetrics,
       totalRevenue,
@@ -324,86 +325,100 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
       return;
     }
 
-    // Generate CSV headers based on platform
-    let headers: string[] = [];
-    if (params.platform === 'shopee') {
-      headers = ['Date', 'Shop ID', 'Revenue', 'Orders', 'Ads Expense', 'Currency'];
-    } else if (params.platform === 'lazada') {
-      headers = ['Date', 'Account ID', 'Revenue', 'Orders', 'Ads Expense', 'Currency'];
-    } else if (params.platform === 'shopify') {
-      headers = ['Date', 'Store ID', 'Revenue', 'Orders', 'Currency'];
-    } else if (params.platform === 'foodpanda') {
-      headers = ['Date', 'Shop ID', 'Revenue', 'Total Orders'];
-    } else if (params.platform === 'grab') {
-      headers = ['Date', 'Store Name', 'Revenue', 'Completed Orders', 'Cancelled Orders'];
-    } else {
-      headers = ['Date', 'Platform', 'Entity', 'Revenue', 'Orders', 'Currency'];
+    // For multiple platforms, use a unified header structure
+    const headers = params.platforms.length > 1 
+      ? ['Date', 'Platform', 'Entity', 'Revenue', 'Orders', 'Ads Expense', 'Currency']
+      : getSinglePlatformHeaders(params.platforms[0]);
+
+    function getSinglePlatformHeaders(platform: Platform): string[] {
+      switch (platform) {
+        case 'shopee':
+          return ['Date', 'Shop ID', 'Revenue', 'Orders', 'Ads Expense', 'Currency'];
+        case 'lazada':
+          return ['Date', 'Account ID', 'Revenue', 'Orders', 'Ads Expense', 'Currency'];
+        case 'shopify':
+          return ['Date', 'Store ID', 'Revenue', 'Orders', 'Currency'];
+        case 'foodpanda':
+          return ['Date', 'Shop ID', 'Revenue', 'Total Orders'];
+        case 'grab':
+          return ['Date', 'Store Name', 'Revenue', 'Completed Orders', 'Cancelled Orders'];
+        default:
+          return ['Date', 'Platform', 'Entity', 'Revenue', 'Orders', 'Currency'];
+      }
     }
 
     // Generate CSV content
     const csvContent = [
       headers.join(','),
       ...data.map(row => {
-        if (params.platform === 'shopee') {
+        if (params.platforms.length > 1) {
+          // Multi-platform unified format
+          const platformType = detectPlatformType(row);
           return [
             row.date,
-            row.shop_id,
-            row.revenue,
-            row.total_orders,
+            platformType,
+            getEntityName(row, platformType),
+            row.revenue || 0,
+            row.total_orders || row.completed_order || 0,
             row.ads_expense || 0,
             row.currency || 'SGD'
-          ].join(',');
-        } else if (params.platform === 'lazada') {
-          return [
-            row.date,
-            row.account_id,
-            row.revenue,
-            row.total_orders,
-            row.ads_expense || 0,
-            row.currency || 'SGD'
-          ].join(',');
-        } else if (params.platform === 'shopify') {
-          return [
-            row.date,
-            row.store_id,
-            row.revenue,
-            row.total_orders,
-            row.currency || 'SGD'
-          ].join(',');
-        } else if (params.platform === 'foodpanda') {
-          return [
-            row.date,
-            row.shop_id,
-            row.revenue,
-            row.total_orders
-          ].join(',');
-        } else if (params.platform === 'grab') {
-          return [
-            row.date,
-            row.store_name,
-            row.revenue,
-            row.completed_order,
-            row.cancelled_order
           ].join(',');
         } else {
-          return [
-            row.date,
-            params.platform,
-            row.shop_id || row.account_id || row.store_id || row.store_name,
-            row.revenue,
-            row.total_orders || row.completed_order,
-            row.currency || 'SGD'
-          ].join(',');
+          // Single platform specific format
+          const platform = params.platforms[0];
+          return generateSinglePlatformRow(row, platform).join(',');
         }
       })
     ].join('\n');
+
+    function detectPlatformType(row: any): string {
+      if (row.shop_id && row.ads_expense !== undefined) return 'shopee';
+      if (row.account_id) return 'lazada';
+      if (row.store_id) return 'shopify';
+      if (row.shop_id && row.ads_expense === undefined) return 'foodpanda';
+      if (row.store_name) return 'grab';
+      return 'unknown';
+    }
+
+    function getEntityName(row: any, platform: string): string {
+      switch (platform) {
+        case 'shopee': return row.shop_id;
+        case 'lazada': return row.account_id;
+        case 'shopify': return row.store_id;
+        case 'foodpanda': return row.shop_id;
+        case 'grab': return row.store_name;
+        default: return row.shop_id || row.account_id || row.store_id || row.store_name || 'N/A';
+      }
+    }
+
+    function generateSinglePlatformRow(row: any, platform: Platform): (string | number)[] {
+      switch (platform) {
+        case 'shopee':
+          return [row.date, row.shop_id, row.revenue, row.total_orders, row.ads_expense || 0, row.currency || 'SGD'];
+        case 'lazada':
+          return [row.date, row.account_id, row.revenue, row.total_orders, row.ads_expense || 0, row.currency || 'SGD'];
+        case 'shopify':
+          return [row.date, row.store_id, row.revenue, row.total_orders, row.currency || 'SGD'];
+        case 'foodpanda':
+          return [row.date, row.shop_id, row.revenue, row.total_orders];
+        case 'grab':
+          return [row.date, row.store_name, row.revenue, row.completed_order, row.cancelled_order];
+        default:
+          return [row.date, platform, getEntityName(row, detectPlatformType(row)), row.revenue, row.total_orders || row.completed_order, row.currency || 'SGD'];
+      }
+    }
 
     // Create and download file
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `${params.platform}_sales_${params.startDate.toISOString().split('T')[0]}_to_${params.endDate.toISOString().split('T')[0]}.csv`);
+    
+    const platformName = params.platforms.length > 1 
+      ? `${params.platforms.length}_platforms`
+      : params.platforms[0];
+    
+    link.setAttribute('download', `${platformName}_sales_${params.startDate.toISOString().split('T')[0]}_to_${params.endDate.toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -416,11 +431,15 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
       return;
     }
 
+    const platformTitle = params.platforms.length > 1 
+      ? `MULTIPLE PLATFORMS (${params.platforms.join(', ').toUpperCase()})`
+      : params.platforms[0].toUpperCase();
+
     // Create PDF content as HTML (basic implementation)
     const htmlContent = `
       <html>
         <head>
-          <title>Sales Report - ${params.platform.toUpperCase()}</title>
+          <title>Sales Report - ${platformTitle}</title>
           <style>
             body { font-family: Arial, sans-serif; margin: 20px; }
             h1 { color: #333; text-align: center; }
@@ -433,9 +452,10 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
           </style>
         </head>
         <body>
-          <h1>Sales Report - ${params.platform.toUpperCase()}</h1>
+          <h1>Sales Report - ${platformTitle}</h1>
           <div class="summary">
             <h3>Summary (${params.startDate.toLocaleDateString()} - ${params.endDate.toLocaleDateString()})</h3>
+            <p><strong>Platforms:</strong> ${params.platforms.join(', ')}</p>
             <p><strong>Total Revenue:</strong> $${summary.totalRevenue.toLocaleString()}</p>
             <p><strong>Total Orders:</strong> ${summary.totalOrders.toLocaleString()}</p>
             ${summary.totalAdsExpense > 0 ? `<p><strong>Total Ads Expense:</strong> $${summary.totalAdsExpense.toLocaleString()}</p>` : ''}
@@ -446,10 +466,11 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
             <thead>
               <tr>
                 <th>Date</th>
-                <th>${params.platform === 'shopee' ? 'Shop ID' : params.platform === 'lazada' ? 'Account ID' : params.platform === 'shopify' ? 'Store ID' : params.platform === 'grab' ? 'Store Name' : 'Entity'}</th>
+                ${params.platforms.length > 1 ? '<th>Platform</th>' : ''}
+                <th>${params.platforms.length > 1 ? 'Entity' : getEntityColumnName(params.platforms[0])}</th>
                 <th>Revenue</th>
                 <th>Orders</th>
-                ${(['shopee', 'lazada'].includes(params.platform)) ? '<th>Ads Expense</th>' : ''}
+                ${shouldShowAdsExpense(params.platforms) ? '<th>Ads Expense</th>' : ''}
                 <th>Currency</th>
               </tr>
             </thead>
@@ -457,10 +478,11 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
               ${data.map(row => `
                 <tr>
                   <td>${row.date}</td>
+                  ${params.platforms.length > 1 ? `<td>${detectPlatformType(row)}</td>` : ''}
                   <td>${row.shop_id || row.account_id || row.store_id || row.store_name}</td>
                   <td>$${(row.revenue || 0).toLocaleString()}</td>
                   <td>${(row.total_orders || row.completed_order || 0).toLocaleString()}</td>
-                  ${(['shopee', 'lazada'].includes(params.platform)) ? `<td>$${(row.ads_expense || 0).toLocaleString()}</td>` : ''}
+                  ${shouldShowAdsExpense(params.platforms) ? `<td>$${(row.ads_expense || 0).toLocaleString()}</td>` : ''}
                   <td>${row.currency || 'SGD'}</td>
                 </tr>
               `).join('')}
@@ -474,12 +496,31 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
       </html>
     `;
 
+    function getEntityColumnName(platform: Platform): string {
+      switch (platform) {
+        case 'shopee': return 'Shop ID';
+        case 'lazada': return 'Account ID';
+        case 'shopify': return 'Store ID';
+        case 'grab': return 'Store Name';
+        default: return 'Entity';
+      }
+    }
+
+    function shouldShowAdsExpense(platforms: Platform[]): boolean {
+      return platforms.some(p => ['shopee', 'lazada'].includes(p));
+    }
+
     // Create and download PDF
     const blob = new Blob([htmlContent], { type: 'text/html' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `${params.platform}_sales_${params.startDate.toISOString().split('T')[0]}_to_${params.endDate.toISOString().split('T')[0]}.html`);
+    
+    const platformName = params.platforms.length > 1 
+      ? `${params.platforms.length}_platforms`
+      : params.platforms[0];
+    
+    link.setAttribute('download', `${platformName}_sales_${params.startDate.toISOString().split('T')[0]}_to_${params.endDate.toISOString().split('T')[0]}.html`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
