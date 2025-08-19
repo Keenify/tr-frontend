@@ -277,47 +277,34 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     setIsCompiling(true);
     
     try {
-      // Use the backend platform compilation service
-      const compilationRequest = await PlatformCompilationService.createCompilationRequest({
-        platforms: params.platforms,
-        start_date: params.startDate.toISOString().split('T')[0],
-        end_date: params.endDate.toISOString().split('T')[0]
-      }, companyInfo?.name);
-
-      // Poll for completion
-      let status = await PlatformCompilationService.getCompilationStatus(compilationRequest.request_id);
+      // Download platform data directly
+      const blob = await PlatformCompilationService.downloadPlatformData(
+        params.platforms,
+        params.startDate.toISOString().split('T')[0],
+        params.endDate.toISOString().split('T')[0],
+        params.format,
+        companyInfo?.name
+      );
       
-      while (status.status === 'PENDING' || status.status === 'PROCESSING') {
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
-        status = await PlatformCompilationService.getCompilationStatus(compilationRequest.request_id);
-      }
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `platform_data_${params.platforms.join('_')}_${params.startDate.toISOString().split('T')[0]}_to_${params.endDate.toISOString().split('T')[0]}.${params.format === 'csv' ? 'zip' : 'pdf'}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
 
-      if (status.status === 'COMPLETED') {
-        // Download the compilation file
-        const blob = await PlatformCompilationService.downloadCompilation(compilationRequest.request_id);
-        
-        // Create download link
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `platform_compilation_${params.platforms.join('_')}_${params.startDate.toISOString().split('T')[0]}_to_${params.endDate.toISOString().split('T')[0]}.zip`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-
-        const formatText = params.format === 'csv' ? 'CSV files' : 'PDF report';
-        alert(`Platform compilation completed successfully! The ZIP file contains ${formatText} and graphs for all selected platforms.`);
-      } else {
-        throw new Error(status.error_message || 'Compilation failed');
-      }
+      const formatText = params.format === 'csv' ? 'CSV files' : 'PDF report';
+      alert(`Platform data downloaded successfully! The file contains ${formatText} and graphs for all selected platforms.`);
       
       // Close modal and refresh data
       setIsCompileSalesModalOpen(false);
       refreshData();
     } catch (error) {
-      console.error('Error compiling sales data:', error);
-      alert(`Failed to compile sales data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Error downloading platform data:', error);
+      alert(`Failed to download platform data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsCompiling(false);
     }
