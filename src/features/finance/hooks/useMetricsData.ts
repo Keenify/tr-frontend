@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { Platform } from '../components/platform/PlatformSelector';
 import { Entity } from '../components/platform/PlatformEntitySelector';
 import { ChartDataPoint } from '../components/charts/RevenueChart';
-import { FOODPANDA_SHOP_NAMES, REDMART_SHOP_NAMES, SHOPEE_SHOP_NAMES } from '../constant/Shopname';
+import { FOODPANDA_SHOP_NAMES, REDMART_SHOP_NAMES } from '../constant/Shopname';
 import { useQueries } from '@tanstack/react-query';
 import { getFoodpandaMetrics } from '../services/useFoodpandaMetrics';
 
@@ -211,7 +211,6 @@ export function useMetricsData({
   const entities = useMemo(() => {
     if (platform === 'shopee' && shopeeMetrics) {
       return [...new Set(shopeeMetrics.map(item => item.shop_id))]
-        .filter(shopId => Object.keys(SHOPEE_SHOP_NAMES).includes(shopId.toString()))
         .map(shopId => ({
           id: shopId,
           name: `Shop ${shopId}`

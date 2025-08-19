@@ -3,8 +3,6 @@ import { Session } from "@supabase/supabase-js";
 import { subDays, startOfMonth, startOfYear, startOfDay, endOfDay } from "date-fns";
 import { useUserAndCompanyData } from "../../../../shared/hooks/useUserAndCompanyData";
 import { SHOPEE_SHOP_NAMES, LAZADA_ACCOUNT_NAMES, FOODPANDA_SHOP_NAMES, REDMART_SHOP_NAMES} from '../../constant/Shopname';
-import { useExportData } from "../../hooks/useExportData";
-import ExportService from "../../services/exportService";
 
 // Import custom hook
 import { useMetricsData } from "../../hooks/useMetricsData";
@@ -25,7 +23,6 @@ import GrabManualEntryModal from "../manual-entry/GrabManualEntryModal";
 import RedmartManualEntryModal from "../manual-entry/RedmartManualEntryModal";
 import FoodpandaManualEntryModal from "../manual-entry/FoodpandaManualEntryModal";
 import ShopeeManualEntryModal from "../manual-entry/ShopeeManualEntryModal";
-import ExportModal, { ExportConfig } from "../export/ExportModal";
 
 // Import types
 import { ShopeeMetric } from '../../services/useShopeeMetrics';
@@ -60,10 +57,6 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   // Get user and company data
   const { companyInfo, error: userDataError, isLoading: userDataLoading } = 
     useUserAndCompanyData(session.user.id);
-
-  // Export data hook
-  const { fetchPlatformData, isLoading: isExportDataLoading, error: exportError } = 
-    useExportData({ companyId: companyInfo?.id });
 
   // Use custom hook for metrics data
   const {
@@ -260,60 +253,6 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const handleShopeeManualEntryClose = () => {
     setIsShopeeManualEntryOpen(false);
     refreshData();
-  };
-
-  // Export functionality handlers
-  const handleOpenExportModal = () => {
-    setIsExportModalOpen(true);
-  };
-
-  const handleExportModalClose = () => {
-    setIsExportModalOpen(false);
-  };
-
-  const handleExport = async (config: ExportConfig) => {
-    try {
-      setIsExporting(true);
-      
-      // Fetch data for all selected platforms
-      const allData = new Map();
-      
-      for (const platform of config.platforms) {
-        try {
-          const platformData = await fetchPlatformData(platform, config.startDate, config.endDate);
-          
-          // Convert to format expected by ExportService
-          const exportData = {
-            platform,
-            metrics: platformData.metrics,
-            chartData: platformData.chartData,
-            totalRevenue: platformData.totalRevenue,
-            totalOrders: platformData.totalOrders,
-            totalAdsExpense: platformData.totalAdsExpense,
-            currency: platformData.currency
-          };
-          
-          allData.set(platform, exportData);
-        } catch (error) {
-          console.warn(`Failed to fetch data for platform ${platform}:`, error);
-          // Continue with other platforms even if one fails
-        }
-      }
-      
-      if (allData.size === 0) {
-        alert('No data available for export');
-        return;
-      }
-      
-      // Use ExportService to generate and download the export
-      await ExportService.exportData(config, allData);
-      
-    } catch (error) {
-      console.error('Export failed:', error);
-      alert('Export failed. Please try again.');
-    } finally {
-      setIsExporting(false);
-    }
   };
 
   // Determine if manual entry should be shown
@@ -534,33 +473,6 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         }`}>
           {isAllSG ? 'All (SG)' : isAllMY ? 'All (MY)' : selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} Data
         </span>
-
-        {/* Export and Manual Entry Buttons */}
-        <div className="flex flex-col items-end gap-3">
-          {/* Export Button */}
-          <button 
-            onClick={handleOpenExportModal}
-            disabled={isExporting || isExportDataLoading}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 text-sm"
-          >
-            {isExporting ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
-                <span>Exporting...</span>
-              </>
-            ) : (
-              <>
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Export Data
-              </>
-            )}
-          </button>
-          
-          {/* Manual Entry Buttons */}
-          {showManualEntry()}
-        </div>
       </div>
 
       {/* Controls section - reorganized into two main sections */}
@@ -768,16 +680,6 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
           isOpen={isShopeeManualEntryOpen}
           onClose={handleShopeeManualEntryClose}
           companyId={companyInfo.id}
-        />
-      )}
-
-      {/* Export Modal */}
-      {companyInfo?.id && isExportModalOpen && (
-        <ExportModal
-          isOpen={isExportModalOpen}
-          onClose={handleExportModalClose}
-          availablePlatforms={enabledPlatforms}
-          onExport={handleExport}
         />
       )}
     </div>
