@@ -4,7 +4,7 @@ import { createCard, updateCard } from "../../../shared/components/trello/servic
 import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { CardUpdate } from "../../../shared/components/trello/types/card.types";
-import { getBoardDetails, HARDCODED_BOARD_ID, DIGITAL_ASSETS_BOARD_ID } from "../services/useBoard";
+import { getBoardDetails, getCompanyResourcesTemplatesBoard, getCompanyResourcesAssetsBoard } from "../services/useBoard";
 import { List } from "../types/board";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 import { getUserData } from '../../../services/useUser';
@@ -31,10 +31,7 @@ interface ResourcesProps {
  * @param {Session} session - User session information for API authentication
  * @param {string} [boardId] - Optional ID of the board to load, uses hardcoded ID if not provided
  */
-const Resources: React.FC<ResourcesProps> = ({ 
-  session, 
-  boardId = HARDCODED_BOARD_ID
-}) => {
+const Resources: React.FC<ResourcesProps> = ({ session }) => {
   const [lists, setLists] = useState<List[]>([]);
   const [digitalAssetsList, setDigitalAssetsList] = useState<List[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,14 +40,47 @@ const Resources: React.FC<ResourcesProps> = ({
   const [digitalAssetsError, setDigitalAssetsError] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string>('');
   
+  // Company-specific board management
+  const [templatesBoardId, setTemplatesBoardId] = useState<string | null>(null);
+  const [assetsBoardId, setAssetsBoardId] = useState<string | null>(null);
+  const [isFetchingBoards, setIsFetchingBoards] = useState(true);
+  
   // Add the useUserAndCompanyData hook
   const { companyInfo, isLoading: isLoadingCompany } = useUserAndCompanyData(session.user.id);
 
-  // Extract fetchBoardDetails into a reusable function
+  // Fetch company-specific board IDs when company data is available
+  const fetchCompanyBoards = useCallback(async () => {
+    if (!companyInfo?.id || isLoadingCompany) return;
+    
+    try {
+      setIsFetchingBoards(true);
+      
+      // Fetch both boards in parallel
+      const [templatesResponse, assetsResponse] = await Promise.all([
+        getCompanyResourcesTemplatesBoard(companyInfo.id),
+        getCompanyResourcesAssetsBoard(companyInfo.id)
+      ]);
+      
+      setTemplatesBoardId(templatesResponse.board_id);
+      setAssetsBoardId(assetsResponse.board_id);
+    } catch (err) {
+      console.error('Failed to fetch company resource boards:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load company boards');
+    } finally {
+      setIsFetchingBoards(false);
+    }
+  }, [companyInfo?.id, isLoadingCompany]);
+
+  useEffect(() => {
+    fetchCompanyBoards();
+  }, [fetchCompanyBoards]);
+
+  // Extract fetchBoardDetails into a reusable function for templates board
   const fetchBoardDetails = useCallback(async () => {
+    if (!templatesBoardId) return;
     try {
       setIsLoading(true);
-      const boardDetails = await getBoardDetails(boardId);
+      const boardDetails = await getBoardDetails(templatesBoardId);
       
       // Use attachment_count directly from the API response
       const formattedLists = boardDetails.map((list) => {
@@ -77,13 +107,14 @@ const Resources: React.FC<ResourcesProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [boardId]);
+  }, [templatesBoardId]);
 
   // Fetch digital assets board details
   const fetchDigitalAssets = useCallback(async () => {
+    if (!assetsBoardId) return;
     try {
       setIsLoadingDigitalAssets(true);
-      const boardDetails = await getBoardDetails(DIGITAL_ASSETS_BOARD_ID);
+      const boardDetails = await getBoardDetails(assetsBoardId);
       
       // Use attachment_count directly from the API response
       const formattedLists = boardDetails.map((list) => {
@@ -110,25 +141,29 @@ const Resources: React.FC<ResourcesProps> = ({
     } finally {
       setIsLoadingDigitalAssets(false);
     }
-  }, []);
+  }, [assetsBoardId]);
 
   // Use the fetchBoardDetails function in useEffect
   useEffect(() => {
     fetchBoardDetails();
-    fetchDigitalAssets();
-  }, [fetchBoardDetails, fetchDigitalAssets]);
+  }, [fetchBoardDetails]);
 
   useEffect(() => {
-    const fetchUserRole = async () => {
-      try {
-        const userData = await getUserData(session.user.id);
-        setUserRole(userData.role);
-      } catch (err) {
-        console.error('Failed to fetch user role:', err);
-      }
-    };
-    fetchUserRole();
+    fetchDigitalAssets();
+  }, [fetchDigitalAssets]);
+
+  const fetchUserRole = useCallback(async () => {
+    try {
+      const userData = await getUserData(session.user.id);
+      setUserRole(userData.role);
+    } catch (err) {
+      console.error('Failed to fetch user role:', err);
+    }
   }, [session.user.id]);
+
+  useEffect(() => {
+    fetchUserRole();
+  }, [fetchUserRole]);
 
   // Create a refresh handler for the TrelloBoard - add before conditional returns
   const handleRefresh = useCallback(async () => {
@@ -148,8 +183,16 @@ const Resources: React.FC<ResourcesProps> = ({
     }
   }, [fetchDigitalAssets]);
 
-  if (isLoading || isLoadingCompany) {
+  if (isLoading || isLoadingCompany || isFetchingBoards) {
     return <div>Loading...</div>;
+  }
+  
+  if (!companyInfo?.id) {
+    return <div>Error: Company information not found</div>;
+  }
+  
+  if (!templatesBoardId || !assetsBoardId) {
+    return <div>Error: Unable to load company boards</div>;
   }
 
   if (error) {
@@ -163,7 +206,7 @@ const Resources: React.FC<ResourcesProps> = ({
    */
 
   /**
-   * Updates list position in the backend
+   * Updates list position in the backend for Templates board
    * @param sourceIndex - Original position of the list
    * @param destinationIndex - New position of the list
    */
@@ -183,6 +226,31 @@ const Resources: React.FC<ResourcesProps> = ({
       setLists(newLists);
     } catch (error) {
       console.error('Failed to update list positions:', error);
+      // You might want to add error handling here (e.g., showing a toast notification)
+    }
+  };
+
+  /**
+   * Updates list position in the backend for Digital Assets board
+   * @param sourceIndex - Original position of the list
+   * @param destinationIndex - New position of the list
+   */
+  const handleDigitalAssetListMove = async (sourceIndex: number, destinationIndex: number) => {
+    try {
+      // Create a new array reflecting the new order
+      const newLists = Array.from(digitalAssetsList);
+      const [removed] = newLists.splice(sourceIndex, 1);
+      newLists.splice(destinationIndex, 0, removed);
+
+      // Update all lists with their new positions (1-based index)
+      await Promise.all(
+        newLists.map((list, idx) =>
+          updateList(list.id, { position: idx + 1 })
+        )
+      );
+      setDigitalAssetsList(newLists);
+    } catch (error) {
+      console.error('Failed to update digital asset list positions:', error);
       // You might want to add error handling here (e.g., showing a toast notification)
     }
   };
@@ -226,6 +294,11 @@ const Resources: React.FC<ResourcesProps> = ({
         ...updates,
         list_id: listId,
         color_code: updates.colorCode,
+        // Convert null to undefined - following Projects pattern
+        description: updates.description === null ? undefined : updates.description,
+        start_date: updates.start_date === null ? undefined : updates.start_date,
+        end_date: updates.end_date === null ? undefined : updates.end_date,
+        locked_by: updates.locked_by === null ? undefined : updates.locked_by,
       };
       // Remove the camelCase version to avoid duplicate fields
       delete apiUpdates.colorCode;
@@ -245,7 +318,6 @@ const Resources: React.FC<ResourcesProps> = ({
                     title: updates.title ?? card.title,
                     description: updates.description ?? card.description,
                     color_code: updates.color_code ?? card.color_code,
-                    thumbnail_url: updates.thumbnailUrl ?? card.thumbnail_url,
                     // Handle additional properties not in the Card interface
                     // Store these as custom properties that will be used by components
                     ...(updates.assignees ? { assignees: updates.assignees } : {}),
@@ -281,6 +353,11 @@ const Resources: React.FC<ResourcesProps> = ({
         ...updates,
         list_id: listId,
         color_code: updates.colorCode,
+        // Convert null to undefined - following Projects pattern
+        description: updates.description === null ? undefined : updates.description,
+        start_date: updates.start_date === null ? undefined : updates.start_date,
+        end_date: updates.end_date === null ? undefined : updates.end_date,
+        locked_by: updates.locked_by === null ? undefined : updates.locked_by,
       };
       // Remove the camelCase version to avoid duplicate fields
       delete apiUpdates.colorCode;
@@ -300,7 +377,6 @@ const Resources: React.FC<ResourcesProps> = ({
                     title: updates.title ?? card.title,
                     description: updates.description ?? card.description,
                     color_code: updates.color_code ?? card.color_code,
-                    thumbnail_url: updates.thumbnailUrl ?? card.thumbnail_url,
                     // Handle additional properties not in the Card interface
                     // Store these as custom properties that will be used by components
                     ...(updates.assignees ? { assignees: updates.assignees } : {}),
@@ -411,7 +487,7 @@ const Resources: React.FC<ResourcesProps> = ({
       const newList = await createList({
         name: title,
         position: maxPosition + 1,
-        board_id: HARDCODED_BOARD_ID,
+        board_id: templatesBoardId,
         country: ""
       });
       return newList.id;  // Return the new list ID
@@ -433,7 +509,7 @@ const Resources: React.FC<ResourcesProps> = ({
       const newList = await createList({
         name: title,
         position: maxPosition + 1,
-        board_id: DIGITAL_ASSETS_BOARD_ID,
+        board_id: assetsBoardId,
         country: ""
       });
       return newList.id;  // Return the new list ID
@@ -537,7 +613,7 @@ const Resources: React.FC<ResourcesProps> = ({
                     locked_by: card.locked_by || undefined
                   }))
                 }))}
-                onListMove={handleListMove}
+                onListMove={handleDigitalAssetListMove}
                 onCardMove={handleCardMove}
                 onCardUpdate={handleDigitalAssetCardUpdate}
                 onListTitleChange={handleListTitleChange}
