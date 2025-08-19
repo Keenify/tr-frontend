@@ -24,6 +24,7 @@ import RedmartManualEntryModal from "../manual-entry/RedmartManualEntryModal";
 import FoodpandaManualEntryModal from "../manual-entry/FoodpandaManualEntryModal";
 import ShopeeManualEntryModal from "../manual-entry/ShopeeManualEntryModal";
 import CompileSalesModal, { CompileParams } from "../CompileSalesModal";
+import { PlatformCompilationService } from "../../services/platformCompilationService";
 
 // Import types
 import { ShopeeMetric } from '../../services/useShopeeMetrics';
@@ -276,22 +277,39 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     setIsCompiling(true);
     
     try {
-      // Fetch data based on selected parameters
-      const { 
-        filteredMetrics: compiledData,
-        totalRevenue: compiledRevenue,
-        totalOrders: compiledOrders,
-        totalAdsExpense: compiledAdsExpense
-      } = await fetchMetricsData(params);
+      // Use the backend platform compilation service
+      const compilationRequest = await PlatformCompilationService.createCompilationRequest({
+        platforms: params.platforms,
+        start_date: params.startDate.toISOString().split('T')[0],
+        end_date: params.endDate.toISOString().split('T')[0]
+      }, companyInfo?.name);
 
-      if (params.format === 'csv') {
-        downloadCSV(compiledData, params);
-      } else if (params.format === 'pdf') {
-        downloadPDF(compiledData, params, {
-          totalRevenue: compiledRevenue,
-          totalOrders: compiledOrders,
-          totalAdsExpense: compiledAdsExpense
-        });
+      // Poll for completion
+      let status = await PlatformCompilationService.getCompilationStatus(compilationRequest.request_id);
+      
+      while (status.status === 'PENDING' || status.status === 'PROCESSING') {
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+        status = await PlatformCompilationService.getCompilationStatus(compilationRequest.request_id);
+      }
+
+      if (status.status === 'COMPLETED') {
+        // Download the compilation file
+        const blob = await PlatformCompilationService.downloadCompilation(compilationRequest.request_id);
+        
+        // Create download link
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `platform_compilation_${params.platforms.join('_')}_${params.startDate.toISOString().split('T')[0]}_to_${params.endDate.toISOString().split('T')[0]}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        const formatText = params.format === 'csv' ? 'CSV files' : 'PDF report';
+        alert(`Platform compilation completed successfully! The ZIP file contains ${formatText} and graphs for all selected platforms.`);
+      } else {
+        throw new Error(status.error_message || 'Compilation failed');
       }
       
       // Close modal and refresh data
@@ -299,236 +317,17 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
       refreshData();
     } catch (error) {
       console.error('Error compiling sales data:', error);
-      alert('Failed to compile sales data. Please try again.');
+      alert(`Failed to compile sales data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsCompiling(false);
     }
   };
 
-  const fetchMetricsData = async (params: CompileParams) => {
-    // This simulates fetching data for the selected platforms and date range
-    // In a real implementation, you'd call your API here for each platform
-    
-    // For now, return current filtered data as demo
-    // In production, you would merge data from multiple platforms
-    return {
-      filteredMetrics,
-      totalRevenue,
-      totalOrders,
-      totalAdsExpense
-    };
-  };
+  // Note: CSV and PDF generation is now handled by the backend platform compilation service
+  // The backend generates proper CSV files with platform identification and includes graphs
 
-  const downloadCSV = (data: any[], params: CompileParams) => {
-    if (!data.length) {
-      alert('No data available for the selected criteria');
-      return;
-    }
-
-    // For multiple platforms, use a unified header structure
-    const headers = params.platforms.length > 1 
-      ? ['Date', 'Platform', 'Entity', 'Revenue', 'Orders', 'Ads Expense', 'Currency']
-      : getSinglePlatformHeaders(params.platforms[0]);
-
-    function getSinglePlatformHeaders(platform: Platform): string[] {
-      switch (platform) {
-        case 'shopee':
-          return ['Date', 'Shop ID', 'Revenue', 'Orders', 'Ads Expense', 'Currency'];
-        case 'lazada':
-          return ['Date', 'Account ID', 'Revenue', 'Orders', 'Ads Expense', 'Currency'];
-        case 'shopify':
-          return ['Date', 'Store ID', 'Revenue', 'Orders', 'Currency'];
-        case 'foodpanda':
-          return ['Date', 'Shop ID', 'Revenue', 'Total Orders'];
-        case 'grab':
-          return ['Date', 'Store Name', 'Revenue', 'Completed Orders', 'Cancelled Orders'];
-        default:
-          return ['Date', 'Platform', 'Entity', 'Revenue', 'Orders', 'Currency'];
-      }
-    }
-
-    // Generate CSV content
-    const csvContent = [
-      headers.join(','),
-      ...data.map(row => {
-        if (params.platforms.length > 1) {
-          // Multi-platform unified format
-          const platformType = detectPlatformType(row);
-          return [
-            row.date,
-            platformType,
-            getEntityName(row, platformType),
-            row.revenue || 0,
-            row.total_orders || row.completed_order || 0,
-            row.ads_expense || 0,
-            row.currency || 'SGD'
-          ].join(',');
-        } else {
-          // Single platform specific format
-          const platform = params.platforms[0];
-          return generateSinglePlatformRow(row, platform).join(',');
-        }
-      })
-    ].join('\n');
-
-    function detectPlatformType(row: any): string {
-      if (row.shop_id && row.ads_expense !== undefined) return 'shopee';
-      if (row.account_id) return 'lazada';
-      if (row.store_id) return 'shopify';
-      if (row.shop_id && row.ads_expense === undefined) return 'foodpanda';
-      if (row.store_name) return 'grab';
-      return 'unknown';
-    }
-
-    function getEntityName(row: any, platform: string): string {
-      switch (platform) {
-        case 'shopee': return row.shop_id;
-        case 'lazada': return row.account_id;
-        case 'shopify': return row.store_id;
-        case 'foodpanda': return row.shop_id;
-        case 'grab': return row.store_name;
-        default: return row.shop_id || row.account_id || row.store_id || row.store_name || 'N/A';
-      }
-    }
-
-    function generateSinglePlatformRow(row: any, platform: Platform): (string | number)[] {
-      switch (platform) {
-        case 'shopee':
-          return [row.date, row.shop_id, row.revenue, row.total_orders, row.ads_expense || 0, row.currency || 'SGD'];
-        case 'lazada':
-          return [row.date, row.account_id, row.revenue, row.total_orders, row.ads_expense || 0, row.currency || 'SGD'];
-        case 'shopify':
-          return [row.date, row.store_id, row.revenue, row.total_orders, row.currency || 'SGD'];
-        case 'foodpanda':
-          return [row.date, row.shop_id, row.revenue, row.total_orders];
-        case 'grab':
-          return [row.date, row.store_name, row.revenue, row.completed_order, row.cancelled_order];
-        default:
-          return [row.date, platform, getEntityName(row, detectPlatformType(row)), row.revenue, row.total_orders || row.completed_order, row.currency || 'SGD'];
-      }
-    }
-
-    // Create and download file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    
-    const platformName = params.platforms.length > 1 
-      ? `${params.platforms.length}_platforms`
-      : params.platforms[0];
-    
-    link.setAttribute('download', `${platformName}_sales_${params.startDate.toISOString().split('T')[0]}_to_${params.endDate.toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const downloadPDF = (data: any[], params: CompileParams, summary: { totalRevenue: number, totalOrders: number, totalAdsExpense: number }) => {
-    if (!data.length) {
-      alert('No data available for the selected criteria');
-      return;
-    }
-
-    const platformTitle = params.platforms.length > 1 
-      ? `MULTIPLE PLATFORMS (${params.platforms.join(', ').toUpperCase()})`
-      : params.platforms[0].toUpperCase();
-
-    // Create PDF content as HTML (basic implementation)
-    const htmlContent = `
-      <html>
-        <head>
-          <title>Sales Report - ${platformTitle}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            h1 { color: #333; text-align: center; }
-            .summary { background: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; font-weight: bold; }
-            tr:nth-child(even) { background-color: #f9f9f9; }
-            .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
-          </style>
-        </head>
-        <body>
-          <h1>Sales Report - ${platformTitle}</h1>
-          <div class="summary">
-            <h3>Summary (${params.startDate.toLocaleDateString()} - ${params.endDate.toLocaleDateString()})</h3>
-            <p><strong>Platforms:</strong> ${params.platforms.join(', ')}</p>
-            <p><strong>Total Revenue:</strong> $${summary.totalRevenue.toLocaleString()}</p>
-            <p><strong>Total Orders:</strong> ${summary.totalOrders.toLocaleString()}</p>
-            ${summary.totalAdsExpense > 0 ? `<p><strong>Total Ads Expense:</strong> $${summary.totalAdsExpense.toLocaleString()}</p>` : ''}
-            <p><strong>Total Records:</strong> ${data.length}</p>
-          </div>
-          
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                ${params.platforms.length > 1 ? '<th>Platform</th>' : ''}
-                <th>${params.platforms.length > 1 ? 'Entity' : getEntityColumnName(params.platforms[0])}</th>
-                <th>Revenue</th>
-                <th>Orders</th>
-                ${shouldShowAdsExpense(params.platforms) ? '<th>Ads Expense</th>' : ''}
-                <th>Currency</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${data.map(row => `
-                <tr>
-                  <td>${row.date}</td>
-                  ${params.platforms.length > 1 ? `<td>${detectPlatformType(row)}</td>` : ''}
-                  <td>${row.shop_id || row.account_id || row.store_id || row.store_name}</td>
-                  <td>$${(row.revenue || 0).toLocaleString()}</td>
-                  <td>${(row.total_orders || row.completed_order || 0).toLocaleString()}</td>
-                  ${shouldShowAdsExpense(params.platforms) ? `<td>$${(row.ads_expense || 0).toLocaleString()}</td>` : ''}
-                  <td>${row.currency || 'SGD'}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-          
-          <div class="footer">
-            Generated on ${new Date().toLocaleString()}
-          </div>
-        </body>
-      </html>
-    `;
-
-    function getEntityColumnName(platform: Platform): string {
-      switch (platform) {
-        case 'shopee': return 'Shop ID';
-        case 'lazada': return 'Account ID';
-        case 'shopify': return 'Store ID';
-        case 'grab': return 'Store Name';
-        default: return 'Entity';
-      }
-    }
-
-    function shouldShowAdsExpense(platforms: Platform[]): boolean {
-      return platforms.some(p => ['shopee', 'lazada'].includes(p));
-    }
-
-    // Create and download PDF
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    
-    const platformName = params.platforms.length > 1 
-      ? `${params.platforms.length}_platforms`
-      : params.platforms[0];
-    
-    link.setAttribute('download', `${platformName}_sales_${params.startDate.toISOString().split('T')[0]}_to_${params.endDate.toISOString().split('T')[0]}.html`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    // Note: This creates an HTML file. For true PDF generation, you'd need a library like jsPDF or puppeteer
-    alert('HTML report downloaded. You can print this as PDF from your browser.');
-  };
+  // Note: PDF generation is now handled by the backend platform compilation service
+  // The backend generates proper PDF reports with platform identification and includes graphs
 
   // Determine if manual entry should be shown
   const showManualEntry = () => {
@@ -759,7 +558,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
             className="px-3 py-1 text-sm bg-indigo-500 text-white rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
             onClick={handleCompileSales}
             disabled={isCompiling || isLoading}
-            title="Compile and test platform data"
+                            title="Compile and export data from multiple platforms"
           >
             {isCompiling ? (
               <>
@@ -986,7 +785,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         <CompileSalesModal
           isOpen={isCompileSalesModalOpen}
           onClose={handleCompileSalesModalClose}
-          companyId={companyInfo.id}
+          companyId={Number(companyInfo.id)}
           onCompile={handleCompileExport}
           isCompiling={isCompiling}
         />

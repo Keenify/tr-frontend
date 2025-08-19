@@ -104,7 +104,7 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Platforms * ({selectedPlatforms.length} selected)
+                  Select Platforms * ({selectedPlatforms.length} selected)
                 </label>
                 <button
                   type="button"
