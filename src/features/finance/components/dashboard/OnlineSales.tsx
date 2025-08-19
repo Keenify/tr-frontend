@@ -53,6 +53,8 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const [isShopeeManualEntryOpen, setIsShopeeManualEntryOpen] = useState<boolean>(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [isCompiling, setIsCompiling] = useState<boolean>(false);
+  const [isCompileSalesModalOpen, setIsCompileSalesModalOpen] = useState<boolean>(false);
 
   // Get user and company data
   const { companyInfo, error: userDataError, isLoading: userDataLoading } = 
@@ -253,6 +255,20 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const handleShopeeManualEntryClose = () => {
     setIsShopeeManualEntryOpen(false);
     refreshData();
+  };
+
+  // Handle compile sales data
+  const handleCompileSales = () => {
+    if (!companyInfo?.id) {
+      alert('Company information is required for compiling sales data');
+      return;
+    }
+    setIsCompileSalesModalOpen(true);
+  };
+
+  const handleCompileSalesModalClose = () => {
+    setIsCompileSalesModalOpen(false);
+    setIsCompiling(false);
   };
 
   // Determine if manual entry should be shown
@@ -473,6 +489,29 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         }`}>
           {isAllSG ? 'All (SG)' : isAllMY ? 'All (MY)' : selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} Data
         </span>
+        
+        {/* Action Buttons */}
+        <div className="flex gap-2 items-center">
+          {/* Manual Entry Button */}
+          {showManualEntry()}
+          
+          {/* Compile Sales Button */}
+          <button 
+            className="px-3 py-1 text-sm bg-indigo-500 text-white rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            onClick={handleCompileSales}
+            disabled={isCompiling || isLoading}
+            title="Compile and test platform data"
+          >
+            {isCompiling ? (
+              <>
+                <div className="animate-spin rounded-full h-3 w-3 border-t border-white"></div>
+                Compiling...
+              </>
+            ) : (
+              'Compile Sales'
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Controls section - reorganized into two main sections */}
