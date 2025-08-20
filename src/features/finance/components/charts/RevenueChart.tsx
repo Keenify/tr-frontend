@@ -7,9 +7,11 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
+  ResponsiveContainer,
+  TooltipProps
 } from 'recharts';
 import { Platform } from '../platform/PlatformSelector';
+import { calculateConsistentYAxisDomain, formatYAxisTick, generateYAxisTicks } from './chartUtils';
 
 interface ChartDataPoint {
   date: string;
@@ -25,14 +27,51 @@ interface ChartDataPoint {
 interface RevenueChartProps {
   data: ChartDataPoint[];
   platform: Platform;
-  shopIdentifier?: string;
 }
+
+// Custom tooltip component
+const CustomTooltip: React.FC<TooltipProps<any, any>> = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+        <p className="text-gray-600 font-medium mb-2">{label}</p>
+        {payload.map((entry: any, index: number) => {
+          const value = entry.value;
+          const name = entry.name;
+          const color = entry.color;
+          
+          // Handle null, undefined, or invalid values
+          if (value === null || value === undefined || isNaN(Number(value))) {
+            return (
+              <p key={index} style={{ color: color }} className="text-sm">
+                {name}: $0.00
+              </p>
+            );
+          }
+          
+          // Format the value with dollar symbol
+          const formattedValue = Number(value).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          });
+          
+          return (
+            <p key={index} style={{ color: color }} className="text-sm">
+              {name}: ${formattedValue}
+            </p>
+          );
+        })}
+      </div>
+    );
+  }
+  return null;
+};
 
 /**
  * Enhanced component for rendering the Revenue & Ads Expense line chart
  * Shows revenue and ads expense trends over time with platform-specific styling
  */
-const RevenueChart: React.FC<RevenueChartProps> = ({ data, platform, shopIdentifier }) => {
+const RevenueChart: React.FC<RevenueChartProps> = ({ data, platform }) => {
   // Platform-specific colors and styling
   const getRevenueColor = () => {
     return '#10B981'; // Green - consistent across all platforms
@@ -42,29 +81,13 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ data, platform, shopIdentif
     return '#F97316'; // Orange - consistent across all platforms
   };
 
-  // Custom tooltip formatter
-  const formatTooltipValue = (value: any, name: string) => {
-    if (name === 'revenue' || name === 'adsExpense') {
-      return [`$${Number(value).toLocaleString()}`, name === 'revenue' ? 'Revenue' : 'Ads Expense'];
-    }
-    return [value, name];
-  };
-
   // Custom date formatter for X-axis
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' }).replace('/', '-');
   };
 
-  // Custom date formatter for tooltip
-  const formatTooltipDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
-  };
 
-  // Calculate chart statistics
-  const totalRevenue = data.reduce((sum, item) => sum + (item.revenue || 0), 0);
-  const totalAdsExpense = data.reduce((sum, item) => sum + (item.adsExpense || 0), 0);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
@@ -93,18 +116,12 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ data, platform, shopIdentif
             <YAxis 
               tick={{ fontSize: 12 }}
               axisLine={{ stroke: '#e5e7eb' }}
-              domain={[0, 800]}
-              ticks={[0, 200, 400, 600, 800]}
+              domain={calculateConsistentYAxisDomain(data)}
+              ticks={generateYAxisTicks(calculateConsistentYAxisDomain(data)[1])}
+              tickFormatter={(value) => formatYAxisTick(value, false)}
             />
             <Tooltip 
-              formatter={formatTooltipValue}
-              labelFormatter={formatTooltipDate}
-              contentStyle={{
-                backgroundColor: 'white',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-              }}
+              content={<CustomTooltip />}
             />
             <Legend 
               verticalAlign="bottom" 
@@ -118,7 +135,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ data, platform, shopIdentif
               strokeWidth={3}
               activeDot={{ r: 8, stroke: getRevenueColor(), strokeWidth: 2, fill: 'white' }}
               name="Revenue"
-              dot={{ r: 4, fill: getRevenueColor() }}
+              dot={{ r: 4, fill: 'white', stroke: getRevenueColor(), strokeWidth: 2 }}
             />
             <Line
               type="monotone"
@@ -127,7 +144,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ data, platform, shopIdentif
               strokeWidth={3}
               activeDot={{ r: 8, stroke: getAdsExpenseColor(), strokeWidth: 2, fill: 'white' }}
               name="Ads Expense"
-              dot={{ r: 4, fill: getAdsExpenseColor() }}
+              dot={{ r: 4, fill: 'white', stroke: getAdsExpenseColor(), strokeWidth: 2 }}
             />
           </LineChart>
         </ResponsiveContainer>
