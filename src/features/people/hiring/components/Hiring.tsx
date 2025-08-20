@@ -14,6 +14,7 @@ import PreHireTab from './PreHireTab';
 import InterviewTab from './InterviewTab';
 import PostInterviewTab from './PostInterviewTab';
 import RejectedTab from './RejectedTab';
+import JobsOpening from './JobsOpening';
 
 // Import services
 import useJobApplications from '../services/useJobApplications';
@@ -81,6 +82,7 @@ const Hiring: React.FC<HiringProps> = () => {
           selectedTabClassName="selected-tab"
         >
           <TabList className="react-tabs__tab-list">
+            <Tab className="tab-item">Jobs Opening</Tab>
             <Tab className="tab-item">Finding Talent</Tab>
             <Tab className="tab-item">Interview Guide</Tab>
             <Tab className="tab-item">
@@ -101,6 +103,12 @@ const Hiring: React.FC<HiringProps> = () => {
             </Tab>
           </TabList>
 
+          <TabPanel>
+            <div className="tab-content">
+              <JobsOpening />
+            </div>
+          </TabPanel>
+          
           <TabPanel>
             <div className="tab-content">
               <FindingTalent />
