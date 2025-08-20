@@ -1,8 +1,25 @@
-// Simple service for downloading platform data directly
+// Enhanced service for downloading consolidated platform data
+// Supports combining multiple shop IDs per platform and multiple platforms into single file
 
 export class PlatformCompilationService {
   private static readonly API_BASE_URL = `${import.meta.env.VITE_BACKEND_API_DOMAIN}/platform-compilation`;
 
+  /**
+   * Download consolidated platform data combining all shop IDs and platforms
+   * 
+   * Features:
+   * - Combines all shop IDs from the same platform (e.g., all Shopee shops)
+   * - Consolidates multiple platforms into a single file
+   * - Returns comprehensive view of all sales data across selected platforms
+   * 
+   * @param platforms Array of platform names to include
+   * @param startDate Start date in YYYY-MM-DD format
+   * @param endDate End date in YYYY-MM-DD format  
+   * @param format Output format ('csv' or 'pdf')
+   * @param companyName Optional company name for filtering
+   * @param companyId Optional company ID for filtering
+   * @returns Promise with blob data and metadata
+   */
   static async downloadPlatformData(
     platforms: string[],
     startDate: string,
@@ -34,16 +51,23 @@ export class PlatformCompilationService {
       platforms,
       start_date: startDate,
       end_date: endDate,
+      consolidate_all_shops: true,
+      consolidate_all_platforms: true,
       ...(companyId && { company_id: companyId })
     };
 
     const url = `${this.API_BASE_URL}/download?${params.toString()}`;
     
-    // Debug logging to verify request format
-    console.log('API Request Details:');
+    // Debug logging to verify consolidated request format
+    console.log('Consolidated Platform Data API Request:');
     console.log('URL:', url);
     console.log('Method: POST');
     console.log('Headers:', { 'Content-Type': 'application/json' });
+    console.log('Platforms:', platforms);
+    console.log('Consolidation flags:', { 
+      consolidate_all_shops: true, 
+      consolidate_all_platforms: true 
+    });
     console.log('Body:', JSON.stringify(requestBody, null, 2));
 
     const response = await fetch(url, {
