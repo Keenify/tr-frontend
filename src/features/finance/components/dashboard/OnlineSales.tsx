@@ -278,7 +278,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     
     try {
       // Download platform data directly
-      const blob = await PlatformCompilationService.downloadPlatformData(
+      const { blob, contentType, filename } = await PlatformCompilationService.downloadPlatformData(
         params.platforms,
         params.startDate.toISOString().split('T')[0],
         params.endDate.toISOString().split('T')[0],
@@ -286,18 +286,39 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         companyInfo?.name
       );
       
-      // Create download link
+      // Create download link for both CSV and PDF
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `platform_data_${params.platforms.join('_')}_${params.startDate.toISOString().split('T')[0]}_to_${params.endDate.toISOString().split('T')[0]}.${params.format === 'csv' ? 'zip' : 'pdf'}`;
+      
+      // Use filename from backend if available, otherwise generate one
+      if (filename) {
+        link.download = filename;
+      } else {
+        // Fallback filename generation
+        const dateRange = `${params.startDate.toISOString().split('T')[0]}_to_${params.endDate.toISOString().split('T')[0]}`;
+        const platformNames = params.platforms.join('_');
+        
+        // Generate appropriate filename based on format
+        if (params.format === 'csv') {
+          link.download = `shop_by_shop_sales_${platformNames}_${dateRange}.csv`;
+        } else {
+          link.download = `sales_report_${platformNames}_${dateRange}.pdf`;
+        }
+      }
+      
+      // Trigger download
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      const formatText = params.format === 'csv' ? 'CSV files' : 'PDF report';
-      alert(`Platform data downloaded successfully! The file contains ${formatText} and graphs for all selected platforms.`);
+      // Determine file type for user message
+      let fileTypeText = params.format === 'csv' ? 'CSV file' : 'PDF report';
+      // Note: The backend now returns individual CSV/PDF files directly, not ZIP files
+      // The ZIP file generation is only used internally for processing
+      
+      alert(`Platform data downloaded successfully! The ${fileTypeText} has been saved to your downloads folder.`);
       
       // Close modal and refresh data
       setIsCompileSalesModalOpen(false);
