@@ -386,11 +386,16 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
       }, 100);
 
       // Determine file type for user message
-      const fileTypeText = params.format === 'csv' ? 'CSV file' : 'PDF report';
+      const fileTypeText = params.format === 'csv' ? 'Filtered CSV file' : 'Filtered PDF report';
       const platformText = params.platforms.length === 1 ? params.platforms[0] : `${params.platforms.length} platforms`;
       
-      // Success message with more details
-      const successMessage = `${fileTypeText} downloaded successfully! Platforms: ${params.platforms.join(', ')} | Date range: ${params.startDate.toISOString().split('T')[0]} to ${params.endDate.toISOString().split('T')[0]} | File size: ${(blob.size / 1024).toFixed(1)} KB`;
+      // Success message with filtered and consolidated data details
+      const successMessage = `${fileTypeText} downloaded successfully!\n` +
+        `📊 Data: date, ads_expense, revenue, total_orders, new_buyer_count, existing_buyer_count\n` +
+        `📈 Graphs embedded directly in file (no separate folders)\n` +
+        `🏪 Platforms: ${params.platforms.join(', ')}\n` +
+        `📅 Date range: ${params.startDate.toISOString().split('T')[0]} to ${params.endDate.toISOString().split('T')[0]}\n` +
+        `💾 File size: ${(blob.size / 1024).toFixed(1)} KB`;
       
       // Show success toast instead of alert
       setToast({
@@ -694,15 +699,15 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
             className="px-3 py-1 text-sm bg-indigo-500 text-white rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
             onClick={handleCompileSales}
             disabled={isCompiling || isLoading}
-                            title="Compile and export data from multiple platforms"
+            title="Consolidate and export data from all shops across multiple platforms"
           >
             {isCompiling ? (
               <>
                 <div className="animate-spin rounded-full h-3 w-3 border-t border-white"></div>
-                Compiling...
+                Consolidating...
               </>
             ) : (
-              'Compile Sales'
+              'Consolidate All Data'
             )}
           </button>
         </div>

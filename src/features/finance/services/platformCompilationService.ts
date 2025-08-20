@@ -5,12 +5,14 @@ export class PlatformCompilationService {
   private static readonly API_BASE_URL = `${import.meta.env.VITE_BACKEND_API_DOMAIN}/platform-compilation`;
 
   /**
-   * Download consolidated platform data combining all shop IDs and platforms
+   * Download consolidated platform data with filtered fields and embedded graphs
    * 
    * Features:
    * - Combines all shop IDs from the same platform (e.g., all Shopee shops)
    * - Consolidates multiple platforms into a single file
-   * - Returns comprehensive view of all sales data across selected platforms
+   * - Filters to only include: date, ads_expense, revenue, total_orders, new_buyer_count, existing_buyer_count
+   * - Embeds graphs directly in both CSV and PDF files (no separate folders)
+   * - Excludes JSON files and separate graph directories
    * 
    * @param platforms Array of platform names to include
    * @param startDate Start date in YYYY-MM-DD format
@@ -53,17 +55,34 @@ export class PlatformCompilationService {
       end_date: endDate,
       consolidate_all_shops: true,
       consolidate_all_platforms: true,
+      include_only_fields: [
+        'date',
+        'ads_expense', 
+        'revenue',
+        'total_orders',
+        'new_buyer_count',
+        'existing_buyer_count'
+      ],
+      include_graphs_in_files: true,
+      exclude_json: true,
+      exclude_separate_graph_folder: true,
       ...(companyId && { company_id: companyId })
     };
 
     const url = `${this.API_BASE_URL}/download?${params.toString()}`;
     
-    // Debug logging to verify consolidated request format
-    console.log('Consolidated Platform Data API Request:');
+    // Debug logging to verify filtered and consolidated request format
+    console.log('Filtered Consolidated Platform Data API Request:');
     console.log('URL:', url);
     console.log('Method: POST');
     console.log('Headers:', { 'Content-Type': 'application/json' });
     console.log('Platforms:', platforms);
+    console.log('Data filtering:', { 
+      include_only_fields: ['date', 'ads_expense', 'revenue', 'total_orders', 'new_buyer_count', 'existing_buyer_count'],
+      include_graphs_in_files: true,
+      exclude_json: true,
+      exclude_separate_graph_folder: true
+    });
     console.log('Consolidation flags:', { 
       consolidate_all_shops: true, 
       consolidate_all_platforms: true 

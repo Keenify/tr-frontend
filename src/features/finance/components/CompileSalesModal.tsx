@@ -87,7 +87,7 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Compile Sales Data</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Compile Consolidated Sales Data</h2>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 focus:outline-none"
@@ -97,6 +97,26 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
+          </div>
+
+          {/* Data Filtering Info */}
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-blue-800">
+                  Filtered & Consolidated Data Export
+                </h3>
+                <div className="mt-2 text-sm text-blue-700">
+                  <p><strong>Data Fields:</strong> date, ads_expense, revenue, total_orders, new_buyer_count, existing_buyer_count</p>
+                  <p><strong>Features:</strong> Combines all shops per platform + includes graphs directly in files (no separate folders)</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -215,10 +235,10 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
                 {isCompiling ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-t border-white"></div>
-                    Compiling...
+                    Consolidating...
                   </>
                 ) : (
-                  'Compile & Export'
+                  'Consolidate & Export'
                 )}
               </button>
             </div>
