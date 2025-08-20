@@ -273,7 +273,8 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     setIsCompiling(false);
   };
 
-  const handleCompileExport = async (params: CompileParams) => {
+  // Enhanced download function with better error handling and user feedback
+  const handleDownloadPlatformData = async (params: CompileParams) => {
     setIsCompiling(true);
     
     try {
@@ -363,6 +364,27 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
       setIsCompiling(false);
     }
   };
+
+  // Enhanced chart data processing for better visualization
+  const getEnhancedChartData = () => {
+    if (!chartData || chartData.length === 0) return [];
+    
+    return chartData.map(item => ({
+      ...item,
+      // Ensure proper formatting for charts
+      revenue: Number(item.revenue) || 0,
+      adsExpense: Number(item.adsExpense) || 0,
+      totalOrders: Number(item.totalOrders) || 0,
+      newBuyers: Number(item.newBuyers) || 0,
+      existingBuyers: Number(item.existingBuyers) || 0,
+      // Add calculated metrics
+      totalBuyers: (Number(item.newBuyers) || 0) + (Number(item.existingBuyers) || 0),
+      revenuePerOrder: (Number(item.revenue) || 0) / (Number(item.totalOrders) || 1),
+      roas: (Number(item.revenue) || 0) / (Number(item.adsExpense) || 1)
+    }));
+  };
+
+
 
   // Note: CSV and PDF generation is now handled by the backend platform compilation service
   // The backend generates proper CSV files with platform identification and includes graphs
@@ -734,10 +756,18 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {/* Revenue Chart */}
-              <RevenueChart data={chartData} platform={selectedPlatform} />
+              <RevenueChart 
+                data={getEnhancedChartData()} 
+                platform={selectedPlatform} 
+                shopIdentifier={isAllSG || isAllMY ? includedStores.join(', ') : shopName}
+              />
 
               {/* Orders Chart */}
-              <OrdersChart data={chartData} platform={selectedPlatform} />
+              <OrdersChart 
+                data={getEnhancedChartData()} 
+                platform={selectedPlatform} 
+                shopIdentifier={isAllSG || isAllMY ? includedStores.join(', ') : shopName}
+              />
             </div>
 
             {/* Data table */}
@@ -827,7 +857,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
           isOpen={isCompileSalesModalOpen}
           onClose={handleCompileSalesModalClose}
           companyId={Number(companyInfo.id)}
-          onCompile={handleCompileExport}
+          onCompile={handleDownloadPlatformData}
           isCompiling={isCompiling}
         />
       )}
