@@ -277,19 +277,30 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     setIsCompiling(true);
     
     try {
+      // Show loading message to user
+      console.log('Starting download for platforms:', params.platforms, 'format:', params.format);
+      
       // Download platform data directly
       const { blob, contentType, filename } = await PlatformCompilationService.downloadPlatformData(
         params.platforms,
         params.startDate.toISOString().split('T')[0],
         params.endDate.toISOString().split('T')[0],
         params.format,
-        companyInfo?.name
+        companyInfo?.name,
+        companyInfo?.id ? Number(companyInfo.id) : undefined
       );
+      
+      console.log('Download completed successfully:', {
+        blobSize: blob.size,
+        contentType,
+        filename
+      });
       
       // Create download link for both CSV and PDF
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
+      link.style.display = 'none';
       
       // Use filename from backend if available, otherwise generate one
       if (filename) {
@@ -298,34 +309,56 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         // Fallback filename generation
         const dateRange = `${params.startDate.toISOString().split('T')[0]}_to_${params.endDate.toISOString().split('T')[0]}`;
         const platformNames = params.platforms.join('_');
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
         
-        // Generate appropriate filename based on format
+        // Generate appropriate filename based on format with timestamp to ensure uniqueness
         if (params.format === 'csv') {
-          link.download = `shop_by_shop_sales_${platformNames}_${dateRange}.csv`;
+          link.download = `sales_data_${platformNames}_${dateRange}_${timestamp}.csv`;
         } else {
-          link.download = `sales_report_${platformNames}_${dateRange}.pdf`;
+          link.download = `sales_report_${platformNames}_${dateRange}_${timestamp}.pdf`;
         }
       }
+      
+      console.log('Triggering download with filename:', link.download);
       
       // Trigger download
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      
+      // Clean up after a short delay to ensure download starts
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
 
       // Determine file type for user message
-      let fileTypeText = params.format === 'csv' ? 'CSV file' : 'PDF report';
-      // Note: The backend now returns individual CSV/PDF files directly, not ZIP files
-      // The ZIP file generation is only used internally for processing
+      const fileTypeText = params.format === 'csv' ? 'CSV file' : 'PDF report';
+      const platformText = params.platforms.length === 1 ? params.platforms[0] : `${params.platforms.length} platforms`;
       
-      alert(`Platform data downloaded successfully! The ${fileTypeText} has been saved to your downloads folder.`);
+      // Success message with more details
+      alert(`${fileTypeText} downloaded successfully!\n\nPlatforms: ${params.platforms.join(', ')}\nDate range: ${params.startDate.toISOString().split('T')[0]} to ${params.endDate.toISOString().split('T')[0]}\nFile size: ${(blob.size / 1024).toFixed(1)} KB\n\nThe file has been saved to your downloads folder.`);
       
       // Close modal and refresh data
       setIsCompileSalesModalOpen(false);
       refreshData();
     } catch (error) {
       console.error('Error downloading platform data:', error);
-      alert(`Failed to download platform data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      let errorMessage = 'Unknown error occurred';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      // Provide more helpful error messages
+      if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+        errorMessage = 'Network error: Please check your internet connection and try again.';
+      } else if (errorMessage.includes('500') || errorMessage.includes('Internal Server Error')) {
+        errorMessage = 'Server error: Please try again later or contact support if the problem persists.';
+      } else if (errorMessage.includes('404')) {
+        errorMessage = 'Service not found: The download service may be temporarily unavailable.';
+      }
+      
+      alert(`Failed to download platform data:\n\n${errorMessage}\n\nPlease check the browser console for more details.`);
     } finally {
       setIsCompiling(false);
     }

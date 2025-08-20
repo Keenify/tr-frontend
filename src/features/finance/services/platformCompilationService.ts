@@ -8,8 +8,22 @@ export class PlatformCompilationService {
     startDate: string,
     endDate: string,
     format: 'csv' | 'pdf',
-    companyName?: string
+    companyName?: string,
+    companyId?: number
   ): Promise<{ blob: Blob; contentType: string; filename?: string }> {
+    // Validate input parameters
+    if (!platforms || platforms.length === 0) {
+      throw new Error('At least one platform must be selected');
+    }
+    
+    if (!startDate || !endDate) {
+      throw new Error('Start date and end date are required');
+    }
+    
+    if (new Date(startDate) > new Date(endDate)) {
+      throw new Error('Start date cannot be after end date');
+    }
+    
     const params = new URLSearchParams();
     if (companyName) {
       params.append('company_name', companyName);
@@ -19,7 +33,8 @@ export class PlatformCompilationService {
     const requestBody = {
       platforms,
       start_date: startDate,
-      end_date: endDate
+      end_date: endDate,
+      ...(companyId && { company_id: companyId })
     };
 
     const url = `${this.API_BASE_URL}/download?${params.toString()}`;
@@ -51,9 +66,9 @@ export class PlatformCompilationService {
       console.error('Error response:', errorText);
       try {
         const error = JSON.parse(errorText);
-        throw new Error(error.detail || 'Failed to download platform data');
+        throw new Error(error.detail || error.message || 'Failed to download platform data');
       } catch {
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
       }
     }
 
@@ -74,6 +89,26 @@ export class PlatformCompilationService {
     const blob = await response.blob();
     console.log('Blob size:', blob.size, 'bytes');
     console.log('Blob type:', blob.type);
+    
+    // Validate that we actually received data
+    if (blob.size === 0) {
+      throw new Error('Received empty file. No data available for the selected date range and platforms.');
+    }
+    
+    // Additional validation for content type
+    const expectedContentTypes = {
+      csv: ['text/csv', 'application/csv', 'text/plain'],
+      pdf: ['application/pdf']
+    };
+    
+    const isValidContentType = expectedContentTypes[format].some(type => 
+      contentType.toLowerCase().includes(type.toLowerCase())
+    );
+    
+    if (!isValidContentType) {
+      console.warn(`Unexpected content type: ${contentType} for format: ${format}`);
+      // Don't throw error, just log warning as some servers might return different content types
+    }
     
     return { blob, contentType, filename };
   }
