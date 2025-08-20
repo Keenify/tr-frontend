@@ -60,6 +60,19 @@ export class PlatformCompilationService {
     for (const [key, value] of response.headers.entries()) {
       console.log(`  ${key}: ${value}`);
     }
+    
+    // Log response body for debugging (only for non-binary responses)
+    if (response.headers.get('content-type')?.includes('application/json')) {
+      const responseText = await response.text();
+      console.log('Response Body:', responseText);
+      // Recreate response for blob processing
+      const newResponse = new Response(responseText, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers
+      });
+      response = newResponse;
+    }
 
     if (!response.ok) {
       const errorText = await response.text();

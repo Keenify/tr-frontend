@@ -33,6 +33,50 @@ import { ShopifyMetric } from '../../services/useShopifyMetrics';
 import { FoodpandaMetric } from '../../services/useFoodpandaMetrics';
 import { GrabMetric } from '../../services/useGrabMetrics';
 
+// Add toast notification component
+const ToastNotification = ({ message, type, isVisible, onClose }: {
+  message: string;
+  type: 'success' | 'error';
+  isVisible: boolean;
+  onClose: () => void;
+}) => {
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 5000); // Auto close after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, onClose]);
+
+  if (!isVisible) return null;
+
+  const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+  const icon = type === 'success' ? '✓' : '✕';
+
+  return (
+    <div className={`fixed top-4 right-4 z-50 max-w-md w-full ${bgColor} text-white p-4 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
+      <div className="flex items-start justify-between">
+        <div className="flex items-start">
+          <span className="text-xl mr-3 mt-0.5">{icon}</span>
+          <div className="text-sm flex-1">
+            <div className="font-semibold">{type === 'success' ? 'Success!' : 'Error!'}</div>
+            <div className="mt-1 whitespace-pre-line">{message}</div>
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-white hover:text-gray-200 focus:outline-none ml-3 flex-shrink-0"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+};
+
 interface OnlineSalesProps {
   session: Session;
 }
@@ -57,6 +101,15 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const [isExporting, setIsExporting] = useState<boolean>(false);
   const [isCompiling, setIsCompiling] = useState<boolean>(false);
   const [isCompileSalesModalOpen, setIsCompileSalesModalOpen] = useState<boolean>(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error';
+    isVisible: boolean;
+  }>({
+    message: '',
+    type: 'success',
+    isVisible: false
+  });
 
   // Get user and company data
   const { companyInfo, error: userDataError, isLoading: userDataLoading } = 
@@ -337,7 +390,14 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
       const platformText = params.platforms.length === 1 ? params.platforms[0] : `${params.platforms.length} platforms`;
       
       // Success message with more details
-      alert(`${fileTypeText} downloaded successfully!\n\nPlatforms: ${params.platforms.join(', ')}\nDate range: ${params.startDate.toISOString().split('T')[0]} to ${params.endDate.toISOString().split('T')[0]}\nFile size: ${(blob.size / 1024).toFixed(1)} KB\n\nThe file has been saved to your downloads folder.`);
+      const successMessage = `${fileTypeText} downloaded successfully! Platforms: ${params.platforms.join(', ')} | Date range: ${params.startDate.toISOString().split('T')[0]} to ${params.endDate.toISOString().split('T')[0]} | File size: ${(blob.size / 1024).toFixed(1)} KB`;
+      
+      // Show success toast instead of alert
+      setToast({
+        message: successMessage,
+        type: 'success',
+        isVisible: true
+      });
       
       // Close modal and refresh data
       setIsCompileSalesModalOpen(false);
@@ -359,7 +419,12 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         errorMessage = 'Service not found: The download service may be temporarily unavailable.';
       }
       
-      alert(`Failed to download platform data:\n\n${errorMessage}\n\nPlease check the browser console for more details.`);
+      // Show error toast instead of alert
+      setToast({
+        message: `Failed to download platform data: ${errorMessage}`,
+        type: 'error',
+        isVisible: true
+      });
     } finally {
       setIsCompiling(false);
     }
@@ -592,6 +657,14 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
 
   return (
     <div className="flex flex-col w-full p-4">
+      {/* Toast Notification */}
+      <ToastNotification
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
+      
       <h1 className="text-2xl font-bold text-gray-800 mb-4">
         Online Sales Dashboard
       </h1>
