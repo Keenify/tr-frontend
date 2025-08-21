@@ -15,7 +15,7 @@ import FloatingMusicPlayer from "./shared/components/FloatingMusicPlayer";
 import { UserDataProvider } from "./shared/contexts/UserDataContext";
 
 // Not Found
-const NotFound = lazy(() => import("./shared/components/NotFound"));
+const NotFound = lazy(() => import("./shared/components/NotFound")); 
 
 // Dashboard Layout
 import { DashboardLayout } from "./features/dashboard/components/DashboardLayout";
