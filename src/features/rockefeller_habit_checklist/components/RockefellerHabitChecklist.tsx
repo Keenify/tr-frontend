@@ -32,16 +32,18 @@ const RockefellerHabitChecklist: React.FC<Props> = ({ session, onUpdate }) => {
     shouldLoadHabits ? companyId : ''
   );
 
-  const handleItemToggle = useCallback((habitId: string) => (itemId: number) => {
-    toggleSubItem(habitId, itemId);
+  const handleItemToggle = useCallback((habitId: string) => async (itemId: number) => {
+    const result = await toggleSubItem(habitId, itemId);
     
-    // Call onUpdate callback if provided
-    if (onUpdate) {
+    // Call onUpdate callback if provided and toggle was successful
+    if (onUpdate && result.success) {
       const habit = habits.find(h => h.habit_id === habitId);
       if (habit) {
         onUpdate(habitId, habit.progress || 0);
       }
     }
+    
+    return result;
   }, [toggleSubItem, onUpdate, habits]);
 
   if (userDataLoading || loading || !shouldLoadHabits) {

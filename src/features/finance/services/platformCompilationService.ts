@@ -89,7 +89,7 @@ export class PlatformCompilationService {
     });
     console.log('Body:', JSON.stringify(requestBody, null, 2));
 
-    const response = await fetch(url, {
+    let response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
