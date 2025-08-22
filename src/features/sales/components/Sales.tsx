@@ -1,16 +1,13 @@
 import { Session } from "@supabase/supabase-js";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { createCard, updateCard } from "../../../shared/components/trello/services/useCard";
 import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { CardUpdate } from "../../../shared/components/trello/types/card.types";
-import { getBoardDetails } from "../services/useBoard";
+import { getBoardDetails, getCompanySalesBoard } from "../services/useBoard";
 import { List } from "../types/board";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 import { getUserData } from '../../../services/useUser';
-
-// Define the sales board ID
-const SALES_BOARD_ID = '0b9d94dd-1796-43f3-8021-5e22f923ef8a';
 
 /**
  * Sales component displays a Trello-style board for managing sales pipeline
@@ -23,46 +20,85 @@ const Sales = ({ session }: { session: Session }) => {
   const [error, setError] = useState<string | null>(null);
   const { companyInfo, isLoading: isLoadingCompany } = useUserAndCompanyData(session.user.id);
   const [userRole, setUserRole] = useState<string>('');
+  
+  // Company-specific board management
+  const [boardId, setBoardId] = useState<string | null>(null);
+  const [isFetchingBoard, setIsFetchingBoard] = useState(true);
+
+  // Fetch company-specific board ID when company data is available
+  const fetchCompanyBoard = useCallback(async () => {
+    if (!companyInfo?.id || isLoadingCompany) return;
+    
+    try {
+      setIsFetchingBoard(true);
+      const boardResponse = await getCompanySalesBoard(companyInfo.id);
+      setBoardId(boardResponse.board_id);
+      
+    } catch (err) {
+      console.error('Failed to fetch company sales board:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load company board');
+    } finally {
+      setIsFetchingBoard(false);
+    }
+  }, [companyInfo?.id, isLoadingCompany]);
 
   useEffect(() => {
-    const fetchBoardDetails = async () => {
-      try {
-        setIsLoading(true);
-        const boardDetails = await getBoardDetails(SALES_BOARD_ID);
-        const transformedLists = boardDetails.map(list => ({
-          ...list,
-          title: list.name,
-          cards: list.cards.map(card => ({
-            ...card,
-            thumbnailUrl: card.thumbnail_url,
-            colorCode: card.color_code,
-          })),
-        }));
-        setLists(transformedLists);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load board details');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    fetchCompanyBoard();
+  }, [fetchCompanyBoard]);
 
+  // Fetch board details when boardId is available
+  const fetchBoardDetails = useCallback(async () => {
+    if (!boardId) return;
+    
+    try {
+      setIsLoading(true);
+      const boardDetails = await getBoardDetails(boardId);
+      const transformedLists = boardDetails.map(list => ({
+        ...list,
+        title: list.name,
+        cards: list.cards.map(card => ({
+          ...card,
+          thumbnailUrl: card.thumbnail_url,
+          colorCode: card.color_code,
+          // Use the attachment_count from the API
+          attachmentCount: card.attachment_count || 0
+        })),
+      }));
+      setLists(transformedLists);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load board details');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [boardId]);
+
+  useEffect(() => {
     fetchBoardDetails();
-  }, []);
+  }, [fetchBoardDetails]);
 
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      try {
-        const userData = await getUserData(session.user.id);
-        setUserRole(userData.role);
-      } catch (err) {
-        console.error('Failed to fetch user role:', err);
-      }
-    };
-    fetchUserRole();
+  const fetchUserRole = useCallback(async () => {
+    try {
+      const userData = await getUserData(session.user.id);
+      setUserRole(userData.role);
+    } catch (err) {
+      console.error('Failed to fetch user role:', err);
+    }
   }, [session.user.id]);
 
-  if (isLoading || isLoadingCompany) {
+  useEffect(() => {
+    fetchUserRole();
+  }, [fetchUserRole]);
+
+  if (isLoading || isLoadingCompany || isFetchingBoard) {
     return <div>Loading...</div>;
+  }
+  
+  if (!companyInfo?.id) {
+    return <div>Error: Company information not found</div>;
+  }
+  
+  if (!boardId) {
+    return <div>Error: Unable to load company board</div>;
   }
 
   if (error) {
@@ -111,6 +147,11 @@ const Sales = ({ session }: { session: Session }) => {
         ...updates,
         list_id: listId,
         color_code: updates.colorCode,
+        // Convert null to undefined - following Projects pattern
+        description: updates.description === null ? undefined : updates.description,
+        start_date: updates.start_date === null ? undefined : updates.start_date,
+        end_date: updates.end_date === null ? undefined : updates.end_date,
+        locked_by: updates.locked_by === null ? undefined : updates.locked_by,
       };
       delete apiUpdates.colorCode;
       await updateCard(cardId, apiUpdates);
@@ -155,13 +196,15 @@ const Sales = ({ session }: { session: Session }) => {
   const handleListAdd = async (title: string, country: string = '') => {
     try {
       if (!title) throw new Error('List title is required');
+      if (!boardId) throw new Error('Board ID not available');
+      
       const maxPosition = lists.reduce((max, list) => 
         Math.max(max, list.position || 0), -1);
       const newList = await createList({
         name: title,
         position: maxPosition + 1,
         country: country,
-        board_id: SALES_BOARD_ID
+        board_id: boardId
       });
       return newList.id;
     } catch (error) {
@@ -187,7 +230,17 @@ const Sales = ({ session }: { session: Session }) => {
         )}
       </div>
       <TrelloBoard 
-        initialLists={lists}
+        initialLists={lists.map(list => ({
+          ...list,
+          cards: list.cards.map(card => ({
+            ...card,
+            // Convert null values to undefined for compatibility
+            due_date: card.due_date || undefined,
+            start_date: card.start_date || undefined,
+            end_date: card.end_date || undefined,
+            locked_by: card.locked_by || undefined
+          }))
+        }))}
         onListMove={handleListMove}
         onCardMove={handleCardMove}
         onCardUpdate={handleCardUpdate}

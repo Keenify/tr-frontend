@@ -23,6 +23,8 @@ import GrabManualEntryModal from "../manual-entry/GrabManualEntryModal";
 import RedmartManualEntryModal from "../manual-entry/RedmartManualEntryModal";
 import FoodpandaManualEntryModal from "../manual-entry/FoodpandaManualEntryModal";
 import ShopeeManualEntryModal from "../manual-entry/ShopeeManualEntryModal";
+import CompileSalesModal, { CompileParams } from "../CompileSalesModal";
+import { PlatformCompilationService } from "../../services/platformCompilationService";
 
 // Import types
 import { ShopeeMetric } from '../../services/useShopeeMetrics';
@@ -30,6 +32,50 @@ import { LazadaMetric } from '../../services/useLazadaMetrics';
 import { ShopifyMetric } from '../../services/useShopifyMetrics';
 import { FoodpandaMetric } from '../../services/useFoodpandaMetrics';
 import { GrabMetric } from '../../services/useGrabMetrics';
+
+// Add toast notification component
+const ToastNotification = ({ message, type, isVisible, onClose }: {
+  message: string;
+  type: 'success' | 'error';
+  isVisible: boolean;
+  onClose: () => void;
+}) => {
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 5000); // Auto close after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, onClose]);
+
+  if (!isVisible) return null;
+
+  const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+  const icon = type === 'success' ? '✓' : '✕';
+
+  return (
+    <div className={`fixed top-4 right-4 z-50 max-w-md w-full ${bgColor} text-white p-4 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
+      <div className="flex items-start justify-between">
+        <div className="flex items-start">
+          <span className="text-xl mr-3 mt-0.5">{icon}</span>
+          <div className="text-sm flex-1">
+            <div className="font-semibold">{type === 'success' ? 'Success!' : 'Error!'}</div>
+            <div className="mt-1 whitespace-pre-line">{message}</div>
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-white hover:text-gray-200 focus:outline-none ml-3 flex-shrink-0"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+};
 
 interface OnlineSalesProps {
   session: Session;
@@ -51,6 +97,19 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const [isRedmartManualEntryOpen, setIsRedmartManualEntryOpen] = useState<boolean>(false);
   const [isFoodpandaManualEntryOpen, setIsFoodpandaManualEntryOpen] = useState<boolean>(false);
   const [isShopeeManualEntryOpen, setIsShopeeManualEntryOpen] = useState<boolean>(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [isCompiling, setIsCompiling] = useState<boolean>(false);
+  const [isCompileSalesModalOpen, setIsCompileSalesModalOpen] = useState<boolean>(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error';
+    isVisible: boolean;
+  }>({
+    message: '',
+    type: 'success',
+    isVisible: false
+  });
 
   // Get user and company data
   const { companyInfo, error: userDataError, isLoading: userDataLoading } = 
@@ -253,6 +312,156 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     refreshData();
   };
 
+  // Handle compile sales data
+  const handleCompileSales = () => {
+    if (!companyInfo?.id) {
+      alert('Company information is required for compiling sales data');
+      return;
+    }
+    setIsCompileSalesModalOpen(true);
+  };
+
+  const handleCompileSalesModalClose = () => {
+    setIsCompileSalesModalOpen(false);
+    setIsCompiling(false);
+  };
+
+  // Enhanced download function with better error handling and user feedback
+  const handleDownloadPlatformData = async (params: CompileParams) => {
+    setIsCompiling(true);
+    
+    try {
+      // Show loading message to user
+      console.log('Starting download for platforms:', params.platforms, 'format:', params.format);
+      
+      // Download platform data directly
+      const { blob, contentType, filename } = await PlatformCompilationService.downloadPlatformData(
+        params.platforms,
+        params.startDate.toISOString().split('T')[0],
+        params.endDate.toISOString().split('T')[0],
+        params.format,
+        companyInfo?.name,
+        companyInfo?.id ? Number(companyInfo.id) : undefined
+      );
+      
+      console.log('Download completed successfully:', {
+        blobSize: blob.size,
+        contentType,
+        filename
+      });
+      
+      // Create download link for both CSV and PDF
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.style.display = 'none';
+      
+      // Use filename from backend if available, otherwise generate one
+      if (filename) {
+        link.download = filename;
+      } else {
+        // Fallback filename generation
+        const dateRange = `${params.startDate.toISOString().split('T')[0]}_to_${params.endDate.toISOString().split('T')[0]}`;
+        const platformNames = params.platforms.join('_');
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        
+        // Generate appropriate filename based on format with timestamp to ensure uniqueness
+        if (params.format === 'csv') {
+          link.download = `sales_data_${platformNames}_${dateRange}_${timestamp}.csv`;
+        } else {
+          link.download = `sales_report_${platformNames}_${dateRange}_${timestamp}.pdf`;
+        }
+      }
+      
+      console.log('Triggering download with filename:', link.download);
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up after a short delay to ensure download starts
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
+
+      // Determine file type for user message
+      const fileTypeText = params.format === 'csv' ? 'Filtered CSV file' : 'Filtered PDF report';
+      const platformText = params.platforms.length === 1 ? params.platforms[0] : `${params.platforms.length} platforms`;
+      
+      // Success message with filtered and consolidated data details
+      const successMessage = `${fileTypeText} downloaded successfully!\n` +
+        `📊 Data: date, ads_expense, revenue, total_orders, new_buyer_count, existing_buyer_count\n` +
+        `📈 Graphs embedded directly in file (no separate folders)\n` +
+        `🏪 Platforms: ${params.platforms.join(', ')}\n` +
+        `📅 Date range: ${params.startDate.toISOString().split('T')[0]} to ${params.endDate.toISOString().split('T')[0]}\n` +
+        `💾 File size: ${(blob.size / 1024).toFixed(1)} KB`;
+      
+      // Show success toast instead of alert
+      setToast({
+        message: successMessage,
+        type: 'success',
+        isVisible: true
+      });
+      
+      // Close modal and refresh data
+      setIsCompileSalesModalOpen(false);
+      refreshData();
+    } catch (error) {
+      console.error('Error downloading platform data:', error);
+      
+      let errorMessage = 'Unknown error occurred';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      // Provide more helpful error messages
+      if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+        errorMessage = 'Network error: Please check your internet connection and try again.';
+      } else if (errorMessage.includes('500') || errorMessage.includes('Internal Server Error')) {
+        errorMessage = 'Server error: Please try again later or contact support if the problem persists.';
+      } else if (errorMessage.includes('404')) {
+        errorMessage = 'Service not found: The download service may be temporarily unavailable.';
+      }
+      
+      // Show error toast instead of alert
+      setToast({
+        message: `Failed to download platform data: ${errorMessage}`,
+        type: 'error',
+        isVisible: true
+      });
+    } finally {
+      setIsCompiling(false);
+    }
+  };
+
+  // Enhanced chart data processing for better visualization
+  const getEnhancedChartData = () => {
+    if (!chartData || chartData.length === 0) return [];
+    
+    return chartData.map(item => ({
+      ...item,
+      // Ensure proper formatting for charts
+      revenue: Number(item.revenue) || 0,
+      adsExpense: Number(item.adsExpense) || 0,
+      totalOrders: Number(item.totalOrders) || 0,
+      newBuyers: Number(item.newBuyers) || 0,
+      existingBuyers: Number(item.existingBuyers) || 0,
+      // Add calculated metrics
+      totalBuyers: (Number(item.newBuyers) || 0) + (Number(item.existingBuyers) || 0),
+      revenuePerOrder: (Number(item.revenue) || 0) / (Number(item.totalOrders) || 1),
+      roas: (Number(item.revenue) || 0) / (Number(item.adsExpense) || 1)
+    }));
+  };
+
+
+
+  // Note: CSV and PDF generation is now handled by the backend platform compilation service
+  // The backend generates proper CSV files with platform identification and includes graphs
+
+  // Note: PDF generation is now handled by the backend platform compilation service
+  // The backend generates proper PDF reports with platform identification and includes graphs
+
   // Determine if manual entry should be shown
   const showManualEntry = () => {
     if (selectedPlatform === 'shopee') {
@@ -453,6 +662,14 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
 
   return (
     <div className="flex flex-col w-full p-4">
+      {/* Toast Notification */}
+      <ToastNotification
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
+      
       <h1 className="text-2xl font-bold text-gray-800 mb-4">
         Online Sales Dashboard
       </h1>
@@ -471,9 +688,29 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         }`}>
           {isAllSG ? 'All (SG)' : isAllMY ? 'All (MY)' : selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} Data
         </span>
-
-        {/* Manual Entry Buttons */}
-        {showManualEntry()}
+        
+        {/* Action Buttons */}
+        <div className="flex gap-2 items-center">
+          {/* Manual Entry Button */}
+          {showManualEntry()}
+          
+          {/* Compile Sales Button */}
+          <button 
+            className="px-3 py-1 text-sm bg-indigo-500 text-white rounded-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            onClick={handleCompileSales}
+            disabled={isCompiling || isLoading}
+            title="Consolidate and export data from all shops across multiple platforms"
+          >
+            {isCompiling ? (
+              <>
+                <div className="animate-spin rounded-full h-3 w-3 border-t border-white"></div>
+                Consolidating...
+              </>
+            ) : (
+              'Consolidate All Data'
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Controls section - reorganized into two main sections */}
@@ -597,10 +834,18 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {/* Revenue Chart */}
-              <RevenueChart data={chartData} platform={selectedPlatform} />
+              <RevenueChart 
+                data={getEnhancedChartData()} 
+                platform={selectedPlatform} 
+                shopIdentifier={isAllSG || isAllMY ? includedStores.join(', ') : shopName}
+              />
 
               {/* Orders Chart */}
-              <OrdersChart data={chartData} platform={selectedPlatform} />
+              <OrdersChart 
+                data={getEnhancedChartData()} 
+                platform={selectedPlatform} 
+                shopIdentifier={isAllSG || isAllMY ? includedStores.join(', ') : shopName}
+              />
             </div>
 
             {/* Data table */}
@@ -681,6 +926,17 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
           isOpen={isShopeeManualEntryOpen}
           onClose={handleShopeeManualEntryClose}
           companyId={companyInfo.id}
+        />
+      )}
+
+      {/* Compile Sales Modal */}
+      {companyInfo?.id && isCompileSalesModalOpen && (
+        <CompileSalesModal
+          isOpen={isCompileSalesModalOpen}
+          onClose={handleCompileSalesModalClose}
+          companyId={Number(companyInfo.id)}
+          onCompile={handleDownloadPlatformData}
+          isCompiling={isCompiling}
         />
       )}
     </div>

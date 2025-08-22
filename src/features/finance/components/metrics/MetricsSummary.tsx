@@ -8,7 +8,9 @@ interface MetricsSummaryProps {
 }
 
 /**
- * Component to display summary metrics cards for revenue, orders, and ad expenses
+ * Simplified component to display basic summary metrics cards
+ * Shows only revenue, orders, and ads expense on the dashboard
+ * Detailed statistics are available in CSV/PDF downloads
  */
 const MetricsSummary: React.FC<MetricsSummaryProps> = ({
   totalRevenue,
@@ -18,17 +20,28 @@ const MetricsSummary: React.FC<MetricsSummaryProps> = ({
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <div className="bg-white p-4 rounded-lg shadow">
-        <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
-        <p className="text-2xl font-semibold text-gray-800">{currency} {totalRevenue.toFixed(2)}</p>
+      {/* Revenue Card */}
+      <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+        <h3 className="text-sm font-medium text-gray-500 mb-1">Total Revenue</h3>
+        <p className="text-xl font-bold text-black">
+          {currency} {totalRevenue.toFixed(2)}
+        </p>
       </div>
-      <div className="bg-white p-4 rounded-lg shadow">
-        <h3 className="text-sm font-medium text-gray-500">Total Orders</h3>
-        <p className="text-2xl font-semibold text-gray-800">{totalOrders}</p>
+
+      {/* Orders Card */}
+      <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+        <h3 className="text-sm font-medium text-gray-500 mb-1">Total Orders</h3>
+        <p className="text-xl font-bold text-black">
+          {totalOrders}
+        </p>
       </div>
-      <div className="bg-white p-4 rounded-lg shadow">
-        <h3 className="text-sm font-medium text-gray-500">Total Ads Expense</h3>
-        <p className="text-2xl font-semibold text-gray-800">{currency} {totalAdsExpense.toFixed(2)}</p>
+
+      {/* Ads Expense Card */}
+      <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+        <h3 className="text-sm font-medium text-gray-500 mb-1">Total Ads Expense</h3>
+        <p className="text-xl font-bold text-black">
+          {currency} {totalAdsExpense.toFixed(2)}
+        </p>
       </div>
     </div>
   );

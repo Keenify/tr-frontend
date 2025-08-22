@@ -8,6 +8,11 @@ export interface Card {
     due_date: string | null;
     created_at: string;
     thumbnail_url?: string;
+    start_date?: string;
+    end_date?: string;
+    is_locked?: boolean;
+    locked_by?: string;
+    attachment_count?: number;
 }
 
 export interface List {
