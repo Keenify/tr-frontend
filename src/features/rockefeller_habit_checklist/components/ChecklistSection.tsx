@@ -16,12 +16,26 @@ const ChecklistSection: React.FC<ChecklistSectionProps> = ({
   
   const [previousProgress, setPreviousProgress] = useState(progressPercentage);
   const [isProgressAnimating, setIsProgressAnimating] = useState(false);
+  const [showProgressBoom, setShowProgressBoom] = useState(false);
+  const [progressChangeType, setProgressChangeType] = useState<'increase' | 'decrease' | null>(null);
 
   useEffect(() => {
     if (previousProgress !== progressPercentage) {
       setIsProgressAnimating(true);
+      
+      // Determine if progress increased or decreased
+      const changeType = progressPercentage > previousProgress ? 'increase' : 'decrease';
+      setProgressChangeType(changeType);
+      
+      // Show boom animation
+      setShowProgressBoom(true);
+      
       setPreviousProgress(progressPercentage);
       
+      // Hide boom animation
+      setTimeout(() => setShowProgressBoom(false), 600);
+      
+      // Stop progress animation
       setTimeout(() => setIsProgressAnimating(false), 1000);
     }
   }, [progressPercentage, previousProgress]);
@@ -32,13 +46,18 @@ const ChecklistSection: React.FC<ChecklistSectionProps> = ({
         <span className="section-number">{habitNumber}.</span>
         <span className="section-title">
           {habitName}
-          <span className={`progress-indicator ${isProgressAnimating ? 'progress-changing' : ''}`}>
+          <span className={`progress-indicator ${isProgressAnimating ? 'progress-changing' : ''}`} style={{ position: 'relative' }}>
             {progressText}
             <span className="progress-percentage" style={{
               color: progressPercentage === 100 ? '#10B981' : progressPercentage >= 50 ? '#F59E0B' : '#EF4444'
             }}>
               {Math.round(progressPercentage)}%
             </span>
+            {showProgressBoom && (
+              <span className={`progress-boom ${progressChangeType === 'increase' ? 'boom-success' : 'boom-decrease'}`}>
+                {progressChangeType === 'increase' ? '💥🎉' : '📉'}
+              </span>
+            )}
           </span>
         </span>
       </div>
