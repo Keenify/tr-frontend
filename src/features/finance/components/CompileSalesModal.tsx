@@ -7,9 +7,10 @@ import { Platform } from "./platform/PlatformSelector";
 interface CompileSalesModalProps {
   isOpen: boolean;
   onClose: () => void;
-  companyId: number;
+  companyId: string;
   onCompile: (params: CompileParams) => Promise<void>;
   isCompiling: boolean;
+  isLoading?: boolean;
 }
 
 export interface CompileParams {
@@ -24,7 +25,8 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
   onClose,
   companyId,
   onCompile,
-  isCompiling
+  isCompiling,
+  isLoading = false
 }) => {
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(["shopee"]);
   const [startDate, setStartDate] = useState<Date>(subDays(new Date(), 7));
@@ -99,27 +101,14 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
             </button>
           </div>
 
-          {/* Data Filtering Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-blue-800">
-                  Filtered & Consolidated Data Export
-                </h3>
-                <div className="mt-2 text-sm text-blue-700">
-                  <p><strong>Data Fields:</strong> date, ads_expense, revenue, total_orders, new_buyer_count, existing_buyer_count</p>
-                  <p><strong>Features:</strong> Combines all shops per platform + includes graphs directly in files (no separate folders)</p>
-                </div>
-              </div>
-            </div>
-          </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {isLoading && (
+              <div className="text-center py-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
+                <p className="text-sm text-gray-600">Loading company information...</p>
+              </div>
+            )}
             {/* Platform Selection */}
             <div>
               <div className="flex justify-between items-center mb-2">
@@ -130,7 +119,7 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
                   type="button"
                   onClick={handleSelectAll}
                   className="text-sm text-indigo-600 hover:text-indigo-800 focus:outline-none"
-                  disabled={isCompiling}
+                  disabled={isCompiling || isLoading}
                 >
                   {selectedPlatforms.length === platforms.length ? 'Deselect All' : 'Select All'}
                 </button>
@@ -143,7 +132,7 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
                       checked={selectedPlatforms.includes(platform.value)}
                       onChange={() => handlePlatformToggle(platform.value)}
                       className="mr-3 focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
-                      disabled={isCompiling}
+                      disabled={isCompiling || isLoading}
                     />
                     <span className={`text-sm ${platform.color} font-medium`}>
                       {platform.label}
@@ -167,7 +156,7 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
                     onChange={(e) => setStartDate(new Date(e.target.value))}
                     className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     required
-                    disabled={isCompiling}
+                    disabled={isCompiling || isLoading}
                   />
                 </div>
                 <div>
@@ -178,13 +167,13 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
                     onChange={(e) => setEndDate(new Date(e.target.value))}
                     className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     required
-                    disabled={isCompiling}
+                    disabled={isCompiling || isLoading}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Export Format */}
+            {/* Export Format - Only CSV supported */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Export Format *
@@ -198,11 +187,11 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
                     checked={format === 'csv'}
                     onChange={(e) => setFormat(e.target.value as 'csv' | 'pdf')}
                     className="mr-2"
-                    disabled={isCompiling}
+                    disabled={isCompiling || isLoading}
                   />
                   <span className="text-sm text-gray-700">CSV</span>
                 </label>
-                <label className="flex items-center">
+                <label className="flex items-center opacity-50">
                   <input
                     type="radio"
                     name="format"
@@ -210,9 +199,9 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
                     checked={format === 'pdf'}
                     onChange={(e) => setFormat(e.target.value as 'csv' | 'pdf')}
                     className="mr-2"
-                    disabled={isCompiling}
+                    disabled={true}
                   />
-                  <span className="text-sm text-gray-700">PDF</span>
+                  <span className="text-sm text-gray-500">PDF (Coming Soon)</span>
                 </label>
               </div>
             </div>
@@ -223,14 +212,14 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
                 type="button"
                 onClick={onClose}
                 className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition focus:outline-none focus:ring-2 focus:ring-gray-500"
-                disabled={isCompiling}
+                disabled={isCompiling || isLoading}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 className="flex-1 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md transition focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                disabled={isCompiling}
+                disabled={isCompiling || isLoading}
               >
                 {isCompiling ? (
                   <>

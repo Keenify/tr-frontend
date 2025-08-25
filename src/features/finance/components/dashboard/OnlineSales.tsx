@@ -331,6 +331,25 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
     setIsCompiling(true);
     
     try {
+      // Debug company info
+      console.log('Company Info:', companyInfo);
+      console.log('Company ID:', companyInfo?.id);
+      console.log('User Data Loading:', userDataLoading);
+      console.log('User Data Error:', userDataError);
+      
+      // Check if company info is available
+      if (userDataLoading) {
+        throw new Error('Company information is still loading. Please wait a moment and try again.');
+      }
+      
+      if (userDataError) {
+        throw new Error(`Error loading company information: ${userDataError.message}`);
+      }
+      
+      if (!companyInfo?.id) {
+        throw new Error('Company information is not available. Please ensure you are logged in and have access to a company.');
+      }
+      
       // Show loading message to user
       console.log('Starting download for platforms:', params.platforms, 'format:', params.format);
       
@@ -341,7 +360,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         params.endDate.toISOString().split('T')[0],
         params.format,
         companyInfo?.name,
-        companyInfo?.id ? Number(companyInfo.id) : undefined
+        companyInfo?.id || undefined
       );
       
       console.log('Download completed successfully:', {
@@ -930,13 +949,14 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
       )}
 
       {/* Compile Sales Modal */}
-      {companyInfo?.id && isCompileSalesModalOpen && (
+      {isCompileSalesModalOpen && (
         <CompileSalesModal
           isOpen={isCompileSalesModalOpen}
           onClose={handleCompileSalesModalClose}
-          companyId={Number(companyInfo.id)}
+          companyId={companyInfo?.id || ''}
           onCompile={handleDownloadPlatformData}
           isCompiling={isCompiling}
+          isLoading={userDataLoading}
         />
       )}
     </div>

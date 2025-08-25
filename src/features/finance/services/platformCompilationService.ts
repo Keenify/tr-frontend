@@ -2,7 +2,7 @@
 // Supports combining multiple shop IDs per platform and multiple platforms into single file
 
 export class PlatformCompilationService {
-  private static readonly API_BASE_URL = `${import.meta.env.VITE_BACKEND_API_DOMAIN}/platform-compilation`;
+  private static readonly API_BASE_URL = `${import.meta.env.VITE_BACKEND_API_DOMAIN}/data-export`;
 
   /**
    * Download consolidated platform data with filtered fields and embedded graphs
@@ -28,7 +28,7 @@ export class PlatformCompilationService {
     endDate: string,
     format: 'csv' | 'pdf',
     companyName?: string,
-    companyId?: number
+    companyId?: string
   ): Promise<{ blob: Blob; contentType: string; filename?: string }> {
     // Validate input parameters
     if (!platforms || platforms.length === 0) {
@@ -43,58 +43,41 @@ export class PlatformCompilationService {
       throw new Error('Start date cannot be after end date');
     }
     
-    const params = new URLSearchParams();
-    if (companyName) {
-      params.append('company_name', companyName);
+    if (!companyId) {
+      throw new Error('Company ID is required for the new API endpoint. Please ensure you are logged in and have access to a company.');
     }
-    params.append('format', format);
 
-    const requestBody = {
-      platforms,
-      start_date: startDate,
-      end_date: endDate,
-      consolidate_all_shops: true,
-      consolidate_all_platforms: true,
-      include_only_fields: [
-        'date',
-        'ads_expense', 
-        'revenue',
-        'total_orders',
-        'new_buyer_count',
-        'existing_buyer_count'
-      ],
-      include_graphs_in_files: true,
-      exclude_json: true,
-      exclude_separate_graph_folder: true,
-      ...(companyId && { company_id: companyId })
-    };
+    // Validate that companyId is a valid UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(companyId)) {
+      throw new Error(`Invalid Company ID format: ${companyId}. Expected UUID format.`);
+    }
 
-    const url = `${this.API_BASE_URL}/download?${params.toString()}`;
+    // Build URL for the new endpoint structure
+    const url = `${this.API_BASE_URL}/company/${companyId}/online-sales-report`;
     
-    // Debug logging to verify filtered and consolidated request format
-    console.log('Filtered Consolidated Platform Data API Request:');
+    // Build query parameters for the new endpoint
+    const params = new URLSearchParams();
+    params.append('platforms', platforms.join(','));
+    params.append('start_date', startDate);
+    params.append('end_date', endDate);
+    params.append('format_type', format);
+    
+    // Debug logging for the new endpoint
+    console.log('Online Sales Report API Request:');
     console.log('URL:', url);
     console.log('Method: POST');
-    console.log('Headers:', { 'Content-Type': 'application/json' });
+    console.log('Query Parameters:', params.toString());
     console.log('Platforms:', platforms);
-    console.log('Data filtering:', { 
-      include_only_fields: ['date', 'ads_expense', 'revenue', 'total_orders', 'new_buyer_count', 'existing_buyer_count'],
-      include_graphs_in_files: true,
-      exclude_json: true,
-      exclude_separate_graph_folder: true
-    });
-    console.log('Consolidation flags:', { 
-      consolidate_all_shops: true, 
-      consolidate_all_platforms: true 
-    });
-    console.log('Body:', JSON.stringify(requestBody, null, 2));
+    console.log('Date Range:', `${startDate} to ${endDate}`);
+    console.log('Format:', format);
 
-    const response = await fetch(url, {
+    let response = await fetch(`${url}?${params.toString()}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(requestBody),
+      // No body needed for this endpoint - all data is in query parameters
     });
 
     // Debug response
