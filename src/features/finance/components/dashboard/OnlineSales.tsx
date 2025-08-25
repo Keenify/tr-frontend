@@ -36,7 +36,7 @@ import { GrabMetric } from '../../services/useGrabMetrics';
 // Add toast notification component
 const ToastNotification = ({ message, type, isVisible, onClose }: {
   message: string;
-  type: 'success' | 'error';
+  type: 'success' | 'error' | 'info';
   isVisible: boolean;
   onClose: () => void;
 }) => {
@@ -51,8 +51,8 @@ const ToastNotification = ({ message, type, isVisible, onClose }: {
 
   if (!isVisible) return null;
 
-  const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
-  const icon = type === 'success' ? '✓' : '✕';
+  const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+  const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ️';
 
   return (
     <div className={`fixed top-4 right-4 z-50 max-w-md w-full ${bgColor} text-white p-4 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
@@ -60,7 +60,7 @@ const ToastNotification = ({ message, type, isVisible, onClose }: {
         <div className="flex items-start">
           <span className="text-xl mr-3 mt-0.5">{icon}</span>
           <div className="text-sm flex-1">
-            <div className="font-semibold">{type === 'success' ? 'Success!' : 'Error!'}</div>
+            <div className="font-semibold">{type === 'success' ? 'Success!' : type === 'error' ? 'Error!' : 'Info!'}</div>
             <div className="mt-1 whitespace-pre-line">{message}</div>
           </div>
         </div>
@@ -103,7 +103,7 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const [isCompileSalesModalOpen, setIsCompileSalesModalOpen] = useState<boolean>(false);
   const [toast, setToast] = useState<{
     message: string;
-    type: 'success' | 'error';
+    type: 'success' | 'error' | 'info';
     isVisible: boolean;
   }>({
     message: '',
@@ -330,6 +330,13 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
   const handleDownloadPlatformData = async (params: CompileParams) => {
     setIsCompiling(true);
     
+    // Show loading toast
+    setToast({
+      message: `🔄 Preparing ${params.format.toUpperCase()} export for ${params.platforms.length > 1 ? 'multiple platforms' : params.platforms[0]}...`,
+      type: 'info',
+      isVisible: true
+    });
+    
     try {
       // Debug company info
       console.log('Company Info:', companyInfo);
@@ -353,15 +360,32 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
       // Show loading message to user
       console.log('Starting download for platforms:', params.platforms, 'format:', params.format);
       
-      // Download platform data directly
-      const { blob, contentType, filename } = await PlatformCompilationService.downloadPlatformData(
-        params.platforms,
-        params.startDate.toISOString().split('T')[0],
-        params.endDate.toISOString().split('T')[0],
-        params.format,
-        companyInfo?.name,
-        companyInfo?.id || undefined
-      );
+      // Choose the appropriate download method based on number of platforms
+      let downloadResult;
+      if (params.platforms.length > 1) {
+        // Use multi-platform export for multiple platforms
+        console.log('Using multi-platform export for multiple platforms');
+        downloadResult = await PlatformCompilationService.downloadMultiPlatformData(
+          params.platforms,
+          params.startDate.toISOString().split('T')[0],
+          params.endDate.toISOString().split('T')[0],
+          params.format,
+          companyInfo.id
+        );
+      } else {
+        // Use single platform export for one platform
+        console.log('Using single platform export for one platform');
+        downloadResult = await PlatformCompilationService.downloadPlatformData(
+          params.platforms,
+          params.startDate.toISOString().split('T')[0],
+          params.endDate.toISOString().split('T')[0],
+          params.format,
+          companyInfo?.name,
+          companyInfo?.id || undefined
+        );
+      }
+      
+      const { blob, contentType, filename } = downloadResult;
       
       console.log('Download completed successfully:', {
         blobSize: blob.size,
@@ -405,18 +429,16 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
       }, 100);
 
       // Determine file type for user message
-      const fileTypeText = params.format === 'csv' ? 'Filtered CSV file' : 'Filtered PDF report';
+      const fileTypeText = params.format === 'csv' ? 'CSV file' : 'PDF report';
       const platformText = params.platforms.length === 1 ? params.platforms[0] : `${params.platforms.length} platforms`;
       
-      // Success message with filtered and consolidated data details
-      const successMessage = `${fileTypeText} downloaded successfully!\n` +
-        `📊 Data: date, ads_expense, revenue, total_orders, new_buyer_count, existing_buyer_count\n` +
-        `📈 Graphs embedded directly in file (no separate folders)\n` +
+      // Success message with essential information
+      const successMessage = `✅ ${fileTypeText} downloaded successfully!\n\n` +
+        `📊 Data: revenue, orders, ads expense, buyer counts\n` +
         `🏪 Platforms: ${params.platforms.join(', ')}\n` +
-        `📅 Date range: ${params.startDate.toISOString().split('T')[0]} to ${params.endDate.toISOString().split('T')[0]}\n` +
-        `💾 File size: ${(blob.size / 1024).toFixed(1)} KB`;
+        `📅 Period: ${params.startDate.toISOString().split('T')[0]} to ${params.endDate.toISOString().split('T')[0]}`;
       
-      // Show success toast instead of alert
+      // Show success toast
       setToast({
         message: successMessage,
         type: 'success',
@@ -434,18 +456,58 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
         errorMessage = error.message;
       }
       
-      // Provide more helpful error messages
+      // Provide more specific and helpful error messages
       if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
         errorMessage = 'Network error: Please check your internet connection and try again.';
       } else if (errorMessage.includes('500') || errorMessage.includes('Internal Server Error')) {
         errorMessage = 'Server error: Please try again later or contact support if the problem persists.';
-      } else if (errorMessage.includes('404')) {
-        errorMessage = 'Service not found: The download service may be temporarily unavailable.';
+      } else if (errorMessage.includes('404') || errorMessage.includes('Not Found')) {
+        errorMessage = 'Service not found: The download service may be temporarily unavailable. Please try again.';
+      } else if (errorMessage.includes('400') || errorMessage.includes('Bad Request')) {
+        errorMessage = 'Invalid request: Please check your date range and platform selection.';
+      } else if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+        errorMessage = 'Authentication error: Please log in again and try.';
+      } else if (errorMessage.includes('403') || errorMessage.includes('Forbidden')) {
+        errorMessage = 'Access denied: You may not have permission to export this data.';
+      } else if (errorMessage.includes('No data found') || errorMessage.includes('No valid platforms')) {
+        errorMessage = 'No data available: Please select a different date range or platforms.';
+      } else if (errorMessage.includes('Invalid Company ID')) {
+        errorMessage = 'Company information error: Please refresh the page and try again.';
+      } else if (errorMessage.includes('Start date cannot be after end date')) {
+        errorMessage = 'Date range error: Please ensure the start date is before the end date.';
+      } else if (errorMessage.includes('Unsupported platform')) {
+        errorMessage = 'Platform error: One or more selected platforms are not supported.';
+      } else if (errorMessage.includes('Format must be')) {
+        errorMessage = 'Format error: Please select either CSV or PDF format.';
+      } else if (errorMessage.includes('Company information is not available')) {
+        errorMessage = 'Company error: Please ensure you are logged in and have access to a company.';
+      } else if (errorMessage.includes('Company information is still loading')) {
+        errorMessage = 'Loading: Please wait a moment for company information to load, then try again.';
+      } else if (errorMessage.includes('Company information is required')) {
+        errorMessage = 'Company required: Please ensure you have selected a company.';
+      } else if (errorMessage.includes('At least one platform must be selected')) {
+        errorMessage = 'Platform selection required: Please select at least one platform to export.';
+      } else if (errorMessage.includes('Start date and end date are required')) {
+        errorMessage = 'Date selection required: Please select both start and end dates.';
+      } else if (errorMessage.includes('No data available for the requested date range')) {
+        errorMessage = 'No data found: Please try a different date range or check if data exists for the selected platforms.';
+      } else if (errorMessage.includes('No valid platforms found')) {
+        errorMessage = 'Platform validation failed: Please check your platform selection and try again.';
+      } else if (errorMessage.includes('Failed to generate export file')) {
+        errorMessage = 'Export generation failed: Please try again or contact support if the problem persists.';
+      } else if (errorMessage.includes('Error generating export')) {
+        errorMessage = 'Export error: Please try again or contact support if the problem persists.';
+      } else if (errorMessage.includes('Invalid platform_ids format')) {
+        errorMessage = 'Platform configuration error: Please refresh the page and try again.';
+      } else if (errorMessage.includes('Requested date range is outside available data range')) {
+        errorMessage = 'Date range unavailable: Please select a date range within the available data period.';
+      } else if (errorMessage.includes('No data available for')) {
+        errorMessage = 'No data available: Please check if data exists for the selected platforms and date range.';
       }
       
-      // Show error toast instead of alert
+      // Show error toast with improved message
       setToast({
-        message: `Failed to download platform data: ${errorMessage}`,
+        message: `Export failed: ${errorMessage}`,
         type: 'error',
         isVisible: true
       });

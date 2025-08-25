@@ -173,7 +173,7 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
               </div>
             </div>
 
-            {/* Export Format - Only CSV supported */}
+            {/* Export Format */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Export Format *
@@ -191,7 +191,7 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
                   />
                   <span className="text-sm text-gray-700">CSV</span>
                 </label>
-                <label className="flex items-center opacity-50">
+                <label className="flex items-center">
                   <input
                     type="radio"
                     name="format"
@@ -199,9 +199,9 @@ const CompileSalesModal: React.FC<CompileSalesModalProps> = ({
                     checked={format === 'pdf'}
                     onChange={(e) => setFormat(e.target.value as 'csv' | 'pdf')}
                     className="mr-2"
-                    disabled={true}
+                    disabled={isCompiling || isLoading}
                   />
-                  <span className="text-sm text-gray-500">PDF (Coming Soon)</span>
+                  <span className="text-sm text-gray-700">PDF</span>
                 </label>
               </div>
             </div>
