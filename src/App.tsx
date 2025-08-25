@@ -116,7 +116,13 @@ const App: React.FC = () => {
             {/* Redirect user ID route to vivid_vision */}
             <Route
               path="/:userId"
-              element={<Navigate to={`/${session?.user.id}/vivid_vision`} replace />}
+              element={
+                session ? (
+                  <Navigate to={`/${session.user.id}/vivid_vision`} replace />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
             />
 
             {/* Public Routes */}
@@ -135,8 +141,7 @@ const App: React.FC = () => {
             <Route path="/job-preview" element={<JobPreview />} />
 
             {/* Protected Routes */}
-            {session && (
-              <>
+            <>
                 <Route
                   path="/:userId/directory"
                   element={
@@ -887,7 +892,6 @@ const App: React.FC = () => {
                   }
                 />
               </>
-            )}
 
             {/* Catch-all for anything else */}
             <Route path="*" element={<NotFound />} />
