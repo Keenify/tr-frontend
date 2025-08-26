@@ -34,6 +34,7 @@ import Quotation from "./features/quotation/components/Quotation";
 import Product from "./features/product/components/Product";
 import Resources from "./features/resources/components/Resources";
 import Projects from "./features/projects/components/Projects";
+import CreativeManagement from "./features/projects/components/CreativeManagement";
 import Supplier from "./features/people/supplier/components/Supplier";
 import Client from "./features/people/client/components/Client";
 import Hiring from "./features/people/hiring/components/Hiring";
@@ -331,6 +332,25 @@ const App: React.FC = () => {
                           onSubTabChange={() => {}}
                         >
                           <Projects session={session} />
+                        </DashboardLayout>
+                      }
+                    />
+                  }
+                />
+                <Route
+                  path="/:userId/creative-management"
+                  element={
+                    <ProtectedRoute
+                      session={session}
+                      element={
+                        <DashboardLayout
+                          session={session}
+                          signOut={signOut}
+                          activeTab="projects"
+                          activeSubTab="creative-management"
+                          onSubTabChange={() => {}}
+                        >
+                          <CreativeManagement session={session} />
                         </DashboardLayout>
                       }
                     />

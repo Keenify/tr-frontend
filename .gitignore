@@ -45,3 +45,8 @@ supabase/.env
 
 # Ignore macOS system files
 .DS_Store
+
+# Claude Code configuration files
+.mcp.json
+CLAUDE.md
+claude.local.md
