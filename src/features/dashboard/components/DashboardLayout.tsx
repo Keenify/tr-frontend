@@ -114,7 +114,8 @@ const navigationConfig = [
     icon: IconClipboardList,
     isExpandable: true, // Assuming projects might become expandable
     subTabs: [
-      { id: "projects", label: "Projects", shortForm: "Pj", icon: ThumbsUp }, // If this is the only one, isExpandable could be false for the parent
+      { id: "projects", label: "Projects", shortForm: "Pj", icon: ThumbsUp },
+      { id: "creative-management", label: "Creative Management", shortForm: "CM", icon: ThumbsUp },
     ],
   },
   {

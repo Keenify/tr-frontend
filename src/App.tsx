@@ -34,6 +34,7 @@ import Quotation from "./features/quotation/components/Quotation";
 import Product from "./features/product/components/Product";
 import Resources from "./features/resources/components/Resources";
 import Projects from "./features/projects/components/Projects";
+import CreativeManagement from "./features/projects/components/CreativeManagement";
 import Supplier from "./features/people/supplier/components/Supplier";
 import Client from "./features/people/client/components/Client";
 import Hiring from "./features/people/hiring/components/Hiring";
@@ -116,7 +117,13 @@ const App: React.FC = () => {
             {/* Redirect user ID route to vivid_vision */}
             <Route
               path="/:userId"
-              element={<Navigate to={`/${session?.user.id}/vivid_vision`} replace />}
+              element={
+                session ? (
+                  <Navigate to={`/${session.user.id}/vivid_vision`} replace />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
             />
 
             {/* Public Routes */}
@@ -135,8 +142,7 @@ const App: React.FC = () => {
             <Route path="/job-preview" element={<JobPreview />} />
 
             {/* Protected Routes */}
-            {session && (
-              <>
+            <>
                 <Route
                   path="/:userId/directory"
                   element={
@@ -326,6 +332,25 @@ const App: React.FC = () => {
                           onSubTabChange={() => {}}
                         >
                           <Projects session={session} />
+                        </DashboardLayout>
+                      }
+                    />
+                  }
+                />
+                <Route
+                  path="/:userId/creative-management"
+                  element={
+                    <ProtectedRoute
+                      session={session}
+                      element={
+                        <DashboardLayout
+                          session={session}
+                          signOut={signOut}
+                          activeTab="projects"
+                          activeSubTab="creative-management"
+                          onSubTabChange={() => {}}
+                        >
+                          <CreativeManagement session={session} />
                         </DashboardLayout>
                       }
                     />
@@ -887,7 +912,6 @@ const App: React.FC = () => {
                   }
                 />
               </>
-            )}
 
             {/* Catch-all for anything else */}
             <Route path="*" element={<NotFound />} />
