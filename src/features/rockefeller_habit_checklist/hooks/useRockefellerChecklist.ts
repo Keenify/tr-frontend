@@ -82,14 +82,19 @@ export const useRockefellerChecklist = (userId: string, companyId: string) => {
   }, [userId, companyId, initializeHabitsFromTemplate, loadLastEditorInfo]);
 
   // Toggle a sub-item
-  const toggleSubItem = useCallback(async (habitId: string, subItemId: number) => {
+  const toggleSubItem = useCallback(async (habitId: string, subItemId: number): Promise<{ success: boolean; newState?: boolean }> => {
     if (!userId || !companyId) {
       setError('User ID and Company ID are required');
-      return;
+      return { success: false };
     }
 
     try {
       setError(null);
+      
+      // Get current state before toggling
+      const currentHabit = habits.find(h => h.habit_id === habitId);
+      const currentItem = currentHabit?.sub_list.find(item => item.id === subItemId);
+      const newState = !currentItem?.complete;
       
       const success = await rockefellerChecklistService.toggleSubItem(
         userId, 
@@ -107,7 +112,7 @@ export const useRockefellerChecklist = (userId: string, companyId: string) => {
                 ...habit,
                 sub_list: habit.sub_list.map(item => 
                   item.id === subItemId 
-                    ? { ...item, complete: !item.complete }
+                    ? { ...item, complete: newState }
                     : item
                 )
               };
@@ -121,12 +126,17 @@ export const useRockefellerChecklist = (userId: string, companyId: string) => {
           userId: userId,
           timestamp: new Date().toISOString()
         });
+
+        return { success: true, newState };
       }
+      
+      return { success: false };
     } catch (err) {
       console.error('Error toggling sub-item:', err);
       setError(err instanceof Error ? err.message : 'Failed to toggle item');
+      return { success: false };
     }
-  }, [userId, companyId]);
+  }, [userId, companyId, habits]);
 
   // Calculate progress for a habit
   const getHabitProgress = useCallback((habit: RockefellerHabitLegacy): number => {

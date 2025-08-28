@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import ChecklistSection from './ChecklistSection';
 import { useRockefellerChecklist } from '../hooks/useRockefellerChecklist';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
@@ -12,6 +12,11 @@ interface Props {
 
 const RockefellerHabitChecklist: React.FC<Props> = ({ session, onUpdate }) => {
   const { userInfo, companyInfo, isLoading: userDataLoading } = useUserAndCompanyData(session.user.id);
+  const [previousOverallProgress, setPreviousOverallProgress] = useState(0);
+  const [showOverallBoom, setShowOverallBoom] = useState(false);
+  const [overallProgressChangeType, setOverallProgressChangeType] = useState<'increase' | 'decrease' | null>(null);
+  const [isProgressAnimating, setIsProgressAnimating] = useState(false);
+  const [progressAnimationType, setProgressAnimationType] = useState<'increase' | 'decrease' | null>(null);
   
   // Use company context directly
   const userId = userInfo?.user_id;
@@ -32,16 +37,58 @@ const RockefellerHabitChecklist: React.FC<Props> = ({ session, onUpdate }) => {
     shouldLoadHabits ? companyId : ''
   );
 
-  const handleItemToggle = useCallback((habitId: string) => (itemId: number) => {
-    toggleSubItem(habitId, itemId);
+  // Track overall progress changes for boom animation
+  useEffect(() => {
+    if (previousOverallProgress !== overallProgress && previousOverallProgress !== 0) {
+      const changeType = overallProgress > previousOverallProgress ? 'increase' : 'decrease';
+      setOverallProgressChangeType(changeType);
+      setProgressAnimationType(changeType);
+      setShowOverallBoom(true);
+      
+      // Trigger progress animation
+      setIsProgressAnimating(true);
+      
+      // Hide boom animation after 600ms
+      setTimeout(() => setShowOverallBoom(false), 600);
+      
+      // Remove animation class after animation completes
+      setTimeout(() => {
+        setIsProgressAnimating(false);
+        setProgressAnimationType(null);
+      }, 400);
+    } else if (previousOverallProgress === 0 && overallProgress > 0) {
+      // Handle first progress from 0% to positive percentage
+      setOverallProgressChangeType('increase');
+      setProgressAnimationType('increase');
+      setShowOverallBoom(true);
+      
+      // Trigger progress animation
+      setIsProgressAnimating(true);
+      
+      // Hide boom animation after 600ms
+      setTimeout(() => setShowOverallBoom(false), 600);
+      
+      // Remove animation class after animation completes
+      setTimeout(() => {
+        setIsProgressAnimating(false);
+        setProgressAnimationType(null);
+      }, 400);
+    }
+    setPreviousOverallProgress(overallProgress);
+  }, [overallProgress, previousOverallProgress]);
+
+  const handleItemToggle = useCallback((habitId: string) => async (itemId: number) => {
+    const result = await toggleSubItem(habitId, itemId);
     
-    // Call onUpdate callback if provided
-    if (onUpdate) {
+    // Call onUpdate callback if provided and toggle was successful
+    if (onUpdate && result.success) {
       const habit = habits.find(h => h.habit_id === habitId);
       if (habit) {
         onUpdate(habitId, habit.progress || 0);
       }
     }
+    
+    return result;
   }, [toggleSubItem, onUpdate, habits]);
 
   if (userDataLoading || loading || !shouldLoadHabits) {
@@ -96,8 +143,13 @@ const RockefellerHabitChecklist: React.FC<Props> = ({ session, onUpdate }) => {
           <p className="checklist-subtitle">
             Company: <strong>{companyInfo?.name}</strong>
           </p>
-          <p className="checklist-subtitle">
-            Progress: <strong>{Math.round(overallProgress)}% Complete</strong>
+          <p className="checklist-subtitle" style={{ position: 'relative' }}>
+            Progress: <strong className={`progress-percentage-text ${isProgressAnimating ? `animating ${progressAnimationType}` : ''}`}>{Math.round(overallProgress)}% Complete</strong>
+            {showOverallBoom && (
+              <span className={`progress-boom ${overallProgressChangeType === 'increase' ? 'boom-success' : 'boom-decrease'}`}>
+                {overallProgressChangeType === 'increase' ? '🚀✨' : '📊📉'}
+              </span>
+            )}
           </p>
           {lastEditorInfo && (
             <p className="checklist-collaboration-info">

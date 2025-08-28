@@ -25,6 +25,8 @@ import FoodpandaManualEntryModal from "../manual-entry/FoodpandaManualEntryModal
 import ShopeeManualEntryModal from "../manual-entry/ShopeeManualEntryModal";
 import CompileSalesModal, { CompileParams } from "../CompileSalesModal";
 import { PlatformCompilationService } from "../../services/platformCompilationService";
+import CompileSalesModal, { CompileParams } from "../CompileSalesModal";
+import { PlatformCompilationService } from "../../services/platformCompilationService";
 
 // Import types
 import { ShopeeMetric } from '../../services/useShopeeMetrics';
