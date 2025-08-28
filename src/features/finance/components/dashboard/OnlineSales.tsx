@@ -25,8 +25,6 @@ import FoodpandaManualEntryModal from "../manual-entry/FoodpandaManualEntryModal
 import ShopeeManualEntryModal from "../manual-entry/ShopeeManualEntryModal";
 import CompileSalesModal, { CompileParams } from "../CompileSalesModal";
 import { PlatformCompilationService } from "../../services/platformCompilationService";
-import CompileSalesModal, { CompileParams } from "../CompileSalesModal";
-import { PlatformCompilationService } from "../../services/platformCompilationService";
 
 // Import types
 import { ShopeeMetric } from '../../services/useShopeeMetrics';
@@ -920,7 +918,6 @@ const OnlineSales: React.FC<OnlineSalesProps> = ({ session }) => {
               <RevenueChart 
                 data={getEnhancedChartData()} 
                 platform={selectedPlatform} 
-                shopIdentifier={isAllSG || isAllMY ? includedStores.join(', ') : shopName}
               />
 
               {/* Orders Chart */}
