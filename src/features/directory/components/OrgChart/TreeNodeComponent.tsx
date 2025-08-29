@@ -68,11 +68,11 @@ const TreeNodeComponent: React.FC<TreeNodeComponentProps> = ({ node, searchQuery
         )}
       </div>
       <div className="text-content">
-        <div className="name">
+        <div className="name-row">
           {highlightText(fullName, searchQuery)}
         </div>
-        <div className="role">
-          {node.role ? highlightText(node.role, searchQuery) : ''}
+        <div className="role-row">
+          {node.role ? highlightText(node.role, searchQuery) : 'No role assigned'}
         </div>
       </div>
     </div>
