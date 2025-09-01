@@ -2,7 +2,6 @@ import { Session } from "@supabase/supabase-js";
 import React, { useEffect, useState, useCallback } from "react";
 import { createCard, updateCard, deleteCard } from "../../../shared/components/trello/services/useCard";
 import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
-// Removed bulk reorder imports - using pure delegation to useTrelloBoard instead
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { CardUpdate, Card as TrelloCard } from "../../../shared/components/trello/types/card.types";
 import { Label } from "../../../shared/types/label.types";
