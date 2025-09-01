@@ -8,16 +8,21 @@ import { supabase } from "../../lib/supabase";
  * This hook provides the current session and a function to sign out the user.
  * It listens for authentication state changes and updates the session accordingly.
  * 
- * @returns {Object} An object containing the current session and a signOut function.
+ * @returns {Object} An object containing the current session, a signOut function, and a loading state.
  */
 export function useSession() {
   const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     // Fetch the current session from Supabase and set it in state
     const fetchSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchSession();
@@ -25,6 +30,7 @@ export function useSession() {
     // Subscribe to authentication state changes and update session
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      setLoading(false); // Ensure loading is false when auth state changes
     });
 
     // Cleanup subscription on component unmount
@@ -39,5 +45,5 @@ export function useSession() {
     setSession(null);
   };
 
-  return { session, signOut };
+  return { session, signOut, loading };
 }

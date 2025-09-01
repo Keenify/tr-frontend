@@ -87,7 +87,7 @@ const PowerOfOneWithCompany: React.FC<{ userId: string }> = ({ userId }) => {
 };
 
 const App: React.FC = () => {
-  const { session, signOut } = useSession();
+  const { session, signOut, loading } = useSession();
 
   return (
     <UserDataProvider>
@@ -102,6 +102,12 @@ const App: React.FC = () => {
         <Suspense fallback={<ClipLoader color="#36d7b7" />}>
           {session && <FloatingMusicPlayer />}
           
+          {/* Show loading spinner while session is being determined */}
+          {loading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+              <ClipLoader color="#36d7b7" />
+            </div>
+          ) : (
           <Routes>
             {/* Default Redirect to User-Specific Route */}
             <Route
@@ -114,17 +120,6 @@ const App: React.FC = () => {
               }
             />
 
-            {/* Redirect user ID route to vivid_vision */}
-            <Route
-              path="/:userId"
-              element={
-                session ? (
-                  <Navigate to={`/${session.user.id}/vivid_vision`} replace />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
-            />
 
             {/* Public Routes */}
             <Route path="/login" element={<AuthForm />} />
@@ -175,7 +170,7 @@ const App: React.FC = () => {
                           activeSubTab="orgChart"
                           onSubTabChange={() => {}}
                         >
-                          <OrgChartPage session={session} />
+                          {session && <OrgChartPage session={session} />}
                         </DashboardLayout>
                       }
                     />
@@ -913,9 +908,22 @@ const App: React.FC = () => {
                 />
               </>
 
+            {/* Redirect base user ID route to vivid_vision - MUST be after all specific routes */}
+            <Route
+              path="/:userId"
+              element={
+                session ? (
+                  <Navigate to={`/${session.user.id}/vivid_vision`} replace />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+
             {/* Catch-all for anything else */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          )}
         </Suspense>
       </Router>
       </QueryClientProvider>
