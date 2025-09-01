@@ -1,7 +1,8 @@
 import { Session } from "@supabase/supabase-js";
 import React, { useEffect, useState, useCallback } from "react";
-import { createCard, updateCard } from "../../../shared/components/trello/services/useCard";
+import { createCard, updateCard, deleteCard } from "../../../shared/components/trello/services/useCard";
 import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
+import { bulkReorderLists, bulkReorderCards } from "../../../shared/components/trello/services/useBulkReorder";
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { CardUpdate } from "../../../shared/components/trello/types/card.types";
 import { getBoardDetails, getCompanyResourcesTemplatesBoard, getCompanyResourcesAssetsBoard } from "../services/useBoard";
@@ -217,16 +218,32 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
       const [removed] = newLists.splice(sourceIndex, 1);
       newLists.splice(destinationIndex, 0, removed);
 
-      // Update all lists with their new positions (1-based index)
-      await Promise.all(
-        newLists.map((list, idx) =>
-          updateList(list.id, { position: idx + 1 })
-        )
-      );
+      // Optimistically update UI
       setLists(newLists);
+
+      // Use bulk reorder if boardId is available
+      if (templatesBoardId) {
+        const reorderData = newLists.map((list, index) => ({
+          listId: list.id,
+          position: index + 1
+        }));
+        
+        await bulkReorderLists(templatesBoardId, reorderData);
+      } else {
+        // Fallback to individual updates
+        await Promise.all(
+          newLists.map((list, idx) =>
+            updateList(list.id, { position: idx + 1 })
+          )
+        );
+      }
     } catch (error) {
       console.error('Failed to update list positions:', error);
-      // You might want to add error handling here (e.g., showing a toast notification)
+      // Revert optimistic update on error
+      const revertedLists = Array.from(lists);
+      const [removed] = revertedLists.splice(destinationIndex, 1);
+      revertedLists.splice(sourceIndex, 0, removed);
+      setLists(revertedLists);
     }
   };
 
@@ -242,16 +259,32 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
       const [removed] = newLists.splice(sourceIndex, 1);
       newLists.splice(destinationIndex, 0, removed);
 
-      // Update all lists with their new positions (1-based index)
-      await Promise.all(
-        newLists.map((list, idx) =>
-          updateList(list.id, { position: idx + 1 })
-        )
-      );
+      // Optimistically update UI
       setDigitalAssetsList(newLists);
+
+      // Use bulk reorder if boardId is available
+      if (assetsBoardId) {
+        const reorderData = newLists.map((list, index) => ({
+          listId: list.id,
+          position: index + 1
+        }));
+        
+        await bulkReorderLists(assetsBoardId, reorderData);
+      } else {
+        // Fallback to individual updates
+        await Promise.all(
+          newLists.map((list, idx) =>
+            updateList(list.id, { position: idx + 1 })
+          )
+        );
+      }
     } catch (error) {
       console.error('Failed to update digital asset list positions:', error);
-      // You might want to add error handling here (e.g., showing a toast notification)
+      // Revert optimistic update on error
+      const revertedLists = Array.from(digitalAssetsList);
+      const [removed] = revertedLists.splice(destinationIndex, 1);
+      revertedLists.splice(sourceIndex, 0, removed);
+      setDigitalAssetsList(revertedLists);
     }
   };
 
@@ -264,20 +297,38 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
    * @param cardId - ID of the card being moved
    */
   const handleCardMove = async (
-    _sourceListId: string,
+    sourceListId: string,
     destinationListId: string,
-    _sourceIndex: number,
+    sourceIndex: number,
     destinationIndex: number,
     cardId: string
   ) => {
     try {
+      // Use bulk reorder if moving within same list and boardId is available
+      if (sourceListId === destinationListId && (templatesBoardId || assetsBoardId)) {
+        const list = lists.find(l => l.id === sourceListId) || digitalAssetsList.find(l => l.id === sourceListId);
+        if (list) {
+          const newCards = Array.from(list.cards);
+          const [removed] = newCards.splice(sourceIndex, 1);
+          newCards.splice(destinationIndex, 0, removed);
+          
+          const reorderData = newCards.map((card, index) => ({
+            cardId: card.id,
+            position: index
+          }));
+          
+          await bulkReorderCards(sourceListId, reorderData);
+          return;
+        }
+      }
+      
+      // Fallback to individual update
       await updateCard(cardId, {
         list_id: destinationListId,
         position: destinationIndex
       });
     } catch (error) {
       console.error('Failed to move card:', error);
-      // You might want to add error handling here (e.g., showing a toast notification)
     }
   };
 
@@ -528,6 +579,27 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
     }
   };
 
+  const handleCardDelete = async (listId: string, cardId: string) => {
+    try {
+      // Find the card to delete in either lists or digitalAssetsList
+      const list = lists.find(l => l.id === listId) || digitalAssetsList.find(l => l.id === listId);
+      const card = list?.cards.find(c => c.id === cardId);
+      
+      if (!card) {
+        console.error('Card not found for deletion');
+        return;
+      }
+
+      // Delete the card via API
+      console.log(`Deleting card ${cardId} from list ${listId}`);
+      await deleteCard(cardId);
+      
+      console.log('Card deleted successfully');
+    } catch (error) {
+      console.error('Error deleting card:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen p-6 flex flex-col">
       <div className="flex justify-between items-center mb-6">
@@ -592,6 +664,8 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
                 userRole={userRole}
                 session={session}
                 onRefresh={handleRefresh}
+                boardId={templatesBoardId || undefined}
+                onCardDelete={handleCardDelete}
               />
             )}
           </Tab.Panel>
@@ -623,6 +697,8 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
                 userRole={userRole}
                 session={session}
                 onRefresh={handleDigitalAssetsRefresh}
+                boardId={assetsBoardId || undefined}
+                onCardDelete={handleCardDelete}
               />
             )}
           </Tab.Panel>

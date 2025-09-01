@@ -1,7 +1,8 @@
 import { Session } from "@supabase/supabase-js";
 import React, { useEffect, useState, useCallback } from "react";
-import { createCard, updateCard } from "../../../shared/components/trello/services/useCard";
+import { createCard, updateCard, deleteCard } from "../../../shared/components/trello/services/useCard";
 import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
+import { bulkReorderLists, bulkReorderCards } from "../../../shared/components/trello/services/useBulkReorder";
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { CardUpdate, Card as TrelloCard } from "../../../shared/components/trello/types/card.types";
 import { Label } from "../../../shared/types/label.types";
@@ -224,25 +225,64 @@ const CreativeManagement: React.FC<CreativeManagementProps> = ({
       const [removed] = newLists.splice(sourceIndex, 1);
       newLists.splice(destinationIndex, 0, removed);
 
-      await Promise.all(
-        newLists.map((list, idx) =>
-          updateList(list.id, { position: idx + 1 })
-        )
-      );
+      // Optimistically update UI
       setLists(newLists);
+
+      // Use bulk reorder if boardId is available
+      const targetBoardId = boardId || creativeBoardId;
+      if (targetBoardId) {
+        const reorderData = newLists.map((list, index) => ({
+          listId: list.id,
+          position: index + 1
+        }));
+        
+        await bulkReorderLists(targetBoardId, reorderData);
+      } else {
+        // Fallback to individual updates
+        await Promise.all(
+          newLists.map((list, idx) =>
+            updateList(list.id, { position: idx + 1 })
+          )
+        );
+      }
     } catch (error) {
       console.error('Failed to update creative list positions:', error);
+      // Revert optimistic update on error
+      const revertedLists = Array.from(lists);
+      const [removed] = revertedLists.splice(destinationIndex, 1);
+      revertedLists.splice(sourceIndex, 0, removed);
+      setLists(revertedLists);
     }
   };
 
   const handleCardMove = async (
-    _sourceListId: string,
+    sourceListId: string,
     destinationListId: string,
-    _sourceIndex: number,
+    sourceIndex: number,
     destinationIndex: number,
     cardId: string
   ) => {
     try {
+      // Use bulk reorder if moving within same list and boardId is available
+      const targetBoardId = boardId || creativeBoardId;
+      if (sourceListId === destinationListId && targetBoardId) {
+        const list = lists.find(l => l.id === sourceListId);
+        if (list) {
+          const newCards = Array.from(list.cards);
+          const [removed] = newCards.splice(sourceIndex, 1);
+          newCards.splice(destinationIndex, 0, removed);
+          
+          const reorderData = newCards.map((card, index) => ({
+            cardId: card.id,
+            position: index
+          }));
+          
+          await bulkReorderCards(sourceListId, reorderData);
+          return;
+        }
+      }
+      
+      // Fallback to individual update
       await updateCard(cardId, {
         list_id: destinationListId,
         position: destinationIndex
@@ -345,6 +385,27 @@ const CreativeManagement: React.FC<CreativeManagementProps> = ({
     }
   };
 
+  const handleCardDelete = async (listId: string, cardId: string) => {
+    try {
+      // Find the card to delete
+      const list = lists.find(l => l.id === listId);
+      const card = list?.cards.find(c => c.id === cardId);
+      
+      if (!card) {
+        console.error('Creative card not found for deletion');
+        return;
+      }
+
+      // Delete the card via API
+      console.log(`Deleting creative card ${cardId} from list ${listId}`);
+      await deleteCard(cardId);
+      
+      console.log('Creative card deleted successfully');
+    } catch (error) {
+      console.error('Error deleting creative card:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen p-6 flex flex-col">
       <div className="flex justify-between items-center mb-6">
@@ -367,6 +428,8 @@ const CreativeManagement: React.FC<CreativeManagementProps> = ({
         onRefresh={handleRefresh}
         onCardModalOpen={handleCardModalOpen}
         onCardModalClose={handleCardModalClose}
+        boardId={boardId || creativeBoardId || undefined}
+        onCardDelete={handleCardDelete}
       />
     </div>
   );

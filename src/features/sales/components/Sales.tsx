@@ -1,7 +1,8 @@
 import { Session } from "@supabase/supabase-js";
 import { useEffect, useState, useCallback } from "react";
-import { createCard, updateCard } from "../../../shared/components/trello/services/useCard";
+import { createCard, updateCard, deleteCard } from "../../../shared/components/trello/services/useCard";
 import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
+import { bulkReorderLists, bulkReorderCards } from "../../../shared/components/trello/services/useBulkReorder";
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { CardUpdate } from "../../../shared/components/trello/types/card.types";
 import { getBoardDetails, getCompanySalesBoard } from "../services/useBoard";
@@ -167,26 +168,63 @@ const Sales = ({ session }: { session: Session }) => {
       const [removed] = newLists.splice(sourceIndex, 1);
       newLists.splice(destinationIndex, 0, removed);
 
-      // Update all lists with their new positions (1-based index)
-      await Promise.all(
-        newLists.map((list, idx) =>
-          updateList(list.id, { position: idx + 1 })
-        )
-      );
+      // Optimistically update UI
       setLists(newLists);
+
+      // Use bulk reorder if boardId is available
+      const targetBoardId = companyBoardId;
+      if (targetBoardId) {
+        const reorderData = newLists.map((list, index) => ({
+          listId: list.id,
+          position: index + 1
+        }));
+        
+        await bulkReorderLists(targetBoardId, reorderData);
+      } else {
+        // Fallback to individual updates
+        await Promise.all(
+          newLists.map((list, idx) =>
+            updateList(list.id, { position: idx + 1 })
+          )
+        );
+      }
     } catch (error) {
       console.error('Failed to update list positions:', error);
+      // Revert optimistic update on error
+      const revertedLists = Array.from(lists);
+      const [removed] = revertedLists.splice(destinationIndex, 1);
+      revertedLists.splice(sourceIndex, 0, removed);
+      setLists(revertedLists);
     }
   };
 
   const handleCardMove = async (
-    _sourceListId: string,
+    sourceListId: string,
     destinationListId: string,
-    _sourceIndex: number,
+    sourceIndex: number,
     destinationIndex: number,
     cardId: string
   ) => {
     try {
+      // Use bulk reorder if moving within same list and boardId is available
+      if (sourceListId === destinationListId && companyBoardId) {
+        const list = lists.find(l => l.id === sourceListId);
+        if (list) {
+          const newCards = Array.from(list.cards);
+          const [removed] = newCards.splice(sourceIndex, 1);
+          newCards.splice(destinationIndex, 0, removed);
+          
+          const reorderData = newCards.map((card, index) => ({
+            cardId: card.id,
+            position: index
+          }));
+          
+          await bulkReorderCards(sourceListId, reorderData);
+          return;
+        }
+      }
+      
+      // Fallback to individual update
       await updateCard(cardId, {
         list_id: destinationListId,
         position: destinationIndex
@@ -287,6 +325,27 @@ const Sales = ({ session }: { session: Session }) => {
     }
   };
 
+  const handleCardDelete = async (listId: string, cardId: string) => {
+    try {
+      // Find the card to delete
+      const list = lists.find(l => l.id === listId);
+      const card = list?.cards.find(c => c.id === cardId);
+      
+      if (!card) {
+        console.error('Card not found for deletion');
+        return;
+      }
+
+      // Delete the card via API
+      console.log(`Deleting card ${cardId} from list ${listId}`);
+      await deleteCard(cardId);
+      
+      console.log('Card deleted successfully');
+    } catch (error) {
+      console.error('Error deleting card:', error);
+    }
+  };
+
   console.log('📋 [Sales] About to render TrelloBoard with props:', {
     listsCount: lists.length,
     userRole,
@@ -328,6 +387,8 @@ const Sales = ({ session }: { session: Session }) => {
         onCardModalOpen={handleCardModalOpen}
         onCardModalClose={handleCardModalClose}
         companyInfo={companyInfo}
+        boardId={companyBoardId || undefined}
+        onCardDelete={handleCardDelete}
       />
     </div>
   );

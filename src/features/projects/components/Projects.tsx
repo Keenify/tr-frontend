@@ -1,6 +1,6 @@
 import { Session } from "@supabase/supabase-js";
 import React, { useEffect, useState, useCallback } from "react";
-import { createCard, updateCard } from "../../../shared/components/trello/services/useCard";
+import { createCard, updateCard, deleteCard } from "../../../shared/components/trello/services/useCard";
 import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { CardUpdate, Card as TrelloCard } from "../../../shared/components/trello/types/card.types";
@@ -159,6 +159,7 @@ const Project: React.FC<ProjectProps> = ({
     setHasUnsavedChanges(false);
   }, []);
 
+
   if (isLoading || isLoadingCompany) {
     return <div>Loading...</div>;
   }
@@ -308,6 +309,27 @@ const Project: React.FC<ProjectProps> = ({
     }
   };
 
+  const handleCardDelete = async (listId: string, cardId: string) => {
+    try {
+      // Find the card to delete
+      const list = lists.find(l => l.id === listId);
+      const card = list?.cards.find(c => c.id === cardId);
+      
+      if (!card) {
+        console.error('Card not found for deletion');
+        return;
+      }
+
+      // Delete the card via API
+      console.log(`Deleting card ${cardId} from list ${listId}`);
+      await deleteCard(cardId);
+      
+      console.log('Card deleted successfully');
+    } catch (error) {
+      console.error('Error deleting card:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen p-6 flex flex-col">
       <div className="flex justify-between items-center mb-6">
@@ -325,12 +347,14 @@ const Project: React.FC<ProjectProps> = ({
         onListCountryChange={handleListCountryChange}
         onCardAdd={handleCardAdd}
         onListAdd={handleListAdd}
+        onCardDelete={handleCardDelete}
         onListDelete={handleListDelete}
         userRole={userRole}
         session={session}
         onRefresh={handleRefresh}
         onCardModalOpen={handleCardModalOpen}
         onCardModalClose={handleCardModalClose}
+        boardId={boardId || companyBoardId || undefined}
       />
     </div>
   );
