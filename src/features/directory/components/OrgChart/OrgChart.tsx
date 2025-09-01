@@ -54,9 +54,12 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
       // Log employees data
       console.log("Employees data:", JSON.stringify(employedEmployees, null, 2));
 
-      // Check if there is an employee with the highest rank
-      const hasHighestRank = employedEmployees.some(emp => emp.highest_rank);
-      if (hasHighestRank) {
+      // Check if there are employees in the hierarchy (either highest_rank or reports_to someone)
+      // OR if there are employees who don't report to anyone (potential roots)
+      const hasHierarchy = employedEmployees.some(emp => emp.highest_rank || emp.reports_to);
+      const hasPotentialRoots = employedEmployees.some(emp => !emp.reports_to);
+      
+      if (hasHierarchy || hasPotentialRoots) {
         setTreeData(transformToTree(employedEmployees));
       } else {
         setTreeData(null);
@@ -78,6 +81,7 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
   };
 
   // Get unassigned employees (those who don't report to anyone AND are not the highest ranking executive)
+  // These are employees that should be shown separately from the hierarchy
   const unassignedEmployees = employees.filter(emp => !emp.reports_to && !emp.highest_rank);
 
   return (
@@ -228,6 +232,7 @@ const transformToTree = (employees: Employee[]): TreeNode | null => {
   const idToNodeMap: { [key: string]: TreeNode } = {};
   let root: TreeNode | null = null;
 
+  // First, create all nodes
   employees.forEach((employee) => {
     idToNodeMap[employee.id] = {
       ...employee,
@@ -236,11 +241,23 @@ const transformToTree = (employees: Employee[]): TreeNode | null => {
     };
   });
 
+  // Find the root node (employee with highest_rank = true)
+  const highestRankEmployee = employees.find(emp => emp.highest_rank);
+  if (highestRankEmployee) {
+    root = idToNodeMap[highestRankEmployee.id];
+  } else {
+    // If no highest_rank employee is set, find employees who don't report to anyone
+    // and use the first one as root (this handles cases where hierarchy exists but no CEO is marked)
+    const potentialRoots = employees.filter(emp => !emp.reports_to);
+    if (potentialRoots.length > 0) {
+      root = idToNodeMap[potentialRoots[0].id];
+    }
+  }
+
+  // Build the tree structure by connecting children to their parents
   employees.forEach((employee) => {
-    if (employee.reports_to) {
+    if (employee.reports_to && idToNodeMap[employee.reports_to]) {
       idToNodeMap[employee.reports_to].children.push(idToNodeMap[employee.id]);
-    } else {
-      root = idToNodeMap[employee.id];
     }
   });
 
