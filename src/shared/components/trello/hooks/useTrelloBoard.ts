@@ -3,7 +3,6 @@ import { DropResult } from 'react-beautiful-dnd';
 import { CardAttachment } from '../services/useCardAttachment';
 import { Label } from '../../../types/label.types';
 import { Card, CardUpdate } from '../types/card.types';
-import { bulkReorderLists, bulkReorderCards, createListPositionUpdates, createCardPositionUpdates } from '../services/useBulkReorder';
 
 // Define the expected input type, matching TrelloBoardProps['initialLists']
 type InitialListInputType = Array<{
@@ -64,8 +63,6 @@ interface TrelloCard {
  * Props for configuring the useTrelloBoard hook
  */
 interface TrelloBoardHookProps {
-  /** Board ID for bulk operations (required for atomic position updates) */
-  boardId?: string;
   /** Callback function when a list is moved to a new position */
   onListMove?: (sourceIndex: number, destinationIndex: number) => Promise<void>;
   /** Callback function when a card is moved within or between lists */
@@ -123,7 +120,6 @@ interface TrelloBoardHookProps {
 export const useTrelloBoard = (
   initialListsInput: InitialListInputType,
   {
-    boardId,
     onListMove,
     onCardMove,
     onCardUpdate,
@@ -141,7 +137,7 @@ export const useTrelloBoard = (
   // Create the transformed initial data *once* to use for initialization and rollback
   const transformedInitialLists: TrelloList[] = initialListsInput.map((list, idx) => ({
     ...list,
-    position: idx + 1, // Ensure position is set (1-based index; adjust as needed)
+    position: (list as any).position || (idx + 1), // Use database position, fallback to index only if missing
     cards: list.cards.map(card => {
       // Explicitly create label_ids from labels if labels exist, otherwise use existing label_ids or default to []
       const final_label_ids = card.labels && card.labels.length > 0 
@@ -176,67 +172,33 @@ export const useTrelloBoard = (
 
     try {
       if (type === 'list') {
+        console.log('🔄 [useTrelloBoard] List moved from', source.index, 'to', destination.index);
+        
         // Store original state for rollback
         const originalLists = JSON.parse(JSON.stringify(lists));
         
-        // Calculate new order
+        // Optimistic UI update for immediate visual feedback
         const newLists = Array.from(lists);
         const [removed] = newLists.splice(source.index, 1);
         newLists.splice(destination.index, 0, removed);
         
-        // Always reindex all positions to match new order
+        // Update positions for display
         const reindexedLists = newLists.map((list, idx) => ({
           ...list,
           position: idx + 1,
         }));
-
-        // ATOMIC BULK UPDATE: Use bulk reorder instead of individual calls
-        if (boardId && reindexedLists.length > 0) {
+        
+        // Apply optimistic update immediately
+        setLists(reindexedLists);
+        
+        // Call parent API handler
+        if (onListMove) {
           try {
-            // Create position updates for all lists
-            const positionUpdates = createListPositionUpdates(reindexedLists);
-            
-            console.log('🔄 [useTrelloBoard] Starting bulk list reorder:', {
-              boardId,
-              totalLists: positionUpdates.length,
-              sourceIndex: source.index,
-              destIndex: destination.index
-            });
-
-            // Perform bulk reorder API call FIRST (not optimistic)
-            const result = await bulkReorderLists(boardId, positionUpdates);
-            
-            console.log('✅ [useTrelloBoard] Bulk list reorder successful:', result);
-
-            // Update UI state only after successful API call
-            setLists(reindexedLists);
-            
+            await onListMove(source.index, destination.index);
           } catch (error) {
-            console.error('❌ [useTrelloBoard] Bulk list reorder failed:', error);
-            // Keep original state on API failure
+            console.error('❌ [useTrelloBoard] List move API failed, rolling back:', error);
+            // Rollback optimistic update on API failure
             setLists(originalLists);
-            throw error; // Re-throw to be caught by outer try-catch
-          }
-        } else {
-          // Fallback to legacy individual updates if no boardId provided
-          console.warn('⚠️ [useTrelloBoard] No boardId provided, falling back to legacy list reorder');
-          
-          // Perform optimistic update first for list movement
-          setLists(reindexedLists);
-
-          // Then perform API update using legacy callback
-          if (onListMove) {
-            try {
-              await onListMove(source.index, destination.index);
-              // After API call, reindex again to guarantee contiguous positions
-              setLists(currentLists =>
-                currentLists.map((l, i) => ({ ...l, position: i + 1 }))
-              );
-            } catch (error) {
-              // If API fails, revert the optimistic update
-              console.error('Failed to move list:', error);
-              setLists(originalLists);
-            }
           }
         }
       } else {
@@ -245,7 +207,16 @@ export const useTrelloBoard = (
         const destListId = destination.droppableId.replace('list-', '');
         const cardId = draggableId.replace('card-', '');
 
+        console.log('🔄 [useTrelloBoard] Card moved:', {
+          cardId,
+          from: `${sourceListId}[${source.index}]`,
+          to: `${destListId}[${destination.index}]`
+        });
+
+        // Store original state for rollback
         const originalLists = JSON.parse(JSON.stringify(lists));
+        
+        // Optimistic UI update for immediate visual feedback
         const newLists = Array.from(lists);
         const sourceList = newLists.find(list => `list-${list.id}` === source.droppableId);
         const destList = newLists.find(list => `list-${list.id}` === destination.droppableId);
@@ -254,70 +225,33 @@ export const useTrelloBoard = (
           const [movedCard] = sourceList.cards.splice(source.index, 1);
           destList.cards.splice(destination.index, 0, movedCard);
           
-          // Check if this is a card reorder within the same list
-          const isSameList = sourceListId === destListId;
+          // Apply optimistic update immediately
+          setLists(newLists);
           
-          if (isSameList && destList.cards.length > 1) {
-            // ATOMIC BULK UPDATE: Use bulk reorder for cards within same list
+          // Call parent API handler
+          if (onCardMove) {
             try {
-              // Reindex all cards in the destination list
-              const reindexedCards = destList.cards.map((card, idx) => ({
-                ...card,
-                position: idx + 1,
-              }));
-              
-              // Create position updates for all cards in the list
-              const positionUpdates = createCardPositionUpdates(reindexedCards);
-              
-              console.log('🔄 [useTrelloBoard] Starting bulk card reorder:', {
-                listId: destListId,
-                totalCards: positionUpdates.length,
-                sourceIndex: source.index,
-                destIndex: destination.index
-              });
-
-              // Perform bulk reorder API call FIRST (not optimistic)
-              const result = await bulkReorderCards(destListId, positionUpdates);
-              
-              console.log('✅ [useTrelloBoard] Bulk card reorder successful:', result);
-
-              // Update UI state only after successful API call
-              destList.cards = reindexedCards;
-              setLists(newLists);
-              
+              await onCardMove(
+                sourceListId,
+                destListId,
+                source.index,
+                destination.index,
+                cardId
+              );
             } catch (error) {
-              console.error('❌ [useTrelloBoard] Bulk card reorder failed:', error);
-              // Keep original state on API failure
+              console.error('❌ [useTrelloBoard] Card move API failed, rolling back:', error);
+              // Rollback optimistic update on API failure
               setLists(originalLists);
-            }
-          } else {
-            // Different lists or single card - use legacy card move
-            setLists(newLists);
-
-            if (onCardMove) {
-              try {
-                await onCardMove(
-                  sourceListId,
-                  destListId,
-                  source.index,
-                  destination.index,
-                  cardId
-                );
-              } catch (error) {
-                console.error('Failed to move card:', error);
-                // Rollback to original state
-                setLists(originalLists);
-              }
             }
           }
         }
       }
     } catch (err) {
       console.error('Error during drag and drop:', err);
-      // Use the transformed data for rollback
+      // Fallback to original data on any error
       setLists(transformedInitialLists);
     }
-  }, [lists, transformedInitialLists, boardId, onListMove, onCardMove]);
+  }, [lists, transformedInitialLists, onListMove, onCardMove]);
 
   const handleCardUpdate = useCallback(async (
     listId: string,

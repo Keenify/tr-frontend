@@ -2,7 +2,7 @@ import { Session } from "@supabase/supabase-js";
 import React, { useEffect, useState, useCallback } from "react";
 import { createCard, updateCard, deleteCard } from "../../../shared/components/trello/services/useCard";
 import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
-import { bulkReorderLists, bulkReorderCards } from "../../../shared/components/trello/services/useBulkReorder";
+// Removed bulk reorder imports - using pure delegation to useTrelloBoard instead
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { CardUpdate, Card as TrelloCard } from "../../../shared/components/trello/types/card.types";
 import { Label } from "../../../shared/types/label.types";
@@ -221,37 +221,29 @@ const CreativeManagement: React.FC<CreativeManagementProps> = ({
 
   const handleListMove = async (sourceIndex: number, destinationIndex: number) => {
     try {
+      console.log(`🔄 [CreativeManagement] List moved from ${sourceIndex} to ${destinationIndex}`);
+      
+      // Create a new array reflecting the new order (same as working Projects approach)
       const newLists = Array.from(lists);
       const [removed] = newLists.splice(sourceIndex, 1);
       newLists.splice(destinationIndex, 0, removed);
 
-      // Optimistically update UI
-      setLists(newLists);
+      console.log(`📍 [CreativeManagement] Updating all ${newLists.length} lists with new positions`);
 
-      // Use bulk reorder if boardId is available
-      const targetBoardId = boardId || creativeBoardId;
-      if (targetBoardId) {
-        const reorderData = newLists.map((list, index) => ({
-          listId: list.id,
-          position: index + 1
-        }));
-        
-        await bulkReorderLists(targetBoardId, reorderData);
-      } else {
-        // Fallback to individual updates
-        await Promise.all(
-          newLists.map((list, idx) =>
-            updateList(list.id, { position: idx + 1 })
-          )
-        );
-      }
+      // Update ALL lists with their new positions (1-based index) - prevents duplicates
+      await Promise.all(
+        newLists.map((list, idx) => {
+          const newPosition = idx + 1;
+          console.log(`  🔄 Updating ${list.title} (${list.id}) to position ${newPosition}`);
+          return updateList(list.id, { position: newPosition });
+        })
+      );
+      
+      // Update frontend state with new order
+      setLists(newLists);
+      console.log(`✅ [CreativeManagement] All list positions updated successfully`);
     } catch (error) {
-      console.error('Failed to update creative list positions:', error);
-      // Revert optimistic update on error
-      const revertedLists = Array.from(lists);
-      const [removed] = revertedLists.splice(destinationIndex, 1);
-      revertedLists.splice(sourceIndex, 0, removed);
-      setLists(revertedLists);
+      console.error('❌ [CreativeManagement] Failed to move list:', error);
     }
   };
 
@@ -263,32 +255,20 @@ const CreativeManagement: React.FC<CreativeManagementProps> = ({
     cardId: string
   ) => {
     try {
-      // Use bulk reorder if moving within same list and boardId is available
-      const targetBoardId = boardId || creativeBoardId;
-      if (sourceListId === destinationListId && targetBoardId) {
-        const list = lists.find(l => l.id === sourceListId);
-        if (list) {
-          const newCards = Array.from(list.cards);
-          const [removed] = newCards.splice(sourceIndex, 1);
-          newCards.splice(destinationIndex, 0, removed);
-          
-          const reorderData = newCards.map((card, index) => ({
-            cardId: card.id,
-            position: index
-          }));
-          
-          await bulkReorderCards(sourceListId, reorderData);
-          return;
-        }
-      }
+      console.log(`🔄 [CreativeManagement] Card moved: ${cardId} from ${sourceListId}[${sourceIndex}] to ${destinationListId}[${destinationIndex}]`);
       
-      // Fallback to individual update
+      // Calculate target position (1-based indexing)
+      const targetPosition = destinationIndex + 1;
+      
+      // Single atomic API call with exact target position
       await updateCard(cardId, {
         list_id: destinationListId,
-        position: destinationIndex
+        position: targetPosition
       });
+      
+      console.log(`✅ [CreativeManagement] Card position updated successfully`);
     } catch (error) {
-      console.error('Failed to move creative card:', error);
+      console.error('❌ [CreativeManagement] Failed to move card:', error);
     }
   };
 

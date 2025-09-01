@@ -2,7 +2,7 @@ import { Session } from "@supabase/supabase-js";
 import React, { useEffect, useState, useCallback } from "react";
 import { createCard, updateCard, deleteCard } from "../../../shared/components/trello/services/useCard";
 import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
-import { bulkReorderLists, bulkReorderCards } from "../../../shared/components/trello/services/useBulkReorder";
+// Removed bulk reorder imports - using pure delegation to useTrelloBoard instead
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { CardUpdate } from "../../../shared/components/trello/types/card.types";
 import { getBoardDetails, getCompanyResourcesTemplatesBoard, getCompanyResourcesAssetsBoard } from "../services/useBoard";
@@ -213,37 +213,29 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
    */
   const handleListMove = async (sourceIndex: number, destinationIndex: number) => {
     try {
-      // Create a new array reflecting the new order
+      console.log(`🔄 [Resources-Templates] List moved from ${sourceIndex} to ${destinationIndex}`);
+      
+      // Create a new array reflecting the new order (same as working Projects approach)
       const newLists = Array.from(lists);
       const [removed] = newLists.splice(sourceIndex, 1);
       newLists.splice(destinationIndex, 0, removed);
 
-      // Optimistically update UI
-      setLists(newLists);
+      console.log(`📍 [Resources-Templates] Updating all ${newLists.length} lists with new positions`);
 
-      // Use bulk reorder if boardId is available
-      if (templatesBoardId) {
-        const reorderData = newLists.map((list, index) => ({
-          listId: list.id,
-          position: index + 1
-        }));
-        
-        await bulkReorderLists(templatesBoardId, reorderData);
-      } else {
-        // Fallback to individual updates
-        await Promise.all(
-          newLists.map((list, idx) =>
-            updateList(list.id, { position: idx + 1 })
-          )
-        );
-      }
+      // Update ALL lists with their new positions (1-based index) - prevents duplicates
+      await Promise.all(
+        newLists.map((list, idx) => {
+          const newPosition = idx + 1;
+          console.log(`  🔄 Updating ${list.name} (${list.id}) to position ${newPosition}`);
+          return updateList(list.id, { position: newPosition });
+        })
+      );
+      
+      // Update frontend state with new order
+      setLists(newLists);
+      console.log(`✅ [Resources-Templates] All list positions updated successfully`);
     } catch (error) {
-      console.error('Failed to update list positions:', error);
-      // Revert optimistic update on error
-      const revertedLists = Array.from(lists);
-      const [removed] = revertedLists.splice(destinationIndex, 1);
-      revertedLists.splice(sourceIndex, 0, removed);
-      setLists(revertedLists);
+      console.error('❌ [Resources-Templates] Failed to move list:', error);
     }
   };
 
@@ -254,37 +246,29 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
    */
   const handleDigitalAssetListMove = async (sourceIndex: number, destinationIndex: number) => {
     try {
-      // Create a new array reflecting the new order
-      const newLists = Array.from(digitalAssetsList);
-      const [removed] = newLists.splice(sourceIndex, 1);
-      newLists.splice(destinationIndex, 0, removed);
+      console.log(`🔄 [Resources-DigitalAssets] List moved from ${sourceIndex} to ${destinationIndex}`);
+      
+      // Create a new array reflecting the new order (same as working Projects approach)
+      const newDigitalAssetsList = Array.from(digitalAssetsList);
+      const [removed] = newDigitalAssetsList.splice(sourceIndex, 1);
+      newDigitalAssetsList.splice(destinationIndex, 0, removed);
 
-      // Optimistically update UI
-      setDigitalAssetsList(newLists);
+      console.log(`📍 [Resources-DigitalAssets] Updating all ${newDigitalAssetsList.length} lists with new positions`);
 
-      // Use bulk reorder if boardId is available
-      if (assetsBoardId) {
-        const reorderData = newLists.map((list, index) => ({
-          listId: list.id,
-          position: index + 1
-        }));
-        
-        await bulkReorderLists(assetsBoardId, reorderData);
-      } else {
-        // Fallback to individual updates
-        await Promise.all(
-          newLists.map((list, idx) =>
-            updateList(list.id, { position: idx + 1 })
-          )
-        );
-      }
+      // Update ALL lists with their new positions (1-based index) - prevents duplicates
+      await Promise.all(
+        newDigitalAssetsList.map((list, idx) => {
+          const newPosition = idx + 1;
+          console.log(`  🔄 Updating ${list.name} (${list.id}) to position ${newPosition}`);
+          return updateList(list.id, { position: newPosition });
+        })
+      );
+      
+      // Update frontend state with new order
+      setDigitalAssetsList(newDigitalAssetsList);
+      console.log(`✅ [Resources-DigitalAssets] All list positions updated successfully`);
     } catch (error) {
-      console.error('Failed to update digital asset list positions:', error);
-      // Revert optimistic update on error
-      const revertedLists = Array.from(digitalAssetsList);
-      const [removed] = revertedLists.splice(destinationIndex, 1);
-      revertedLists.splice(sourceIndex, 0, removed);
-      setDigitalAssetsList(revertedLists);
+      console.error('❌ [Resources-DigitalAssets] Failed to move list:', error);
     }
   };
 
@@ -304,31 +288,20 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
     cardId: string
   ) => {
     try {
-      // Use bulk reorder if moving within same list and boardId is available
-      if (sourceListId === destinationListId && (templatesBoardId || assetsBoardId)) {
-        const list = lists.find(l => l.id === sourceListId) || digitalAssetsList.find(l => l.id === sourceListId);
-        if (list) {
-          const newCards = Array.from(list.cards);
-          const [removed] = newCards.splice(sourceIndex, 1);
-          newCards.splice(destinationIndex, 0, removed);
-          
-          const reorderData = newCards.map((card, index) => ({
-            cardId: card.id,
-            position: index
-          }));
-          
-          await bulkReorderCards(sourceListId, reorderData);
-          return;
-        }
-      }
+      console.log(`🔄 [Resources] Card moved: ${cardId} from ${sourceListId}[${sourceIndex}] to ${destinationListId}[${destinationIndex}]`);
       
-      // Fallback to individual update
+      // Calculate target position (1-based indexing)
+      const targetPosition = destinationIndex + 1;
+      
+      // Single atomic API call with exact target position
       await updateCard(cardId, {
         list_id: destinationListId,
-        position: destinationIndex
+        position: targetPosition
       });
+      
+      console.log(`✅ [Resources] Card position updated successfully`);
     } catch (error) {
-      console.error('Failed to move card:', error);
+      console.error('❌ [Resources] Failed to move card:', error);
     }
   };
 
