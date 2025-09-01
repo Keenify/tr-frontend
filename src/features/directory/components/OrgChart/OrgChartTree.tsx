@@ -58,7 +58,7 @@ const OrgChartTree: React.FC<OrgChartTreeProps> = ({ node, onNodeClick, searchQu
     if (containerRef.current) {
       const { width, height } = containerRef.current.getBoundingClientRect();
       setDimensions({ width, height });
-      setTranslate({ x: width / 2, y: height / 6 }); // Adjust vertical position to 1/6 of height
+      setTranslate({ x: width / 2, y: 80 }); // Position tree higher up
     }
   };
 
@@ -80,9 +80,9 @@ const OrgChartTree: React.FC<OrgChartTreeProps> = ({ node, onNodeClick, searchQu
   }, [node]);
 
   const renderCustomNode = ({ nodeDatum }: CustomNodeElementProps) => (
-    <foreignObject width="150" height="100" x="-75" y="-50">
+    <foreignObject width="200" height="120" x="-100" y="-60">
       <div
-        style={{ width: '150px', height: '100px', cursor: 'pointer' }}
+        style={{ width: '200px', height: '120px', cursor: 'pointer' }}
         onClick={() => onNodeClick(nodeDatum as unknown as Employee)}
       >
         <MemoizedTreeNodeComponent 
@@ -124,8 +124,8 @@ const OrgChartTree: React.FC<OrgChartTreeProps> = ({ node, onNodeClick, searchQu
     };
 
     const totalNodes = countNodes(filteredNode);
-    const baseZoom = Math.min(dimensions.width, dimensions.height) / (totalNodes * 100);
-    return Math.min(Math.max(baseZoom, 0.4), 1.2); // Limit zoom between 0.4 and 1.2
+    const baseZoom = Math.min(dimensions.width, dimensions.height) / (totalNodes * 150);
+    return Math.min(Math.max(baseZoom, 0.3), 1.5); // Allow more zoom range
   };
 
   return (
@@ -136,12 +136,13 @@ const OrgChartTree: React.FC<OrgChartTreeProps> = ({ node, onNodeClick, searchQu
           orientation="vertical"
           translate={translate}
           pathFunc="elbow"
-          nodeSize={{ x: 220, y: 120 }}
+          nodeSize={{ x: 280, y: 160 }} // Increased spacing
           renderCustomNodeElement={renderCustomNode}
           zoom={calculateZoom()}
-          separation={{ siblings: 1.5, nonSiblings: 2 }}
+          separation={{ siblings: 2, nonSiblings: 2.5 }} // Increased separation
           enableLegacyTransitions={true}
           transitionDuration={800}
+          pathClassFunc={() => "org-chart-link"}
         />
       )}
     </div>
