@@ -26,10 +26,11 @@ interface UserDataContextType {
 
 const UserDataContext = createContext<UserDataContextType | undefined>(undefined);
 
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours (disable auto-refresh)
 
 export const UserDataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [cache, setCache] = useState<UserDataCache>({});
+  console.log('🔧 [UserDataContext] Provider initialized with 24-hour cache - no auto-refresh');
 
   const getCachedUserData = useCallback((userId: string) => {
     if (!userId) {
@@ -46,12 +47,22 @@ export const UserDataProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     // Return cached data if it exists and is still fresh
     if (cachedData && (now - cachedData.timestamp) < CACHE_DURATION) {
+      const cacheAgeMinutes = Math.round((now - cachedData.timestamp) / 1000 / 60 * 10) / 10;
+      console.log(`✅ [UserDataContext] Using cached data for ${userId}, age: ${cacheAgeMinutes}min`);
       return {
         userInfo: cachedData.userInfo,
         companyInfo: cachedData.companyInfo,
         error: cachedData.error,
         isLoading: cachedData.isLoading,
       };
+    }
+
+    // Log cache expiration
+    if (cachedData) {
+      const cacheAgeMinutes = Math.round((now - cachedData.timestamp) / 1000 / 60 * 10) / 10;
+      console.log(`⏰ [UserDataContext] Cache EXPIRED for ${userId}, age: ${cacheAgeMinutes}min, triggering refresh`);
+    } else {
+      console.log(`🆕 [UserDataContext] No cached data for ${userId}, fetching fresh data`);
     }
 
     // If we're already loading this user's data, return the loading state
@@ -122,7 +133,7 @@ export const UserDataProvider: React.FC<{ children: ReactNode }> = ({ children }
       error: null,
       isLoading: true,
     };
-  }, [cache]);
+  }, [cache]); // Update when cache changes to propagate fresh data
 
   const invalidateCache = useCallback((userId: string) => {
     setCache(prev => {

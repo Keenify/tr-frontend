@@ -1,14 +1,23 @@
 .tree-node {
   position: relative;
-  width: 150px;
-  height: 100px;
-  border-radius: 8px;
+  width: 200px;
+  height: 120px;
+  border-radius: 12px;
   overflow: hidden;
   background-color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   padding: 16px;
   display: flex;
   align-items: center;
+  gap: 12px;
+  border: 2px solid #e5e7eb;
+  transition: all 0.2s ease-in-out;
+}
+
+.tree-node:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-color: #f97316;
+  transform: translateY(-2px);
 }
 
 .tree-node::before {
@@ -17,23 +26,22 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 24px;
-  background-color: white;
-  opacity: 0.5;
+  height: 4px;
+  background: linear-gradient(90deg, #f97316, #ea580c);
+  opacity: 1;
   z-index: 1;
 }
 
 .avatar {
-  position: absolute; /* Position the avatar absolutely within the tree node */
-  top: 0; /* Align the top of the avatar with the top of the tree node */
-  left: 16px; /* Position the avatar 16 pixels from the left edge of the tree node */
-  width: 40px; /* Updated size */
-  height: 40px; /* Updated size */
-  border-radius: 50%; /* Make the avatar circular by setting the border radius to 50% */
-  overflow: hidden; /* Hide any content that overflows the boundaries of the avatar */
-  border: 2px solid white; /* Add a 2-pixel solid white border around the avatar */
-  z-index: 2; /* Ensure the avatar is above the pseudo-element by setting a higher z-index */
-  margin-top: 5px; /* Lower the avatar */
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #f97316;
+  flex-shrink: 0;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .avatar img {
@@ -43,29 +51,52 @@
 }
 
 .initials {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: gray;
+  background: linear-gradient(135deg, #f97316, #ea580c);
   color: white;
   font-weight: bold;
+  font-size: 16px;
   border-radius: 50%;
 }
 
 .text-content {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
 }
 
-.name {
-  font-weight: bold;
-  color: #f97316; /* Orange color */
-  margin-top: 36px; /* Add margin to position lower */
+.name-row {
+  font-weight: 700;
+  color: #f97316;
+  font-size: 14px;
+  line-height: 1.2;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-height: 2.4em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
-.role {
-  font-size: 0.875rem; /* Small text */
-  color: #6b7280; /* Gray color */
+.role-row {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.2;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-height: 2.4em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-weight: 500;
 }
