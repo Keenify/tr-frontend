@@ -137,7 +137,7 @@ export const useTrelloBoard = (
   // Create the transformed initial data *once* to use for initialization and rollback
   const transformedInitialLists: TrelloList[] = initialListsInput.map((list, idx) => ({
     ...list,
-    position: idx + 1, // Ensure position is set (1-based index; adjust as needed)
+    position: (list as any).position || (idx + 1), // Use database position, fallback to index only if missing
     cards: list.cards.map(card => {
       // Explicitly create label_ids from labels if labels exist, otherwise use existing label_ids or default to []
       const final_label_ids = card.labels && card.labels.length > 0 
@@ -172,38 +172,51 @@ export const useTrelloBoard = (
 
     try {
       if (type === 'list') {
-        // Perform optimistic update first for list movement
+        console.log('🔄 [useTrelloBoard] List moved from', source.index, 'to', destination.index);
+        
+        // Store original state for rollback
+        const originalLists = JSON.parse(JSON.stringify(lists));
+        
+        // Optimistic UI update for immediate visual feedback
         const newLists = Array.from(lists);
         const [removed] = newLists.splice(source.index, 1);
         newLists.splice(destination.index, 0, removed);
-        // Always reindex all positions to match new order
+        
+        // Update positions for display
         const reindexedLists = newLists.map((list, idx) => ({
           ...list,
           position: idx + 1,
         }));
+        
+        // Apply optimistic update immediately
         setLists(reindexedLists);
-
-        // Then perform API update
+        
+        // Call parent API handler
         if (onListMove) {
           try {
             await onListMove(source.index, destination.index);
-            // After API call, reindex again to guarantee contiguous positions
-            setLists(currentLists =>
-              currentLists.map((l, i) => ({ ...l, position: i + 1 }))
-            );
           } catch (error) {
-            // If API fails, revert the optimistic update and reindex
-            console.error('Failed to move list:', error);
-            setLists(
-              transformedInitialLists.map((l, i) => ({ ...l, position: i + 1 }))
-            );
+            console.error('❌ [useTrelloBoard] List move API failed, rolling back:', error);
+            // Rollback optimistic update on API failure
+            setLists(originalLists);
           }
         }
       } else {
+        // Card drag and drop
         const sourceListId = source.droppableId.replace('list-', '');
         const destListId = destination.droppableId.replace('list-', '');
         const cardId = draggableId.replace('card-', '');
 
+        console.log('🔄 [useTrelloBoard] Card moved:', {
+          cardId,
+          from: `${sourceListId}[${source.index}]`,
+          to: `${destListId}[${destination.index}]`
+        });
+
+        // Store original state for rollback
+        const originalLists = JSON.parse(JSON.stringify(lists));
+        
+        // Optimistic UI update for immediate visual feedback
         const newLists = Array.from(lists);
         const sourceList = newLists.find(list => `list-${list.id}` === source.droppableId);
         const destList = newLists.find(list => `list-${list.id}` === destination.droppableId);
@@ -211,8 +224,11 @@ export const useTrelloBoard = (
         if (sourceList && destList) {
           const [movedCard] = sourceList.cards.splice(source.index, 1);
           destList.cards.splice(destination.index, 0, movedCard);
+          
+          // Apply optimistic update immediately
           setLists(newLists);
-
+          
+          // Call parent API handler
           if (onCardMove) {
             try {
               await onCardMove(
@@ -223,16 +239,16 @@ export const useTrelloBoard = (
                 cardId
               );
             } catch (error) {
-              console.error('Failed to move card:', error);
-              // Use the transformed data for rollback
-              setLists(transformedInitialLists);
+              console.error('❌ [useTrelloBoard] Card move API failed, rolling back:', error);
+              // Rollback optimistic update on API failure
+              setLists(originalLists);
             }
           }
         }
       }
     } catch (err) {
       console.error('Error during drag and drop:', err);
-      // Use the transformed data for rollback
+      // Fallback to original data on any error
       setLists(transformedInitialLists);
     }
   }, [lists, transformedInitialLists, onListMove, onCardMove]);

@@ -40,6 +40,7 @@ interface TrelloBoardProps {
     country?: string;
     cards: Card[];
   }>;
+  boardId?: string;
   onListMove?: (sourceIndex: number, destinationIndex: number) => Promise<void>;
   onCardMove?: (
     sourceListId: string,
@@ -78,6 +79,7 @@ interface TrelloBoardProps {
  */
 export const TrelloBoard: React.FC<TrelloBoardProps> = ({ 
   initialLists,
+  boardId,
   onListMove,
   onCardMove,
   onCardUpdate,
@@ -110,6 +112,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   } = useTrelloBoard(
     initialLists,
     {
+      boardId,
       onListMove,
       onCardMove,
       onCardUpdate,
