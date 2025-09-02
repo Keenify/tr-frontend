@@ -277,9 +277,17 @@ export function DashboardLayout({
   const [isUploading, setIsUploading] = useState(false);
 
   // Company data
+  console.log('🏢 [DashboardLayout] About to call useUserAndCompanyData with ID:', session.user.id);
   const { companyInfo, userInfo, error: companyError } = useUserAndCompanyData(
     session.user.id
   );
+  console.log('📊 [DashboardLayout] useUserAndCompanyData result:', { 
+    hasCompanyInfo: !!companyInfo, 
+    companyId: companyInfo?.id, 
+    hasUserInfo: !!userInfo,
+    userRole: userInfo?.role,
+    error: !!companyError 
+  });
   if (companyError) {
     console.error("Error fetching company data:", companyError);
   }

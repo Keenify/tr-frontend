@@ -31,6 +31,7 @@ import { Fragment } from 'react';
  * @property {string} userRole - Role of the current user (determines permissions)
  * @property {Session} [session] - Optional Supabase session object
  * @property {Function} [onRefresh] - Optional callback to refresh data from parent
+ * @property {any} [companyInfo] - Optional company data to avoid internal useUserAndCompanyData call
  */
 interface TrelloBoardProps {
   initialLists: Array<{
@@ -59,6 +60,7 @@ interface TrelloBoardProps {
   onRefresh?: () => Promise<void>;
   onCardModalOpen?: (listId: string, cardId: string) => void;
   onCardModalClose?: () => void;
+  companyInfo?: any;
 }
 
 /**
@@ -89,7 +91,8 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   session,
   onRefresh,
   onCardModalOpen,
-  onCardModalClose
+  onCardModalClose,
+  companyInfo
 }) => {
   // Get the current user's ID from the session
   const userId = session?.user?.id || '';
@@ -133,7 +136,12 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   const [companyLabels, setCompanyLabels] = useState<Label[]>([]);
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([]);
   
-  const { companyInfo } = useUserAndCompanyData(userId);
+  // Use provided companyInfo prop or fallback to internal hook for backward compatibility
+  // Only call the internal hook if companyInfo prop is not provided
+  console.log('🔧 [TrelloBoard] companyInfo prop provided:', !!companyInfo, companyInfo ? `ID: ${companyInfo.id}` : 'No prop');
+  const { companyInfo: fallbackCompanyInfo } = useUserAndCompanyData(companyInfo ? '' : userId);
+  const effectiveCompanyInfo = companyInfo || fallbackCompanyInfo;
+  console.log('📊 [TrelloBoard] effectiveCompanyInfo:', !!effectiveCompanyInfo, effectiveCompanyInfo ? `ID: ${effectiveCompanyInfo.id}` : 'No data');
 
   // Make sure this is defined at the component level
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -168,9 +176,9 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   // Fetch company labels
   useEffect(() => {
     const fetchCompanyLabels = async () => {
-      if (!companyInfo?.id) return;
+      if (!effectiveCompanyInfo?.id) return;
       try {
-        const labels = await labelService.fetchLabelsByCompany(companyInfo.id);
+        const labels = await labelService.fetchLabelsByCompany(effectiveCompanyInfo.id);
         setCompanyLabels(labels);
       } catch (error) {
         console.error("Failed to fetch company labels:", error);
@@ -178,18 +186,18 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
       }
     };
     fetchCompanyLabels();
-  }, [companyInfo?.id]);
+  }, [effectiveCompanyInfo?.id]);
 
   // Improved employee fetching using directoryService
   useEffect(() => {
     const fetchEmployees = async () => {
-      if (!companyInfo?.id) {
+      if (!effectiveCompanyInfo?.id) {
         return;
       }
       
       try {
         // Use directoryService similar to OrgChart component
-        const employeesData = await directoryService.fetchEmployees(companyInfo.id);
+        const employeesData = await directoryService.fetchEmployees(effectiveCompanyInfo.id);
         
         if (employeesData && employeesData.length > 0) {
           setEmployees(employeesData);
@@ -199,10 +207,10 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
       }
     };
 
-    if (companyInfo?.id) {
+    if (effectiveCompanyInfo?.id) {
       fetchEmployees();
     }
-  }, [companyInfo]);
+  }, [effectiveCompanyInfo?.id]);
 
   // Use the employees data
   useEffect(() => {

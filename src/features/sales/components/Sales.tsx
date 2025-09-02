@@ -15,44 +15,64 @@ import { getUserData } from '../../../services/useUser';
  * @returns {JSX.Element} A Trello-style board interface for sales pipeline management
  */
 const Sales = ({ session }: { session: Session }) => {
+  console.log('🔄 [Sales] Component render start - Timestamp:', new Date().toISOString());
+  console.log('📍 [Sales] Session user ID:', session.user.id);
+  
   const [lists, setLists] = useState<List[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // ⚠️ THIS IS THE PROBLEMATIC CALL - Sales calling useUserAndCompanyData directly
+  console.log('🚨 [Sales] About to call useUserAndCompanyData with ID:', session.user.id);
   const { companyInfo, isLoading: isLoadingCompany } = useUserAndCompanyData(session.user.id);
+  console.log('📊 [Sales] useUserAndCompanyData result:', { 
+    hasCompanyInfo: !!companyInfo, 
+    companyId: companyInfo?.id, 
+    isLoadingCompany 
+  });
+  
   const [userRole, setUserRole] = useState<string>('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [activelyEditing, setActivelyEditing] = useState<{cardId?: string, listId?: string} | null>(null);
+  
+  console.log('🔍 [Sales] State values:', { 
+    listsCount: lists.length, 
+    isLoading, 
+    error, 
+    companyId: companyInfo?.id, 
+    isLoadingCompany, 
+    userRole 
+  });
   
   // Company-specific board management
-  const [boardId, setBoardId] = useState<string | null>(null);
-  const [isFetchingBoard, setIsFetchingBoard] = useState(true);
+  const [companyBoardId, setCompanyBoardId] = useState<string | null>(null);
 
-  // Fetch company-specific board ID when company data is available
-  const fetchCompanyBoard = useCallback(async () => {
-    if (!companyInfo?.id || isLoadingCompany) return;
-    
-    try {
-      setIsFetchingBoard(true);
-      const boardResponse = await getCompanySalesBoard(companyInfo.id);
-      setBoardId(boardResponse.board_id);
-      
-    } catch (err) {
-      console.error('Failed to fetch company sales board:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load company board');
-    } finally {
-      setIsFetchingBoard(false);
+  // Get or create company-specific Sales board
+  const getCompanyBoard = useCallback(async () => {
+    if (!companyInfo?.id) {
+      throw new Error('Company information not available');
     }
-  }, [companyInfo?.id, isLoadingCompany]);
 
-  useEffect(() => {
-    fetchCompanyBoard();
-  }, [fetchCompanyBoard]);
+    try {
+      const boardResponse = await getCompanySalesBoard(companyInfo.id);
+      setCompanyBoardId(boardResponse.board_id);
+      return boardResponse.board_id;
+    } catch (error) {
+      console.error('Failed to get company Sales board:', error);
+      throw error;
+    }
+  }, [companyInfo?.id]);
 
-  // Fetch board details when boardId is available
+
+  // Extract fetchBoardDetails into a reusable function
   const fetchBoardDetails = useCallback(async () => {
-    if (!boardId) return;
-    
     try {
       setIsLoading(true);
-      const boardDetails = await getBoardDetails(boardId);
+      
+      // Determine which board to use: company board or fallback
+      let targetBoardId = companyBoardId || await getCompanyBoard();
+      
+      const boardDetails = await getBoardDetails(targetBoardId);
       const transformedLists = boardDetails.map(list => ({
         ...list,
         title: list.name,
@@ -65,16 +85,23 @@ const Sales = ({ session }: { session: Session }) => {
         })),
       }));
       setLists(transformedLists);
+      return transformedLists;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load board details');
+      throw err;
     } finally {
       setIsLoading(false);
     }
-  }, [boardId]);
+  }, [companyBoardId, getCompanyBoard]);
 
   useEffect(() => {
-    fetchBoardDetails();
-  }, [fetchBoardDetails]);
+    if (companyInfo?.id && !isLoadingCompany) {
+      fetchBoardDetails();
+    }
+  }, [companyInfo?.id, isLoadingCompany]);
+  
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // fetchBoardDetails is intentionally not included to prevent auto-refresh loops
 
   const fetchUserRole = useCallback(async () => {
     try {
@@ -89,16 +116,44 @@ const Sales = ({ session }: { session: Session }) => {
     fetchUserRole();
   }, [fetchUserRole]);
 
-  if (isLoading || isLoadingCompany || isFetchingBoard) {
+  // Create a refresh handler for the TrelloBoard
+  const handleRefresh = useCallback(async () => {
+    // Check for unsaved changes before refreshing
+    if (hasUnsavedChanges || activelyEditing) {
+      const confirmRefresh = window.confirm(
+        'You have unsaved changes. Refreshing will lose these changes. Continue?'
+      );
+      if (!confirmRefresh) return;
+      setHasUnsavedChanges(false);
+      setActivelyEditing(null);
+    }
+    
+    try {
+      await fetchBoardDetails();
+    } catch (error) {
+      console.error('Failed to refresh board data:', error);
+    }
+  }, [hasUnsavedChanges, activelyEditing, fetchBoardDetails]);
+
+  // Handler for when card modal opens
+  const handleCardModalOpen = useCallback((listId: string, cardId: string) => {
+    console.log('🎯 [Sales] Card modal opened, marking as actively editing:', { listId, cardId });
+    setActivelyEditing({ cardId, listId });
+  }, []);
+
+  // Handler for when card modal closes
+  const handleCardModalClose = useCallback(() => {
+    console.log('❌ [Sales] Card modal closed, clearing actively editing');
+    setActivelyEditing(null);
+    setHasUnsavedChanges(false);
+  }, []);
+
+  if (isLoading || isLoadingCompany) {
     return <div>Loading...</div>;
   }
   
   if (!companyInfo?.id) {
     return <div>Error: Company information not found</div>;
-  }
-  
-  if (!boardId) {
-    return <div>Error: Unable to load company board</div>;
   }
 
   if (error) {
@@ -142,6 +197,10 @@ const Sales = ({ session }: { session: Session }) => {
   };
 
   const handleCardUpdate = async (listId: string, cardId: string, updates: CardUpdate) => {
+    // Mark as having changes and track the editing card
+    setHasUnsavedChanges(true);
+    setActivelyEditing({ cardId, listId });
+    
     try {
       const apiUpdates = {
         ...updates,
@@ -155,8 +214,13 @@ const Sales = ({ session }: { session: Session }) => {
       };
       delete apiUpdates.colorCode;
       await updateCard(cardId, apiUpdates);
+      
+      // Clear unsaved changes after successful update
+      setHasUnsavedChanges(false);
+      setActivelyEditing(null);
     } catch (error) {
       console.error('Failed to update card:', error);
+      // Keep unsaved changes state if update failed
     }
   };
 
@@ -196,7 +260,9 @@ const Sales = ({ session }: { session: Session }) => {
   const handleListAdd = async (title: string, country: string = '') => {
     try {
       if (!title) throw new Error('List title is required');
-      if (!boardId) throw new Error('Board ID not available');
+      
+      // Get the target board ID (company-specific)
+      let targetBoardId = companyBoardId || await getCompanyBoard();
       
       const maxPosition = lists.reduce((max, list) => 
         Math.max(max, list.position || 0), -1);
@@ -204,7 +270,7 @@ const Sales = ({ session }: { session: Session }) => {
         name: title,
         position: maxPosition + 1,
         country: country,
-        board_id: boardId
+        board_id: targetBoardId
       });
       return newList.id;
     } catch (error) {
@@ -220,6 +286,13 @@ const Sales = ({ session }: { session: Session }) => {
       console.error('Error deleting list:', error);
     }
   };
+
+  console.log('📋 [Sales] About to render TrelloBoard with props:', {
+    listsCount: lists.length,
+    userRole,
+    sessionUserId: session.user.id,
+    pattern: 'Following Projects.tsx pattern - regular handler functions'
+  });
 
   return (
     <div className="min-h-screen p-6 flex flex-col">
@@ -251,6 +324,10 @@ const Sales = ({ session }: { session: Session }) => {
         onListDelete={handleListDelete}
         userRole={userRole}
         session={session}
+        onRefresh={handleRefresh}
+        onCardModalOpen={handleCardModalOpen}
+        onCardModalClose={handleCardModalClose}
+        companyInfo={companyInfo}
       />
     </div>
   );
