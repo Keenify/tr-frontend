@@ -18,6 +18,13 @@ interface CreateListRequest {
 export async function updateList(listId: string, updateData: UpdateListRequest): Promise<ListResponse> {
     const endpoint = `${API_DOMAIN}/trello/lists/${encodeURIComponent(listId)}`;
 
+    console.log('🌐 [updateList] Making API request:', {
+        endpoint,
+        listId,
+        updateData,
+        method: 'PATCH'
+    });
+
     const response = await fetch(endpoint, {
         method: 'PATCH',
         headers: {
@@ -29,6 +36,12 @@ export async function updateList(listId: string, updateData: UpdateListRequest):
     
 
     const data = await response.json();
+
+    console.log('🌐 [updateList] API response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        responseData: data
+    });
 
     if (!response.ok) {
         console.error('❌ API request failed:', {
