@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { jdService } from '../services/jdService';
-import { JDPage, CreateJDPageRequest, UpdateJDPageRequest } from '../types/jd.types';
+import { JDPage, UpdateJDPageRequest } from '../types/jd.types';
 
 export const useJDPages = () => {
   const [pages, setPages] = useState<JDPage[]>([]);
@@ -14,22 +14,7 @@ export const useJDPages = () => {
       const data = await jdService.fetchJDPages();
       setPages(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch JD pages');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const createPage = useCallback(async (pageData: CreateJDPageRequest) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const newPage = await jdService.createJDPage(pageData);
-      setPages(prev => [newPage, ...prev]);
-      return newPage;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create JD page');
-      throw err;
+      setError(err instanceof Error ? err.message : 'Failed to fetch JD page');
     } finally {
       setLoading(false);
     }
@@ -52,31 +37,33 @@ export const useJDPages = () => {
     }
   }, []);
 
-  const deletePage = useCallback(async (id: string) => {
+  // Initialize with a default page if none exists
+  const initializeDefaultPage = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
-      await jdService.deleteJDPage(id);
-      setPages(prev => prev.filter(page => page.id !== id));
+      await jdService.initializeDefaultPage();
+      await fetchPages(); // Refresh the pages
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete JD page');
-      throw err;
-    } finally {
-      setLoading(false);
+      console.log('Could not initialize default page:', err);
     }
-  }, []);
+  }, [fetchPages]);
 
   useEffect(() => {
     fetchPages();
   }, [fetchPages]);
+
+  // Auto-initialize default page if no pages exist
+  useEffect(() => {
+    if (pages.length === 0 && !loading) {
+      initializeDefaultPage();
+    }
+  }, [pages.length, loading, initializeDefaultPage]);
 
   return {
     pages,
     loading,
     error,
     fetchPages,
-    createPage,
     updatePage,
-    deletePage,
+    initializeDefaultPage,
   };
 };

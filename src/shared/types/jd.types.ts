@@ -1,21 +1,7 @@
-export interface JDContentBlock {
-  id: string;
-  type: 'text' | 'image' | 'bullet';
-  content: string;
-  style?: {
-    bold?: boolean;
-    italic?: boolean;
-    underline?: boolean;
-  };
-  imageUrl?: string;
-  imageAlt?: string;
-  order: number;
-}
-
 export interface JDPage {
   id: string;
   title: string;
-  content: JDContentBlock[];
+  content: string;
   created_by: string;
   updated_by: string;
   created_at: string;
@@ -25,10 +11,10 @@ export interface JDPage {
 
 export interface CreateJDPageRequest {
   title: string;
-  content: JDContentBlock[];
+  content: string;
 }
 
 export interface UpdateJDPageRequest {
   title?: string;
-  content?: JDContentBlock[];
+  content?: string;
 }

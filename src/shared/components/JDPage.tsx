@@ -1,304 +1,135 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { JDPage as JDPageType, JDContentBlock } from '../types/jd.types';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { JDPage as JDPageType } from '../types/jd.types';
 import { jdService } from '../services/jdService';
 import { useJDPages } from '../hooks/useJDPages';
-import { useManagerAccess } from '../hooks/useManagerAccess';
+import { useEditor, EditorContent, Editor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
+import Image from '@tiptap/extension-image';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
+import TextAlign from '@tiptap/extension-text-align';
+import Link from '@tiptap/extension-link';
 
 interface JDPageProps {
-  pageId?: string;
   onClose?: () => void;
 }
 
-const JDPage: React.FC<JDPageProps> = ({ pageId, onClose }) => {
-  const { pages, loading, error, createPage, updatePage, deletePage } = useJDPages();
-  const { isManager, loading: managerLoading, error: managerError } = useManagerAccess();
-  const [currentPage, setCurrentPage] = useState<JDPageType | null>(null);
+const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
+  const { pages, loading, error, updatePage } = useJDPages();
   const [isEditing, setIsEditing] = useState(false);
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState<JDContentBlock[]>([]);
-  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [title, setTitle] = useState('Job Description');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load existing page if pageId is provided
-  React.useEffect(() => {
-    if (pageId) {
-      const page = pages.find(p => p.id === pageId);
-      if (page) {
-        setCurrentPage(page);
-        setTitle(page.title);
-        setContent(page.content);
-      }
-    }
-  }, [pageId, pages]);
+  // TipTap Editor
+  const editor: Editor | null = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      Image,
+      TaskList,
+      TaskItem.configure({
+        nested: true,
+      }),
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+      Link.configure({
+        openOnClick: false,
+      }),
+    ],
+    content: '',
+    onUpdate: ({ editor }) => {
+      // Content is automatically managed by TipTap
+    },
+    editorProps: {
+      attributes: {
+        class: 'prose max-w-none focus:outline-none',
+        'data-placeholder': 'Start writing your job description here... Use the formatting tools above to style your text and upload images.',
+      },
+    },
+  });
 
-  const handleCreateNew = useCallback(async () => {
-    try {
-      const newPage = await createPage({
-        title: 'Untitled JD Page',
-        content: []
-      });
-      setCurrentPage(newPage);
-      setTitle(newPage.title);
-      setContent(newPage.content);
-      setIsEditing(true);
-    } catch (err) {
-      console.error('Failed to create new page:', err);
+  // Load the single JD page
+  useEffect(() => {
+    if (pages.length > 0 && editor) {
+      const page = pages[0]; // Always use the first/only page
+      setTitle(page.title);
+      if (page.content) {
+        // Convert markdown content to HTML for TipTap
+        const htmlContent = convertMarkdownToHtml(page.content);
+        editor.commands.setContent(htmlContent);
+      } else {
+        editor.commands.setContent('');
+      }
+    } else if (editor) {
+      // Initialize with default content if no page exists
+      setTitle('Job Description');
+      editor.commands.setContent('');
     }
-  }, [createPage]);
+  }, [pages, editor]);
+
+  // Convert markdown to HTML for TipTap
+  const convertMarkdownToHtml = (markdown: string): string => {
+    return markdown
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/__(.*?)__/g, '<u>$1</u>')
+      .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+      .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+      .replace(/^• (.*$)/gm, '<ul><li>$1</li></ul>')
+      .replace(/\n/g, '<br>');
+  };
+
+  // Convert TipTap HTML back to markdown for storage
+  const convertHtmlToMarkdown = (html: string): string => {
+    // This is a simplified conversion - you might want to use a proper HTML-to-markdown library
+    return html
+      .replace(/<strong>(.*?)<\/strong>/g, '**$1**')
+      .replace(/<em>(.*?)<\/em>/g, '*$1*')
+      .replace(/<u>(.*?)<\/u>/g, '__$1__')
+      .replace(/<h1>(.*?)<\/h1>/g, '# $1')
+      .replace(/<h2>(.*?)<\/h2>/g, '## $1')
+      .replace(/<ul><li>(.*?)<\/li><\/ul>/g, '• $1')
+      .replace(/<br>/g, '\n');
+  };
 
   const handleSave = useCallback(async () => {
-    if (!currentPage) return;
+    if (pages.length === 0 || !editor) return;
     
     try {
-      await updatePage(currentPage.id, { title, content });
+      const htmlContent = editor.getHTML();
+      const markdownContent = convertHtmlToMarkdown(htmlContent);
+      await updatePage(pages[0].id, { title, content: markdownContent });
       setIsEditing(false);
-      // Refresh the current page data
-      const updatedPage = pages.find(p => p.id === currentPage.id);
-      if (updatedPage) {
-        setCurrentPage(updatedPage);
-      }
     } catch (err) {
       console.error('Failed to save page:', err);
     }
-  }, [currentPage, title, content, updatePage, pages]);
+  }, [pages, title, editor, updatePage]);
 
-  const handleDelete = useCallback(async () => {
-    if (!currentPage || !window.confirm('Are you sure you want to delete this page?')) return;
-    
-    try {
-      await deletePage(currentPage.id);
-      setCurrentPage(null);
-      setTitle('');
-      setContent([]);
-      onClose?.();
-    } catch (err) {
-      console.error('Failed to delete page:', err);
-    }
-  }, [currentPage, deletePage, onClose]);
-
-  const addTextBlock = useCallback(() => {
-    const newBlock: JDContentBlock = {
-      id: Date.now().toString(),
-      type: 'text',
-      content: '',
-      style: {},
-      order: content.length
-    };
-    setContent(prev => [...prev, newBlock]);
-    setSelectedBlockId(newBlock.id);
-  }, [content.length]);
-
-  const addImageBlock = useCallback(async (file: File) => {
+  const handleImageUpload = useCallback(async (file: File) => {
     try {
       const imageUrl = await jdService.uploadImage(file);
-      const newBlock: JDContentBlock = {
-        id: Date.now().toString(),
-        type: 'image',
-        content: file.name,
-        imageUrl,
-        imageAlt: file.name,
-        order: content.length
-      };
-      setContent(prev => [...prev, newBlock]);
-      setSelectedBlockId(newBlock.id);
+      
+      if (editor) {
+        // Insert image at current cursor position
+        editor.chain().focus().setImage({ src: imageUrl, alt: file.name }).run();
+      }
     } catch (err) {
       console.error('Failed to upload image:', err);
     }
-  }, [content.length]);
-
-  const addBulletBlock = useCallback(() => {
-    const newBlock: JDContentBlock = {
-      id: Date.now().toString(),
-      type: 'bullet',
-      content: '',
-      style: {},
-      order: content.length
-    };
-    setContent(prev => [...prev, newBlock]);
-    setSelectedBlockId(newBlock.id);
-  }, [content.length]);
-
-  const updateBlock = useCallback((blockId: string, updates: Partial<JDContentBlock>) => {
-    setContent(prev => prev.map(block => 
-      block.id === blockId ? { ...block, ...updates } : block
-    ));
-  }, []);
-
-  const deleteBlock = useCallback((blockId: string) => {
-    setContent(prev => prev.filter(block => block.id !== blockId));
-  }, []);
-
-  const toggleStyle = useCallback((blockId: string, style: 'bold' | 'italic' | 'underline') => {
-    setContent(prev => prev.map(block => {
-      if (block.id === blockId) {
-        return {
-          ...block,
-          style: {
-            ...block.style,
-            [style]: !block.style?.[style]
-          }
-        };
-      }
-      return block;
-    }));
-  }, []);
+  }, [editor]);
 
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type.startsWith('image/')) {
-      addImageBlock(file);
+      handleImageUpload(file);
     }
     // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  }, [addImageBlock]);
-
-  const renderBlock = useCallback((block: JDContentBlock) => {
-    const isSelected = selectedBlockId === block.id;
-    
-    switch (block.type) {
-      case 'text':
-        return (
-          <div key={block.id} className={`mb-4 ${isSelected ? 'ring-2 ring-blue-500' : ''}`}>
-            <div className="flex gap-2 mb-2">
-              <button
-                onClick={() => toggleStyle(block.id, 'bold')}
-                className={`px-2 py-1 text-sm ${block.style?.bold ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-              >
-                B
-              </button>
-              <button
-                onClick={() => toggleStyle(block.id, 'italic')}
-                className={`px-2 py-1 text-sm ${block.style?.italic ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-              >
-                I
-              </button>
-              <button
-                onClick={() => toggleStyle(block.id, 'underline')}
-                className={`px-2 py-1 text-sm ${block.style?.underline ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-              >
-                U
-              </button>
-              <button
-                onClick={() => deleteBlock(block.id)}
-                className="px-2 py-1 text-sm bg-red-500 text-white"
-              >
-                Delete
-              </button>
-            </div>
-            <textarea
-              value={block.content}
-              onChange={(e) => updateBlock(block.id, { content: e.target.value })}
-              onFocus={() => setSelectedBlockId(block.id)}
-              className={`w-full p-2 border rounded min-h-[100px] ${
-                block.style?.bold ? 'font-bold' : ''
-              } ${block.style?.italic ? 'italic' : ''} ${
-                block.style?.underline ? 'underline' : ''
-              }`}
-              placeholder="Enter text here..."
-            />
-          </div>
-        );
-
-      case 'image':
-        return (
-          <div key={block.id} className={`mb-4 ${isSelected ? 'ring-2 ring-blue-500' : ''}`}>
-            <div className="flex gap-2 mb-2">
-              <button
-                onClick={() => deleteBlock(block.id)}
-                className="px-2 py-1 text-sm bg-red-500 text-white"
-              >
-                Delete
-              </button>
-            </div>
-            <img
-              src={block.imageUrl}
-              alt={block.imageAlt || 'Uploaded image'}
-              className="max-w-full h-auto rounded border"
-              onFocus={() => setSelectedBlockId(block.id)}
-            />
-          </div>
-        );
-
-      case 'bullet':
-        return (
-          <div key={block.id} className={`mb-4 ${isSelected ? 'ring-2 ring-blue-500' : ''}`}>
-            <div className="flex gap-2 mb-2">
-              <button
-                onClick={() => toggleStyle(block.id, 'bold')}
-                className={`px-2 py-1 text-sm ${block.style?.bold ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-              >
-                B
-              </button>
-              <button
-                onClick={() => toggleStyle(block.id, 'italic')}
-                className={`px-2 py-1 text-sm ${block.style?.italic ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-              >
-                I
-              </button>
-              <button
-                onClick={() => toggleStyle(block.id, 'underline')}
-                className={`px-2 py-1 text-sm ${block.style?.underline ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-              >
-                U
-              </button>
-              <button
-                onClick={() => deleteBlock(block.id)}
-                className="px-2 py-1 text-sm bg-red-500 text-white"
-              >
-                Delete
-              </button>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="text-2xl mt-2">•</span>
-              <textarea
-                value={block.content}
-                onChange={(e) => updateBlock(block.id, { content: e.target.value })}
-                onFocus={() => setSelectedBlockId(block.id)}
-                className={`flex-1 p-2 border rounded min-h-[100px] ${
-                  block.style?.bold ? 'font-bold' : ''
-                } ${block.style?.italic ? 'italic' : ''} ${
-                  block.style?.underline ? 'underline' : ''
-                }`}
-                placeholder="Enter bullet point text..."
-              />
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  }, [selectedBlockId, toggleStyle, deleteBlock, updateBlock]);
-
-  // Check manager access
-  if (managerLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Checking access...</div>
-      </div>
-    );
-  }
-
-  if (managerError) {
-    return (
-      <div className="text-red-500 p-4">
-        Error checking access: {managerError}
-      </div>
-    );
-  }
-
-  if (!isManager) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="text-xl font-semibold text-red-600 mb-2">Access Denied</div>
-          <div className="text-gray-600">Only managers can access the JD Page.</div>
-        </div>
-      </div>
-    );
-  }
+  }, [handleImageUpload]);
 
   if (loading) {
     return (
@@ -316,49 +147,39 @@ const JDPage: React.FC<JDPageProps> = ({ pageId, onClose }) => {
     );
   }
 
+  if (!editor) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading editor...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">JD Page Editor</h1>
-        <div className="flex gap-2">
-          {!currentPage && (
+      <div className="flex justify-between items-center mb-8 p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+        <h1 className="text-3xl font-bold text-gray-800">Job Description Page</h1>
+        <div className="flex gap-3">
+          {isEditing ? (
             <button
-              onClick={handleCreateNew}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              onClick={handleSave}
+              className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md hover:shadow-lg font-medium"
             >
-              Create New
+              Save Changes
             </button>
-          )}
-          {currentPage && (
-            <>
-              {isEditing ? (
-                <button
-                  onClick={handleSave}
-                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                >
-                  Save
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  Edit
-                </button>
-              )}
-              <button
-                onClick={handleDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-              >
-                Delete
-              </button>
-            </>
+          ) : (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg font-medium"
+            >
+              Edit Page
+            </button>
           )}
           {onClose && (
             <button
               onClick={onClose}
-              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+              className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-md hover:shadow-lg font-medium"
             >
               Close
             </button>
@@ -366,97 +187,159 @@ const JDPage: React.FC<JDPageProps> = ({ pageId, onClose }) => {
         </div>
       </div>
 
-      {/* Page List */}
-      {!currentPage && (
+      {/* Page Content */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        {/* Title */}
         <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-4">Existing Pages</h2>
-          {pages.length === 0 ? (
-            <p className="text-gray-500">No JD pages found. Create your first one!</p>
-          ) : (
-            <div className="grid gap-4">
-              {pages.map(page => (
-                <div
-                  key={page.id}
-                  className="p-4 border rounded hover:bg-gray-50 cursor-pointer"
-                  onClick={() => {
-                    setCurrentPage(page);
-                    setTitle(page.title);
-                    setContent(page.content);
-                    setIsEditing(false);
-                  }}
-                >
-                  <h3 className="font-semibold">{page.title}</h3>
-                  <p className="text-sm text-gray-500">
-                    Last updated: {new Date(page.updated_at).toLocaleDateString()}
-                  </p>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            disabled={!isEditing}
+            className="text-2xl font-bold w-full p-4 border-2 border-gray-200 rounded-lg disabled:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-800 placeholder-gray-500"
+            placeholder="Enter page title..."
+          />
+        </div>
+
+        {/* Toolbar */}
+        {isEditing && (
+          <div className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg shadow-sm">
+            <h3 className="font-semibold mb-4 text-gray-800 text-lg">Formatting Tools</h3>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => editor.chain().focus().toggleBold().run()}
+                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
+                  editor.isActive('bold') ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white hover:bg-blue-600'
+                }`}
+                title="Bold"
+              >
+                <strong>B</strong>
+              </button>
+              <button
+                onClick={() => editor.chain().focus().toggleItalic().run()}
+                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
+                  editor.isActive('italic') ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white hover:bg-blue-600'
+                }`}
+                title="Italic"
+              >
+                <em>I</em>
+              </button>
+              <button
+                onClick={() => editor.chain().focus().toggleUnderline().run()}
+                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
+                  editor.isActive('underline') ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white hover:bg-blue-600'
+                }`}
+                title="Underline"
+              >
+                <u>U</u>
+              </button>
+              <button
+                onClick={() => editor.chain().focus().toggleBulletList().run()}
+                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
+                  editor.isActive('bulletList') ? 'bg-purple-600 text-white' : 'bg-purple-500 text-white hover:bg-purple-600'
+                }`}
+                title="Bullet List"
+              >
+                •
+              </button>
+              <button
+                onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
+                  editor.isActive('heading', { level: 1 }) ? 'bg-green-600 text-white' : 'bg-green-500 text-white hover:bg-green-600'
+                }`}
+                title="Heading 1"
+              >
+                H1
+              </button>
+              <button
+                onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
+                  editor.isActive('heading', { level: 2 }) ? 'bg-green-600 text-white' : 'bg-green-500 text-white hover:bg-green-600'
+                }`}
+                title="Heading 2"
+              >
+                H2
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors shadow-md hover:shadow-lg flex items-center gap-2"
+                title="Upload Image"
+              >
+                🖼️
+              </button>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <div className="mt-4 p-3 bg-blue-100 rounded-lg">
+              <p className="text-sm text-blue-800">
+                💡 <strong>Rich Text Editor:</strong> Use the formatting tools above to style your text. 
+                Images will be automatically inserted at your cursor position and displayed in real-time.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Content Editor */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Job Description Content
+          </label>
+          {isEditing ? (
+            <div className="space-y-4">
+              <div className="tiptap-editor">
+                <EditorContent editor={editor} className="min-h-[280px] prose max-w-none" />
+              </div>
+              {/* Live Preview while editing */}
+              <div className="live-preview">
+                <h4>Live Preview:</h4>
+                <div className="p-4 border-2 border-gray-200 rounded-lg bg-gray-50">
+                  <div 
+                    className="prose max-w-none"
+                    dangerouslySetInnerHTML={{
+                      __html: editor.getHTML()
+                    }}
+                  />
                 </div>
-              ))}
+              </div>
+            </div>
+          ) : (
+            <div className="w-full p-4 border-2 border-gray-200 rounded-lg min-h-[300px] bg-gray-50">
+              {editor.getHTML() ? (
+                <div 
+                  className="prose max-w-none"
+                  dangerouslySetInnerHTML={{
+                    __html: editor.getHTML()
+                  }}
+                />
+              ) : (
+                <div className="text-gray-800 font-mono text-sm">
+                  No content yet. Click Edit to start writing.
+                </div>
+              )}
             </div>
           )}
         </div>
-      )}
 
-      {/* Editor */}
-      {currentPage && (
-        <div>
-          {/* Title */}
+        {/* Final Preview */}
+        {editor.getHTML() && (
           <div className="mb-6">
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              disabled={!isEditing}
-              className="text-2xl font-bold w-full p-2 border rounded disabled:bg-gray-100"
-              placeholder="Enter page title..."
-            />
-          </div>
-
-          {/* Toolbar */}
-          {isEditing && (
-            <div className="mb-6 p-4 bg-gray-100 rounded">
-              <h3 className="font-semibold mb-2">Add Content</h3>
-              <div className="flex gap-2">
-                <button
-                  onClick={addTextBlock}
-                  className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  Add Text
-                </button>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                >
-                  Add Image
-                </button>
-                <button
-                  onClick={addBulletBlock}
-                  className="px-3 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
-                >
-                  Add Bullet Point
-                </button>
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">Final Preview</h3>
+            <div className="p-6 border-2 border-gray-200 rounded-lg bg-white shadow-sm">
+              <div 
+                className="prose max-w-none"
+                dangerouslySetInnerHTML={{
+                  __html: editor.getHTML()
+                }}
               />
             </div>
-          )}
-
-          {/* Content */}
-          <div className="space-y-4">
-            {content.map(renderBlock)}
           </div>
-
-          {content.length === 0 && isEditing && (
-            <div className="text-center py-12 text-gray-500">
-              <p>No content yet. Use the toolbar above to add text, images, or bullet points.</p>
-            </div>
-          )}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
