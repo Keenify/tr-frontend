@@ -547,7 +547,7 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
     try {
       // Find the list to get its title for logging (check both lists)
       const listToDelete = lists.find(l => l.id === listId) || digitalAssetsList.find(l => l.id === listId);
-      const listTitle = listToDelete?.name || 'Unknown List';
+      const listTitle = listToDelete?.title || listToDelete?.name || 'Unknown List';
       
       await deleteList(listId);
       

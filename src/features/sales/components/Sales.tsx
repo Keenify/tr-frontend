@@ -301,7 +301,7 @@ const Sales = ({ session }: { session: Session }) => {
     try {
       // Find the list to get its title for logging
       const listToDelete = lists.find(l => l.id === listId);
-      const listTitle = listToDelete?.name || 'Unknown List';
+      const listTitle = listToDelete?.title || listToDelete?.name || 'Unknown List';
       
       await deleteList(listId);
       
