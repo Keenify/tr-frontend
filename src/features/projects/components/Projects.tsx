@@ -1,6 +1,6 @@
 import { Session } from "@supabase/supabase-js";
-import React, { useEffect, useState, useCallback } from "react";
-import { createCard, updateCard } from "../../../shared/components/trello/services/useCard";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { createCard, updateCard, deleteCard } from "../../../shared/components/trello/services/useCard";
 import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { CardUpdate, Card as TrelloCard } from "../../../shared/components/trello/types/card.types";
@@ -46,9 +46,26 @@ const Project: React.FC<ProjectProps> = ({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [activelyEditing, setActivelyEditing] = useState<{cardId?: string, listId?: string} | null>(null);
   const [companyBoardId, setCompanyBoardId] = useState<string | null>(null);
+  
+  // Use ref to store companyBoardId to avoid dependency recreation cycles
+  const companyBoardIdRef = useRef<string | null>(null);
+  
+  // Update ref whenever state changes
+  useEffect(() => {
+    companyBoardIdRef.current = companyBoardId;
+  }, [companyBoardId]);
+
+  // Debug logging for component lifecycle
+  useEffect(() => {
+    console.log('🔄 [Projects] Component mounted');
+    return () => {
+      console.log('💪 [Projects] Component unmounting');
+    };
+  }, []);
 
   // Get or create company-specific Projects board
   const getCompanyBoard = useCallback(async () => {
+    console.log('🔄 [Projects] getCompanyBoard recreated with companyInfo?.id:', companyInfo?.id);
     if (!companyInfo?.id) {
       throw new Error('Company information not available');
     }
@@ -63,15 +80,27 @@ const Project: React.FC<ProjectProps> = ({
     }
   }, [companyInfo?.id]);
 
-  // Extract fetchBoardDetails into a reusable function
+  // Extract fetchBoardDetails into a reusable function with minimal dependencies
   const fetchBoardDetails = useCallback(async () => {
+    console.log('🔄 [Projects] fetchBoardDetails called');
     try {
       setIsLoading(true);
       
       // Determine which board to use: provided boardId, company board, or fallback
       let targetBoardId = boardId;
       if (!targetBoardId) {
-        targetBoardId = companyBoardId || await getCompanyBoard();
+        // Use ref to avoid dependency recreation cycle
+        if (companyBoardIdRef.current) {
+          targetBoardId = companyBoardIdRef.current;
+        } else if (companyInfo?.id) {
+          // Inline the company board logic to reduce dependencies
+          const boardResponse = await getCompanyProjectsBoard(companyInfo.id);
+          setCompanyBoardId(boardResponse.board_id);
+          companyBoardIdRef.current = boardResponse.board_id;
+          targetBoardId = boardResponse.board_id;
+        } else {
+          throw new Error('Company information not available');
+        }
       }
       
       const boardDetails = await getBoardDetails(targetBoardId);
@@ -97,20 +126,17 @@ const Project: React.FC<ProjectProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [boardId, companyBoardId, getCompanyBoard]);
+  }, [boardId, companyInfo?.id]); // Removed companyBoardId dependency
 
   // Load board details on mount and when company data is available
   useEffect(() => {
-
+    console.log('🔥 [Projects] Main useEffect triggered with:', { companyInfoId: companyInfo?.id, isLoadingCompany });
     // Only fetch if company info is available and loading is complete
     if (companyInfo?.id && !isLoadingCompany) {
+      console.log('✅ [Projects] Calling fetchBoardDetails');
       fetchBoardDetails();
     }
-  }, [companyInfo?.id, isLoadingCompany]);
-
-  
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  // fetchBoardDetails is intentionally not included to prevent auto-refresh loops
+  }, [companyInfo?.id, isLoadingCompany]); // Removed fetchBoardDetails to prevent infinite loop
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -126,6 +152,7 @@ const Project: React.FC<ProjectProps> = ({
 
   // Create a refresh handler for the TrelloBoard - moved up before conditional returns
   const handleRefresh = useCallback(async () => {
+    console.log('🔄 [Projects] handleRefresh called');
     // Check for unsaved changes before refreshing
     if (hasUnsavedChanges || activelyEditing) {
       const confirmRefresh = window.confirm(
@@ -144,7 +171,7 @@ const Project: React.FC<ProjectProps> = ({
     } catch (error) {
       console.error('Failed to refresh board data:', error);
     }
-  }, [hasUnsavedChanges, activelyEditing]);
+  }, [hasUnsavedChanges, activelyEditing]); // Removed fetchBoardDetails dependency
 
   // Handler for when card modal opens - track as actively editing
   const handleCardModalOpen = useCallback((listId: string, cardId: string) => {
@@ -159,6 +186,7 @@ const Project: React.FC<ProjectProps> = ({
     setHasUnsavedChanges(false);
   }, []);
 
+
   if (isLoading || isLoadingCompany) {
     return <div>Loading...</div>;
   }
@@ -169,37 +197,54 @@ const Project: React.FC<ProjectProps> = ({
 
   const handleListMove = async (sourceIndex: number, destinationIndex: number) => {
     try {
-      // Create a new array reflecting the new order
+      console.log(`🔄 [Projects] List moved from ${sourceIndex} to ${destinationIndex}`);
+      
+      // Create a new array reflecting the new order (original working approach)
       const newLists = Array.from(lists);
       const [removed] = newLists.splice(sourceIndex, 1);
       newLists.splice(destinationIndex, 0, removed);
 
-      // Update all lists with their new positions (1-based index)
+      console.log(`📍 [Projects] Updating all ${newLists.length} lists with new positions`);
+
+      // Update ALL lists with their new positions (1-based index) - prevents duplicates
       await Promise.all(
-        newLists.map((list, idx) =>
-          updateList(list.id, { position: idx + 1 })
-        )
+        newLists.map((list, idx) => {
+          const newPosition = idx + 1;
+          console.log(`  🔄 Updating ${list.title} (${list.id}) to position ${newPosition}`);
+          return updateList(list.id, { position: newPosition });
+        })
       );
+      
+      // Update frontend state with new order
       setLists(newLists);
+      console.log(`✅ [Projects] All list positions updated successfully`);
     } catch (error) {
-      console.error('Failed to update list positions:', error);
+      console.error('❌ [Projects] Failed to move list:', error);
     }
   };
 
   const handleCardMove = async (
-    _sourceListId: string,
+    sourceListId: string,
     destinationListId: string,
-    _sourceIndex: number,
+    sourceIndex: number,
     destinationIndex: number,
     cardId: string
   ) => {
     try {
+      console.log(`🔄 [Projects] Card moved: ${cardId} from ${sourceListId}[${sourceIndex}] to ${destinationListId}[${destinationIndex}]`);
+      
+      // Calculate target position (1-based indexing)
+      const targetPosition = destinationIndex + 1;
+      
+      // Single atomic API call with exact target position
       await updateCard(cardId, {
         list_id: destinationListId,
-        position: destinationIndex
+        position: targetPosition
       });
+      
+      console.log(`✅ [Projects] Card position updated successfully`);
     } catch (error) {
-      console.error('Failed to move card:', error);
+      console.error('❌ [Projects] Failed to move card:', error);
     }
   };
 
@@ -308,6 +353,27 @@ const Project: React.FC<ProjectProps> = ({
     }
   };
 
+  const handleCardDelete = async (listId: string, cardId: string) => {
+    try {
+      // Find the card to delete
+      const list = lists.find(l => l.id === listId);
+      const card = list?.cards.find(c => c.id === cardId);
+      
+      if (!card) {
+        console.error('Card not found for deletion');
+        return;
+      }
+
+      // Delete the card via API
+      console.log(`Deleting card ${cardId} from list ${listId}`);
+      await deleteCard(cardId);
+      
+      console.log('Card deleted successfully');
+    } catch (error) {
+      console.error('Error deleting card:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen p-6 flex flex-col">
       <div className="flex justify-between items-center mb-6">
@@ -325,6 +391,7 @@ const Project: React.FC<ProjectProps> = ({
         onListCountryChange={handleListCountryChange}
         onCardAdd={handleCardAdd}
         onListAdd={handleListAdd}
+        onCardDelete={handleCardDelete}
         onListDelete={handleListDelete}
         userRole={userRole}
         session={session}

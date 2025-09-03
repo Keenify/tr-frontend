@@ -1,6 +1,6 @@
 import { Session } from "@supabase/supabase-js";
 import React, { useEffect, useState, useCallback } from "react";
-import { createCard, updateCard } from "../../../shared/components/trello/services/useCard";
+import { createCard, updateCard, deleteCard } from "../../../shared/components/trello/services/useCard";
 import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { CardUpdate } from "../../../shared/components/trello/types/card.types";
@@ -212,21 +212,29 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
    */
   const handleListMove = async (sourceIndex: number, destinationIndex: number) => {
     try {
-      // Create a new array reflecting the new order
+      console.log(`🔄 [Resources-Templates] List moved from ${sourceIndex} to ${destinationIndex}`);
+      
+      // Create a new array reflecting the new order (same as working Projects approach)
       const newLists = Array.from(lists);
       const [removed] = newLists.splice(sourceIndex, 1);
       newLists.splice(destinationIndex, 0, removed);
 
-      // Update all lists with their new positions (1-based index)
+      console.log(`📍 [Resources-Templates] Updating all ${newLists.length} lists with new positions`);
+
+      // Update ALL lists with their new positions (1-based index) - prevents duplicates
       await Promise.all(
-        newLists.map((list, idx) =>
-          updateList(list.id, { position: idx + 1 })
-        )
+        newLists.map((list, idx) => {
+          const newPosition = idx + 1;
+          console.log(`  🔄 Updating ${list.name} (${list.id}) to position ${newPosition}`);
+          return updateList(list.id, { position: newPosition });
+        })
       );
+      
+      // Update frontend state with new order
       setLists(newLists);
+      console.log(`✅ [Resources-Templates] All list positions updated successfully`);
     } catch (error) {
-      console.error('Failed to update list positions:', error);
-      // You might want to add error handling here (e.g., showing a toast notification)
+      console.error('❌ [Resources-Templates] Failed to move list:', error);
     }
   };
 
@@ -237,21 +245,29 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
    */
   const handleDigitalAssetListMove = async (sourceIndex: number, destinationIndex: number) => {
     try {
-      // Create a new array reflecting the new order
-      const newLists = Array.from(digitalAssetsList);
-      const [removed] = newLists.splice(sourceIndex, 1);
-      newLists.splice(destinationIndex, 0, removed);
+      console.log(`🔄 [Resources-DigitalAssets] List moved from ${sourceIndex} to ${destinationIndex}`);
+      
+      // Create a new array reflecting the new order (same as working Projects approach)
+      const newDigitalAssetsList = Array.from(digitalAssetsList);
+      const [removed] = newDigitalAssetsList.splice(sourceIndex, 1);
+      newDigitalAssetsList.splice(destinationIndex, 0, removed);
 
-      // Update all lists with their new positions (1-based index)
+      console.log(`📍 [Resources-DigitalAssets] Updating all ${newDigitalAssetsList.length} lists with new positions`);
+
+      // Update ALL lists with their new positions (1-based index) - prevents duplicates
       await Promise.all(
-        newLists.map((list, idx) =>
-          updateList(list.id, { position: idx + 1 })
-        )
+        newDigitalAssetsList.map((list, idx) => {
+          const newPosition = idx + 1;
+          console.log(`  🔄 Updating ${list.name} (${list.id}) to position ${newPosition}`);
+          return updateList(list.id, { position: newPosition });
+        })
       );
-      setDigitalAssetsList(newLists);
+      
+      // Update frontend state with new order
+      setDigitalAssetsList(newDigitalAssetsList);
+      console.log(`✅ [Resources-DigitalAssets] All list positions updated successfully`);
     } catch (error) {
-      console.error('Failed to update digital asset list positions:', error);
-      // You might want to add error handling here (e.g., showing a toast notification)
+      console.error('❌ [Resources-DigitalAssets] Failed to move list:', error);
     }
   };
 
@@ -264,20 +280,27 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
    * @param cardId - ID of the card being moved
    */
   const handleCardMove = async (
-    _sourceListId: string,
+    sourceListId: string,
     destinationListId: string,
-    _sourceIndex: number,
+    sourceIndex: number,
     destinationIndex: number,
     cardId: string
   ) => {
     try {
+      console.log(`🔄 [Resources] Card moved: ${cardId} from ${sourceListId}[${sourceIndex}] to ${destinationListId}[${destinationIndex}]`);
+      
+      // Calculate target position (1-based indexing)
+      const targetPosition = destinationIndex + 1;
+      
+      // Single atomic API call with exact target position
       await updateCard(cardId, {
         list_id: destinationListId,
-        position: destinationIndex
+        position: targetPosition
       });
+      
+      console.log(`✅ [Resources] Card position updated successfully`);
     } catch (error) {
-      console.error('Failed to move card:', error);
-      // You might want to add error handling here (e.g., showing a toast notification)
+      console.error('❌ [Resources] Failed to move card:', error);
     }
   };
 
@@ -528,6 +551,27 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
     }
   };
 
+  const handleCardDelete = async (listId: string, cardId: string) => {
+    try {
+      // Find the card to delete in either lists or digitalAssetsList
+      const list = lists.find(l => l.id === listId) || digitalAssetsList.find(l => l.id === listId);
+      const card = list?.cards.find(c => c.id === cardId);
+      
+      if (!card) {
+        console.error('Card not found for deletion');
+        return;
+      }
+
+      // Delete the card via API
+      console.log(`Deleting card ${cardId} from list ${listId}`);
+      await deleteCard(cardId);
+      
+      console.log('Card deleted successfully');
+    } catch (error) {
+      console.error('Error deleting card:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen p-6 flex flex-col">
       <div className="flex justify-between items-center mb-6">
@@ -592,6 +636,8 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
                 userRole={userRole}
                 session={session}
                 onRefresh={handleRefresh}
+                boardId={templatesBoardId || undefined}
+                onCardDelete={handleCardDelete}
               />
             )}
           </Tab.Panel>
@@ -623,6 +669,8 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
                 userRole={userRole}
                 session={session}
                 onRefresh={handleDigitalAssetsRefresh}
+                boardId={assetsBoardId || undefined}
+                onCardDelete={handleCardDelete}
               />
             )}
           </Tab.Panel>

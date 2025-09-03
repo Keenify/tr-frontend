@@ -1,6 +1,6 @@
 import { Session } from "@supabase/supabase-js";
 import React, { useEffect, useState, useCallback } from "react";
-import { createCard, updateCard } from "../../../shared/components/trello/services/useCard";
+import { createCard, updateCard, deleteCard } from "../../../shared/components/trello/services/useCard";
 import { createList, updateList, deleteList } from "../../../shared/components/trello/services/useList";
 import { TrelloBoard } from "../../../shared/components/trello/TrelloBoard";
 import { CardUpdate, Card as TrelloCard } from "../../../shared/components/trello/types/card.types";
@@ -220,35 +220,54 @@ const CreativeManagement: React.FC<CreativeManagementProps> = ({
 
   const handleListMove = async (sourceIndex: number, destinationIndex: number) => {
     try {
+      console.log(`🔄 [CreativeManagement] List moved from ${sourceIndex} to ${destinationIndex}`);
+      
+      // Create a new array reflecting the new order (same as working Projects approach)
       const newLists = Array.from(lists);
       const [removed] = newLists.splice(sourceIndex, 1);
       newLists.splice(destinationIndex, 0, removed);
 
+      console.log(`📍 [CreativeManagement] Updating all ${newLists.length} lists with new positions`);
+
+      // Update ALL lists with their new positions (1-based index) - prevents duplicates
       await Promise.all(
-        newLists.map((list, idx) =>
-          updateList(list.id, { position: idx + 1 })
-        )
+        newLists.map((list, idx) => {
+          const newPosition = idx + 1;
+          console.log(`  🔄 Updating ${list.title} (${list.id}) to position ${newPosition}`);
+          return updateList(list.id, { position: newPosition });
+        })
       );
+      
+      // Update frontend state with new order
       setLists(newLists);
+      console.log(`✅ [CreativeManagement] All list positions updated successfully`);
     } catch (error) {
-      console.error('Failed to update creative list positions:', error);
+      console.error('❌ [CreativeManagement] Failed to move list:', error);
     }
   };
 
   const handleCardMove = async (
-    _sourceListId: string,
+    sourceListId: string,
     destinationListId: string,
-    _sourceIndex: number,
+    sourceIndex: number,
     destinationIndex: number,
     cardId: string
   ) => {
     try {
+      console.log(`🔄 [CreativeManagement] Card moved: ${cardId} from ${sourceListId}[${sourceIndex}] to ${destinationListId}[${destinationIndex}]`);
+      
+      // Calculate target position (1-based indexing)
+      const targetPosition = destinationIndex + 1;
+      
+      // Single atomic API call with exact target position
       await updateCard(cardId, {
         list_id: destinationListId,
-        position: destinationIndex
+        position: targetPosition
       });
+      
+      console.log(`✅ [CreativeManagement] Card position updated successfully`);
     } catch (error) {
-      console.error('Failed to move creative card:', error);
+      console.error('❌ [CreativeManagement] Failed to move card:', error);
     }
   };
 
@@ -345,6 +364,27 @@ const CreativeManagement: React.FC<CreativeManagementProps> = ({
     }
   };
 
+  const handleCardDelete = async (listId: string, cardId: string) => {
+    try {
+      // Find the card to delete
+      const list = lists.find(l => l.id === listId);
+      const card = list?.cards.find(c => c.id === cardId);
+      
+      if (!card) {
+        console.error('Creative card not found for deletion');
+        return;
+      }
+
+      // Delete the card via API
+      console.log(`Deleting creative card ${cardId} from list ${listId}`);
+      await deleteCard(cardId);
+      
+      console.log('Creative card deleted successfully');
+    } catch (error) {
+      console.error('Error deleting creative card:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen p-6 flex flex-col">
       <div className="flex justify-between items-center mb-6">
@@ -367,6 +407,8 @@ const CreativeManagement: React.FC<CreativeManagementProps> = ({
         onRefresh={handleRefresh}
         onCardModalOpen={handleCardModalOpen}
         onCardModalClose={handleCardModalClose}
+        boardId={boardId || creativeBoardId || undefined}
+        onCardDelete={handleCardDelete}
       />
     </div>
   );
