@@ -9,6 +9,7 @@ import { getBoardDetails, getCompanyProjectsBoard, HARDCODED_BOARD_ID } from "..
 import { List, Card as ProjectCard } from "../types/board";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 import { getUserData } from '../../../services/useUser';
+import { logDeletion } from '../../../shared/services/deletionLogService';
 
 interface ProjectProps {
   session: Session;
@@ -347,7 +348,26 @@ const Project: React.FC<ProjectProps> = ({
 
   const handleListDelete = async (listId: string) => {
     try {
+      // Find the list to get its title for logging
+      const listToDelete = lists.find(l => l.id === listId);
+      const listTitle = listToDelete?.name || 'Unknown List';
+      
       await deleteList(listId);
+      
+      // Log the deletion
+      if (companyInfo?.id && session.user.id) {
+        const userData = await getUserData(session.user.id);
+        const fullName = `${userData.first_name} ${userData.last_name}`.trim() || 'Unknown User';
+        await logDeletion(
+          'delete_list',
+          listId,
+          listTitle,
+          session.user.id,
+          fullName,
+          companyInfo.id,
+          'projects'
+        );
+      }
     } catch (error) {
       console.error('Error deleting list:', error);
     }
@@ -398,6 +418,7 @@ const Project: React.FC<ProjectProps> = ({
         onRefresh={handleRefresh}
         onCardModalOpen={handleCardModalOpen}
         onCardModalClose={handleCardModalClose}
+        boardModule="projects"
       />
     </div>
   );

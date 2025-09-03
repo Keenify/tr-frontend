@@ -8,6 +8,7 @@ import { getBoardDetails, getCompanyResourcesTemplatesBoard, getCompanyResources
 import { List } from "../types/board";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 import { getUserData } from '../../../services/useUser';
+import { logDeletion } from '../../../shared/services/deletionLogService';
 import { Tab } from '@headlessui/react';
 
 interface ResourcesProps {
@@ -544,7 +545,26 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
 
   const handleListDelete = async (listId: string) => {
     try {
+      // Find the list to get its title for logging (check both lists)
+      const listToDelete = lists.find(l => l.id === listId) || digitalAssetsList.find(l => l.id === listId);
+      const listTitle = listToDelete?.name || 'Unknown List';
+      
       await deleteList(listId);
+      
+      // Log the deletion
+      if (companyInfo?.id && session.user.id) {
+        const userData = await getUserData(session.user.id);
+        const fullName = `${userData.first_name} ${userData.last_name}`.trim() || 'Unknown User';
+        await logDeletion(
+          'delete_list',
+          listId,
+          listTitle,
+          session.user.id,
+          fullName,
+          companyInfo.id,
+          'resources'
+        );
+      }
       // Refresh board data if needed
     } catch (error) {
       console.error('Error deleting list:', error);
@@ -638,6 +658,7 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
                 onRefresh={handleRefresh}
                 boardId={templatesBoardId || undefined}
                 onCardDelete={handleCardDelete}
+                boardModule="resources"
               />
             )}
           </Tab.Panel>
@@ -671,6 +692,7 @@ const Resources: React.FC<ResourcesProps> = ({ session }) => {
                 onRefresh={handleDigitalAssetsRefresh}
                 boardId={assetsBoardId || undefined}
                 onCardDelete={handleCardDelete}
+                boardModule="resources"
               />
             )}
           </Tab.Panel>

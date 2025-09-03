@@ -9,6 +9,7 @@ import { getBoardDetails, getCompanyCreativeBoard } from "../services/useCreativ
 import { CreativeUIList, CreativeCard, CREATIVE_WORKFLOW_TEMPLATES } from "../types/creativeBoard";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 import { getUserData } from '../../../services/useUser';
+import { logDeletion } from '../../../shared/services/deletionLogService';
 
 interface CreativeManagementProps {
   session: Session;
@@ -358,7 +359,26 @@ const CreativeManagement: React.FC<CreativeManagementProps> = ({
 
   const handleListDelete = async (listId: string) => {
     try {
+      // Find the list to get its title for logging
+      const listToDelete = lists.find(l => l.id === listId);
+      const listTitle = listToDelete?.title || 'Unknown List';
+      
       await deleteList(listId);
+      
+      // Log the deletion
+      if (companyInfo?.id && session.user.id) {
+        const userData = await getUserData(session.user.id);
+        const fullName = `${userData.first_name} ${userData.last_name}`.trim() || 'Unknown User';
+        await logDeletion(
+          'delete_list',
+          listId,
+          listTitle,
+          session.user.id,
+          fullName,
+          companyInfo.id,
+          'creative'
+        );
+      }
     } catch (error) {
       console.error('Error deleting creative list:', error);
     }
@@ -409,6 +429,7 @@ const CreativeManagement: React.FC<CreativeManagementProps> = ({
         onCardModalClose={handleCardModalClose}
         boardId={boardId || creativeBoardId || undefined}
         onCardDelete={handleCardDelete}
+        boardModule="creative"
       />
     </div>
   );
