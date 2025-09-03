@@ -18,7 +18,6 @@ interface JDPageProps {
 const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
   const { pages, loading, error, updatePage } = useJDPages();
   const [isEditing, setIsEditing] = useState(false);
-  const [title, setTitle] = useState('Job Description');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // TipTap Editor
@@ -54,7 +53,6 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
   useEffect(() => {
     if (pages.length > 0 && editor) {
       const page = pages[0]; // Always use the first/only page
-      setTitle(page.title);
       if (page.content) {
         // Convert markdown content to HTML for TipTap
         const htmlContent = convertMarkdownToHtml(page.content);
@@ -64,7 +62,6 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
       }
     } else if (editor) {
       // Initialize with default content if no page exists
-      setTitle('Job Description');
       editor.commands.setContent('');
     }
   }, [pages, editor]);
@@ -100,12 +97,12 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
     try {
       const htmlContent = editor.getHTML();
       const markdownContent = convertHtmlToMarkdown(htmlContent);
-      await updatePage(pages[0].id, { title, content: markdownContent });
+      await updatePage(pages[0].id, { title: 'Job Description', content: markdownContent });
       setIsEditing(false);
     } catch (err) {
       console.error('Failed to save page:', err);
     }
-  }, [pages, title, editor, updatePage]);
+  }, [pages, editor, updatePage]);
 
   const handleImageUpload = useCallback(async (file: File) => {
     try {
@@ -157,50 +154,36 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8 p-6 bg-white rounded-lg shadow-sm border border-gray-200">
-        <h1 className="text-3xl font-bold text-gray-800">Job Description Page</h1>
-        <div className="flex gap-3">
-          {isEditing ? (
-            <button
-              onClick={handleSave}
-              className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md hover:shadow-lg font-medium"
-            >
-              Save Changes
-            </button>
-          ) : (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg font-medium"
-            >
-              Edit Page
-            </button>
-          )}
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-md hover:shadow-lg font-medium"
-            >
-              Close
-            </button>
-          )}
-        </div>
-      </div>
-
       {/* Page Content */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        {/* Title */}
-        <div className="mb-6">
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            disabled={!isEditing}
-            className="text-2xl font-bold w-full p-4 border-2 border-gray-200 rounded-lg disabled:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-800 placeholder-gray-500"
-            placeholder="Enter page title..."
-          />
+        {/* Header */}
+        <div className="flex justify-end items-center mb-6">
+          <div className="flex gap-3">
+            {isEditing ? (
+              <button
+                onClick={handleSave}
+                className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md hover:shadow-lg font-medium"
+              >
+                Save Changes
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg font-medium"
+              >
+                Edit Page
+              </button>
+            )}
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-md hover:shadow-lg font-medium"
+              >
+                Close
+              </button>
+              )}
+          </div>
         </div>
-
         {/* Toolbar */}
         {isEditing && (
           <div className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg shadow-sm">
@@ -284,61 +267,33 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
           </div>
         )}
 
-        {/* Content Editor */}
+        {/* Unified Content Editor/Viewer - Google Docs Style */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Job Description Content
-          </label>
-          {isEditing ? (
-            <div className="space-y-4">
-              <div className="tiptap-editor">
-                <EditorContent editor={editor} className="min-h-[280px] prose max-w-none" />
+          <div className="w-full border-2 border-gray-200 rounded-lg min-h-[500px] bg-white">
+            {isEditing ? (
+              <div className="tiptap-editor p-6">
+                <EditorContent editor={editor} className="min-h-[450px] prose max-w-none focus:outline-none" />
               </div>
-              {/* Live Preview while editing */}
-              <div className="live-preview">
-                <h4>Live Preview:</h4>
-                <div className="p-4 border-2 border-gray-200 rounded-lg bg-gray-50">
+            ) : (
+              <div className="p-6 min-h-[450px]">
+                {editor.getHTML() ? (
                   <div 
                     className="prose max-w-none"
                     dangerouslySetInnerHTML={{
                       __html: editor.getHTML()
                     }}
                   />
-                </div>
+                ) : (
+                  <div className="text-gray-500 text-center py-20">
+                    <div className="text-6xl mb-4">📝</div>
+                    <div className="text-xl font-medium text-gray-600 mb-2">No content yet</div>
+                    <div className="text-gray-500">Click "Edit Page" to start writing your job description</div>
+                  </div>
+                )}
               </div>
-            </div>
-          ) : (
-            <div className="w-full p-4 border-2 border-gray-200 rounded-lg min-h-[300px] bg-gray-50">
-              {editor.getHTML() ? (
-                <div 
-                  className="prose max-w-none"
-                  dangerouslySetInnerHTML={{
-                    __html: editor.getHTML()
-                  }}
-                />
-              ) : (
-                <div className="text-gray-800 font-mono text-sm">
-                  No content yet. Click Edit to start writing.
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Final Preview */}
-        {editor.getHTML() && (
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">Final Preview</h3>
-            <div className="p-6 border-2 border-gray-200 rounded-lg bg-white shadow-sm">
-              <div 
-                className="prose max-w-none"
-                dangerouslySetInnerHTML={{
-                  __html: editor.getHTML()
-                }}
-              />
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
