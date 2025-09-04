@@ -53,6 +53,7 @@ interface TrelloListProps {
   userId?: string;
   companyLabels: Label[];
   selectedLabelIds?: string[];
+  boardModule?: string;
 }
 
 /**
@@ -112,6 +113,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   userId = '',
   companyLabels,
   selectedLabelIds = [],
+  boardModule = 'unknown',
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingCountry, setIsEditingCountry] = useState(false);
@@ -476,6 +478,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                       onCardClick={onCardClick}
                       employees={employees}
                       userId={userId}
+                      boardModule={boardModule}
                     />
                   ))}
                   {dropProvided.placeholder}
