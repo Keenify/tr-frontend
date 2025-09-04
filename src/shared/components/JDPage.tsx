@@ -244,6 +244,33 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
                 H2
               </button>
               <button
+                onClick={() => editor.chain().focus().setTextAlign('left').run()}
+                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
+                  editor.isActive({ textAlign: 'left' }) ? 'bg-indigo-600 text-white' : 'bg-indigo-500 text-white hover:bg-indigo-600'
+                }`}
+                title="Align Left"
+              >
+                ⬅️
+              </button>
+              <button
+                onClick={() => editor.chain().focus().setTextAlign('center').run()}
+                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
+                  editor.isActive({ textAlign: 'center' }) ? 'bg-indigo-600 text-white' : 'bg-indigo-500 text-white hover:bg-indigo-600'
+                }`}
+                title="Align Center"
+              >
+                ↔️
+              </button>
+              <button
+                onClick={() => editor.chain().focus().setTextAlign('right').run()}
+                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
+                  editor.isActive({ textAlign: 'right' }) ? 'bg-indigo-600 text-white' : 'bg-indigo-500 text-white hover:bg-indigo-600'
+                }`}
+                title="Align Right"
+              >
+                ➡️
+              </button>
+              <button
                 onClick={() => fileInputRef.current?.click()}
                 className="px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors shadow-md hover:shadow-lg flex items-center gap-2"
                 title="Upload Image"
