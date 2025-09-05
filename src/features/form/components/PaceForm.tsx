@@ -384,11 +384,15 @@ const PaceForm: React.FC = () => {
               <div className="p-3">
                 <div className="text-sm">
                   {row.kpi_list ? (
-                    <ul className="list-disc list-inside space-y-1">
-                      {row.kpi_list.split('\n').filter(kpi => kpi.trim()).map((kpi, kpiIndex) => (
-                        <li key={kpiIndex} className="text-sm">{kpi.trim()}</li>
-                      ))}
-                    </ul>
+                    <div className="space-y-1">
+                      {row.kpi_list.split('\n').filter(kpi => kpi.trim()).map((kpi, kpiIndex) => {
+                        const trimmedKpi = kpi.trim();
+                        const displayKpi = trimmedKpi.startsWith('•') ? trimmedKpi : `• ${trimmedKpi}`;
+                        return (
+                          <div key={kpiIndex} className="text-sm">{displayKpi}</div>
+                        );
+                      })}
+                    </div>
                   ) : (
                     <span className="text-gray-400 italic">No KPIs specified</span>
                   )}

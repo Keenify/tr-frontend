@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Controller } from 'react-hook-form';
 import { ExtendedEmployee } from '../hooks/useEmployees';
+import KpiTextarea from './KpiTextarea';
 
 interface PaceFormRowProps {
   idx: number;
@@ -190,10 +191,11 @@ const PaceFormRow: React.FC<PaceFormRowProps> = ({
           name={`processes.${idx}.kpi_list`}
           control={control}
           render={({ field }) => (
-            <textarea
-              {...field}
+            <KpiTextarea
+              value={field.value || ''}
+              onChange={field.onChange}
               className="w-full p-2 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-orange-400 resize-vertical min-h-[60px]"
-              placeholder="• First KPI&#10;• Second KPI&#10;• Third KPI"
+              placeholder="• First KPI\n• Second KPI\n• Third KPI"
               rows={3}
             />
           )}
