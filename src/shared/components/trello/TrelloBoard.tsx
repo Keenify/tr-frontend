@@ -62,6 +62,7 @@ interface TrelloBoardProps {
   onCardModalOpen?: (listId: string, cardId: string) => void;
   onCardModalClose?: () => void;
   companyInfo?: any;
+  boardModule?: string;
 }
 
 /**
@@ -94,7 +95,8 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   onRefresh,
   onCardModalOpen,
   onCardModalClose,
-  companyInfo
+  companyInfo,
+  boardModule = 'unknown'
 }) => {
   // Get the current user's ID from the session
   const userId = session?.user?.id || '';
@@ -112,7 +114,6 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   } = useTrelloBoard(
     initialLists,
     {
-      boardId,
       onListMove,
       onCardMove,
       onCardUpdate,
@@ -546,6 +547,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
                   userId={userId}
                   companyLabels={companyLabels}
                   selectedLabelIds={selectedLabelIds}
+                  boardModule={boardModule}
                 />
               ))}
               {provided.placeholder}
@@ -670,6 +672,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
           readOnly={selectedCard.card.is_locked && selectedCard.card.locked_by !== userId}
           employees={employees}
           userId={userId}
+          boardModule={boardModule}
         />
       )}
     </div>

@@ -10,6 +10,7 @@ import { updateCard } from './services/useCard';
 import { labelService } from '../../services/labelService';
 import { TrelloCardDescription } from './TrelloCardDescription';
 import { TrelloCardLabelManager } from './TrelloCardLabelManager';
+import { logDeletion } from '../../services/deletionLogService';
 import '../../styles/TrelloCardDescription.css';
 
 // --- Remove Placeholder Label Data and Service ---
@@ -40,6 +41,7 @@ interface TrelloCardModalProps {
   userId?: string;
   onAttachmentChange?: (newCount: number) => void;
   onLockChange?: (isLocked: boolean, lockedBy: string) => void;
+  boardModule?: string;
 }
 
 // Predefined color options for quick selection
@@ -87,7 +89,8 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   employees,
   userId = '',
   onAttachmentChange,
-  onLockChange
+  onLockChange,
+  boardModule = 'unknown'
 }) => {
   // Always call the hook with a string value, even if it's empty
   const { userInfo } = useUserAndCompanyData(userId);
@@ -352,7 +355,28 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
     }
     
     try {
+      // Get attachment info before deletion for logging
+      const attachmentToDelete = attachments.find(a => a.id === attachmentId);
+      const fileName = attachmentToDelete?.file_url ? 
+        attachmentToDelete.file_url.split('/').pop() || 'unknown_file' : 
+        'unknown_file';
+      
       await deleteAttachment(attachmentId);
+      
+      // Log the deletion
+      if (userInfo && userInfo.id && userInfo.company_id) {
+        const fullName = `${userInfo.first_name} ${userInfo.last_name}`.trim() || 'Unknown User';
+        await logDeletion(
+          'delete_attachment',
+          attachmentId,
+          fileName,
+          userInfo.id,
+          fullName,
+          userInfo.company_id,
+          boardModule
+        );
+      }
+      
       setAttachments(prev => {
         const updatedAttachments = prev.filter(a => a.id !== attachmentId);
         if (onAttachmentChange) {
