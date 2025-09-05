@@ -1,7 +1,7 @@
 export interface WeeklyMeetingQuestion {
   id: string;
   company_id: string;
-  question_text: string;
+  question_text: Record<string, any>;
   created_at: string;
   updated_at: string;
 }
@@ -26,11 +26,11 @@ export interface WeeklyMeetingFormData {
 
 export interface CreateQuestionRequest {
   company_id: string;
-  question_text: string;
+  question_text: Record<string, any>;
 }
 
 export interface UpdateQuestionRequest {
-  question_text?: string;
+  question_text?: Record<string, any>;
 }
 
 export interface CreateResponseRequest {

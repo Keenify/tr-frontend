@@ -26,7 +26,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
   const [weeklyEntry, setWeeklyEntry] = useState<string>('');
   const [newQuestion, setNewQuestion] = useState<CreateQuestionRequest>({
     company_id: '',
-    question_text: ''
+    question_text: { text: '' }
   });
 
   // Load questions when companyInfo is available
@@ -84,7 +84,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
 
   // Create or update single question entry (upsert logic)
   const handleCreateQuestion = async () => {
-    if (!newQuestion.question_text?.trim()) {
+    if (!newQuestion.question_text?.text?.trim()) {
       toast.error('Question text is required');
       return;
     }
@@ -97,7 +97,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
       
       setNewQuestion({
         company_id: companyInfo?.id || '',
-        question_text: ''
+        question_text: { text: '' }
       });
       setShowQuestionForm(false);
     } catch (error) {
@@ -108,7 +108,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
 
   // Update existing question
   const handleUpdateQuestion = async () => {
-    if (!editingQuestion || !editingQuestion.question_text?.trim()) {
+    if (!editingQuestion || !editingQuestion.question_text?.text?.trim()) {
       toast.error('Question text is required');
       return;
     }
@@ -154,7 +154,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
     } else {
       setNewQuestion({
         company_id: companyInfo?.id || '',
-        question_text: ''
+        question_text: { text: '' }
       });
     }
     setShowQuestionForm(true);
@@ -321,7 +321,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
               {questions.length > 0 ? (
                 <div className="ml-9">
                   <div className="text-sm text-gray-700 whitespace-pre-line">
-                    {questions[0].question_text || 'No questions set'}
+                    {questions[0].question_text?.text || 'No questions set'}
                   </div>
                 </div>
               ) : (
@@ -436,14 +436,14 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
                   Weekly Meeting Questions
                 </label>
                 <textarea
-                  value={editingQuestion ? editingQuestion.question_text : newQuestion.question_text}
+                  value={editingQuestion ? editingQuestion.question_text?.text || '' : newQuestion.question_text?.text || ''}
                   onChange={(e) => {
                     if (editingQuestion) {
-                      setEditingQuestion(prev => prev ? { ...prev, question_text: e.target.value } : null);
+                      setEditingQuestion(prev => prev ? { ...prev, question_text: { ...prev.question_text, text: e.target.value } } : null);
                     } else {
                       setNewQuestion(prev => ({ 
                         ...prev, 
-                        question_text: e.target.value
+                        question_text: { ...prev.question_text, text: e.target.value }
                       }));
                     }
                   }}
