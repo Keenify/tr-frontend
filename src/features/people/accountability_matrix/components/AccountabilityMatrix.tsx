@@ -113,7 +113,7 @@ const AccountabilityMatrix: React.FC<AccountabilityMatrixProps> = ({ session }) 
     menu: (base) => ({
       ...base,
       position: 'absolute',
-      zIndex: 9999,
+      zIndex: 1000,
       maxHeight: '200px',
       overflow: 'hidden'
     }),
@@ -141,7 +141,7 @@ const AccountabilityMatrix: React.FC<AccountabilityMatrixProps> = ({ session }) 
     }),
     menuPortal: (base) => ({
       ...base,
-      zIndex: 9999
+      zIndex: 1000
     }),
     container: (base) => ({
       ...base,
