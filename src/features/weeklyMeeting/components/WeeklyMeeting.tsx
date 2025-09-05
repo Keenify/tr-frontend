@@ -254,7 +254,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Weekly Meeting</h1>
-          <p className="text-gray-600">Manage your weekly meeting questions and responses</p>
+          <p className="text-gray-600">Manage your weekly meeting questions and entry</p>
         </div>
         <button
           onClick={() => setShowQuestionForm(true)}
