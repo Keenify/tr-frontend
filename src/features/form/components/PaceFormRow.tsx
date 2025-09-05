@@ -61,7 +61,7 @@ const EmployeeDropdown: React.FC<{
           setIsOpen(!isOpen);
           setSearchTerm('');
         }}
-        className="w-full p-1 text-sm text-left focus:outline-none bg-transparent flex items-center min-h-[32px]"
+        className="w-full p-1 text-base text-left focus:outline-none bg-transparent flex items-center min-h-[32px]"
       >
         {selectedEmployee ? (
           <div className="flex items-center space-x-2">
@@ -96,7 +96,7 @@ const EmployeeDropdown: React.FC<{
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search employees..."
-              className="w-full p-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-orange-400"
+              className="w-full p-1 text-base border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-orange-400"
             />
           </div>
           
@@ -122,13 +122,13 @@ const EmployeeDropdown: React.FC<{
                       target.src = '/default-avatar.png';
                     }}
                   />
-                  <span className="text-sm truncate">
+                  <span className="text-base truncate">
                     {employee.first_name} {employee.last_name}
                   </span>
                 </div>
               ))
             ) : (
-              <div className="p-2 text-sm text-gray-500 text-center">
+              <div className="p-2 text-base text-gray-500 text-center">
                 No employees found
               </div>
             )}
@@ -159,7 +159,7 @@ const PaceFormRow: React.FC<PaceFormRowProps> = ({
 
             />
             {fieldState.error && (
-              <div className="text-red-500 text-xs mt-1">{fieldState.error.message}</div>
+              <div className="text-red-500 text-sm mt-1">{fieldState.error.message}</div>
             )}
           </div>
         )}
@@ -175,11 +175,11 @@ const PaceFormRow: React.FC<PaceFormRowProps> = ({
             <input
               {...field}
               type="text"
-              className="w-full p-1 text-sm border-none focus:outline-none bg-transparent"
+              className="w-full p-1 text-base border-none focus:outline-none bg-transparent"
               placeholder="Process name"
             />
             {fieldState.error && (
-              <div className="text-red-500 text-xs mt-1">{fieldState.error.message}</div>
+              <div className="text-red-500 text-sm mt-1">{fieldState.error.message}</div>
             )}
           </div>
         )}
@@ -194,7 +194,7 @@ const PaceFormRow: React.FC<PaceFormRowProps> = ({
             <KpiTextarea
               value={field.value || ''}
               onChange={field.onChange}
-              className="w-full p-2 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-orange-400 resize-vertical min-h-[60px]"
+              className="w-full p-2 text-base border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-orange-400 resize-vertical min-h-[60px]"
               placeholder="• First KPI\n• Second KPI\n• Third KPI"
               rows={3}
             />
@@ -204,7 +204,7 @@ const PaceFormRow: React.FC<PaceFormRowProps> = ({
           <button
             type="button"
             onClick={() => onRemove(idx)}
-            className="text-red-500 text-xs hover:text-red-700 mt-1"
+            className="text-red-500 text-base hover:text-red-700 mt-1"
           >
             ✕ Remove
           </button>
