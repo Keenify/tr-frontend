@@ -102,7 +102,6 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
         responses: {
           'main_response': {
             questions: questions.map(q => ({
-              question_id: q.id,
               question_text: q.question_text || '',
               response: ''
             })),
