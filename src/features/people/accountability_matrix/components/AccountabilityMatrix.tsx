@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useUserAndCompanyData } from "../../../../shared/hooks/useUserAndCompanyData";
 import { getAllEmployees } from "../../../../services/useUser";
 import { UserData } from "../../../../services/useUser";
-import Select, { StylesConfig } from 'react-select';
+import Select, { StylesConfig, components } from 'react-select';
 import { 
   createAccountability, 
   getCompanyAccountabilities, 
@@ -20,6 +20,7 @@ interface AccountabilityMatrixProps {
 interface SelectOption {
   value: string;
   label: string;
+  profilePic?: string;
 }
 
 const AccountabilityMatrix: React.FC<AccountabilityMatrixProps> = ({ session }) => {
@@ -102,11 +103,98 @@ const AccountabilityMatrix: React.FC<AccountabilityMatrixProps> = ({ session }) 
     }
   };
 
-  // Convert employees to select options
-  const employeeOptions: SelectOption[] = employees.map((employee) => ({
-    value: employee.id,
-    label: `${employee.first_name} ${employee.last_name}`
-  }));
+  // Convert employees to select options, filtering only active employees
+  const employeeOptions: SelectOption[] = employees
+    .filter((employee) => employee.Is_Employed === true)
+    .map((employee) => ({
+      value: employee.id,
+      label: `${employee.first_name} ${employee.last_name}`,
+      profilePic: employee.profile_pic_url
+    }));
+
+  // Custom Option component to display profile pictures
+  const CustomOption = (props: any) => {
+    const { data, innerRef, innerProps } = props;
+    return (
+      <div ref={innerRef} {...innerProps} className="flex items-center p-2 hover:bg-gray-100 cursor-pointer">
+        {data.profilePic ? (
+          <img 
+            src={data.profilePic} 
+            alt={data.label}
+            className="w-8 h-8 rounded-full mr-3 object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-full mr-3 bg-gray-300 flex items-center justify-center">
+            <span className="text-gray-600 text-sm font-medium">
+              {data.label.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+            </span>
+          </div>
+        )}
+        <span className="text-gray-900">{data.label}</span>
+      </div>
+    );
+  };
+
+  // Custom SingleValue component for selected value
+  const CustomSingleValue = (props: any) => {
+    const { data } = props;
+    return (
+      <div className="flex items-center">
+        {data.profilePic ? (
+          <img 
+            src={data.profilePic} 
+            alt={data.label}
+            className="w-6 h-6 rounded-full mr-2 object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="w-6 h-6 rounded-full mr-2 bg-gray-300 flex items-center justify-center">
+            <span className="text-gray-600 text-xs font-medium">
+              {data.label.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+            </span>
+          </div>
+        )}
+        <span className="text-gray-900">{data.label}</span>
+      </div>
+    );
+  };
+
+  // Custom MultiValue component for multi-select
+  const CustomMultiValue = (props: any) => {
+    const { data, removeProps } = props;
+    return (
+      <div className="flex items-center bg-blue-100 rounded-full px-2 py-1 mr-1 mb-1">
+        {data.profilePic ? (
+          <img 
+            src={data.profilePic} 
+            alt={data.label}
+            className="w-5 h-5 rounded-full mr-1 object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="w-5 h-5 rounded-full mr-1 bg-gray-300 flex items-center justify-center">
+            <span className="text-gray-600 text-xs font-medium">
+              {data.label.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+            </span>
+          </div>
+        )}
+        <span className="text-blue-800 text-sm mr-1">{data.label}</span>
+        <button
+          {...removeProps}
+          className="text-blue-600 hover:text-blue-800 ml-1"
+        >
+          ×
+        </button>
+      </div>
+    );
+  };
 
   // Custom styles for the Select components to ensure dropdowns are visible
   const selectStyles: StylesConfig<SelectOption, true> = {
@@ -309,8 +397,16 @@ const AccountabilityMatrix: React.FC<AccountabilityMatrixProps> = ({ session }) 
                       })}
                       placeholder="Select accountable person"
                       isClearable
+                      isSearchable
                       styles={selectStyles}
                       menuPortalTarget={document.body}
+                      components={{
+                        Option: CustomOption,
+                        SingleValue: CustomSingleValue
+                      }}
+                      filterOption={(option, inputValue) => {
+                        return option.label.toLowerCase().includes(inputValue.toLowerCase());
+                      }}
                     />
                   ) : (
                     `${employees.find(emp => emp.id === row.accountable_person)?.first_name} ${employees.find(emp => emp.id === row.accountable_person)?.last_name}`
@@ -329,9 +425,17 @@ const AccountabilityMatrix: React.FC<AccountabilityMatrixProps> = ({ session }) 
                         team_involved: options ? options.map(option => option.value) : [] 
                       })}
                       placeholder="Select team members"
+                      isSearchable
                       styles={selectStyles}
                       menuPortalTarget={document.body}
                       closeMenuOnSelect={false}
+                      components={{
+                        Option: CustomOption,
+                        MultiValue: CustomMultiValue
+                      }}
+                      filterOption={(option, inputValue) => {
+                        return option.label.toLowerCase().includes(inputValue.toLowerCase());
+                      }}
                     />
                   ) : (
                     <TeamMemberLabels teamMemberIds={row.team_involved} />
@@ -412,8 +516,16 @@ const AccountabilityMatrix: React.FC<AccountabilityMatrixProps> = ({ session }) 
                     })}
                     placeholder="Select accountable person"
                     isClearable
+                    isSearchable
                     styles={selectStyles}
                     menuPortalTarget={document.body}
+                    components={{
+                      Option: CustomOption,
+                      SingleValue: CustomSingleValue
+                    }}
+                    filterOption={(option, inputValue) => {
+                      return option.label.toLowerCase().includes(inputValue.toLowerCase());
+                    }}
                   />
                 </td>
                 <td className="table-cell">
@@ -428,9 +540,17 @@ const AccountabilityMatrix: React.FC<AccountabilityMatrixProps> = ({ session }) 
                       team_involved: options ? options.map(option => option.value) : [] 
                     })}
                     placeholder="Select team members"
+                    isSearchable
                     styles={selectStyles}
                     menuPortalTarget={document.body}
                     closeMenuOnSelect={false}
+                    components={{
+                      Option: CustomOption,
+                      MultiValue: CustomMultiValue
+                    }}
+                    filterOption={(option, inputValue) => {
+                      return option.label.toLowerCase().includes(inputValue.toLowerCase());
+                    }}
                   />
                 </td>
                 <td className="table-cell">
