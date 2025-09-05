@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { Plus, Edit3, Save, X, Trash2 } from 'react-feather';
+import { Edit3, Save, X, Trash2 } from 'react-feather';
 import { weeklyMeetingService } from '../services/weeklyMeetingService';
 import {
   WeeklyMeetingQuestion,
   WeeklyMeetingResponse,
   ViewMode,
-  CreateQuestionRequest,
-  UpdateQuestionRequest
+  CreateQuestionRequest
 } from '../types';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import toast from 'react-hot-toast';
@@ -83,7 +82,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
     }
   };
 
-  // Create new question
+  // Create or update single question entry (upsert logic)
   const handleCreateQuestion = async () => {
     if (!newQuestion.question_text?.trim()) {
       toast.error('Question text is required');
@@ -91,20 +90,19 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
     }
 
     try {
-      const createdQuestion = await weeklyMeetingService.createQuestion(newQuestion);
-      setQuestions(prev => [...prev, createdQuestion].sort(
-        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-      ));
+      // Use the upsert endpoint for cleaner logic
+      const upsertedQuestion = await weeklyMeetingService.upsertCompanyQuestion(companyInfo?.id || '', newQuestion);
+      setQuestions([upsertedQuestion]);
+      toast.success('Questions saved successfully');
       
       setNewQuestion({
         company_id: companyInfo?.id || '',
         question_text: ''
       });
       setShowQuestionForm(false);
-      toast.success('Question created successfully');
     } catch (error) {
-      console.error('Error creating question:', error);
-      toast.error('Failed to create question');
+      console.error('Error saving questions:', error);
+      toast.error('Failed to save questions');
     }
   };
 
@@ -116,43 +114,50 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
     }
 
     try {
-      const updateData: UpdateQuestionRequest = {
+      const updateData: CreateQuestionRequest = {
+        company_id: companyInfo?.id || '',
         question_text: editingQuestion.question_text
       };
       
-      const updatedQuestion = await weeklyMeetingService.updateQuestion(editingQuestion.id, updateData);
-      setQuestions(prev => prev.map(q => 
-        q.id === editingQuestion.id ? updatedQuestion : q
-      ).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()));
+      const updatedQuestion = await weeklyMeetingService.upsertCompanyQuestion(companyInfo?.id || '', updateData);
+      setQuestions([updatedQuestion]);
       
       setEditingQuestion(null);
-      toast.success('Question updated successfully');
+      toast.success('Questions updated successfully');
     } catch (error) {
-      console.error('Error updating question:', error);
-      toast.error('Failed to update question');
+      console.error('Error updating questions:', error);
+      toast.error('Failed to update questions');
     }
   };
 
   // Delete question
   const handleDeleteQuestion = async (questionId: string) => {
-    if (!window.confirm('Are you sure you want to delete this question?')) {
+    if (!window.confirm('Are you sure you want to delete your weekly meeting questions?')) {
       return;
     }
 
     try {
       await weeklyMeetingService.deleteQuestion(questionId);
-      setQuestions(prev => prev.filter(q => q.id !== questionId));
-      toast.success('Question deleted successfully');
+      setQuestions([]);
+      toast.success('Questions deleted successfully');
     } catch (error) {
-      console.error('Error deleting question:', error);
-      toast.error('Failed to delete question');
+      console.error('Error deleting questions:', error);
+      toast.error('Failed to delete questions');
     }
   };
 
-  // Start editing a question
-  const startEditingQuestion = (question: WeeklyMeetingQuestion) => {
-    setEditingQuestion({ ...question });
-    setShowQuestionForm(false);
+
+  // Start editing the single question entry
+  const startEditingSingleQuestion = () => {
+    if (questions.length > 0) {
+      setEditingQuestion({ ...questions[0] });
+    } else {
+      setNewQuestion({
+        company_id: companyInfo?.id || '',
+        question_text: ''
+      });
+    }
+    setShowQuestionForm(true);
   };
 
   // Cancel editing
@@ -279,65 +284,52 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
               <Edit3 className="w-5 h-5 mr-2" />
               Questions
             </h3>
-            <button
-              onClick={() => setShowQuestionForm(true)}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Question
-            </button>
           </div>
 
           <div className="space-y-4">
-            {questions.map((question, index) => (
-              <div key={question.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center flex-1">
-                    <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-800 text-xs font-bold rounded-full mr-3">
-                      {index + 1}
-                    </span>
-                    <span className="text-sm font-semibold text-gray-800 flex-1">
-                      {question.question_text || 'No question text'}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2 ml-4">
+            {/* Single Question Entry Interface */}
+            <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center flex-1">
+                  <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-800 text-xs font-bold rounded-full mr-3">
+                    1
+                  </span>
+                  <span className="text-sm font-semibold text-gray-800 flex-1">
+                    Weekly Meeting Questions
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2 ml-4">
+                  <button
+                    onClick={startEditingSingleQuestion}
+                    className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                    title="Edit questions"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  {questions.length > 0 && (
                     <button
-                      onClick={() => startEditingQuestion(question)}
-                      className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
-                      title="Edit question"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteQuestion(question.id)}
+                      onClick={() => handleDeleteQuestion(questions[0].id)}
                       className="p-1 text-red-600 hover:text-red-800 hover:bg-red-100 rounded transition-colors"
-                      title="Delete question"
+                      title="Delete questions"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
+                  )}
+                </div>
+              </div>
+              
+              {questions.length > 0 ? (
+                <div className="ml-9">
+                  <div className="text-sm text-gray-700 whitespace-pre-line">
+                    {questions[0].question_text || 'No questions set'}
                   </div>
                 </div>
-              </div>
-            ))}
-            
-            {questions.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <div className="mb-4">
-                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+              ) : (
+                <div className="ml-9 text-sm text-gray-500 italic">
+                  Click the edit button to add your weekly meeting questions
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Questions Available</h3>
-                <p className="text-gray-600 mb-4">Add some questions to get started with your weekly meetings.</p>
-                <button
-                  onClick={() => setShowQuestionForm(true)}
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Your First Question
-                </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
@@ -428,7 +420,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">
-                {editingQuestion ? 'Edit Question' : 'Add New Question'}
+                {editingQuestion ? 'Edit Questions' : 'Add Questions'}
               </h3>
               <button
                 onClick={cancelEditing}
@@ -441,7 +433,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Question Text
+                  Weekly Meeting Questions
                 </label>
                 <textarea
                   value={editingQuestion ? editingQuestion.question_text : newQuestion.question_text}
@@ -456,9 +448,17 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
                     }
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={3}
-                  placeholder="Enter your question..."
+                  rows={8}
+                  placeholder="Enter your weekly meeting questions (one per line):
+
+• What did you accomplish this week?
+• What challenges did you face?
+• What are your goals for next week?
+• Any other thoughts or reflections?"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  You can include multiple questions, one per line. This will be your single question entry for weekly meetings.
+                </p>
               </div>
             </div>
             
@@ -473,7 +473,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
                 onClick={editingQuestion ? handleUpdateQuestion : handleCreateQuestion}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
-                {editingQuestion ? 'Update Question' : 'Create Question'}
+                {editingQuestion ? 'Update Questions' : 'Save Questions'}
               </button>
             </div>
           </div>

@@ -62,6 +62,13 @@ class WeeklyMeetingService {
     });
   }
 
+  async upsertCompanyQuestion(companyId: string, data: CreateQuestionRequest): Promise<WeeklyMeetingQuestion> {
+    return this.makeRequest<WeeklyMeetingQuestion>(`/weekly-meetings/companies/${companyId}/questions/upsert`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Response Management
   async createResponse(data: CreateResponseRequest): Promise<WeeklyMeetingResponse> {
     return this.makeRequest<WeeklyMeetingResponse>('/weekly-meetings/responses/', {
