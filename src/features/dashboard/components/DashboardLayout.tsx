@@ -87,6 +87,12 @@ const navigationConfig = [
         shortForm: "Dh",
         icon: Calendar,
       },
+      {
+        id: "weeklyMeeting",
+        label: "Weekly Meeting",
+        shortForm: "Wm",
+        icon: Calendar,
+      },
     ],
   },
   {
