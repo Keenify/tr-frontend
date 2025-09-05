@@ -22,6 +22,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
   const [responses, setResponses] = useState<WeeklyMeetingResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [showQuestionForm, setShowQuestionForm] = useState(false);
+  const [weeklyEntry, setWeeklyEntry] = useState<string>('');
   const [newQuestion, setNewQuestion] = useState<CreateQuestionRequest>({
     company_id: '',
     question_text: ''
@@ -35,6 +36,11 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
       setNewQuestion(prev => ({ ...prev, company_id: companyInfo.id }));
     }
   }, [companyInfo, viewMode.date]);
+
+  // Load weekly entry when date changes
+  useEffect(() => {
+    loadWeeklyEntryForDate();
+  }, [viewMode.date, responses]);
 
   // Load questions for the company
   const loadQuestions = async () => {
@@ -63,6 +69,18 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
     }
   };
 
+  // Load weekly entry for the selected date
+  const loadWeeklyEntryForDate = () => {
+    const dateStr = viewMode.date.toISOString().split('T')[0];
+    const entryForDate = responses.find(r => r.meeting_date === dateStr);
+    
+    if (entryForDate) {
+      setWeeklyEntry(entryForDate.response_data?.notes || '');
+    } else {
+      setWeeklyEntry('');
+    }
+  };
+
   // Create new question
   const handleCreateQuestion = async () => {
     if (!newQuestion.question_text?.trim()) {
@@ -88,35 +106,79 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
     }
   };
 
-  // Save responses
-  const saveResponses = async () => {
+  // Save weekly entry (upsert logic)
+  const saveWeeklyEntry = async () => {
     if (!companyInfo?.id) return;
 
     setLoading(true);
     try {
       const dateStr = viewMode.date.toISOString().split('T')[0];
-      const formData = {
-        company_id: companyInfo.id,
-        meeting_date: dateStr,
-        last_edited_by: session.user.id,
-        responses: {
-          'main_response': {
-            questions: questions.map(q => ({
-              question_text: q.question_text || '',
-              response: ''
-            })),
-            notes: '',
-            mood: 'positive'
-          }
-        }
+      const existingEntry = responses.find(r => r.meeting_date === dateStr);
+      
+      const responseData = {
+        questions: questions.map(q => ({
+          question_text: q.question_text || '',
+          response: ''
+        })),
+        notes: weeklyEntry,
+        mood: 'positive'
       };
 
-      await weeklyMeetingService.submitFormResponses(formData);
-      toast.success('Responses saved successfully');
+      if (existingEntry) {
+        // Update existing entry
+        await weeklyMeetingService.updateResponse(existingEntry.id, {
+          response_data: responseData,
+          last_edited_by: session.user.id
+        });
+        toast.success('Weekly entry updated successfully');
+      } else {
+        // Create new entry
+        const formData = {
+          company_id: companyInfo.id,
+          meeting_date: dateStr,
+          last_edited_by: session.user.id,
+          responses: {
+            'main_response': responseData
+          }
+        };
+        await weeklyMeetingService.submitFormResponses(formData);
+        toast.success('Weekly entry created successfully');
+      }
+      
       loadResponses();
     } catch (error) {
-      console.error('Error saving responses:', error);
-      toast.error('Failed to save responses');
+      console.error('Error saving weekly entry:', error);
+      toast.error('Failed to save weekly entry');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete weekly entry
+  const deleteWeeklyEntry = async () => {
+    if (!companyInfo?.id) return;
+    
+    const dateStr = viewMode.date.toISOString().split('T')[0];
+    const existingEntry = responses.find(r => r.meeting_date === dateStr);
+    
+    if (!existingEntry) {
+      toast.error('No entry found to delete');
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to delete this weekly entry?')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await weeklyMeetingService.deleteResponse(existingEntry.id);
+      setWeeklyEntry('');
+      toast.success('Weekly entry deleted successfully');
+      loadResponses();
+    } catch (error) {
+      console.error('Error deleting weekly entry:', error);
+      toast.error('Failed to delete weekly entry');
     } finally {
       setLoading(false);
     }
@@ -220,32 +282,46 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold flex items-center">
               <Edit3 className="w-5 h-5 mr-2" />
-              Weekly Response - {viewMode.date.toLocaleDateString('en-US', { 
+              Weekly Entry - {viewMode.date.toLocaleDateString('en-US', { 
                 weekday: 'long', 
                 year: 'numeric', 
                 month: 'long', 
                 day: 'numeric' 
               })}
             </h3>
-            <button
-              onClick={saveResponses}
-              disabled={loading}
-              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              {loading ? 'Saving...' : 'Save Response'}
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={saveWeeklyEntry}
+                disabled={loading}
+                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {loading ? 'Saving...' : responses.find(r => r.meeting_date === viewMode.date.toISOString().split('T')[0]) ? 'Update Entry' : 'Save Entry'}
+              </button>
+              {responses.find(r => r.meeting_date === viewMode.date.toISOString().split('T')[0]) && (
+                <button
+                  onClick={deleteWeeklyEntry}
+                  disabled={loading}
+                  className="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Delete Entry
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Your Weekly Response
+                Your Weekly Entry
               </label>
               <textarea
+                value={weeklyEntry}
+                onChange={(e) => setWeeklyEntry(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 rows={12}
-                placeholder="Write your weekly response here... You can include:
+                placeholder="Write your weekly entry here... You can include:
 
 • What you accomplished this week
 • Challenges you faced
@@ -254,17 +330,24 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
               />
             </div>
             
-            {responses.length > 0 && (
+            {responses.filter(r => r.meeting_date !== viewMode.date.toISOString().split('T')[0]).length > 0 && (
               <div className="mt-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Previous Responses:</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Previous Entries:</h4>
                 <div className="space-y-2">
-                  {responses.map((response) => (
+                  {responses
+                    .filter(r => r.meeting_date !== viewMode.date.toISOString().split('T')[0])
+                    .map((response) => (
                     <div key={response.id} className="bg-gray-50 border border-gray-200 rounded-md p-3">
                       <div className="text-sm text-gray-600 mb-1">
-                        {new Date(response.created_at).toLocaleDateString()}
+                        {new Date(response.meeting_date).toLocaleDateString('en-US', { 
+                          weekday: 'long', 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
                       </div>
                       <div className="text-sm text-gray-800">
-                        {response.response_data?.notes || 'No response content'}
+                        {response.response_data?.notes || 'No entry content'}
                       </div>
                     </div>
                   ))}
