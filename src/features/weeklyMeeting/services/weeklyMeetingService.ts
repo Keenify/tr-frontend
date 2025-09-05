@@ -2,12 +2,10 @@ import {
   WeeklyMeetingQuestion,
   WeeklyMeetingResponse,
   WeeklyMeetingFormData,
-  WeeklyMeetingFormResponse,
   CreateQuestionRequest,
   UpdateQuestionRequest,
   CreateResponseRequest,
-  UpdateResponseRequest,
-  DateRangeFilter
+  UpdateResponseRequest
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -45,13 +43,9 @@ class WeeklyMeetingService {
     return this.makeRequest<WeeklyMeetingQuestion>(`/weekly-meetings/questions/${questionId}`);
   }
 
-  async getCompanyQuestions(companyId: string, activeOnly: boolean = true): Promise<WeeklyMeetingQuestion[]> {
-    const params = new URLSearchParams();
-    if (activeOnly) {
-      params.append('active_only', 'true');
-    }
+  async getCompanyQuestions(companyId: string): Promise<WeeklyMeetingQuestion[]> {
     return this.makeRequest<WeeklyMeetingQuestion[]>(
-      `/weekly-meetings/companies/${companyId}/questions?${params.toString()}`
+      `/weekly-meetings/companies/${companyId}/questions`
     );
   }
 
@@ -86,21 +80,6 @@ class WeeklyMeetingService {
     );
   }
 
-  async getEmployeeResponses(employeeId: string): Promise<WeeklyMeetingResponse[]> {
-    return this.makeRequest<WeeklyMeetingResponse[]>(
-      `/weekly-meetings/employees/${employeeId}/responses`
-    );
-  }
-
-  async getCompanyResponsesByDateRange(companyId: string, dateRange: DateRangeFilter): Promise<WeeklyMeetingResponse[]> {
-    const params = new URLSearchParams({
-      start_date: dateRange.start_date,
-      end_date: dateRange.end_date,
-    });
-    return this.makeRequest<WeeklyMeetingResponse[]>(
-      `/weekly-meetings/companies/${companyId}/responses/date-range?${params.toString()}`
-    );
-  }
 
   async updateResponse(responseId: string, data: UpdateResponseRequest): Promise<WeeklyMeetingResponse> {
     return this.makeRequest<WeeklyMeetingResponse>(`/weekly-meetings/responses/${responseId}`, {
@@ -123,11 +102,6 @@ class WeeklyMeetingService {
     });
   }
 
-  async getMeetingFormData(companyId: string, meetingDate: string): Promise<WeeklyMeetingFormResponse> {
-    return this.makeRequest<WeeklyMeetingFormResponse>(
-      `/weekly-meetings/companies/${companyId}/meeting-form/${meetingDate}`
-    );
-  }
 }
 
 export const weeklyMeetingService = new WeeklyMeetingService();
