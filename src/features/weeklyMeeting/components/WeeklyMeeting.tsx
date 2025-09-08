@@ -17,7 +17,15 @@ interface WeeklyMeetingProps {
 
 const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
   const { companyInfo } = useUserAndCompanyData(session.user.id);
-  const [viewMode, setViewMode] = useState<ViewMode>({ type: 'week', date: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()) });
+  const [viewMode, setViewMode] = useState<ViewMode>({ type: 'week', date: new Date() });
+
+  // Helper function to get local date string in YYYY-MM-DD format
+  const getLocalDateString = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
   const [questions, setQuestions] = useState<WeeklyMeetingQuestion[]>([]);
   const [responses, setResponses] = useState<WeeklyMeetingResponse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -61,7 +69,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
     if (!companyInfo?.id) return;
     
     try {
-      const dateStr = viewMode.date.toISOString().split('T')[0];
+      const dateStr = getLocalDateString(viewMode.date);
       const companyResponses = await weeklyMeetingService.getCompanyResponsesForDate(companyInfo.id, dateStr);
       setResponses(companyResponses);
     } catch (error) {
@@ -72,7 +80,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
 
   // Load weekly entry for the selected date
   const loadWeeklyEntryForDate = () => {
-    const dateStr = viewMode.date.toISOString().split('T')[0];
+    const dateStr = getLocalDateString(viewMode.date);
     const entryForDate = responses.find(r => r.meeting_date === dateStr);
     
     if (entryForDate) {
@@ -93,13 +101,14 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
       // Use the upsert endpoint for cleaner logic
       const upsertedQuestion = await weeklyMeetingService.upsertCompanyQuestion(companyInfo?.id || '', newQuestion);
       setQuestions([upsertedQuestion]);
-      toast.success('Questions saved successfully');
+      toast.success('Questions created successfully!');
       
       setNewQuestion({
         company_id: companyInfo?.id || '',
         question_text: { text: '' }
       });
       setShowQuestionForm(false);
+      setEditingQuestion(null);
     } catch (error) {
       console.error('Error saving questions:', error);
       toast.error('Failed to save questions');
@@ -123,7 +132,8 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
       setQuestions([updatedQuestion]);
       
       setEditingQuestion(null);
-      toast.success('Questions updated successfully');
+      setShowQuestionForm(false);
+      toast.success('Questions updated successfully!');
     } catch (error) {
       console.error('Error updating questions:', error);
       toast.error('Failed to update questions');
@@ -172,7 +182,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
 
     setLoading(true);
     try {
-      const dateStr = viewMode.date.toISOString().split('T')[0];
+      const dateStr = getLocalDateString(viewMode.date);
       const existingEntry = responses.find(r => r.meeting_date === dateStr);
       
       const responseData = {
@@ -218,7 +228,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
   const deleteWeeklyEntry = async () => {
     if (!companyInfo?.id) return;
     
-    const dateStr = viewMode.date.toISOString().split('T')[0];
+    const dateStr = getLocalDateString(viewMode.date);
     const existingEntry = responses.find(r => r.meeting_date === dateStr);
     
     if (!existingEntry) {
@@ -269,7 +279,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
           <label className="text-sm font-medium text-gray-700">Meeting Date:</label>
           <input
             type="date"
-            value={viewMode.date.toISOString().split('T')[0]}
+            value={getLocalDateString(viewMode.date)}
             onChange={(e) => setViewMode(prev => ({ ...prev, date: new Date(e.target.value) }))}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -302,7 +312,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
                   <button
                     onClick={startEditingSingleQuestion}
                     className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
-                    title="Edit questions"
+                    title={questions.length > 0 ? "Edit questions" : "Create questions"}
                   >
                     <Edit3 className="w-4 h-4" />
                   </button>
@@ -320,13 +330,17 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
               
               {questions.length > 0 ? (
                 <div className="ml-9">
+                  <div className="flex items-center mb-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                    <span className="text-sm text-green-600 font-medium">Question Created</span>
+                  </div>
                   <div className="text-sm text-gray-700 whitespace-pre-line">
                     {questions[0].question_text?.text || 'No questions set'}
                   </div>
                 </div>
               ) : (
                 <div className="ml-9 text-sm text-gray-500 italic">
-                  Click the edit button to add your weekly meeting questions
+                  Click the edit button to create your weekly meeting questions
                 </div>
               )}
             </div>
@@ -352,9 +366,9 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
                 className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
               >
                 <Save className="w-4 h-4 mr-2" />
-                {loading ? 'Saving...' : responses.find(r => r.meeting_date === viewMode.date.toISOString().split('T')[0]) ? 'Update Entry' : 'Save Entry'}
+                {loading ? 'Saving...' : responses.find(r => r.meeting_date === getLocalDateString(viewMode.date)) ? 'Update Entry' : 'Save Entry'}
               </button>
-              {responses.find(r => r.meeting_date === viewMode.date.toISOString().split('T')[0]) && (
+              {responses.find(r => r.meeting_date === getLocalDateString(viewMode.date)) && (
                 <button
                   onClick={deleteWeeklyEntry}
                   disabled={loading}
@@ -386,12 +400,12 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
               />
             </div>
             
-            {responses.filter(r => r.meeting_date !== viewMode.date.toISOString().split('T')[0]).length > 0 && (
+            {responses.filter(r => r.meeting_date !== getLocalDateString(viewMode.date)).length > 0 && (
               <div className="mt-4">
                 <h4 className="text-sm font-medium text-gray-700 mb-2">Previous Entries:</h4>
                 <div className="space-y-2">
                   {responses
-                    .filter(r => r.meeting_date !== viewMode.date.toISOString().split('T')[0])
+                    .filter(r => r.meeting_date !== getLocalDateString(viewMode.date))
                     .map((response) => (
                     <div key={response.id} className="bg-gray-50 border border-gray-200 rounded-md p-3">
                       <div className="text-sm text-gray-600 mb-1">
@@ -420,7 +434,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">
-                {editingQuestion ? 'Edit Questions' : 'Add Questions'}
+                {editingQuestion ? 'Edit Questions' : 'Create Questions'}
               </h3>
               <button
                 onClick={cancelEditing}
@@ -457,7 +471,10 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
 • Any other thoughts or reflections?"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  You can include multiple questions, one per line. This will be your single question entry for weekly meetings.
+                  {editingQuestion 
+                    ? "You can update your existing questions here. This is your single question entry for weekly meetings."
+                    : "You can include multiple questions, one per line. This will be your single question entry for weekly meetings."
+                  }
                 </p>
               </div>
             </div>
@@ -473,7 +490,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
                 onClick={editingQuestion ? handleUpdateQuestion : handleCreateQuestion}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
-                {editingQuestion ? 'Update Questions' : 'Save Questions'}
+                {editingQuestion ? 'Update Questions' : 'Create Questions'}
               </button>
             </div>
           </div>
