@@ -16,24 +16,31 @@ const KpiTextarea: React.FC<KpiTextareaProps> = ({
   rows = 3
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [displayValue, setDisplayValue] = useState(value);
 
-  // Update display value when prop value changes
-  useEffect(() => {
-    setDisplayValue(value);
-  }, [value]);
-
-  // Format text to ensure each line has a bullet point
+  // Format text to ensure each line has a bullet point with proper spacing
   const formatTextWithBullets = (text: string): string => {
     return text
       .split('\n')
       .map(line => {
         const trimmed = line.trim();
         if (!trimmed) return '';
-        return trimmed.startsWith('•') ? trimmed : `• ${trimmed}`;
+        // Ensure bullet point is followed by a space
+        if (trimmed.startsWith('•')) {
+          return trimmed.startsWith('• ') ? trimmed : `• ${trimmed.substring(1)}`;
+        }
+        return `• ${trimmed}`;
       })
       .join('\n');
   };
+
+  const [displayValue, setDisplayValue] = useState(() => formatTextWithBullets(value));
+
+  // Update display value when prop value changes
+  useEffect(() => {
+    // Format the value to ensure proper bullet point spacing
+    const formattedValue = formatTextWithBullets(value);
+    setDisplayValue(formattedValue);
+  }, [value]);
 
   // Handle text changes
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
