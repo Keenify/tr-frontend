@@ -67,6 +67,7 @@ import TheRocksMain from "./features/theRocks/components/main";
 import PaceForm from "./features/form/components/PaceForm";
 import FaceForm from "./features/form/components/FaceForm";
 import StrataPage from "./features/strata/page";
+import WeeklyMeeting from "./features/weeklyMeeting/components/WeeklyMeeting";
 
 
 // Import the public daily huddle component
@@ -232,6 +233,25 @@ const App: React.FC = () => {
                           onSubTabChange={() => {}}
                         >
                           <DailyHuddle session={session} />
+                        </DashboardLayout>
+                      }
+                    />
+                  }
+                />
+                <Route
+                  path="/:userId/weeklyMeeting"
+                  element={
+                    <ProtectedRoute
+                      session={session}
+                      element={
+                        <DashboardLayout
+                          session={session}
+                          signOut={signOut}
+                          activeTab="meeting"
+                          activeSubTab="weeklyMeeting"
+                          onSubTabChange={() => {}}
+                        >
+                          <WeeklyMeeting session={session} />
                         </DashboardLayout>
                       }
                     />
