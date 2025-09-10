@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { Edit3, Save, X, Trash2 } from 'react-feather';
 import { weeklyMeetingService } from '../services/weeklyMeetingService';
@@ -84,7 +85,7 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
     const entryForDate = responses.find(r => r.meeting_date === dateStr);
     
     if (entryForDate) {
-      setWeeklyEntry(entryForDate.response_data?.notes || entryForDate.response_data?.content || '');
+      setWeeklyEntry(entryForDate.response_data?.notes || '');
     } else {
       setWeeklyEntry('');
     }
@@ -350,23 +351,15 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
         {/* Response Section */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center">
-              <h3 className="text-lg font-semibold flex items-center">
-                <Edit3 className="w-5 h-5 mr-2" />
-                Weekly Entry - {viewMode.date.toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </h3>
-              {(responses.find(r => r.meeting_date === getLocalDateString(viewMode.date))?.response_data?.type === 'automated' || 
-                responses.find(r => r.meeting_date === getLocalDateString(viewMode.date))?.response_data?.automation_metadata) && (
-                <span className="ml-3 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  🤖 Automated Entry
-                </span>
-              )}
-            </div>
+            <h3 className="text-lg font-semibold flex items-center">
+              <Edit3 className="w-5 h-5 mr-2" />
+              Weekly Entry - {viewMode.date.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </h3>
             <div className="flex space-x-2">
               <button
                 onClick={saveWeeklyEntry}
@@ -416,23 +409,16 @@ const WeeklyMeeting: React.FC<WeeklyMeetingProps> = ({ session }) => {
                     .filter(r => r.meeting_date !== getLocalDateString(viewMode.date))
                     .map((response) => (
                     <div key={response.id} className="bg-gray-50 border border-gray-200 rounded-md p-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="text-sm text-gray-600">
-                          {new Date(response.meeting_date).toLocaleDateString('en-US', { 
-                            weekday: 'long', 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
-                          })}
-                        </div>
-                        {(response.response_data?.type === 'automated' || response.response_data?.automation_metadata) && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            🤖 Automated
-                          </span>
-                        )}
+                      <div className="text-sm text-gray-600 mb-1">
+                        {new Date(response.meeting_date).toLocaleDateString('en-US', { 
+                          weekday: 'long', 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
                       </div>
                       <div className="text-sm text-gray-800">
-                        {response.response_data?.notes || response.response_data?.content || 'No entry content'}
+                        {response.response_data?.notes || 'No entry content'}
                       </div>
                     </div>
                   ))}

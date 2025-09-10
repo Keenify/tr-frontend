@@ -387,7 +387,13 @@ const PaceForm: React.FC = () => {
                     <div className="space-y-1">
                       {row.kpi_list.split('\n').filter(kpi => kpi.trim()).map((kpi, kpiIndex) => {
                         const trimmedKpi = kpi.trim();
-                        const displayKpi = trimmedKpi.startsWith('•') ? trimmedKpi : `• ${trimmedKpi}`;
+                        // Ensure bullet point is followed by a space
+                        let displayKpi;
+                        if (trimmedKpi.startsWith('•')) {
+                          displayKpi = trimmedKpi.startsWith('• ') ? trimmedKpi : `• ${trimmedKpi.substring(1)}`;
+                        } else {
+                          displayKpi = `• ${trimmedKpi}`;
+                        }
                         return (
                           <div key={kpiIndex} className="text-base">{displayKpi}</div>
                         );

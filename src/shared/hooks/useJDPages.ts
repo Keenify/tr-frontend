@@ -51,12 +51,16 @@ export const useJDPages = () => {
     fetchPages();
   }, [fetchPages]);
 
-  // Auto-initialize default page if no pages exist
+  // Auto-initialize default page if no pages exist, but only after initial load is complete
   useEffect(() => {
-    if (pages.length === 0 && !loading) {
-      initializeDefaultPage();
+    if (pages.length === 0 && !loading && !error) {
+      // Add a small delay to prevent race conditions
+      const timer = setTimeout(() => {
+        initializeDefaultPage();
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [pages.length, loading, initializeDefaultPage]);
+  }, [pages.length, loading, error, initializeDefaultPage]);
 
   return {
     pages,
