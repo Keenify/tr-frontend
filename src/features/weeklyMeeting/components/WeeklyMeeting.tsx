@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import React, { useState, useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { Edit3, Save, X, Trash2 } from 'react-feather';
 import { weeklyMeetingService } from '../services/weeklyMeetingService';
