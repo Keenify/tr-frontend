@@ -2,6 +2,7 @@ export interface JDPage {
   id: string;
   title: string;
   content: string;
+  company_id: string;
   created_by: string;
   updated_by: string;
   created_at: string;
