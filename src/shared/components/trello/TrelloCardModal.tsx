@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { createCardAttachment, deleteAttachment, getCardAttachments, getAttachmentUrl, updateAttachmentThumbnailStatus, CardAttachment } from './services/useCardAttachment';
 import { assignEmployeeToCard, unassignEmployeeFromCard, getCardAssignees } from './services/useCardAssignee';
@@ -154,6 +154,9 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   const [showLabelManager, setShowLabelManager] = useState(false);
   const [isLoadingLabels, setIsLoadingLabels] = useState(false);
   
+  // Refs for click-outside functionality
+  const assigneeDropdownRef = useRef<HTMLDivElement>(null);
+  
   // Check if the current user is the one who locked the card
   const isLockedByCurrentUser = userInfo?.id === lockedBy;
   
@@ -165,10 +168,21 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
 
   // Filter employees based on search term
   const filteredEmployees = useMemo(() => {
-    if (!searchTerm.trim()) return employees;
+    // Ensure we only work with valid employee objects and only show employed employees
+    const validEmployees = employees.filter(emp => 
+      emp && 
+      emp.id && 
+      emp.first_name && 
+      emp.last_name &&
+      typeof emp.first_name === 'string' &&
+      typeof emp.last_name === 'string' &&
+      emp.Is_Employed === true
+    );
+    
+    if (!searchTerm.trim()) return validEmployees;
     
     const term = searchTerm.toLowerCase();
-    return employees.filter(emp => 
+    return validEmployees.filter(emp => 
       emp.first_name.toLowerCase().includes(term) || 
       emp.last_name.toLowerCase().includes(term)
     );
@@ -176,7 +190,10 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
 
   // Get assigned employee names for display
   const assignedEmployees = useMemo(() => {
-    return employees.filter(emp => assignees.includes(emp.id));
+    return employees.filter(emp => 
+      assignees.includes(emp.id) && 
+      emp.Is_Employed === true
+    );
   }, [employees, assignees]);
 
   // Get assigned label objects for display
@@ -254,6 +271,33 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
     setStartDate(formatDateForInput(card.start_date));
     setEndDate(formatDateForInput(card.end_date));
   }, [card]);
+
+  // Handle click outside and escape key to close assignee dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (assigneeDropdownRef.current && !assigneeDropdownRef.current.contains(event.target as Node)) {
+        setShowAssigneeDropdown(false);
+        setSearchTerm('');
+      }
+    };
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showAssigneeDropdown) {
+        setShowAssigneeDropdown(false);
+        setSearchTerm('');
+      }
+    };
+
+    if (showAssigneeDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEscapeKey);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [showAssigneeDropdown]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (!isEditable) {
@@ -345,6 +389,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
     } finally {
       setIsUpdatingAssignees(false);
       setSearchTerm('');
+      setShowAssigneeDropdown(false);
     }
   };
 
@@ -645,7 +690,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
       {/* Toast notification */}
       {toast && (
         <div className={`fixed top-4 right-4 px-4 py-2 rounded-md shadow-lg z-50 transition-all duration-300 
@@ -654,7 +699,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
         </div>
       )}
       
-      <div className={`bg-white rounded-lg w-full max-w-6xl h-[90vh] flex flex-col ${isLocked && !isLockedByCurrentUser ? 'opacity-95' : ''}`}>
+      <div className={`bg-white rounded-lg w-full max-w-6xl h-[95vh] sm:h-[90vh] flex flex-col ${isLocked && !isLockedByCurrentUser ? 'opacity-95' : ''}`}>
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
           {/* Lock status banner */}
           {isLocked && (
@@ -714,8 +759,8 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
           </div>
 
           {/* Scrollable content area */}
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="flex flex-col md:flex-row gap-8">
+          <div className="flex-1 overflow-y-auto p-4 md:p-6">
+            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
               {/* Left column - Main card info */}
               <div className="flex-1">
                 <div className="mb-6">
@@ -887,12 +932,35 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                       <span className="text-gray-500 italic">No assignees</span>
                     ) : (
                       assignedEmployees.map(emp => (
-                        <div key={emp.id} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md flex items-center">
-                          <span>{emp.first_name} {emp.last_name}</span>
+                        <div key={emp.id} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md flex items-center gap-2">
+                          {/* Profile Picture */}
+                          <div className="flex-shrink-0 w-6 h-6 rounded-full overflow-hidden bg-blue-200 flex items-center justify-center">
+                            {emp.profile_pic_url ? (
+                              <img
+                                src={emp.profile_pic_url}
+                                alt={`${emp.first_name} ${emp.last_name}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  // Fallback to initials if image fails to load
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  const parent = target.parentElement;
+                                  if (parent) {
+                                    parent.innerHTML = `<span class="text-xs font-medium text-blue-600">${emp.first_name.charAt(0)}${emp.last_name.charAt(0)}</span>`;
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <span className="text-xs font-medium text-blue-600">
+                                {emp.first_name.charAt(0)}{emp.last_name.charAt(0)}
+                              </span>
+                            )}
+                          </div>
+                          <span className="flex-1">{emp.first_name} {emp.last_name}</span>
                           {!readOnly && (
                             <button 
                               type="button"
-                              className="ml-1 text-blue-600 hover:text-blue-800"
+                              className="ml-1 text-blue-600 hover:text-blue-800 flex-shrink-0"
                               onClick={() => handleAssigneeToggle(emp.id)}
                               disabled={isUpdatingAssignees}
                             >
@@ -906,13 +974,19 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                   
                   {/* Search and assign */}
                   {!readOnly && (
-                    <div className="relative">
+                    <div className="relative" ref={assigneeDropdownRef}>
                       <input
                         type="text"
                         placeholder="Search employees to assign..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onFocus={() => setShowAssigneeDropdown(true)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') {
+                            setShowAssigneeDropdown(false);
+                            setSearchTerm('');
+                          }
+                        }}
                         className="w-full px-3 py-2 border rounded-md"
                         disabled={isUpdatingAssignees}
                       />
@@ -932,7 +1006,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                               <div 
                                 key={emp.id} 
                                 className={`
-                                  p-2 hover:bg-gray-100 cursor-pointer flex items-center
+                                  p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-3
                                   ${assignees.includes(emp.id) ? 'bg-blue-50' : ''}
                                 `}
                                 onClick={() => handleAssigneeToggle(emp.id)}
@@ -942,9 +1016,32 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                                   type="checkbox"
                                   checked={assignees.includes(emp.id)}
                                   onChange={() => {}}
-                                  className="mr-2"
+                                  className="flex-shrink-0"
                                 />
-                                <span>{emp.first_name} {emp.last_name}</span>
+                                {/* Profile Picture */}
+                                <div className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                                  {emp.profile_pic_url ? (
+                                    <img
+                                      src={emp.profile_pic_url}
+                                      alt={`${emp.first_name} ${emp.last_name}`}
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        // Fallback to initials if image fails to load
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        const parent = target.parentElement;
+                                        if (parent) {
+                                          parent.innerHTML = `<span class="text-sm font-medium text-gray-600">${emp.first_name.charAt(0)}${emp.last_name.charAt(0)}</span>`;
+                                        }
+                                      }}
+                                    />
+                                  ) : (
+                                    <span className="text-sm font-medium text-gray-600">
+                                      {emp.first_name.charAt(0)}{emp.last_name.charAt(0)}
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="flex-1 truncate">{emp.first_name} {emp.last_name}</span>
                               </div>
                             ))
                           )}
@@ -1038,9 +1135,9 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                       attachments.map((attachment) => (
                         <div 
                           key={attachment.id}
-                          className="flex items-center justify-between p-2 border-b last:border-b-0 gap-2"
+                          className="flex items-start justify-between p-2 border-b last:border-b-0 gap-2"
                         >
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div className="flex items-start gap-2 flex-1 min-w-0 attachment-container">
                             {/* Thumbnail Toggle Button - only for images */}                       
                             {attachment.file_type.startsWith('image/') && isEditable && (
                               <button
@@ -1064,7 +1161,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                             )}
                             <a
                               onClick={() => handleOpenAttachment(attachment.id)}
-                              className="text-blue-500 hover:text-blue-600 cursor-pointer truncate"
+                              className="text-blue-500 hover:text-blue-600 cursor-pointer attachment-filename"
                               title={attachment.file_url}
                             >
                               {attachment.file_url.split('_').length > 2 
@@ -1077,7 +1174,7 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                               type="button"
                               onClick={() => handleRemoveAttachment(attachment.id)}
                               disabled={!isEditable}
-                              className="text-red-500 hover:text-red-600 flex-shrink-0 ml-2"
+                              className="text-red-500 hover:text-red-600 flex-shrink-0 ml-2 mt-1"
                             >
                               Remove
                             </button>

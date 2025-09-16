@@ -293,7 +293,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
     }
   };
 
-  // Find employee data for assignees
+  // Find employee data for assignees, filtering out non-employees
   const assigneeEmployees = assignees
     .map(assignee => {
       // Handle both string IDs and object format with employee_id
@@ -303,7 +303,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
       
       return employees.find(emp => emp.id === employeeId);
     })
-    .filter(Boolean) as Employee[];
+    .filter(emp => emp && emp.Is_Employed) as Employee[];
 
   const handleAttachmentCountChange = (newCount: number) => {
     if (onUpdate) {
@@ -470,11 +470,11 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
                   {derivedLabels.slice(0, 3).map((label) => (
                     <span
                       key={label.id}
-                      className="px-1.5 py-0.5 rounded-full text-xs font-medium"
+                      className="px-1.5 py-0.5 rounded-full text-xs font-medium truncate max-w-[80px]"
                       style={{ backgroundColor: label.color_code + '33', color: label.color_code }}
                       title={label.text}
                     >
-                      {label.text}
+                      {label.text.length > 10 ? `${label.text.substring(0, 10)}...` : label.text}
                     </span>
                   ))}
                   {derivedLabels.length > 3 && (
