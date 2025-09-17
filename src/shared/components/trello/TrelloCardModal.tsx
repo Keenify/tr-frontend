@@ -9,6 +9,7 @@ import { useUserAndCompanyData } from '../../hooks/useUserAndCompanyData';
 import { updateCard } from './services/useCard';
 import { labelService } from '../../services/labelService';
 import { TrelloCardDescription } from './TrelloCardDescription';
+import { TrelloCardEmailManager } from './TrelloCardEmailManager';
 import { TrelloCardLabelManager } from './TrelloCardLabelManager';
 import { logDeletion } from '../../services/deletionLogService';
 import '../../styles/TrelloCardDescription.css';
@@ -782,10 +783,10 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                   <label className="block text-gray-700 text-sm font-bold mb-2">
                     Description
                   </label>
-                  {/* 
+                  {/*
                     TrelloCardDescription component handles rich text with markdown support
                     It accepts HTML content as input and outputs HTML content on change
-                    This replaces the simple textarea with a full-featured editor 
+                    This replaces the simple textarea with a full-featured editor
                   */}
                   <TrelloCardDescription
                     value={description}
@@ -794,6 +795,15 @@ export const TrelloCardModal: React.FC<TrelloCardModalProps> = ({
                     placeholder="Add a detailed description..."
                   />
                 </div>
+
+                {/* Customer Email Management - Sales module only */}
+                {boardModule === 'sales' && (
+                  <TrelloCardEmailManager
+                    description={description}
+                    onEmailsChange={setDescription}
+                    disabled={!isEditable || readOnly}
+                  />
+                )}
 
                 {/* Add date fields */}
                 <div className="mb-6 grid grid-cols-2 gap-4">
