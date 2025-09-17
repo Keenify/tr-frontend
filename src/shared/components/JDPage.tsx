@@ -228,7 +228,85 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
+    <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen relative">
+      {/* Sticky Edit Button - Positioned to avoid header overlap */}
+      <div className="fixed top-24 right-4 sm:right-6 z-40 hidden lg:block">
+        <div className="flex flex-col gap-2">
+          {isEditing ? (
+            <button
+              onClick={handleSave}
+              className="px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all duration-200 shadow-lg hover:shadow-xl font-medium flex items-center gap-2 transform hover:scale-105 backdrop-blur-sm bg-opacity-95"
+              title="Save changes"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Save
+            </button>
+          ) : (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl font-medium flex items-center gap-2 transform hover:scale-105 backdrop-blur-sm bg-opacity-95"
+              title="Edit job description"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit
+            </button>
+          )}
+          
+          {/* Additional action buttons */}
+          <button
+            onClick={handleView}
+            className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg font-medium flex items-center gap-2 text-sm backdrop-blur-sm bg-opacity-95"
+            title="View public page"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            <span className="hidden sm:inline">View</span>
+          </button>
+          
+          <button
+            onClick={handleCopyLink}
+            className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-200 shadow-md hover:shadow-lg font-medium flex items-center gap-2 text-sm backdrop-blur-sm bg-opacity-95"
+            title="Copy link to clipboard"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            <span className="hidden sm:inline">Copy</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Sticky Button - Shows on smaller screens */}
+      <div className="fixed bottom-4 right-4 z-40 lg:hidden">
+        {isEditing ? (
+          <button
+            onClick={handleSave}
+            className="w-14 h-14 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center transform hover:scale-105 backdrop-blur-sm bg-opacity-95"
+            title="Save changes"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </button>
+        ) : (
+          <button
+            onClick={() => setIsEditing(true)}
+            className="w-14 h-14 bg-purple-500 text-white rounded-full hover:bg-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center transform hover:scale-105 backdrop-blur-sm bg-opacity-95"
+            title="Edit job description"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </button>
+        )}
+      </div>
+
       {/* Page Content */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         {/* Header */}
@@ -237,42 +315,6 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
             <h1 className="text-2xl font-bold text-gray-900">Job Description</h1>
           </div>
           <div className="flex gap-3">
-            <button
-              onClick={handleView}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg font-medium flex items-center gap-2"
-              title="View public page"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              View
-            </button>
-            <button
-              onClick={handleCopyLink}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md hover:shadow-lg font-medium flex items-center gap-2"
-              title="Copy link to clipboard"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-              Copy Link
-            </button>
-            {isEditing ? (
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors shadow-md hover:shadow-lg font-medium"
-              >
-                Save Changes
-              </button>
-            ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors shadow-md hover:shadow-lg font-medium"
-              >
-                Edit
-              </button>
-            )}
             {onClose && (
               <button
                 onClick={onClose}
