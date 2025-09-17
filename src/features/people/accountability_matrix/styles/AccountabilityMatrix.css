@@ -162,4 +162,53 @@ tr[data-editing="true"] {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+
+/* Custom select component styles */
+.react-select__option {
+  padding: 8px 12px;
+}
+
+.react-select__option:hover {
+  background-color: #f1f5f9;
+}
+
+.react-select__single-value {
+  display: flex;
+  align-items: center;
+}
+
+.react-select__multi-value {
+  background-color: #dbeafe;
+  border-radius: 9999px;
+  padding: 2px 8px;
+  margin: 2px;
+  display: flex;
+  align-items: center;
+}
+
+.react-select__multi-value__label {
+  color: #1e40af;
+  font-size: 0.875rem;
+}
+
+.react-select__multi-value__remove {
+  color: #3b82f6;
+  margin-left: 4px;
+  cursor: pointer;
+}
+
+.react-select__multi-value__remove:hover {
+  color: #1e40af;
+}
+
+/* Profile picture fallback styles */
+.profile-pic-fallback {
+  background-color: #e5e7eb;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  color: #6b7280;
 } 

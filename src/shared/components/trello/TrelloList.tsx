@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { TrelloCard } from './TrelloCard';
 import { StrictModeDroppable } from './StrictModeDroppable';
 import { Draggable } from 'react-beautiful-dnd';
@@ -53,6 +53,7 @@ interface TrelloListProps {
   userId?: string;
   companyLabels: Label[];
   selectedLabelIds?: string[];
+  boardModule?: string;
 }
 
 /**
@@ -112,6 +113,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   userId = '',
   companyLabels,
   selectedLabelIds = [],
+  boardModule = 'unknown',
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingCountry, setIsEditingCountry] = useState(false);
@@ -122,8 +124,26 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const canManageList = userRole.toLowerCase().includes('manager') || userRole.toLowerCase().includes('va');
+
+  // Handle click outside to close menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -251,7 +271,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
-          className="flex-shrink-0 w-80"
+          className="flex-shrink-0 w-80 sm:w-96"
         >
           <div className="bg-gray-100 rounded-lg p-4 flex flex-col h-full min-h-[150px] relative">
             {/* Toast notification */}
@@ -307,7 +327,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                   {filteredCards.length}
                 </span>
                 {canManageList && (
-                  <div className="relative">
+                  <div className="relative" ref={menuRef}>
                     <button
                       title="Open list menu"
                       className="p-1 rounded-full hover:bg-gray-200"
@@ -324,9 +344,9 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                     </button>
 
                     {showMenu && (
-                      <div className="absolute right-0 top-full mt-1 bg-white shadow-lg rounded-md py-1 z-50 min-w-[100px]">
+                      <div className="absolute right-0 top-full mt-1 bg-white shadow-lg rounded-md py-1 z-50 min-w-[120px] border border-gray-200">
                         <button
-                          className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50"
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 whitespace-nowrap"
                           onClick={() => {
                             setShowMenu(false);
                             setIsEditingCountry(true);
@@ -335,7 +355,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                           Edit Country
                         </button>
                         <button
-                          className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                          className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 whitespace-nowrap"
                           onClick={handleDeleteClick}
                         >
                           Delete List
@@ -359,23 +379,25 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                     value={listCountry}
                     onChange={(e) => setListCountry(e.target.value)}
                     placeholder="e.g. Singapore, Malaysia, or SG, MY"
-                    className="flex-1 px-3 py-2 rounded-md border border-gray-300"
+                    className="flex-1 px-3 py-2 rounded-md border border-gray-300 min-w-0"
                   />
-                  <button
-                    onClick={handleCountrySubmit}
-                    className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsEditingCountry(false);
-                      setListCountry(country);
-                    }}
-                    className="px-2 py-1 text-gray-500 hover:text-gray-700"
-                  >
-                    ✕
-                  </button>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={handleCountrySubmit}
+                      className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm whitespace-nowrap"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditingCountry(false);
+                        setListCountry(country);
+                      }}
+                      className="px-2 py-1 text-gray-500 hover:text-gray-700 text-sm"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
                 <div className="mt-2 text-sm text-gray-500">
                   Common codes: SG (Singapore), MY (Malaysia)
@@ -476,6 +498,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                       onCardClick={onCardClick}
                       employees={employees}
                       userId={userId}
+                      boardModule={boardModule}
                     />
                   ))}
                   {dropProvided.placeholder}

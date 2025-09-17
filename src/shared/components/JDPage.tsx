@@ -16,7 +16,7 @@ interface JDPageProps {
 }
 
 const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
-  const { pages, loading, error, updatePage } = useJDPages();
+  const { pages, loading, error, updatePage, fetchPages } = useJDPages();
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -51,20 +51,23 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
 
   // Load the single JD page
   useEffect(() => {
-    if (pages.length > 0 && editor) {
-      const page = pages[0]; // Always use the first/only page
-      if (page.content) {
-        // Convert markdown content to HTML for TipTap
-        const htmlContent = convertMarkdownToHtml(page.content);
-        editor.commands.setContent(htmlContent);
-      } else {
+    if (editor) {
+      if (pages.length > 0) {
+        const page = pages[0]; // Always use the first/only page
+        if (page.content) {
+          // Convert markdown content to HTML for TipTap
+          const htmlContent = convertMarkdownToHtml(page.content);
+          editor.commands.setContent(htmlContent);
+        } else {
+          editor.commands.setContent('');
+        }
+      } else if (!loading && !error) {
+        // Only set empty content if we're not loading and there's no error
+        // This prevents clearing content during initial load
         editor.commands.setContent('');
       }
-    } else if (editor) {
-      // Initialize with default content if no page exists
-      editor.commands.setContent('');
     }
-  }, [pages, editor]);
+  }, [pages, editor, loading, error]);
 
   // Convert markdown to HTML for TipTap
   const convertMarkdownToHtml = (markdown: string): string => {
@@ -128,6 +131,14 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
     }
   }, [handleImageUpload]);
 
+  const handleRefresh = useCallback(async () => {
+    try {
+      await fetchPages();
+    } catch (err) {
+      console.error('Failed to refresh page:', err);
+    }
+  }, [fetchPages]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -157,7 +168,20 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
       {/* Page Content */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         {/* Header */}
-        <div className="flex justify-end items-center mb-6">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex gap-3">
+            <button
+              onClick={handleRefresh}
+              disabled={loading}
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Refresh content from server"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Refresh
+            </button>
+          </div>
           <div className="flex gap-3">
             {isEditing ? (
               <button
@@ -242,6 +266,33 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
                 title="Heading 2"
               >
                 H2
+              </button>
+              <button
+                onClick={() => editor.chain().focus().setTextAlign('left').run()}
+                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
+                  editor.isActive({ textAlign: 'left' }) ? 'bg-indigo-600 text-white' : 'bg-indigo-500 text-white hover:bg-indigo-600'
+                }`}
+                title="Align Left"
+              >
+                ⬅️
+              </button>
+              <button
+                onClick={() => editor.chain().focus().setTextAlign('center').run()}
+                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
+                  editor.isActive({ textAlign: 'center' }) ? 'bg-indigo-600 text-white' : 'bg-indigo-500 text-white hover:bg-indigo-600'
+                }`}
+                title="Align Center"
+              >
+                ↔️
+              </button>
+              <button
+                onClick={() => editor.chain().focus().setTextAlign('right').run()}
+                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
+                  editor.isActive({ textAlign: 'right' }) ? 'bg-indigo-600 text-white' : 'bg-indigo-500 text-white hover:bg-indigo-600'
+                }`}
+                title="Align Right"
+              >
+                ➡️
               </button>
               <button
                 onClick={() => fileInputRef.current?.click()}

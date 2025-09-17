@@ -10,12 +10,7 @@ export const jdService = {
    */
   async fetchJDPages(): Promise<JDPage[]> {
     try {
-      // If we have a single page, return it in an array
-      if (singleJDPage) {
-        return [singleJDPage];
-      }
-      
-      // Try to fetch from database
+      // Always try to fetch from database first to ensure fresh data
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('User not authenticated');
@@ -37,7 +32,11 @@ export const jdService = {
           return [data];
         }
       } catch (dbError) {
-        console.log('Database not available, using default page');
+        console.log('Database not available, checking cached page');
+        // Only use cached page if database is unavailable
+        if (singleJDPage) {
+          return [singleJDPage];
+        }
       }
 
       // Return empty array if no page exists
@@ -247,5 +246,20 @@ export const jdService = {
         console.log('Default page already exists or could not be created');
       }
     }
+  },
+
+  /**
+   * Clears the cached page data - useful for debugging or forcing fresh data
+   */
+  clearCache(): void {
+    singleJDPage = null;
+  },
+
+  /**
+   * Forces a fresh fetch from the database, bypassing cache
+   */
+  async forceRefresh(): Promise<JDPage[]> {
+    singleJDPage = null;
+    return this.fetchJDPages();
   }
 };

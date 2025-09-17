@@ -358,13 +358,13 @@ const PaceForm: React.FC = () => {
         {/* Table Header */}
         <div className="grid grid-cols-3 bg-gray-200 border-b border-gray-300">
           <div className="p-3 border-r border-gray-300">
-            <div className="font-semibold text-sm text-center">Person Accountable</div>
+            <div className="font-semibold text-base text-center">Person Accountable</div>
           </div>
           <div className="p-3 border-r border-gray-300">
-            <div className="font-semibold text-sm text-center">Name of Process</div>
+            <div className="font-semibold text-base text-center">Name of Process</div>
           </div>
           <div className="p-3 border-r border-gray-300">
-            <div className="font-semibold text-sm text-center">KPIs<br />(Better, Faster, Cheaper)</div>
+            <div className="font-semibold text-base text-center">KPIs<br />(Better, Faster, Cheaper)</div>
           </div>
         </div>
         
@@ -374,21 +374,31 @@ const PaceForm: React.FC = () => {
           return (
             <div key={`process-${index}`} className="grid grid-cols-3 border-b border-gray-300">
               <div className="p-3 border-r border-gray-300">
-                <span className="text-sm">
+                <span className="text-base">
                   {employee ? `${employee.first_name} ${employee.last_name}` : 'Unknown Employee'}
                 </span>
               </div>
               <div className="p-3 border-r border-gray-300">
-                <span className="text-sm">{row.process_name}</span>
+                <span className="text-base">{row.process_name}</span>
               </div>
               <div className="p-3">
-                <div className="text-sm">
+                <div className="text-base">
                   {row.kpi_list ? (
-                    <ul className="list-disc list-inside space-y-1">
-                      {row.kpi_list.split('\n').filter(kpi => kpi.trim()).map((kpi, kpiIndex) => (
-                        <li key={kpiIndex} className="text-sm">{kpi.trim()}</li>
-                      ))}
-                    </ul>
+                    <div className="space-y-1">
+                      {row.kpi_list.split('\n').filter(kpi => kpi.trim()).map((kpi, kpiIndex) => {
+                        const trimmedKpi = kpi.trim();
+                        // Ensure bullet point is followed by a space
+                        let displayKpi;
+                        if (trimmedKpi.startsWith('•')) {
+                          displayKpi = trimmedKpi.startsWith('• ') ? trimmedKpi : `• ${trimmedKpi.substring(1)}`;
+                        } else {
+                          displayKpi = `• ${trimmedKpi}`;
+                        }
+                        return (
+                          <div key={kpiIndex} className="text-base">{displayKpi}</div>
+                        );
+                      })}
+                    </div>
                   ) : (
                     <span className="text-gray-400 italic">No KPIs specified</span>
                   )}
@@ -406,18 +416,18 @@ const PaceForm: React.FC = () => {
       {/* Header */}
       <div className="bg-orange-400 text-white p-4 rounded-t-lg flex justify-between items-center">
         <div>
-          <h1 className="text-xl">
+          <h1 className="text-2xl">
             <span className="font-bold">People:</span> Process Accountability Chart (PACe)
           </h1>
         </div>
         {hasSubmittedData && (
           <div className="flex items-center space-x-3">
-            <span className="text-sm">
+            <span className="text-base">
               {isEditMode ? 'Editing Mode' : 'View Mode'}
             </span>
             <button
               onClick={handleEditModeToggle}
-              className="bg-white text-orange-400 px-4 py-1 rounded text-sm font-medium hover:bg-gray-100 transition-colors"
+              className="bg-white text-orange-400 px-4 py-1 rounded text-base font-medium hover:bg-gray-100 transition-colors"
             >
               {isEditMode ? 'Switch to View' : 'Edit Form'}
             </button>
@@ -431,19 +441,19 @@ const PaceForm: React.FC = () => {
           <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold mr-2 flex-shrink-0">
             1
           </div>
-          <span className="text-sm">Identify 4 to 9 processes that drive your business.</span>
+          <span className="text-base">Identify 4 to 9 processes that drive your business.</span>
         </div>
         <div className="flex items-center mb-2">
           <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold mr-2 flex-shrink-0">
             2
           </div>
-          <span className="text-sm">Assign someone specific accountability for each process.</span>
+          <span className="text-base">Assign someone specific accountability for each process.</span>
         </div>
         <div className="flex items-center">
           <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold mr-2 flex-shrink-0">
             3
           </div>
-          <span className="text-sm">List Key Performance Indicators (KPIs) for each process (better, faster, cheaper).</span>
+          <span className="text-base">List Key Performance Indicators (KPIs) for each process (better, faster, cheaper).</span>
         </div>
       </div>
 
@@ -455,7 +465,7 @@ const PaceForm: React.FC = () => {
           {/* Status Messages in View Mode */}
           {submitStatus && (
             <div className="p-4 bg-gray-50 border-l border-r border-gray-300">
-              <div className={`text-sm ${submitStatus.startsWith('Form') ? 'text-green-600' : 'text-red-600'}`}>
+              <div className={`text-base ${submitStatus.startsWith('Form') ? 'text-green-600' : 'text-red-600'}`}>
                 {submitStatus}
               </div>
             </div>
@@ -472,7 +482,7 @@ const PaceForm: React.FC = () => {
               <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold absolute -top-2 left-0 transform -translate-x-1/2">
                 1
               </div>
-              <div className="font-semibold text-sm text-center">
+              <div className="font-semibold text-base text-center">
                 Person Accountable
               </div>
             </div>
@@ -483,12 +493,12 @@ const PaceForm: React.FC = () => {
               <div className="w-4 h-4 bg-purple-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold absolute -top-2 right-0 transform translate-x-1/2">
                 3
               </div>
-              <div className="font-semibold text-sm text-center">
+              <div className="font-semibold text-base text-center">
                 Name of Process
               </div>
             </div>
             <div className="p-3 relative">
-              <div className="font-semibold text-sm text-center">KPIs<br />(Better, Faster, Cheaper)</div>
+              <div className="font-semibold text-base text-center">KPIs<br />(Better, Faster, Cheaper)</div>
             </div>
           </div>
 
@@ -531,7 +541,7 @@ const PaceForm: React.FC = () => {
             {loading ? 'Submitting...' : 'Submit'}
           </button>
           {submitStatus && (
-            <div className={`mt-3 text-sm ${submitStatus.startsWith('Form') ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`mt-3 text-base ${submitStatus.startsWith('Form') ? 'text-green-600' : 'text-red-600'}`}>
               {submitStatus}
             </div>
           )}

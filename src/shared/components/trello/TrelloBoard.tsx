@@ -62,6 +62,7 @@ interface TrelloBoardProps {
   onCardModalOpen?: (listId: string, cardId: string) => void;
   onCardModalClose?: () => void;
   companyInfo?: any;
+  boardModule?: string;
 }
 
 /**
@@ -94,7 +95,8 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   onRefresh,
   onCardModalOpen,
   onCardModalClose,
-  companyInfo
+  companyInfo,
+  boardModule = 'unknown'
 }) => {
   // Get the current user's ID from the session
   const userId = session?.user?.id || '';
@@ -112,7 +114,6 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   } = useTrelloBoard(
     initialLists,
     {
-      boardId,
       onListMove,
       onCardMove,
       onCardUpdate,
@@ -177,19 +178,39 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   }, [lists, selectedCountry]);
 
   // Fetch company labels
+  const fetchCompanyLabels = async () => {
+    if (!effectiveCompanyInfo?.id) return;
+    try {
+      const labels = await labelService.fetchLabelsByCompany(effectiveCompanyInfo.id);
+      
+      // Apply the same employee filtering logic as in TrelloCardModal
+      const allEmployeeNames = employees.map(emp => `${emp.first_name} ${emp.last_name}`.toLowerCase());
+      const employedEmployeeNames = employees
+        .filter(emp => emp.Is_Employed === true)
+        .map(emp => `${emp.first_name} ${emp.last_name}`.toLowerCase());
+      
+      const filteredLabels = labels.filter(label => {
+        const labelText = label.text.toLowerCase();
+        
+        // If the label text matches any employee name, only show it if that employee is employed
+        if (allEmployeeNames.includes(labelText)) {
+          return employedEmployeeNames.includes(labelText);
+        }
+        
+        // If the label doesn't match any employee name, keep it (it's a custom label)
+        return true;
+      });
+      
+      setCompanyLabels(filteredLabels);
+    } catch (error) {
+      console.error("Failed to fetch company labels:", error);
+      // Optionally show a toast or error message
+    }
+  };
+
   useEffect(() => {
-    const fetchCompanyLabels = async () => {
-      if (!effectiveCompanyInfo?.id) return;
-      try {
-        const labels = await labelService.fetchLabelsByCompany(effectiveCompanyInfo.id);
-        setCompanyLabels(labels);
-      } catch (error) {
-        console.error("Failed to fetch company labels:", error);
-        // Optionally show a toast or error message
-      }
-    };
     fetchCompanyLabels();
-  }, [effectiveCompanyInfo?.id]);
+  }, [effectiveCompanyInfo?.id, employees]);
 
   // Improved employee fetching using directoryService
   useEffect(() => {
@@ -417,19 +438,19 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
 
       {/* Conditional Filter Info Display - Updated for multi-select */} 
       <div className="flex gap-4 mb-4 flex-wrap">
-        {searchTerm && (
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-2 text-blue-700 flex items-center justify-between">
-            <span>
-              Showing results for: <strong>{searchTerm}</strong>
-            </span>
-            <button 
-              onClick={() => setSearchTerm('')}
-              className="text-blue-500 hover:text-blue-700"
-            >
-              Clear
-            </button>
-          </div>
-        )}
+         {searchTerm && (
+           <div className="bg-blue-50 border border-blue-200 rounded-md p-2 text-blue-700 flex items-center justify-between">
+             <span>
+               Showing results for: <strong>{searchTerm}</strong>
+             </span>
+             <button 
+               onClick={() => setSearchTerm('')}
+               className="text-blue-500 hover:text-black ml-2 transition-colors duration-200"
+             >
+               Clear
+             </button>
+           </div>
+         )}
         {selectedLabels.length > 0 && (
           <div className="bg-purple-50 border border-purple-200 rounded-md p-2 text-purple-700 flex items-center gap-2 text-sm flex-wrap">
             <span>Filtering by Labels:</span> 
@@ -546,6 +567,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
                   userId={userId}
                   companyLabels={companyLabels}
                   selectedLabelIds={selectedLabelIds}
+                  boardModule={boardModule}
                 />
               ))}
               {provided.placeholder}
@@ -601,6 +623,8 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
           onClose={() => {
             console.log('❌ [TrelloBoard] Closing card modal');
             setSelectedCard(null);
+            // Refresh company labels in case new ones were created
+            fetchCompanyLabels();
             // Notify parent that modal is closing
             if (onCardModalClose) {
               onCardModalClose();
@@ -670,6 +694,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
           readOnly={selectedCard.card.is_locked && selectedCard.card.locked_by !== userId}
           employees={employees}
           userId={userId}
+          boardModule={boardModule}
         />
       )}
     </div>

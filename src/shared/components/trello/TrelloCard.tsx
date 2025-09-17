@@ -6,6 +6,8 @@ import { TrelloCardModal } from './TrelloCardModal';
 import { Card, CardUpdate } from './types/card.types';
 import { Label } from '../../types/label.types';
 import { Employee } from '@/shared/types/directory.types';
+import { useUserAndCompanyData } from '../../hooks/useUserAndCompanyData';
+import { logDeletion } from '../../services/deletionLogService';
 import '../../styles/TrelloCardDescription.css';
 
 // Safe HTML renderer component
@@ -60,6 +62,7 @@ interface TrelloCardProps {
   labels?: Label[];
   labelIds?: string[];
   companyLabels?: Label[];
+  boardModule?: string;
 }
 
 /**
@@ -124,6 +127,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   labels: initialLabels = [],
   labelIds = [],
   companyLabels = [],
+  boardModule = 'unknown',
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartPosition, setDragStartPosition] = useState({ x: 0, y: 0 });
@@ -132,6 +136,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
   const [isLoadingAttachments, setIsLoadingAttachments] = useState(false);
   const [cardAttachments, setCardAttachments] = useState<CardAttachment[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { userInfo } = useUserAndCompanyData(userId || '');
   const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>(propsThumbnailUrl);
 
   useEffect(() => {
@@ -191,6 +196,20 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
     try {
       const success = await deleteCard(id);
       if (success) {
+        // Log the deletion
+        if (userInfo && userInfo.id && userInfo.company_id) {
+          const fullName = `${userInfo.first_name} ${userInfo.last_name}`.trim() || 'Unknown User';
+          await logDeletion(
+            'delete_card',
+            id,
+            title,
+            userInfo.id,
+            fullName,
+            userInfo.company_id,
+            boardModule
+          );
+        }
+        
         setShowDeleteModal(false);
         // Ensure onDelete is called to trigger list refresh
         if (onDelete) {
@@ -274,7 +293,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
     }
   };
 
-  // Find employee data for assignees
+  // Find employee data for assignees, filtering out non-employees
   const assigneeEmployees = assignees
     .map(assignee => {
       // Handle both string IDs and object format with employee_id
@@ -284,7 +303,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
       
       return employees.find(emp => emp.id === employeeId);
     })
-    .filter(Boolean) as Employee[];
+    .filter(emp => emp && emp.Is_Employed) as Employee[];
 
   const handleAttachmentCountChange = (newCount: number) => {
     if (onUpdate) {
@@ -385,8 +404,8 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
               </div>
             )}
 
-            {/* Only show edit button if not locked */}
-            {!isLocked && (
+            {/* Only show edit button if not locked and user is manager */}
+            {!isLocked && userRole.toLowerCase().includes('manager') && (
               <button
                 title="Edit card"
                 className="absolute top-1 right-1 p-0.5 rounded-full hover:bg-gray-100 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
@@ -402,12 +421,14 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
             {/* Dropdown menu */}
             {showMenu && (
               <div className="absolute top-5 right-1 bg-white shadow-lg rounded-md py-1 z-50">
-                <button
-                  className="w-full px-3 py-1 text-left text-xs text-red-600 hover:bg-red-50"
-                  onClick={handleDeleteClick}
-                >
-                  Delete
-                </button>
+                {userRole.toLowerCase().includes('manager') && (
+                  <button
+                    className="w-full px-3 py-1 text-left text-xs text-red-600 hover:bg-red-50"
+                    onClick={handleDeleteClick}
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             )}
 
@@ -449,11 +470,11 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
                   {derivedLabels.slice(0, 3).map((label) => (
                     <span
                       key={label.id}
-                      className="px-1.5 py-0.5 rounded-full text-xs font-medium"
+                      className="px-1.5 py-0.5 rounded-full text-xs font-medium truncate max-w-[80px]"
                       style={{ backgroundColor: label.color_code + '33', color: label.color_code }}
                       title={label.text}
                     >
-                      {label.text}
+                      {label.text.length > 10 ? `${label.text.substring(0, 10)}...` : label.text}
                     </span>
                   ))}
                   {derivedLabels.length > 3 && (
@@ -607,6 +628,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
           onAttachmentChange={handleAttachmentCountChange}
           onLockChange={handleLockStatusChange}
           onThumbnailChange={handleThumbnailChange}
+          boardModule={boardModule}
         />
       )}
     </>
