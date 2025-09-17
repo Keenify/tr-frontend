@@ -19,27 +19,6 @@ const PublicJDPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const handleRefresh = async () => {
-    if (!companyId) return;
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const data = await jdService.forceRefreshPublic(companyId);
-      
-      if (data) {
-        setJdData(data);
-      } else {
-        setError('No job description found for this company');
-      }
-    } catch (err) {
-      setError('Failed to refresh job description');
-      console.error('Error refreshing public JD:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     const fetchPublicJD = async () => {
@@ -115,24 +94,11 @@ const PublicJDPage: React.FC = () => {
       <div className="max-w-4xl mx-auto px-6">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex justify-between items-center">
-            <div className="text-center flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {companyName}
-              </h1>
-              <p className="text-lg text-gray-600">Job Description</p>
-            </div>
-            <button
-              onClick={handleRefresh}
-              disabled={loading}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              title="Refresh content"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Refresh
-            </button>
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {companyName}
+            </h1>
+            <p className="text-lg text-gray-600">Job Description</p>
           </div>
         </div>
 

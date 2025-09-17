@@ -177,35 +177,17 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
     }
   }, [handleImageUpload]);
 
-  const handleRefresh = useCallback(async () => {
-    try {
-      await fetchPages();
-    } catch (err) {
-      console.error('Failed to refresh page:', err);
+  const handleView = useCallback(() => {
+    if (!companyInfo?.id) {
+      toast.error('Company information not available');
+      return;
     }
-  }, [fetchPages]);
 
-  const handleDebug = useCallback(async () => {
-    try {
-      await jdService.debugTableInfo();
-      toast.success('Debug info logged to console');
-    } catch (err) {
-      console.error('Debug failed:', err);
-      toast.error('Debug failed - check console');
-    }
-  }, []);
+    const viewUrl = `${window.location.origin}/jd/${companyInfo.id}`;
+    window.open(viewUrl, '_blank');
+  }, [companyInfo?.id]);
 
-  const handleCheckTable = useCallback(async () => {
-    try {
-      await jdService.createTableIfNotExists();
-      toast.success('Table check completed - check console for details');
-    } catch (err) {
-      console.error('Table check failed:', err);
-      toast.error('Table check failed - check console');
-    }
-  }, []);
-
-  const handleShare = useCallback(async () => {
+  const handleCopyLink = useCallback(async () => {
     if (!companyInfo?.id) {
       toast.error('Company information not available');
       return;
@@ -214,10 +196,10 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
     try {
       const shareUrl = `${window.location.origin}/jd/${companyInfo.id}`;
       await navigator.clipboard.writeText(shareUrl);
-      toast.success('Share link copied to clipboard!');
+      toast.success('Link copied to clipboard!');
     } catch (err) {
-      console.error('Failed to copy share link:', err);
-      toast.error('Failed to copy share link');
+      console.error('Failed to copy link:', err);
+      toast.error('Failed to copy link');
     }
   }, [companyInfo?.id]);
 
@@ -252,65 +234,49 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div className="flex gap-3 items-center">
-            <button
-              onClick={handleRefresh}
-              disabled={loading}
-              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              title="Refresh content from server"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Refresh
-            </button>
-            <button
-              onClick={handleDebug}
-              className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors shadow-md hover:shadow-lg font-medium flex items-center gap-2"
-              title="Debug database info"
-            >
-              🔍 Debug
-            </button>
-            <button
-              onClick={handleCheckTable}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-md hover:shadow-lg font-medium flex items-center gap-2"
-              title="Check/Create table"
-            >
-              🗄️ Check Table
-            </button>
-            {pages.length > 0 && (
-              <div className="flex items-center gap-2 px-3 py-2 bg-green-100 text-green-800 rounded-lg text-sm">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>Live on public page</span>
-              </div>
-            )}
+            <h1 className="text-2xl font-bold text-gray-900">Job Description</h1>
           </div>
           <div className="flex gap-3">
             <button
-              onClick={handleShare}
-              className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors shadow-md hover:shadow-lg font-medium flex items-center gap-2"
-              title="Copy share link to clipboard"
+              onClick={handleView}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg font-medium flex items-center gap-2"
+              title="View public page"
             >
-              🔗 Share Page
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              View
+            </button>
+            <button
+              onClick={handleCopyLink}
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md hover:shadow-lg font-medium flex items-center gap-2"
+              title="Copy link to clipboard"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              Copy Link
             </button>
             {isEditing ? (
               <button
                 onClick={handleSave}
-                className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md hover:shadow-lg font-medium"
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors shadow-md hover:shadow-lg font-medium"
               >
                 Save Changes
               </button>
             ) : (
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg font-medium"
+                className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors shadow-md hover:shadow-lg font-medium"
               >
-                Edit Page
+                Edit
               </button>
             )}
             {onClose && (
               <button
                 onClick={onClose}
-                className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-md hover:shadow-lg font-medium"
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-md hover:shadow-lg font-medium"
               >
                 Close
               </button>
