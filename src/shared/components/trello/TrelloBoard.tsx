@@ -244,7 +244,13 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   const handleAddListSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newListTitle.trim()) {
-      handleAddList(newListTitle, newListCountry);
+      // Validate country code if provided
+      if (newListCountry.trim() && (newListCountry.trim().length !== 2 || !/^[A-Z]{2}$/.test(newListCountry.trim()))) {
+        alert('Please enter a valid 2-letter country code (e.g., SG, MY, US) or leave it empty.');
+        return;
+      }
+      
+      handleAddList(newListTitle, newListCountry.trim());
       setNewListTitle('');
       setNewListCountry('');
       setIsAddingList(false);
@@ -586,8 +592,9 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
                     <input
                       type="text"
                       value={newListCountry}
-                      onChange={(e) => setNewListCountry(e.target.value)}
-                      placeholder="Enter country (optional)..."
+                      onChange={(e) => setNewListCountry(e.target.value.toUpperCase())}
+                      placeholder="Enter country code (optional, e.g. SG, MY)..."
+                      maxLength={2}
                       className="w-full px-3 py-2 border rounded-md mb-2"
                     />
                     <div className="flex items-center gap-2">
