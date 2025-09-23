@@ -6,7 +6,6 @@ import { CardAttachment } from './services/useCardAttachment';
 import { Card } from './types/card.types';
 import { Label } from '../../types/label.types';
 import { Employee } from '@/shared/types/directory.types';
-import lookup from 'country-code-lookup';
 
 interface TrelloListProps {
   id: string;
@@ -160,16 +159,13 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   const handleCountrySubmit = async () => {
     if (onCountryChange) {
       try {
-        // Convert full country name to code if needed
-        let countryCode = listCountry.toUpperCase();
-        if (countryCode.length > 2) {
-          const country = lookup.byCountry(listCountry);
-          if (country) {
-            countryCode = country.iso2;
-          } else {
-            showToast('Invalid country name', 'error');
-            return;
-          }
+        // Only accept 2-letter country codes
+        const countryCode = listCountry.toUpperCase().trim();
+        
+        // Validate that it's exactly 2 characters and contains only letters
+        if (countryCode.length !== 2 || !/^[A-Z]{2}$/.test(countryCode)) {
+          showToast('Please enter a valid 2-letter country code (e.g., SG, MY, US)', 'error');
+          return;
         }
         
         await onCountryChange(countryCode);
@@ -243,15 +239,40 @@ export const TrelloList: React.FC<TrelloListProps> = ({
         const titleMatch = card.title.toLowerCase().includes(lowerSearchTerm);
         const descriptionMatch = card.description && card.description.toLowerCase().includes(lowerSearchTerm);
         
-        const assigneeMatch = card.assignees?.some(assignee => {
-          const employeeId = typeof assignee === 'string' ? assignee : (assignee as { employee_id: string }).employee_id;
-          const employee = employees.find(emp => emp.id === employeeId);
-          return employee && (
-            (employee.first_name && employee.first_name.toLowerCase().includes(lowerSearchTerm)) ||
-            (employee.last_name && employee.last_name.toLowerCase().includes(lowerSearchTerm)) ||
-            (employee.email && employee.email.toLowerCase().includes(lowerSearchTerm))
-          );
-        });
+         const assigneeMatch = card.assignees?.some(assignee => {
+           const employeeId = typeof assignee === 'string' ? assignee : (assignee as { employee_id: string }).employee_id;
+           const employee = employees.find(emp => emp.id === employeeId);
+           if (!employee) return false;
+           
+           // Create a comprehensive search string with all possible name combinations
+           const firstName = (employee.first_name || '').toLowerCase();
+           const lastName = (employee.last_name || '').toLowerCase();
+           const email = (employee.email || '').toLowerCase();
+           
+           // Combine all name parts into a searchable string
+           const fullName = `${firstName} ${lastName}`.trim();
+           const reverseName = `${lastName} ${firstName}`.trim();
+           const allNameParts = [firstName, lastName].filter(part => part.length > 0);
+           
+           // Check if search term matches any individual field
+           const firstNameMatch = firstName.includes(lowerSearchTerm);
+           const lastNameMatch = lastName.includes(lowerSearchTerm);
+           const emailMatch = email.includes(lowerSearchTerm);
+           const fullNameMatch = fullName.includes(lowerSearchTerm);
+           const reverseNameMatch = reverseName.includes(lowerSearchTerm);
+           
+           // Advanced matching: check if search term words match any combination of name parts
+           const searchWords = lowerSearchTerm.split(/\s+/).filter(word => word.length > 0);
+           const nameWords = allNameParts.join(' ').split(/\s+/).filter(word => word.length > 0);
+           
+           // Check if all search words are found in the name words (in any order)
+           const allSearchWordsMatch = searchWords.length > 0 && 
+             searchWords.every(searchWord => 
+               nameWords.some(nameWord => nameWord.includes(searchWord))
+             );
+           
+           return firstNameMatch || lastNameMatch || emailMatch || fullNameMatch || reverseNameMatch || allSearchWordsMatch;
+         });
         return titleMatch || descriptionMatch || assigneeMatch;
       });
       console.log(`[TrelloList ${id}] Cards after search filter:`, cardsToFilter.map(c=>c.id));
@@ -371,14 +392,15 @@ export const TrelloList: React.FC<TrelloListProps> = ({
             {isEditingCountry && (
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Country (enter name or 2-letter code)
+                  Country Code (2-letter code only)
                 </label>
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={listCountry}
-                    onChange={(e) => setListCountry(e.target.value)}
-                    placeholder="e.g. Singapore, Malaysia, or SG, MY"
+                    onChange={(e) => setListCountry(e.target.value.toUpperCase())}
+                    placeholder="e.g. SG, MY, US, GB"
+                    maxLength={2}
                     className="flex-1 px-3 py-2 rounded-md border border-gray-300 min-w-0"
                   />
                   <div className="flex items-center gap-1 flex-shrink-0">
