@@ -15,22 +15,12 @@ export const jdService = {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('User not authenticated');
 
-        // Get company ID from parameter or user data
+        // Use provided company ID directly - don't query employees table
         let targetCompanyId = companyId;
         
         if (!targetCompanyId) {
-          // Try to get user's company from employees table
-          const { data: employeeData } = await supabase
-            .from('employees')
-            .select('company_id')
-            .eq('user_id', user.id)
-            .single();
-          
-          targetCompanyId = employeeData?.company_id;
-        }
-
-        if (!targetCompanyId) {
-          throw new Error('No company ID available');
+          console.log('No company ID provided to fetchJDPages, returning empty array');
+          return [];
         }
 
         // Fetch JD page by company ID instead of created_by
@@ -120,14 +110,8 @@ export const jdService = {
         let companyId = pageData.companyId;
         
         if (!companyId) {
-          // Try to get user's company from employees table
-          const { data: employeeData } = await supabase
-            .from('employees')
-            .select('company_id')
-            .eq('user_id', user.id)
-            .single();
-          
-          companyId = employeeData?.company_id || '04734324-c151-47c8-86ed-5b000c4e99d2';
+          // If no company ID provided, we can't create a page
+          throw new Error('Company ID is required to create JD page');
         }
 
         const { data, error } = await supabase

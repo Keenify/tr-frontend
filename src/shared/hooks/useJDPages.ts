@@ -8,6 +8,13 @@ export const useJDPages = (companyId?: string) => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchPages = useCallback(async () => {
+    if (!companyId) {
+      console.log('No company ID available, skipping JD pages fetch');
+      setPages([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -39,6 +46,11 @@ export const useJDPages = (companyId?: string) => {
 
   // Initialize with a default page if none exists
   const initializeDefaultPage = useCallback(async () => {
+    if (!companyId) {
+      console.log('No company ID available, skipping default page initialization');
+      return;
+    }
+
     try {
       await jdService.initializeDefaultPage(companyId);
       await fetchPages(); // Refresh the pages
@@ -53,14 +65,14 @@ export const useJDPages = (companyId?: string) => {
 
   // Auto-initialize default page if no pages exist, but only after initial load is complete
   useEffect(() => {
-    if (pages.length === 0 && !loading && !error) {
+    if (companyId && pages.length === 0 && !loading && !error) {
       // Add a small delay to prevent race conditions
       const timer = setTimeout(() => {
         initializeDefaultPage();
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [pages.length, loading, error, initializeDefaultPage]);
+  }, [companyId, pages.length, loading, error, initializeDefaultPage]);
 
   return {
     pages,

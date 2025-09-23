@@ -20,7 +20,9 @@ interface JDPageProps {
 
 const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
   const { session } = useSession();
-  const { companyInfo } = useUserAndCompanyData(session?.user?.id || '');
+  const { companyInfo, isLoading: companyLoading } = useUserAndCompanyData(session?.user?.id || '');
+  
+  // Only pass company ID when it's available to prevent premature fetching
   const { pages, loading, error, updatePage, fetchPages } = useJDPages(companyInfo?.id);
   const [isEditing, setIsEditing] = useState(false);
   const [editorState, setEditorState] = useState({ bold: false, italic: false, underline: false });
@@ -203,7 +205,7 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
     }
   }, [companyInfo?.id]);
 
-  if (loading) {
+  if (loading || companyLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-lg">Loading...</div>
