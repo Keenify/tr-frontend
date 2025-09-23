@@ -13,6 +13,7 @@ export interface JDPage {
 export interface CreateJDPageRequest {
   title: string;
   content: string;
+  companyId?: string;
 }
 
 export interface UpdateJDPageRequest {

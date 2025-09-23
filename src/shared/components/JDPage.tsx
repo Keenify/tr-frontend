@@ -19,13 +19,13 @@ interface JDPageProps {
 }
 
 const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
-  const { pages, loading, error, updatePage, fetchPages } = useJDPages();
+  const { session } = useSession();
+  const { companyInfo } = useUserAndCompanyData(session?.user?.id || '');
+  const { pages, loading, error, updatePage, fetchPages } = useJDPages(companyInfo?.id);
   const [isEditing, setIsEditing] = useState(false);
   const [editorState, setEditorState] = useState({ bold: false, italic: false, underline: false });
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { session } = useSession();
-  const { companyInfo } = useUserAndCompanyData(session?.user?.id || '');
 
   // TipTap Editor
   const editor: Editor | null = useEditor({
@@ -139,7 +139,7 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
       console.log('Update result:', result);
       
       // Force refresh the cache to ensure public page gets updated content
-      await jdService.forceRefresh();
+      await jdService.forceRefresh(companyInfo?.id);
       
       setIsEditing(false);
       toast.success('Job description saved and published successfully! The public page has been updated.');

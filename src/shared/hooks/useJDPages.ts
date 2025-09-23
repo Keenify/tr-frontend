@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { jdService } from '../services/jdService';
 import { JDPage, UpdateJDPageRequest } from '../types/jd.types';
 
-export const useJDPages = () => {
+export const useJDPages = (companyId?: string) => {
   const [pages, setPages] = useState<JDPage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -11,14 +11,14 @@ export const useJDPages = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await jdService.fetchJDPages();
+      const data = await jdService.fetchJDPages(companyId);
       setPages(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch JD page');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [companyId]);
 
   const updatePage = useCallback(async (id: string, pageData: UpdateJDPageRequest) => {
     try {
@@ -40,12 +40,12 @@ export const useJDPages = () => {
   // Initialize with a default page if none exists
   const initializeDefaultPage = useCallback(async () => {
     try {
-      await jdService.initializeDefaultPage();
+      await jdService.initializeDefaultPage(companyId);
       await fetchPages(); // Refresh the pages
     } catch (err) {
       console.log('Could not initialize default page:', err);
     }
-  }, [fetchPages]);
+  }, [fetchPages, companyId]);
 
   useEffect(() => {
     fetchPages();

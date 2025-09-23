@@ -8,19 +8,36 @@ export const jdService = {
   /**
    * Fetches the single JD page for the current user's company
    */
-  async fetchJDPages(): Promise<JDPage[]> {
+  async fetchJDPages(companyId?: string): Promise<JDPage[]> {
     try {
       // Always try to fetch from database first to ensure fresh data
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('User not authenticated');
 
-        // For now, we'll fetch all JD pages that the user created
-        // This is a temporary solution until we determine the correct company association method
+        // Get company ID from parameter or user data
+        let targetCompanyId = companyId;
+        
+        if (!targetCompanyId) {
+          // Try to get user's company from employees table
+          const { data: employeeData } = await supabase
+            .from('employees')
+            .select('company_id')
+            .eq('user_id', user.id)
+            .single();
+          
+          targetCompanyId = employeeData?.company_id;
+        }
+
+        if (!targetCompanyId) {
+          throw new Error('No company ID available');
+        }
+
+        // Fetch JD page by company ID instead of created_by
         const { data, error } = await supabase
           .from('jd_pages')
           .select('*')
-          .eq('created_by', user.id)
+          .eq('company_id', targetCompanyId)
           .limit(1) // Only get one page
           .order('updated_at', { ascending: false })
           .single();
@@ -99,9 +116,19 @@ export const jdService = {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('User not authenticated');
 
-        // We need to get the company_id from the useUserAndCompanyData hook
-        // For now, we'll require company_id to be passed in or use a default
-        const companyId = '04734324-c151-47c8-86ed-5b000c4e99d2'; // Default from your original SQL
+        // Get company ID from user data or fallback to hardcoded
+        let companyId = pageData.companyId;
+        
+        if (!companyId) {
+          // Try to get user's company from employees table
+          const { data: employeeData } = await supabase
+            .from('employees')
+            .select('company_id')
+            .eq('user_id', user.id)
+            .single();
+          
+          companyId = employeeData?.company_id || '04734324-c151-47c8-86ed-5b000c4e99d2';
+        }
 
         const { data, error } = await supabase
           .from('jd_pages')
@@ -127,7 +154,7 @@ export const jdService = {
         id: Date.now().toString(),
         title: pageData.title,
         content: pageData.content,
-        company_id: '04734324-c151-47c8-86ed-5b000c4e99d2',
+        company_id: pageData.companyId || '04734324-c151-47c8-86ed-5b000c4e99d2',
         created_by: 'mock-user-id',
         updated_by: 'mock-user-id',
         created_at: new Date().toISOString(),
@@ -235,12 +262,13 @@ export const jdService = {
   /**
    * Initializes the service with a default page if none exists
    */
-  async initializeDefaultPage(): Promise<void> {
+  async initializeDefaultPage(companyId?: string): Promise<void> {
     if (!singleJDPage) {
       try {
         await this.createJDPage({
           title: 'Job Description',
-          content: 'Welcome to your Job Description page. Click Edit to start customizing this content.'
+          content: 'Welcome to your Job Description page. Click Edit to start customizing this content.',
+          companyId
         });
       } catch (error) {
         console.log('Default page already exists or could not be created');
@@ -258,9 +286,9 @@ export const jdService = {
   /**
    * Forces a fresh fetch from the database, bypassing cache
    */
-  async forceRefresh(): Promise<JDPage[]> {
+  async forceRefresh(companyId?: string): Promise<JDPage[]> {
     singleJDPage = null;
-    return this.fetchJDPages();
+    return this.fetchJDPages(companyId);
   },
 
   /**
