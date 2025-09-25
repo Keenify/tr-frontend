@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { B2BOrderRow, DietaryRestriction } from '../types/B2BOrderTypes';
-import { generateB2BOrderPDF } from '../services/useB2BOrderPDF';
+import { generateB2BOrderPDFEnhanced } from '../utils/enhancedPdfGenerator';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import '../styles/B2BOrder.css';
 
 interface B2BOrderProps {
-  session: Session;
+  session: Session | null;
 }
 
 const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
-  const { companyInfo } = useUserAndCompanyData(session.user.id);
+  const { companyInfo } = useUserAndCompanyData(session?.user?.id || '');
 
   const initialRow: B2BOrderRow = {
     id: Date.now().toString(),
@@ -107,56 +107,15 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
     }));
   };
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = () => {
     try {
-      console.log('Starting PDF generation...');
+      console.log('Starting client-side PDF generation...');
+      console.log('Rows:', rows);
       console.log('Company info:', companyInfo);
-
-      if (!companyInfo) {
-        alert('Company information is not available. Please wait for it to load.');
-        return;
-      }
-
-      const pdfData = {
-        rows: rows,
-        companyInfo: companyInfo,
-        customerCompanyName: 'Budget Tracker',
-        currentDate: new Date().toLocaleDateString(),
-        totalPax: getTotalPax(),
-        totalAmount: getTotalAmount()
-      };
-
-      console.log('PDF data being sent:', pdfData);
-
-      const blob = await generateB2BOrderPDF(pdfData);
-
-      console.log('PDF blob received:', blob);
-
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-
-      // Generate filename with date
-      const now = new Date();
-      const formattedDate = `${now.getDate().toString().padStart(2, '0')}-${(now.getMonth() + 1)
-        .toString()
-        .padStart(2, '0')}-${now.getFullYear()}_${now.getHours()
-        .toString()
-        .padStart(2, '0')}-${now.getMinutes()
-        .toString()
-        .padStart(2, '0')}`;
-
-      link.download = `Order_Budget_Tracker_${formattedDate}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error: any) {
-      console.error('Error generating PDF:', error);
-      console.error('Error details:', error.message);
-      console.error('Error stack:', error.stack);
-      alert(`Failed to generate PDF: ${error.message || 'Unknown error'}`);
+      generateB2BOrderPDFEnhanced(rows, companyInfo);
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      alert('Failed to generate PDF');
     }
   };
 
