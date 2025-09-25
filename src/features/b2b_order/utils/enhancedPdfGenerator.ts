@@ -2,7 +2,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { B2BOrderRow } from '../types/B2BOrderTypes';
 
-const generateProductTable = (doc: jsPDF, rows: B2BOrderRow[]) => {
+const generateProductTable = (doc: jsPDF, rows: B2BOrderRow[], companyInfo?: any) => {
   const input = document.getElementById('b2b-order-table');
   if (input) {
     const clonedTable = input.cloneNode(true) as HTMLElement;
@@ -67,13 +67,13 @@ const generateProductTable = (doc: jsPDF, rows: B2BOrderRow[]) => {
     if (table) {
       table.style.width = '100%';
       table.style.borderCollapse = 'collapse';
-      table.style.fontSize = '14px'; // Increase font size for better readability
+      table.style.fontSize = '18px'; // Larger font size for better readability
 
-      // Style all cells
+      // Style all cells with increased padding
       const cells = table.querySelectorAll('td, th');
       cells.forEach(cell => {
         (cell as HTMLElement).style.border = '1px solid #d1d5db';
-        (cell as HTMLElement).style.padding = '12px'; // Increase padding
+        (cell as HTMLElement).style.padding = '16px'; // Increased padding
         (cell as HTMLElement).style.textAlign = 'left';
       });
 
@@ -83,7 +83,7 @@ const generateProductTable = (doc: jsPDF, rows: B2BOrderRow[]) => {
         (header as HTMLElement).style.backgroundColor = '#667eea';
         (header as HTMLElement).style.color = 'white';
         (header as HTMLElement).style.fontWeight = 'bold';
-        (header as HTMLElement).style.fontSize = '14px';
+        (header as HTMLElement).style.fontSize = '18px';
       });
 
       // Style summary row
@@ -97,9 +97,9 @@ const generateProductTable = (doc: jsPDF, rows: B2BOrderRow[]) => {
     // Temporarily append the cloned table to the document
     document.body.appendChild(clonedTable);
 
-    // Use html2canvas with improved settings - matching quotation
+    // Use html2canvas with improved settings - larger scale for bigger table
     html2canvas(clonedTable, {
-      scale: 2,
+      scale: 3,
       logging: false,
       useCORS: true,
       allowTaint: true,
@@ -116,8 +116,9 @@ const generateProductTable = (doc: jsPDF, rows: B2BOrderRow[]) => {
         const pdfWidth = doc.internal.pageSize.getWidth() - 20;
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-        // Position the table at y=60, same as quotation
-        doc.addImage(imgData, 'PNG', 10, 60, pdfWidth, pdfHeight);
+        // Position the table with proper spacing after title
+        const tableY = companyInfo ? 68 : 45;
+        doc.addImage(imgData, 'PNG', 10, tableY, pdfWidth, pdfHeight);
 
         // Format the current date and time - matching quotation format
         const now = new Date();
@@ -170,14 +171,18 @@ export const generateB2BOrderPDFEnhanced = (rows: B2BOrderRow[], companyInfo?: a
         doc.text(companyInfo.phone || '', 45, 30);
         doc.text(companyInfo.website_url || '', 45, 35);
 
-        // Add Order Budget Tracker information
-        doc.setFontSize(16);
-        doc.text('Order Budget Tracker', 10, 50);
+        // Add Order Budget Tracker information with theme color and centered
+        doc.setTextColor(102, 126, 234); // #667eea theme color
+        doc.setFontSize(22);
+        const pageWidth = doc.internal.pageSize.getWidth();
+        doc.text('Order Budget Tracker', pageWidth / 2, 50, { align: 'center' });
+
+        doc.setTextColor(0, 0, 0); // Reset to black
         doc.setFontSize(12);
-        doc.text(`Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, 10, 55);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, pageWidth / 2, 58, { align: 'center' });
 
         // Proceed with table generation
-        generateProductTable(doc, rows);
+        generateProductTable(doc, rows, companyInfo);
       };
 
       logoImg.onerror = () => {
@@ -192,15 +197,30 @@ export const generateB2BOrderPDFEnhanced = (rows: B2BOrderRow[], companyInfo?: a
         doc.text(companyInfo.phone || '', 15, 30);
         doc.text(companyInfo.website_url || '', 15, 35);
 
-        doc.setFontSize(16);
-        doc.text('Order Budget Tracker', 10, 50);
-        doc.setFontSize(12);
-        doc.text(`Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, 10, 55);
+        // Add Order Budget Tracker information with theme color and centered
+        doc.setTextColor(102, 126, 234); // #667eea theme color
+        doc.setFontSize(22);
+        const pageWidth = doc.internal.pageSize.getWidth();
+        doc.text('Order Budget Tracker', pageWidth / 2, 50, { align: 'center' });
 
-        generateProductTable(doc, rows);
+        doc.setTextColor(0, 0, 0); // Reset to black
+        doc.setFontSize(12);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, pageWidth / 2, 58, { align: 'center' });
+
+        generateProductTable(doc, rows, companyInfo);
       };
     } else {
-      generateProductTable(doc, rows);
+      // Add title and date when no company info with theme color and centered
+      doc.setTextColor(102, 126, 234); // #667eea theme color
+      doc.setFontSize(22);
+      const pageWidth = doc.internal.pageSize.getWidth();
+      doc.text('Order Budget Tracker', pageWidth / 2, 25, { align: 'center' });
+
+      doc.setTextColor(0, 0, 0); // Reset to black
+      doc.setFontSize(12);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, pageWidth / 2, 35, { align: 'center' });
+
+      generateProductTable(doc, rows, companyInfo);
     }
   } catch (error) {
     console.error('PDF generation failed:', error);
