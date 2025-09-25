@@ -116,8 +116,8 @@ const generateProductTable = (doc: jsPDF, rows: B2BOrderRow[], companyInfo?: any
         const pdfWidth = doc.internal.pageSize.getWidth() - 20;
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-        // Position the table with proper spacing after title
-        const tableY = companyInfo ? 68 : 45;
+        // Position the table much lower to give space for logo
+        const tableY = companyInfo ? 90 : 70;
         doc.addImage(imgData, 'PNG', 10, tableY, pdfWidth, pdfHeight);
 
         // Format the current date and time - matching quotation format
@@ -171,15 +171,15 @@ export const generateB2BOrderPDFEnhanced = (rows: B2BOrderRow[], companyInfo?: a
         doc.text(companyInfo.phone || '', 45, 30);
         doc.text(companyInfo.website_url || '', 45, 35);
 
-        // Add Order Budget Tracker information with theme color and centered
+        // Add Order Budget Tracker information with theme color and centered - lowered for logo space
         doc.setTextColor(102, 126, 234); // #667eea theme color
         doc.setFontSize(22);
         const pageWidth = doc.internal.pageSize.getWidth();
-        doc.text('Order Budget Tracker', pageWidth / 2, 50, { align: 'center' });
+        doc.text('Order Budget Tracker', pageWidth / 2, 70, { align: 'center' });
 
         doc.setTextColor(0, 0, 0); // Reset to black
         doc.setFontSize(12);
-        doc.text(`Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, pageWidth / 2, 58, { align: 'center' });
+        doc.text(`Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, pageWidth / 2, 80, { align: 'center' });
 
         // Proceed with table generation
         generateProductTable(doc, rows, companyInfo);
@@ -197,28 +197,28 @@ export const generateB2BOrderPDFEnhanced = (rows: B2BOrderRow[], companyInfo?: a
         doc.text(companyInfo.phone || '', 15, 30);
         doc.text(companyInfo.website_url || '', 15, 35);
 
-        // Add Order Budget Tracker information with theme color and centered
+        // Add Order Budget Tracker information with theme color and centered - lowered for logo space
         doc.setTextColor(102, 126, 234); // #667eea theme color
         doc.setFontSize(22);
         const pageWidth = doc.internal.pageSize.getWidth();
-        doc.text('Order Budget Tracker', pageWidth / 2, 50, { align: 'center' });
+        doc.text('Order Budget Tracker', pageWidth / 2, 70, { align: 'center' });
 
         doc.setTextColor(0, 0, 0); // Reset to black
         doc.setFontSize(12);
-        doc.text(`Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, pageWidth / 2, 58, { align: 'center' });
+        doc.text(`Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, pageWidth / 2, 80, { align: 'center' });
 
         generateProductTable(doc, rows, companyInfo);
       };
     } else {
-      // Add title and date when no company info with theme color and centered
+      // Add title and date when no company info with theme color and centered - lowered for logo space
       doc.setTextColor(102, 126, 234); // #667eea theme color
       doc.setFontSize(22);
       const pageWidth = doc.internal.pageSize.getWidth();
-      doc.text('Order Budget Tracker', pageWidth / 2, 25, { align: 'center' });
+      doc.text('Order Budget Tracker', pageWidth / 2, 50, { align: 'center' });
 
       doc.setTextColor(0, 0, 0); // Reset to black
       doc.setFontSize(12);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, pageWidth / 2, 35, { align: 'center' });
+      doc.text(`Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, pageWidth / 2, 60, { align: 'center' });
 
       generateProductTable(doc, rows, companyInfo);
     }
