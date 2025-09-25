@@ -31,6 +31,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import DailyHuddle from "./features/dailyHuddle/components/DailyHuddle";
 import Sales from "./features/sales/components/Sales";
 import Quotation from "./features/quotation/components/Quotation";
+import B2BOrderFixed from "./features/b2b_order/components/B2BOrderFixed";
 import Product from "./features/product/components/Product";
 import Resources from "./features/resources/components/Resources";
 import Projects from "./features/projects/components/Projects";
@@ -293,6 +294,25 @@ const App: React.FC = () => {
                           onSubTabChange={() => {}}
                         >
                           <Quotation session={session} />
+                        </DashboardLayout>
+                      }
+                    />
+                  }
+                />
+                <Route
+                  path="/:userId/b2b_order"
+                  element={
+                    <ProtectedRoute
+                      session={session}
+                      element={
+                        <DashboardLayout
+                          session={session}
+                          signOut={signOut}
+                          activeTab="sales"
+                          activeSubTab="b2b_order"
+                          onSubTabChange={() => {}}
+                        >
+                          <B2BOrderFixed session={session} />
                         </DashboardLayout>
                       }
                     />

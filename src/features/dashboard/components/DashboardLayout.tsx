@@ -72,6 +72,7 @@ const navigationConfig = [
       { id: "salesTab", label: "Sales", shortForm: "Sa", icon: ThumbsUp },
       { id: "product", label: "Product", shortForm: "Pr", icon: ThumbsUp },
       { id: "quotation", label: "Quotation", shortForm: "Qu", icon: ThumbsUp },
+      { id: "b2b_order", label: "Order Budget Tracker", shortForm: "OBT", icon: ThumbsUp },
     ],
   },
   {
