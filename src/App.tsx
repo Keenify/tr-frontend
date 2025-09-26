@@ -105,26 +105,8 @@ const App: React.FC = () => {
         <Suspense fallback={<ClipLoader color="#36d7b7" />}>
           {session && <FloatingMusicPlayer />}
           
-          {/* Show loading spinner while session is being determined */}
-          {loading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-              <ClipLoader color="#36d7b7" />
-            </div>
-          ) : (
           <Routes>
-            {/* Default Redirect to User-Specific Route */}
-            <Route
-              path="/"
-              element={
-                <Navigate
-                  to={session ? `/${session.user.id}/vivid_vision` : "/login"}
-                  replace
-                />
-              }
-            />
-
-
-            {/* Public Routes */}
+            {/* Public Routes - Always accessible, even while loading */}
             <Route path="/login" element={<AuthForm />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route
@@ -133,7 +115,7 @@ const App: React.FC = () => {
             />
             {/* Public Daily Huddle routes */}
             <Route path="/daily_huddle/:userid" element={<PublicDailyHuddle />} />
-            
+
             {/* Public Job Details route */}
             <Route path="/jobs/:jobId" element={<PublicJobDetails />} />
             {/* Job Preview route */}
@@ -143,6 +125,29 @@ const App: React.FC = () => {
 
             {/* Public Order Budget Tracker - no auth required */}
             <Route path="/public/order-tracker" element={<B2BOrderFixed session={null} />} />
+
+            {/* Show loading spinner while session is being determined for protected routes */}
+            {loading ? (
+              <Route
+                path="*"
+                element={
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                    <ClipLoader color="#36d7b7" />
+                  </div>
+                }
+              />
+            ) : (
+              <>
+                {/* Default Redirect to User-Specific Route */}
+                <Route
+                  path="/"
+                  element={
+                    <Navigate
+                      to={session ? `/${session.user.id}/vivid_vision` : "/login"}
+                      replace
+                    />
+                  }
+                />
 
             {/* Protected Routes */}
             <>
@@ -1028,8 +1033,9 @@ const App: React.FC = () => {
 
             {/* Catch-all for anything else */}
             <Route path="*" element={<NotFound />} />
+              </>
+            )}
           </Routes>
-          )}
         </Suspense>
       </Router>
       </QueryClientProvider>
