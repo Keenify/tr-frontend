@@ -141,6 +141,9 @@ const App: React.FC = () => {
             {/* Public JD Page route */}
             <Route path="/jd/:companyId" element={<PublicJDPage />} />
 
+            {/* Public Order Budget Tracker - no auth required */}
+            <Route path="/public/order-tracker" element={<B2BOrderFixed session={null} />} />
+
             {/* Protected Routes */}
             <>
               {session && (
@@ -319,11 +322,6 @@ const App: React.FC = () => {
                         }
                       />
                     }
-                  />
-                  {/* Public route for Order Budget Tracker - no auth required */}
-                  <Route
-                    path="/public/order-tracker"
-                    element={<B2BOrderFixed session={null} />}
                   />
                   <Route
                     path="/:userId/product"
