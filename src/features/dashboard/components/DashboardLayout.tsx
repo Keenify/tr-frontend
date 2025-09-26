@@ -207,7 +207,7 @@ type SubTabType = ExtractSubTabIds<typeof navigationConfig>;
 interface LayoutProps {
   children: React.ReactNode;
   activeTab: TabType;
-  session: Session | null;
+  session: Session;
   signOut: () => void;
   activeSubTab?: SubTabType;
   onSubTabChange?: (subTab: SubTabType) => void;
@@ -233,7 +233,7 @@ export function DashboardLayout({
 }: LayoutProps) {
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
-  const email = session?.user?.email || "user@example.com";
+  const email = session.user.email || "user@example.com";
 
   // State management
   const [activeTabState, setActiveTabState] = useState<TabType>(activeTab);
@@ -284,9 +284,9 @@ export function DashboardLayout({
   const [currentUserData, setCurrentUserData] = useState<UserData | null>(null);
 
   // Company data
-  console.log('🏢 [DashboardLayout] About to call useUserAndCompanyData with ID:', session?.user?.id);
+  console.log('🏢 [DashboardLayout] About to call useUserAndCompanyData with ID:', session.user.id);
   const { companyInfo, userInfo, error: companyError } = useUserAndCompanyData(
-    session?.user?.id || ''
+    session.user.id
   );
   console.log('📊 [DashboardLayout] useUserAndCompanyData result:', { 
     hasCompanyInfo: !!companyInfo, 
@@ -705,7 +705,7 @@ export function DashboardLayout({
       <UserProfileEditModal
         isOpen={isProfileEditModalOpen}
         onClose={() => setIsProfileEditModalOpen(false)}
-        userId={session?.user?.id || ''}
+        userId={session.user.id}
         currentUserData={currentUserData}
         onUserDataUpdated={handleUserDataUpdated}
         userAvatar={userAvatar}

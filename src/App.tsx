@@ -320,6 +320,11 @@ const App: React.FC = () => {
                       />
                     }
                   />
+                  {/* Public route for Order Budget Tracker - no auth required */}
+                  <Route
+                    path="/public/order-tracker"
+                    element={<B2BOrderFixed session={null} />}
+                  />
                   <Route
                     path="/:userId/product"
                     element={
