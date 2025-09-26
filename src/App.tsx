@@ -126,6 +126,22 @@ const App: React.FC = () => {
             {/* Public Order Budget Tracker - no auth required */}
             <Route path="/public/order-tracker" element={<B2BOrderFixed session={null} />} />
 
+            {/* Order Budget Tracker with Dashboard layout - no auth required */}
+            <Route
+              path="/:userId/b2b_order"
+              element={
+                <DashboardLayout
+                  session={null}
+                  signOut={() => {}}
+                  activeTab="sales"
+                  activeSubTab="b2b_order"
+                  onSubTabChange={() => {}}
+                >
+                  <B2BOrderFixed session={null} />
+                </DashboardLayout>
+              }
+            />
+
             {/* Show loading spinner while session is being determined for protected routes */}
             {loading ? (
               <Route
@@ -304,25 +320,6 @@ const App: React.FC = () => {
                             onSubTabChange={() => {}}
                           >
                             <Quotation session={session} />
-                          </DashboardLayout>
-                        }
-                      />
-                    }
-                  />
-                  <Route
-                    path="/:userId/b2b_order"
-                    element={
-                      <ProtectedRoute
-                        session={session}
-                        element={
-                          <DashboardLayout
-                            session={session}
-                            signOut={signOut}
-                            activeTab="sales"
-                            activeSubTab="b2b_order"
-                            onSubTabChange={() => {}}
-                          >
-                            <B2BOrderFixed session={session} />
                           </DashboardLayout>
                         }
                       />
