@@ -207,7 +207,7 @@ type SubTabType = ExtractSubTabIds<typeof navigationConfig>;
 interface LayoutProps {
   children: React.ReactNode;
   activeTab: TabType;
-  session: Session | null;
+  session: Session;
   signOut: () => void;
   activeSubTab?: SubTabType;
   onSubTabChange?: (subTab: SubTabType) => void;
@@ -233,7 +233,7 @@ export function DashboardLayout({
 }: LayoutProps) {
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
-  const email = session?.user?.email || "user@example.com";
+  const email = session.user.email || "user@example.com";
 
   // State management
   const [activeTabState, setActiveTabState] = useState<TabType>(activeTab);
@@ -284,9 +284,9 @@ export function DashboardLayout({
   const [currentUserData, setCurrentUserData] = useState<UserData | null>(null);
 
   // Company data
-  console.log('🏢 [DashboardLayout] About to call useUserAndCompanyData with ID:', session?.user?.id);
+  console.log('🏢 [DashboardLayout] About to call useUserAndCompanyData with ID:', session.user.id);
   const { companyInfo, userInfo, error: companyError } = useUserAndCompanyData(
-    session?.user?.id || ''
+    session.user.id
   );
   console.log('📊 [DashboardLayout] useUserAndCompanyData result:', { 
     hasCompanyInfo: !!companyInfo, 
@@ -601,67 +601,61 @@ export function DashboardLayout({
             </span>
           </NavLinkWithContextMenu>
           
-          {session ? (
-            <div className="flex items-center space-x-3">
-              <div className="relative">
-                <div
-                  className="h-10 w-10 rounded-full flex items-center justify-center overflow-hidden cursor-pointer border-2 border-white/30 hover:border-white/70 transition-all duration-200"
-                  onClick={() => setIsProfileEditModalOpen(true)}
-                >
-                  {userAvatar ? (
-                    <img
-                      src={userAvatar}
-                      alt="User avatar"
-                      className="h-full w-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                        e.currentTarget.nextElementSibling?.classList.remove("hidden");
-                      }}
-                    />
-                  ) : (
-                    <span className="text-white font-semibold text-lg bg-white/10 flex items-center justify-center w-full h-full">
-                      {currentUserData?.first_name?.charAt(0)?.toUpperCase() || email.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </div>
-                {/* Edit Profile Button */}
+          <div className="flex items-center space-x-3">
+            <div className="relative">
+              <div
+                className="h-10 w-10 rounded-full flex items-center justify-center overflow-hidden cursor-pointer border-2 border-white/30 hover:border-white/70 transition-all duration-200"
+                onClick={() => setIsProfileEditModalOpen(true)}
+              >
+                {userAvatar ? (
+                  <img
+                    src={userAvatar}
+                    alt="User avatar"
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                      e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                    }}
+                  />
+                ) : (
+                  <span className="text-white font-semibold text-lg bg-white/10 flex items-center justify-center w-full h-full">
+                    {currentUserData?.first_name?.charAt(0)?.toUpperCase() || email.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              {/* Edit Profile Button */}
+              <button
+                onClick={() => setIsProfileEditModalOpen(true)}
+                className="absolute -bottom-1 -right-1 h-6 w-6 bg-indigo-600 hover:bg-indigo-700 rounded-full flex items-center justify-center border-2 border-white transition-all duration-200"
+                title="Edit Profile"
+              >
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex flex-col">
+              <p className="text-sm font-medium text-white">
+                {currentUserData ? `${currentUserData.first_name} ${currentUserData.last_name}` : email}
+              </p>
+              <div className="flex space-x-4 mt-1">
                 <button
-                  onClick={() => setIsProfileEditModalOpen(true)}
-                  className="absolute -bottom-1 -right-1 h-6 w-6 bg-indigo-600 hover:bg-indigo-700 rounded-full flex items-center justify-center border-2 border-white transition-all duration-200"
-                  title="Edit Profile"
+                  onClick={() => setIsResetModalOpen(true)}
+                  className="text-sm text-white/80 hover:text-white flex items-center transition-colors duration-150"
                 >
-                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
+                  <Lock className="w-4 h-4 mr-1" />
+                  Reset Password
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  className="text-sm text-white/80 hover:text-white flex items-center transition-colors duration-150"
+                >
+                  <Power className="w-4 h-4 mr-1" />
+                  Sign Out
                 </button>
               </div>
-              <div className="flex flex-col">
-                <p className="text-sm font-medium text-white">
-                  {currentUserData ? `${currentUserData.first_name} ${currentUserData.last_name}` : email}
-                </p>
-                <div className="flex space-x-4 mt-1">
-                  <button
-                    onClick={() => setIsResetModalOpen(true)}
-                    className="text-sm text-white/80 hover:text-white flex items-center transition-colors duration-150"
-                  >
-                    <Lock className="w-4 h-4 mr-1" />
-                    Reset Password
-                  </button>
-                  <button
-                    onClick={handleSignOut}
-                    className="text-sm text-white/80 hover:text-white flex items-center transition-colors duration-150"
-                  >
-                    <Power className="w-4 h-4 mr-1" />
-                    Sign Out
-                  </button>
-                </div>
-              </div>
             </div>
-          ) : (
-            <div className="text-white text-sm">
-              Public Access
-            </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -711,7 +705,7 @@ export function DashboardLayout({
       <UserProfileEditModal
         isOpen={isProfileEditModalOpen}
         onClose={() => setIsProfileEditModalOpen(false)}
-        userId={session?.user?.id || ''}
+        userId={session.user.id}
         currentUserData={currentUserData}
         onUserDataUpdated={handleUserDataUpdated}
         userAvatar={userAvatar}
