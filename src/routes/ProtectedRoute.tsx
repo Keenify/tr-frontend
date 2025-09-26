@@ -10,6 +10,15 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ session, element }) => {
   const { userId } = useParams<{ userId: string }>();
+  const location = window.location.pathname;
+
+  // Allow public access to b2b_order route
+  const isB2BOrderRoute = location.includes('/b2b_order');
+
+  // If accessing b2b_order route, allow without authentication
+  if (isB2BOrderRoute) {
+    return element;
+  }
 
   // If no session (unauthenticated), redirect to login
   if (!session) {

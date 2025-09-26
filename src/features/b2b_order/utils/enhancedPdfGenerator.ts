@@ -47,15 +47,6 @@ const generateProductTable = (doc: jsPDF, rows: B2BOrderRow[], companyInfo?: any
         select.parentNode?.replaceChild(span, select);
       });
 
-      // Handle custom dietary inputs
-      const customInputs = row.querySelectorAll('.custom-dietary-input');
-      customInputs.forEach(input => {
-        const span = document.createElement('span');
-        span.textContent = (input as HTMLInputElement).value || 'Custom';
-        span.style.display = 'inline-block';
-        span.style.padding = '4px';
-        input.parentNode?.replaceChild(span, input);
-      });
     });
 
     // Remove all error messages

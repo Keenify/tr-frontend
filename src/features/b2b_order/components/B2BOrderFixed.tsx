@@ -10,14 +10,15 @@ interface B2BOrderProps {
 }
 
 const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
-  const { companyInfo } = useUserAndCompanyData(session?.user?.id || '');
+  // Handle both authenticated and public access
+  const userId = session?.user?.id || '';
+  const { companyInfo } = useUserAndCompanyData(userId);
 
   const initialRow: B2BOrderRow = {
     id: Date.now().toString(),
     pax: 1,
     amountPerPerson: 0,
-    dietaryRestriction: 'halal',
-    customDietary: ''
+    dietaryRestriction: 'halal'
   };
 
   const [rows, setRows] = useState<B2BOrderRow[]>([initialRow]);
@@ -28,13 +29,6 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
     setValidationErrors({});
   };
 
-  const handleAddRow = () => {
-    const newRow: B2BOrderRow = {
-      ...initialRow,
-      id: Date.now().toString()
-    };
-    setRows([...rows, newRow]);
-  };
 
   const handleRemoveRow = (id: string) => {
     if (rows.length > 1) {
@@ -90,11 +84,6 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
     ));
   };
 
-  const handleCustomDietaryChange = (id: string, value: string) => {
-    setRows(rows.map(row =>
-      row.id === id ? { ...row, customDietary: value } : row
-    ));
-  };
 
   const incrementValue = (id: string, field: 'pax' | 'amountPerPerson', delta: number) => {
     setRows(rows.map(row => {
@@ -214,35 +203,15 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                     )}
                   </td>
                   <td className="dietary-cell">
-                    {row.dietaryRestriction !== 'custom' ? (
-                      <select
-                        className="dietary-select"
-                        value={row.dietaryRestriction}
-                        onChange={(e) => handleDietaryChange(row.id, e.target.value as DietaryRestriction)}
-                      >
-                        <option value="halal">Halal</option>
-                        <option value="non-halal">Non-Halal</option>
-                        <option value="vegan">Vegan</option>
-                        <option value="custom">Custom</option>
-                      </select>
-                    ) : (
-                      <div className="custom-dietary-wrapper">
-                        <input
-                          type="text"
-                          className="custom-dietary-input"
-                          placeholder="Enter custom dietary restriction"
-                          value={row.customDietary}
-                          onChange={(e) => handleCustomDietaryChange(row.id, e.target.value)}
-                        />
-                        <button
-                          className="back-to-select-btn"
-                          onClick={() => handleDietaryChange(row.id, 'halal')}
-                          title="Back to options"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    )}
+                    <select
+                      className="dietary-select"
+                      value={row.dietaryRestriction}
+                      onChange={(e) => handleDietaryChange(row.id, e.target.value as DietaryRestriction)}
+                    >
+                      <option value="halal">Halal</option>
+                      <option value="non-halal">Non-Halal</option>
+                      <option value="vegan">Vegan</option>
+                    </select>
                   </td>
                   <td className="actions-cell">
                     <button
@@ -262,17 +231,8 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                 <td>
                   <strong>Total Pax: {getTotalPax()}</strong>
                 </td>
-                <td colSpan={2}>
+                <td colSpan={3}>
                   <strong>Total Amount: ${getTotalAmount().toFixed(2)}</strong>
-                </td>
-                <td>
-                  <button
-                    className="add-row-btn"
-                    onClick={handleAddRow}
-                    title="Add row"
-                  >
-                    + Add Row
-                  </button>
                 </td>
               </tr>
             </tfoot>
