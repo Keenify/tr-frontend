@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { generateSnackOrderReport } from '../utils/snackOrderReportGenerator';
+import { generateGiftSuggestions, generateGiftSuggestionPDF } from '../services/useGiftSuggestions';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
+import { Product, ProductVariant } from '../../../shared/types/Product';
+import { generateAutomatedGiftBox, formatGiftBoxForDisplay } from '../utils/giftSuggestionHelper';
+import { getCachedProducts, cacheAllProducts, getCacheInfo } from '../utils/productCache';
+import { generateGiftSuggestionPDF as generateSamplePDF } from '../utils/giftSuggestionPdfGenerator';
 import '../styles/B2BOrder.css';
+import '../styles/GiftSuggestion.css';
 
 interface B2BOrderProps {
   session: Session | null;
@@ -24,8 +30,67 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedItems, setGeneratedItems] = useState<any[]>([]);
 
+  // Product data state
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productVariants, setProductVariants] = useState<{[key: number]: ProductVariant[]}>({});
+  const [loadingProducts, setLoadingProducts] = useState(false);
+
   // Validation
   const [errors, setErrors] = useState<{ pax?: string; price?: string }>({});
+
+  // Fetch/load products and variants when component mounts (with caching)
+  useEffect(() => {
+    const loadProducts = async () => {
+      setLoadingProducts(true);
+      console.log('=== PRODUCT CACHE SYSTEM ===');
+
+      // Check cache info
+      const cacheInfo = getCacheInfo();
+      console.log('Cache info:', cacheInfo);
+
+      try {
+        // Try to get cached products (works for both authenticated and public access)
+        const { products: cachedProducts, productVariants: cachedVariants } = await getCachedProducts(companyInfo?.id);
+
+        if (cachedProducts.length > 0) {
+          console.log('✅ Successfully loaded products from cache system');
+          console.log(`📦 Loaded ${cachedProducts.length} products with variants`);
+          console.log('Products loaded:', cachedProducts.map(p => ({ id: p.id, name: p.name })));
+
+          setProducts(cachedProducts);
+          setProductVariants(cachedVariants);
+
+          // Show which products have variants
+          Object.entries(cachedVariants).forEach(([productId, variants]) => {
+            const product = cachedProducts.find(p => p.id === parseInt(productId));
+            console.log(`  📋 ${product?.name}: ${variants.length} variants`);
+          });
+        } else {
+          console.log('❌ No products available in cache system');
+          setProducts([]);
+          setProductVariants({});
+        }
+
+        // If we have a company ID but no fresh cache, refresh the cache in background
+        if (companyInfo?.id && (!cacheInfo.hasCache || cacheInfo.companyId !== companyInfo.id)) {
+          console.log('🔄 Refreshing product cache in background...');
+          cacheAllProducts(companyInfo.id).catch(error => {
+            console.warn('⚠️ Background cache refresh failed:', error);
+          });
+        }
+
+      } catch (error) {
+        console.error('❌ Failed to load products from cache system:', error);
+        setProducts([]);
+        setProductVariants({});
+      } finally {
+        setLoadingProducts(false);
+        console.log('=== END PRODUCT CACHE SYSTEM ===');
+      }
+    };
+
+    loadProducts();
+  }, [companyInfo?.id]);
 
   const validateInputs = () => {
     const newErrors: { pax?: string; price?: string } = {};
@@ -78,80 +143,85 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
       const priceNum = parseFloat(pricePerPerson);
       const isHalal = dietaryRestriction === 'halal';
 
-      // Available gift box options with actual pricing
-      const giftBoxOptions = [
-        {
-          name: "Premium Assorted Gift Box",
-          basePrice: 25.00, // Base price per box
-          products: {
-            "Popcorn Mix": { flavors: isHalal ? ["Tom Yum", "Mala", "Salted Caramel"] : ["Tom Yum", "Mala", "Chicken Floss"], count: 3, unitCost: 3.50 },
-            "Brownie Crisps": { flavors: ["Chocolate"], count: 2, unitCost: 4.00 },
-            "Crispy Cones": { flavors: ["Nasi Lemak"], count: 1, unitCost: 5.50 }
-          }
-        },
-        {
-          name: "Deluxe Snack Gift Box",
-          basePrice: 22.00,
-          products: {
-            "Popcorn Mix": { flavors: isHalal ? ["Chocolate", "Salted Caramel"] : ["Chocolate", "Chicken Floss"], count: 2, unitCost: 3.50 },
-            "YUMI Corn Sticks": { flavors: ["Pulut Hitam", "Chilli Crab"], count: 2, unitCost: 4.50 },
-            "Crispy Cones": { flavors: ["Original"], count: 1, unitCost: 5.50 }
-          }
-        },
-        {
-          name: "Signature Flavor Gift Box",
-          basePrice: 28.00,
-          products: {
-            "Popcorn Mix": { flavors: isHalal ? ["Tom Yum", "Mala", "Chocolate", "Salted Caramel"] : ["Tom Yum", "Mala", "Chocolate", "Chicken Floss"], count: 4, unitCost: 3.50 },
-            "Brownie Crisps": { flavors: ["Original"], count: 1, unitCost: 4.00 }
-          }
-        }
-      ];
+      // Enhanced debug logging
+      console.log('=== GIFT GENERATOR DEBUG ===');
+      console.log('Total products:', products.length);
+      console.log('Company ID:', companyInfo?.id);
+      console.log('Products:', products);
+      console.log('Product variants:', productVariants);
 
-      // Randomly select a gift box configuration
-      const selectedGiftBox = giftBoxOptions[Math.floor(Math.random() * giftBoxOptions.length)];
-
-      // Calculate actual cost of gift box contents
-      let calculatedBoxCost = 0;
-      Object.values(selectedGiftBox.products).forEach(product => {
-        calculatedBoxCost += product.unitCost * product.count;
+      // Check each product for variants
+      products.forEach(product => {
+        const variants = productVariants[product.id] || [];
+        console.log(`Product "${product.name}" (ID: ${product.id}):`, {
+          hasVariants: variants.length > 0,
+          variantCount: variants.length,
+          variants: variants.map(v => v.name)
+        });
       });
 
-      // Use the higher of base price or calculated cost (with margin)
-      const actualBoxPrice = Math.max(selectedGiftBox.basePrice, calculatedBoxCost * 1.3); // 30% margin
+      // Filter available products and log the filtering process
+      const availableProducts = products.filter(product => {
+        const hasVariants = productVariants[product.id] && productVariants[product.id].length > 0;
+        console.log(`Product "${product.name}": hasVariants = ${hasVariants}`);
+        return hasVariants;
+      });
 
-      // Check if user's budget per person is sufficient
-      let finalBoxPrice = actualBoxPrice;
-      let budgetMessage = "";
+      console.log('Available products after filtering:', availableProducts.length);
+      console.log('Available products:', availableProducts.map(p => ({ id: p.id, name: p.name })));
+      console.log('=== END DEBUG ===');
 
-      if (priceNum < actualBoxPrice) {
-        // If budget is less than actual price, adjust the box contents or show budget message
-        finalBoxPrice = actualBoxPrice; // Keep actual price
-        budgetMessage = `(Budget: RM ${priceNum.toFixed(2)}/person, Actual: RM ${actualBoxPrice.toFixed(2)}/person)`;
+      // Use the automated gift box generation with real products
+      const automatedGiftBox = generateAutomatedGiftBox(
+        {
+          pax: paxNum,
+          budgetPerPerson: priceNum,
+          dietaryRestriction: dietaryRestriction
+        },
+        products,
+        productVariants,
+        'SG' // Default to Singapore branch - could be made dynamic
+      );
+
+      if (!automatedGiftBox) {
+        // Show user-friendly message when no real products are available
+        console.warn('No real products available for automated generation.');
+
+        // Check if we have any products at all
+        const hasProducts = products.length > 0;
+        const hasVariants = Object.values(productVariants).some(variants => variants.length > 0);
+
+        let message = 'No products available for gift generation!\n\n';
+
+        if (!hasProducts) {
+          message += '• No products found in the system\n';
+          message += '• Please add products in the Product section first\n';
+        } else if (!hasVariants) {
+          message += `• Found ${products.length} products but no variants\n`;
+          message += '• Please add variants/flavors to your products\n';
+        } else {
+          message += '• Products and variants exist but none are suitable for gift boxes\n';
+          message += '• Check that products have proper pricing and variants\n';
+        }
+
+        message += '\nTip: Go to Product section → Add products → Add variants for each product';
+
+        alert(message);
+        setIsGenerating(false);
+        return;
       }
 
-      // Calculate quantities and pricing
-      const boxesNeeded = paxNum; // 1 box per person
-      const totalAmount = boxesNeeded * finalBoxPrice;
-
-      // Generate all flavors list from selected products
-      const allFlavors: string[] = [];
-      Object.values(selectedGiftBox.products).forEach(product => {
-        allFlavors.push(...product.flavors);
-      });
-
-      // Generate the table data
+      // Format the automated gift box for display
+      const formattedGiftBox = formatGiftBoxForDisplay(automatedGiftBox);
       const giftBoxItem = {
-        productDescription: selectedGiftBox.name,
-        pax: paxNum,
-        pricePerBox: finalBoxPrice.toFixed(2),
-        total: totalAmount.toFixed(2),
-        flavors: allFlavors,
-        budgetMessage,
-        specialInstructions
+        ...formattedGiftBox,
+        specialInstructions,
+        name: automatedGiftBox.name,
+        description: automatedGiftBox.description,
+        tierPricing: automatedGiftBox.tierPricing
       };
 
-      console.log('Generated gift box item:', giftBoxItem);
+      console.log('Generated automated gift box:', giftBoxItem);
       setGeneratedItems([giftBoxItem]);
       setShowTable(true);
 
@@ -167,8 +237,110 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
   const handleRegenerate = async () => {
     if (isGenerating) return; // Prevent double clicks
 
-    console.log('Regenerate button clicked');
+    console.log('Regenerate button clicked - generating new combinations...');
+
+    // Small delay to ensure different time-based seeds
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    // Clear current results first to show loading state
+    setGeneratedItems([]);
+
     await handleGenerateGifts();
+  };
+
+
+  const handleExportPDF = async () => {
+    if (isGenerating || generatedItems.length === 0) return;
+
+    try {
+      setIsGenerating(true);
+      const currentItem = generatedItems[0];
+
+      // Create the gift box option object for the backend
+      const giftBoxOption = {
+        name: currentItem.productDescription,
+        basePrice: parseFloat(currentItem.pricePerBox),
+        actualPrice: parseFloat(currentItem.pricePerBox),
+        totalPrice: parseFloat(currentItem.total),
+        flavors: currentItem.flavors,
+        products: {}, // This would be populated with actual product data
+        budgetMessage: currentItem.budgetMessage
+      };
+
+      // Create the parameters object
+      const params = {
+        pax: parseInt(pax),
+        budgetPerPerson: parseFloat(pricePerPerson),
+        dietaryRestriction: dietaryRestriction,
+        specialInstructions: specialInstructions,
+        companyInfo: companyInfo || { name: 'Unknown Company' }
+      };
+
+      console.log('Generating PDF with backend...');
+      const pdfBlob = await generateGiftSuggestionPDF(giftBoxOption, params);
+
+      // Download the PDF
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Gift_Suggestions_${params.pax}pax_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Backend service might not be available. Please try the local generation instead.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleDownloadSample = async () => {
+    if (isGenerating || generatedItems.length === 0) {
+      console.log('Cannot generate PDF: isGenerating =', isGenerating, 'generatedItems.length =', generatedItems.length);
+      return;
+    }
+
+    try {
+      const currentItem = generatedItems[0];
+      console.log('Current item data:', currentItem);
+
+      // Prepare gift data for PDF generation
+      const giftData = {
+        name: currentItem.name || currentItem.productDescription || 'Gift Box',
+        description: currentItem.description || currentItem.productDescription || 'Custom Gift Box',
+        pax: currentItem.pax || parseInt(pax),
+        pricePerBox: currentItem.pricePerBox || '0.00',
+        total: currentItem.total || '0.00',
+        selectedProducts: currentItem.selectedProducts || [],
+        variants: currentItem.variants || [],
+        tierPricing: currentItem.tierPricing || [],
+        specialInstructions: currentItem.specialInstructions
+      };
+
+      // Form inputs for the report
+      const formInputs = {
+        pax,
+        pricePerPerson,
+        dietaryRestriction,
+        specialInstructions
+      };
+
+      console.log('Gift data prepared:', giftData);
+      console.log('Form inputs:', formInputs);
+      console.log('Company info:', companyInfo);
+      console.log('Generating sample PDF report...');
+
+      await generateSamplePDF(giftData, companyInfo, formInputs);
+      console.log('PDF generation completed successfully');
+
+    } catch (error) {
+      console.error('Detailed error generating sample PDF:', error);
+      console.error('Error stack:', error.stack);
+      alert(`Failed to generate PDF sample: ${error.message}. Please check the console for details.`);
+    }
   };
 
   return (
@@ -194,7 +366,6 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                     placeholder="Enter number"
                     className={`form-input ${errors.pax ? 'error' : ''}`}
                   />
-                  {errors.pax && <span className="error-message">{errors.pax}</span>}
                 </div>
               </div>
             </div>
@@ -211,7 +382,6 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                     placeholder="0.00"
                     className={`form-input ${errors.price ? 'error' : ''}`}
                   />
-                  {errors.price && <span className="error-message">{errors.price}</span>}
                 </div>
               </div>
             </div>
@@ -252,7 +422,7 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
             <div className="button-container">
               <button
                 onClick={handleGenerateGifts}
-                disabled={isGenerating}
+                disabled={isGenerating || !!errors.pax || !!errors.price}
                 className="generate-btn"
               >
 {isGenerating ? 'Generating...' : 'Generate Gift Suggestions'}
@@ -260,173 +430,123 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
             </div>
           )}
 
-          {/* Results table */}
+          {/* Results Section - New Card Design */}
           {showTable && (
             <div className="results-section">
-              <h3>Suggested Gift Items</h3>
-              <div className="results-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th style={{ width: "60%" }}>Product Description & Packaging</th>
-                      <th style={{ width: "40%" }}>Pax & Price Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {generatedItems.map((item, index) => (
-                      <tr key={index}>
-                        <td style={{ verticalAlign: "top", padding: "1rem" }}>
-                          <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem" }}>
-                            {/* Product Info */}
-                            <div style={{ flex: 1 }}>
-                              <div>
-                                <strong style={{ fontSize: "1.1rem" }}>{item.productDescription}</strong>
+              <h3>🎁 Your Personalized Gift Suggestions</h3>
+              <div className="gift-box-cards">
+                {generatedItems.map((item, index) => (
+                  <div key={index} className="gift-box-card">
+                    <div className="card-header">
+                      <h4>{item.name || item.productDescription}</h4>
+                      <span className="badge">✨ Auto-Generated Package</span>
+                    </div>
+
+                    <div className="card-body">
+                      {/* Left Side - Product Details */}
+                      <div className="product-details">
+                        <div className="product-section">
+                          <div className="section-title">Selected Products</div>
+                          <div className="product-list">
+                            {item.selectedProducts && item.selectedProducts.map((product, i) => (
+                              <div key={i} className="product-item">
+                                <div className="product-icon">📦</div>
+                                <span className="product-name">{product.name}</span>
                               </div>
-                              <div style={{ marginTop: "0.5rem", color: "#666" }}>
-                                <strong>Contains:</strong>
-                                <div style={{ marginLeft: "0.5rem", marginTop: "0.25rem" }}>
-                                  {item.flavors.map((flavor, i) => (
-                                    <div key={i} style={{ marginBottom: "0.2rem" }}>
-                                      • {flavor}
-                                    </div>
-                                  ))}
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="product-section">
+                          <div className="section-title">Flavor Varieties ({item.variants?.length || 0})</div>
+                          <div className="flavor-chips">
+                            {item.variants && item.variants.map((variant, i) => (
+                              <span key={i} className="flavor-chip">
+                                {variant.name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {item.specialInstructions && (
+                          <div className="special-instructions-display">
+                            <strong>Special Instructions:</strong>
+                            <div>{item.specialInstructions}</div>
+                          </div>
+                        )}
+
+                        {/* Packaging Preview */}
+                        <div className="packaging-preview">
+                          {item.variants && item.variants.slice(0, 8).map((variant, i) => (
+                            <div key={i} className="package-thumbnail" title={variant.name}>
+                              {variant.image_url ? (
+                                <img src={variant.image_url} alt={variant.name} />
+                              ) : (
+                                <div className="package-placeholder">
+                                  {variant.name.split(' ').map(w => w[0]).join('').substring(0, 3)}
                                 </div>
-                              </div>
+                              )}
                             </div>
+                          ))}
+                        </div>
+                      </div>
 
-                            {/* Packaging Images */}
-                            <div style={{ textAlign: "center", minWidth: "200px" }}>
-                              {/* Main gift box image */}
-                              <div style={{ marginBottom: "1rem" }}>
-                                <img
-                                  src="https://via.placeholder.com/180x120/667eea/FFFFFF?text=Gift+Box"
-                                  alt="Gift Box"
-                                  style={{
-                                    width: "180px",
-                                    height: "120px",
-                                    border: "2px solid #667eea",
-                                    borderRadius: "8px",
-                                    boxShadow: "0 2px 8px rgba(102, 126, 234, 0.2)"
-                                  }}
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = "none";
-                                  }}
-                                />
-                              </div>
+                      {/* Right Side - Pricing Panel */}
+                      <div className="pricing-panel">
+                        <div className="price-display">
+                          <div className="quantity-label">Quantity</div>
+                          <div className="quantity-value">{item.pax} boxes</div>
+                          <div className="price-per-box">RM {item.pricePerBox} per box</div>
+                          <div className="total-price">Total: RM {item.total}</div>
+                        </div>
 
-                              {/* Individual flavor packaging images */}
-                              <div style={{
-                                display: "grid",
-                                gridTemplateColumns: "repeat(4, 45px)",
-                                gap: "8px",
-                                justifyContent: "center",
-                                padding: "12px",
-                                backgroundColor: "#f8fafc",
-                                borderRadius: "8px",
-                                border: "1px solid #e2e8f0"
-                              }}>
-                                {item.flavors.slice(0, 8).map((flavor, i) => {
-                                  const colorMap: {[key: string]: string} = {
-                                    "Tom Yum": "FF6B35",
-                                    "Mala": "8B0000",
-                                    "Salted Caramel": "FFA500",
-                                    "Chocolate": "8B4513",
-                                    "Chicken Floss": "FFB6C1",
-                                    "Nasi Lemak": "32CD32",
-                                    "Pulut Hitam": "800080",
-                                    "Chilli Crab": "FF4500",
-                                    "Original": "87CEEB"
-                                  };
-                                  const bgColor = colorMap[flavor] || "666666";
-                                  const initials = flavor.split(' ').map(w => w[0]).join('').substring(0, 2);
-
-                                  return (
-                                    <div key={i} style={{ position: "relative" }}>
-                                      <img
-                                        src={`https://via.placeholder.com/45x45/${bgColor}/FFFFFF?text=${encodeURIComponent(initials)}`}
-                                        alt={flavor}
-                                        style={{
-                                          width: "45px",
-                                          height: "45px",
-                                          borderRadius: "6px",
-                                          border: "2px solid white",
-                                          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                                          cursor: "pointer"
-                                        }}
-                                        title={flavor}
-                                        onError={(e) => {
-                                          // Fallback to colored div if image fails
-                                          const target = e.currentTarget;
-                                          target.style.display = "none";
-                                          const fallbackDiv = target.nextSibling as HTMLElement;
-                                          if (fallbackDiv) fallbackDiv.style.display = "flex";
-                                        }}
-                                      />
-                                      <div
-                                        style={{
-                                          width: "45px",
-                                          height: "45px",
-                                          backgroundColor: `#${bgColor}`,
-                                          color: "white",
-                                          fontSize: "12px",
-                                          fontWeight: "bold",
-                                          display: "none",
-                                          alignItems: "center",
-                                          justifyContent: "center",
-                                          borderRadius: "6px",
-                                          border: "2px solid white",
-                                          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                                          cursor: "pointer"
-                                        }}
-                                        title={flavor}
-                                      >
-                                        {initials}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                        {/* Tier Pricing */}
+                        {item.tierPricing && (
+                          <div className="tier-pricing-section">
+                            <div className="tier-pricing-title">Volume Discounts</div>
+                            <div className="tier-list">
+                              {item.tierPricing.slice(0, 5).map((tier, idx) => (
+                                <div
+                                  key={idx}
+                                  className={`tier-item ${item.pax >= tier.minQuantity && item.pax <= tier.maxQuantity ? 'active' : ''}`}
+                                >
+                                  <span className="tier-range">
+                                    {tier.minQuantity}{tier.maxQuantity === Infinity ? '+' : `-${tier.maxQuantity}`} boxes
+                                  </span>
+                                  <span className="tier-price">
+                                    RM {tier.pricePerUnit.toFixed(2)}
+                                  </span>
+                                </div>
+                              ))}
                             </div>
                           </div>
-                        </td>
-                        <td style={{ verticalAlign: "top", padding: "1rem", textAlign: "center" }}>
-                          <div>
-                            <div style={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}>
-                              <strong>{item.pax} pax</strong>
-                            </div>
-                            <div style={{ fontSize: "1rem", marginBottom: "0.5rem", color: "#666" }}>
-                              RM {item.pricePerBox}/box
-                            </div>
-                            <div style={{ fontSize: "1.2rem", color: "#2d5aa0", marginBottom: "0.5rem" }}>
-                              <strong>Total: RM {item.total}</strong>
-                            </div>
-                            {item.budgetMessage && (
-                              <div style={{ fontSize: "0.8rem", color: "#e74c3c", fontStyle: "italic" }}>
-                                {item.budgetMessage}
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              {/* Regenerate button (when table is shown) */}
+              {/* Action buttons (when table is shown) */}
               <div className="button-container">
                 <button
                   type="button"
                   onClick={handleRegenerate}
-                  disabled={isGenerating}
+                  disabled={isGenerating || !!errors.pax || !!errors.price}
                   className="regenerate-btn"
-                  style={{
-                    opacity: isGenerating ? 0.6 : 1,
-                    cursor: isGenerating ? 'not-allowed' : 'pointer'
-                  }}
                 >
-                  {isGenerating ? 'Regenerating...' : 'Regenerate Suggestions'}
+                  {isGenerating ? 'Regenerating...' : '🔄 Regenerate Suggestions'}
                 </button>
+              </div>
+
+              {/* Download sample link - positioned under the regenerate button */}
+              <div className="download-sample-container">
+                <span
+                  onClick={handleDownloadSample}
+                  className="download-sample-link"
+                >
+                  📄 Download Sample Report
+                </span>
               </div>
             </div>
           )}
