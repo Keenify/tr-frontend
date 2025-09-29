@@ -6,6 +6,7 @@ import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyDa
 import { Product, ProductVariant } from '../../../shared/types/Product';
 import { generateAutomatedGiftBox, formatGiftBoxForDisplay } from '../utils/giftSuggestionHelper';
 import { getCachedProducts, cacheAllProducts, getCacheInfo, initializePublicCache } from '../utils/productCache';
+import { getStaticProducts } from '../utils/staticProductData';
 import { generateGiftSuggestionPDF as generateSamplePDF } from '../utils/giftSuggestionPdfGenerator';
 import { transformGiftSuggestionToQuotation } from '../utils/giftSuggestionToQuotation';
 import { BACKEND_API_DOMAIN } from '../../../config';
@@ -78,9 +79,12 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
             console.log(`  📋 ${product?.name}: ${variants.length} variants`);
           });
         } else {
-          console.log('❌ No products available in cache system');
-          setProducts([]);
-          setProductVariants({});
+          console.log('❌ No products available in cache system, using static fallback');
+          // Use static products as fallback for incognito/public access
+          const { products: staticProducts, productVariants: staticVariants } = getStaticProducts();
+          setProducts(staticProducts);
+          setProductVariants(staticVariants);
+          console.log('✅ Loaded static products for public access');
         }
 
         // Initialize public cache if no cache exists at all (for first-time visitors)
@@ -101,8 +105,11 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
 
       } catch (error) {
         console.error('❌ Failed to load products from cache system:', error);
-        setProducts([]);
-        setProductVariants({});
+        // Use static products as ultimate fallback
+        const { products: staticProducts, productVariants: staticVariants } = getStaticProducts();
+        setProducts(staticProducts);
+        setProductVariants(staticVariants);
+        console.log('✅ Using static products as fallback after cache failure');
       } finally {
         setLoadingProducts(false);
         console.log('=== END PRODUCT CACHE SYSTEM ===');
