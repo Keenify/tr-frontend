@@ -103,11 +103,20 @@ const Hiring: React.FC<HiringProps> = () => {
               Rejected
               {counts.rejected > 0 && <span className="count-badge">{counts.rejected}</span>}
             </Tab>
+
           </TabList>
 
           <TabPanel>
-            <div className="tab-content">
-              <JDPage />
+            <div className="tab-content flex">
+              <div className="flex-1">
+                <JDPage />
+              </div>
+              <div className="ml-2 flex flex-col gap-3 pt-6">
+                {/* Action buttons will be passed as props or handled via context */}
+                <div id="jd-action-buttons" className="flex flex-col gap-3">
+                  {/* Buttons will be rendered here by JDPage component */}
+                </div>
+              </div>
             </div>
           </TabPanel>
           
