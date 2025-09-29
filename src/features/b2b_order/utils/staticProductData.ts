@@ -35,25 +35,11 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
       product_id: 78,
       created_at: new Date().toISOString()
     },
-    {
-      id: 3,
-      name: "Valentine's Day",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250203_145640_Valentines.jpg?",
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
     // Classic Popcorn Flavors
     {
       id: 4,
       name: "Chocolate",
       image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115413_Chocolate.jpg?",
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 5,
-      name: "Cheese",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250214_062441_Cheese.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
