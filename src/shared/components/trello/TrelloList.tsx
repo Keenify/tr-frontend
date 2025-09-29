@@ -159,15 +159,14 @@ export const TrelloList: React.FC<TrelloListProps> = ({
   const handleCountrySubmit = async () => {
     if (onCountryChange) {
       try {
-        // Only accept 2-letter country codes
-        const countryCode = listCountry.toUpperCase().trim();
-        
-        // Validate that it's exactly 2 characters and contains only letters
-        if (countryCode.length !== 2 || !/^[A-Z]{2}$/.test(countryCode)) {
-          showToast('Please enter a valid 2-letter country code (e.g., SG, MY, US)', 'error');
+        const countryCode = listCountry.trim();
+
+        // Validate that a country is selected (only SG or MY allowed)
+        if (!countryCode || (countryCode !== 'SG' && countryCode !== 'MY')) {
+          showToast('Please select a country (Singapore or Malaysia)', 'error');
           return;
         }
-        
+
         await onCountryChange(countryCode);
         setListCountry(countryCode);
         showToast('Country updated successfully', 'success');
@@ -392,17 +391,18 @@ export const TrelloList: React.FC<TrelloListProps> = ({
             {isEditingCountry && (
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Country Code (2-letter code only)
+                  Select Country
                 </label>
                 <div className="flex items-center gap-2">
-                  <input
-                    type="text"
+                  <select
                     value={listCountry}
-                    onChange={(e) => setListCountry(e.target.value.toUpperCase())}
-                    placeholder="e.g. SG, MY, US, GB"
-                    maxLength={2}
-                    className="flex-1 px-3 py-2 rounded-md border border-gray-300 min-w-0"
-                  />
+                    onChange={(e) => setListCountry(e.target.value)}
+                    className="flex-1 px-3 py-2 rounded-md border border-gray-300 min-w-0 appearance-none bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a country...</option>
+                    <option value="SG">Singapore</option>
+                    <option value="MY">Malaysia</option>
+                  </select>
                   <div className="flex items-center gap-1 flex-shrink-0">
                     <button
                       onClick={handleCountrySubmit}
