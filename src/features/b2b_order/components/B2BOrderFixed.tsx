@@ -40,6 +40,16 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
   // Validation
   const [errors, setErrors] = useState<{ pax?: string; price?: string }>({});
 
+  // Auto-hide error messages after 3 seconds
+  useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      const timer = setTimeout(() => {
+        setErrors({});
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [errors]);
+
   // Fetch/load products and variants when component mounts (with caching)
   useEffect(() => {
     const loadProducts = async () => {
@@ -104,13 +114,21 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
 
   const validateInputs = () => {
     const newErrors: { pax?: string; price?: string } = {};
+    const paxNum = parseInt(pax);
+    const priceNum = parseFloat(pricePerPerson);
 
-    if (!pax || isNaN(parseInt(pax)) || parseInt(pax) < 1) {
+    // Validate number of people (1-1000 range)
+    if (!pax || isNaN(paxNum) || paxNum < 1) {
       newErrors.pax = 'Please enter a valid number of people (minimum 1)';
+    } else if (paxNum > 1000) {
+      newErrors.pax = 'Number of people should be less than 1000 for practical orders';
     }
 
-    if (!pricePerPerson || isNaN(parseFloat(pricePerPerson)) || parseFloat(pricePerPerson) < 1) {
-      newErrors.price = 'Please enter a valid price per person (minimum RM 1)';
+    // Validate price per person (RM 5-500 range)
+    if (!pricePerPerson || isNaN(priceNum) || priceNum < 5) {
+      newErrors.price = 'Please enter a valid price per person (minimum RM 5)';
+    } else if (priceNum > 500) {
+      newErrors.price = 'Price per person should be reasonable (maximum RM 500)';
     }
 
     setErrors(newErrors);
@@ -118,20 +136,22 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
   };
 
   const handlePaxChange = (value: string) => {
-    // Only allow numbers
+    // Allow numbers only, but don't block editing when over limit
     if (value === '' || /^\d+$/.test(value)) {
       setPax(value);
-      if (errors.pax) {
+      // Clear error when user starts typing valid numbers
+      if (errors.pax && value !== '' && parseInt(value) >= 1 && parseInt(value) <= 1000) {
         setErrors({ ...errors, pax: undefined });
       }
     }
   };
 
   const handlePriceChange = (value: string) => {
-    // Only allow numbers and decimal point
+    // Allow numbers and decimal point, but don't block editing when over limit
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setPricePerPerson(value);
-      if (errors.price) {
+      // Clear error when user starts typing valid prices
+      if (errors.price && value !== '' && parseFloat(value) >= 5 && parseFloat(value) <= 500) {
         setErrors({ ...errors, price: undefined });
       }
     }
@@ -431,7 +451,9 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                     placeholder="Enter number"
                     className={`form-input ${errors.pax ? 'error' : ''}`}
                   />
+                  {errors.pax && <div className="error-message">{errors.pax}</div>}
                 </div>
+                <div className="input-explanation">Range: 1-1000 people</div>
               </div>
             </div>
 
@@ -447,7 +469,9 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                     placeholder="0.00"
                     className={`form-input ${errors.price ? 'error' : ''}`}
                   />
+                  {errors.price && <div className="error-message">{errors.price}</div>}
                 </div>
+                <div className="input-explanation">Range: RM 5-500</div>
               </div>
             </div>
 

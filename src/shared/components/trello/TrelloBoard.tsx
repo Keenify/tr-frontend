@@ -604,7 +604,6 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
                       onChange={(e) => setNewListCountry(e.target.value)}
                       className="w-full px-3 py-2 border rounded-md mb-2 appearance-none bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="">Select country (optional)...</option>
                       <option value="SG">Singapore</option>
                       <option value="MY">Malaysia</option>
                     </select>

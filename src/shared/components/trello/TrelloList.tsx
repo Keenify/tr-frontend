@@ -399,7 +399,6 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                     onChange={(e) => setListCountry(e.target.value)}
                     className="flex-1 px-3 py-2 rounded-md border border-gray-300 min-w-0 appearance-none bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
-                    <option value="">Select a country...</option>
                     <option value="SG">Singapore</option>
                     <option value="MY">Malaysia</option>
                   </select>

@@ -99,12 +99,15 @@
 }
 
 .error-message {
-  position: absolute;
-  bottom: -20px;
-  left: 0;
   color: #dc3545;
-  font-size: 0.85rem;
+  font-size: 0.7rem;
   margin-top: 0.25rem;
+  font-weight: 400;
+  position: relative;
+  line-height: 1.2;
+  display: block;
+  min-height: 14px; /* Reserve space to prevent layout shift */
+  transition: opacity 0.3s ease;
 }
 
 .special-instructions {
@@ -497,11 +500,13 @@
 .packaging-preview {
   margin-top: 2rem;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-  gap: 0.75rem;
-  padding: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
+  gap: 0.5rem;
+  padding: 2rem 4rem 2rem 1.5rem; /* More padding on right, less on left */
   background: #f8f9fa;
   border-radius: 10px;
+  overflow: visible;
+  justify-items: left center; /* Left center alignment */
 }
 
 .package-thumbnail {
@@ -510,19 +515,30 @@
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, z-index 0s;
   cursor: pointer;
   position: relative;
   z-index: 1;
+  margin: 8px; /* Increased margin to prevent hover conflicts */
 }
 
-.package-thumbnail:hover,
-.package-thumbnail:active,
-.package-thumbnail:focus {
-  transform: scale(4);
-  transform-origin: left center;
+.package-thumbnail:hover {
+  transform: scale(3.5);
+  transform-origin: 30% center; /* Slightly off-center to prevent edge clipping */
   z-index: 1000;
-  transition-delay: 0.1s;
+  transition: transform 0.2s ease, z-index 0s;
+}
+
+/* Create a larger hover area to prevent flickering */
+.package-thumbnail::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  z-index: -1; /* Behind the image but part of hover area */
+  pointer-events: none;
 }
 
 /* Mobile touch support */
@@ -531,7 +547,7 @@
     transform: scale(3);
     transform-origin: center center;
     z-index: 1000;
-    transition-delay: 0s;
+    transition: transform 0.3s ease, z-index 0s;
   }
 }
 
