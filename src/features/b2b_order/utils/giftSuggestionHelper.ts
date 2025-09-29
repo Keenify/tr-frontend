@@ -101,7 +101,12 @@ export const selectRandomVariants = (
 
 // Get actual product pricing from the product data
 const getProductBoxPrice = (product: Product, branch: 'SG' | 'MY' = 'SG'): number => {
-  // Use the retail price from the product based on branch
+  // For gift boxes: 1 carton = 6 boxes = RM 25, so 1 box = RM 4.17
+  if (product.name.toLowerCase().includes('gift box')) {
+    return 25.00 / 6; // RM 4.17 per box
+  }
+
+  // For other products, use the retail price from the product based on branch
   const priceString = branch === 'SG' ? product.rrp_sgd : product.rrp_myr;
 
   if (!priceString) {
@@ -110,7 +115,7 @@ const getProductBoxPrice = (product: Product, branch: 'SG' | 'MY' = 'SG'): numbe
     if (fallbackPrice) {
       return parseFloat(fallbackPrice);
     }
-    // Default fallback price if no pricing is available
+    // Default fallback price for non-gift box products
     return 20.00;
   }
 
@@ -123,9 +128,9 @@ export const generateAutomatedGiftBox = (
   productVariants: { [key: number]: ProductVariant[] },
   branch: 'SG' | 'MY' = 'SG'
 ): AutomatedGiftBox | null => {
-  // Filter products that have variants
+  // Filter for ONLY gift box products that have variants
   const availableProducts = products.filter(
-    product => productVariants[product.id]?.length > 0
+    product => product.name.toLowerCase().includes('gift box') && productVariants[product.id]?.length > 0
   );
 
   if (availableProducts.length === 0) {
@@ -174,12 +179,12 @@ export const generateAutomatedGiftBox = (
     const variants = productVariants[product.id] || [];
     const productBoxPrice = getProductBoxPrice(product, branch);
 
-    // For gift box products, select 1 variant
+    // For gift box products, select 8 variants (8 flavors per box)
     // For other products, select 1-4 variants with better randomization
     const isGiftBox = product.name.toLowerCase().includes('gift box');
     let variantCount;
     if (isGiftBox) {
-      variantCount = 1;
+      variantCount = Math.min(8, variants.length); // 8 flavors per gift box
     } else {
       // More variety in variant selection: 1-4 variants
       const maxVariants = Math.min(4, variants.length);

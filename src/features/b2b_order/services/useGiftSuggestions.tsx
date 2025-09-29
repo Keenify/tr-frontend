@@ -50,24 +50,52 @@ export const generateGiftSuggestions = async (params: GiftSuggestionParams): Pro
   return response.json();
 };
 
-export const generateGiftSuggestionPDF = async (giftBox: GiftBoxOption, params: GiftSuggestionParams): Promise<Blob> => {
-  console.log('Backend API Domain:', BACKEND_API_DOMAIN);
-  const url = `${BACKEND_API_DOMAIN}/gift-suggestions/generate-pdf`;
-  console.log('Calling backend URL:', url);
+export interface GiftSuggestionPDFData {
+  selectedProducts: number[];
+  selectedFlavors: {
+    [key: string]: string[];
+  };
+  products: Array<{
+    id: number;
+    name: string;
+    variants: Array<{
+      id: number;
+      name: string;
+      image_url: string | null;
+    }>;
+  }>;
+  companyInfo: CompanyData;
+  customerCompanyName: string;
+  sales_account_manager: string;
+  currentDate: string;
+  currency: 'SGD' | 'MYR';
+  giftBoxConfiguration: {
+    name: string;
+    description: string;
+    selectedProducts: {
+      [productId: number]: {
+        name: string;
+        selectedVariants: string[];
+      };
+    };
+  };
+  specialInstructions?: string;
+  pax: number;
+  budgetPerPerson: number;
+  totalPrice: number;
+  pricePerBox: number;
+}
 
-  const response = await fetch(url, {
+export const generateGiftSuggestionPDF = async (data: GiftSuggestionPDFData): Promise<Blob> => {
+  // Use the same quotation PDF endpoint as the existing quotation system
+  const response = await fetch(`${BACKEND_API_DOMAIN}/quotations/generate`, {
     method: 'POST',
     headers: {
       'Accept': '*/*',
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      giftBox,
-      params
-    }),
+    body: JSON.stringify(data),
   });
-
-  console.log('Response status:', response.status);
 
   if (!response.ok) {
     const errorText = await response.text();

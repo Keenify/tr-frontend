@@ -5,8 +5,10 @@ import { generateGiftSuggestions, generateGiftSuggestionPDF } from '../services/
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import { Product, ProductVariant } from '../../../shared/types/Product';
 import { generateAutomatedGiftBox, formatGiftBoxForDisplay } from '../utils/giftSuggestionHelper';
-import { getCachedProducts, cacheAllProducts, getCacheInfo } from '../utils/productCache';
+import { getCachedProducts, cacheAllProducts, getCacheInfo, initializePublicCache } from '../utils/productCache';
 import { generateGiftSuggestionPDF as generateSamplePDF } from '../utils/giftSuggestionPdfGenerator';
+import { transformGiftSuggestionToQuotation } from '../utils/giftSuggestionToQuotation';
+import { BACKEND_API_DOMAIN } from '../../../config';
 import '../styles/B2BOrder.css';
 import '../styles/GiftSuggestion.css';
 
@@ -69,6 +71,14 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
           console.log('❌ No products available in cache system');
           setProducts([]);
           setProductVariants({});
+        }
+
+        // Initialize public cache if no cache exists at all (for first-time visitors)
+        if (!cacheInfo.hasCache) {
+          console.log('🚀 No cache found, initializing for public access...');
+          initializePublicCache().catch(error => {
+            console.warn('⚠️ Public cache initialization failed:', error);
+          });
         }
 
         // If we have a company ID but no fresh cache, refresh the cache in background
@@ -256,42 +266,67 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
       setIsGenerating(true);
       const currentItem = generatedItems[0];
 
-      // Create the gift box option object for the backend
-      const giftBoxOption = {
-        name: currentItem.productDescription,
-        basePrice: parseFloat(currentItem.pricePerBox),
-        actualPrice: parseFloat(currentItem.pricePerBox),
-        totalPrice: parseFloat(currentItem.total),
-        flavors: currentItem.flavors,
-        products: {}, // This would be populated with actual product data
-        budgetMessage: currentItem.budgetMessage
+      console.log('🎁 Starting PDF generation using quotation system...');
+
+      // Form inputs for transformation
+      const formInputs = {
+        pax,
+        pricePerPerson,
+        dietaryRestriction,
+        specialInstructions
       };
 
-      // Create the parameters object
-      const params = {
-        pax: parseInt(pax),
-        budgetPerPerson: parseFloat(pricePerPerson),
-        dietaryRestriction: dietaryRestriction,
-        specialInstructions: specialInstructions,
-        companyInfo: companyInfo || { name: 'Unknown Company' }
-      };
+      // Transform gift suggestion data to exact quotation format
+      const quotationData = transformGiftSuggestionToQuotation(
+        currentItem,
+        companyInfo,
+        formInputs,
+        products,
+        productVariants,
+        'Gift Box Customer', // customerCompanyName
+        'Sales Representative' // salesManager
+      );
 
-      console.log('Generating PDF with backend...');
-      const pdfBlob = await generateGiftSuggestionPDF(giftBoxOption, params);
+      console.log('📋 Transformed quotation data:', quotationData);
+      console.log('🔗 Calling quotation API directly...');
 
-      // Download the PDF
+      // Call the quotation API directly - this will produce the EXACT same PDF as quotations
+      const response = await fetch(`${BACKEND_API_DOMAIN}/quotations/generate`, {
+        method: 'POST',
+        headers: {
+          'Accept': '*/*',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(quotationData),
+      });
+
+      console.log('📊 Quotation API response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Quotation API error:', errorText);
+        throw new Error(`Failed to generate quotation PDF: ${response.status} - ${errorText}`);
+      }
+
+      // Get the PDF blob
+      const pdfBlob = await response.blob();
+      console.log('✅ PDF generated successfully, size:', pdfBlob.size, 'bytes');
+
+      // Download the PDF with descriptive filename
       const url = URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Gift_Suggestions_${params.pax}pax_${new Date().toISOString().split('T')[0]}.pdf`;
+      link.download = `Gift_Suggestion_Quotation_${parseInt(pax)}pax_${new Date().toISOString().split('T')[0]}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
+      console.log('📥 PDF download initiated');
+
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Backend service might not be available. Please try the local generation instead.');
+      console.error('❌ Error generating PDF:', error);
+      alert(`Failed to generate PDF: ${error.message}. Please check the console for details.`);
     } finally {
       setIsGenerating(false);
     }
@@ -304,23 +339,12 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
     }
 
     try {
+      setIsGenerating(true);
       const currentItem = generatedItems[0];
-      console.log('Current item data:', currentItem);
 
-      // Prepare gift data for PDF generation
-      const giftData = {
-        name: currentItem.name || currentItem.productDescription || 'Gift Box',
-        description: currentItem.description || currentItem.productDescription || 'Custom Gift Box',
-        pax: currentItem.pax || parseInt(pax),
-        pricePerBox: currentItem.pricePerBox || '0.00',
-        total: currentItem.total || '0.00',
-        selectedProducts: currentItem.selectedProducts || [],
-        variants: currentItem.variants || [],
-        tierPricing: currentItem.tierPricing || [],
-        specialInstructions: currentItem.specialInstructions
-      };
+      console.log('🎁 Starting PDF generation using quotation system...');
 
-      // Form inputs for the report
+      // Form inputs for transformation
       const formInputs = {
         pax,
         pricePerPerson,
@@ -328,18 +352,59 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
         specialInstructions
       };
 
-      console.log('Gift data prepared:', giftData);
-      console.log('Form inputs:', formInputs);
-      console.log('Company info:', companyInfo);
-      console.log('Generating sample PDF report...');
+      // Transform gift suggestion data to exact quotation format
+      const quotationData = transformGiftSuggestionToQuotation(
+        currentItem,
+        companyInfo,
+        formInputs,
+        products,
+        productVariants,
+        'Gift Box Customer', // customerCompanyName
+        'Sales Representative' // salesManager
+      );
 
-      await generateSamplePDF(giftData, companyInfo, formInputs);
-      console.log('PDF generation completed successfully');
+      console.log('📋 Transformed quotation data:', quotationData);
+      console.log('🔗 Calling quotation API directly...');
+
+      // Call the quotation API directly - this will produce the EXACT same PDF as quotations
+      const response = await fetch(`${BACKEND_API_DOMAIN}/quotations/generate`, {
+        method: 'POST',
+        headers: {
+          'Accept': '*/*',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(quotationData),
+      });
+
+      console.log('📊 Quotation API response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Quotation API error:', errorText);
+        throw new Error(`Failed to generate quotation PDF: ${response.status} - ${errorText}`);
+      }
+
+      // Get the PDF blob
+      const pdfBlob = await response.blob();
+      console.log('✅ PDF generated successfully, size:', pdfBlob.size, 'bytes');
+
+      // Download the PDF with descriptive filename
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Gift_Suggestion_Report_${parseInt(pax)}pax_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      console.log('📥 PDF download initiated');
 
     } catch (error) {
-      console.error('Detailed error generating sample PDF:', error);
-      console.error('Error stack:', error.stack);
-      alert(`Failed to generate PDF sample: ${error.message}. Please check the console for details.`);
+      console.error('❌ Error generating PDF:', error);
+      alert(`Failed to generate PDF: ${error.message}. Please check the console for details.`);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -543,9 +608,13 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
               <div className="download-sample-container">
                 <span
                   onClick={handleDownloadSample}
-                  className="download-sample-link"
+                  className={`download-sample-link ${isGenerating ? 'disabled' : ''}`}
+                  style={{
+                    opacity: isGenerating ? 0.6 : 1,
+                    cursor: isGenerating ? 'not-allowed' : 'pointer'
+                  }}
                 >
-                  📄 Download Sample Report
+                  {isGenerating ? '📄 Generating PDF...' : '📄 Download Quotation PDF'}
                 </span>
               </div>
             </div>

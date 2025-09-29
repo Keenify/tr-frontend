@@ -91,8 +91,9 @@ export const getCachedProducts = async (companyId?: string): Promise<{
       const cache: ProductCache = JSON.parse(cachedData);
       const cacheAge = Date.now() - new Date(cache.last_updated).getTime();
 
-      // Check if cache is still valid and for the same company
-      if (cacheAge < CACHE_DURATION && (!companyId || cache.company_id === companyId)) {
+      // For public access (no companyId), never expire the cache
+      // For company-specific access, check expiration and company match
+      if ((!companyId) || (cacheAge < CACHE_DURATION && cache.company_id === companyId)) {
         console.log('📋 Using cached products from localStorage');
 
         // Convert to the format expected by the gift generator
@@ -176,5 +177,33 @@ export const getCacheInfo = (): { hasCache: boolean; lastUpdated?: string; produ
     return { hasCache: false };
   } catch {
     return { hasCache: false };
+  }
+};
+
+/**
+ * Initialize cache for public access if not already present
+ * This ensures products are always available even for anonymous users
+ */
+export const initializePublicCache = async (): Promise<void> => {
+  try {
+    const cacheInfo = getCacheInfo();
+
+    // If cache already exists, don't override it
+    if (cacheInfo.hasCache) {
+      console.log('✅ Product cache already initialized');
+      return;
+    }
+
+    console.log('🚀 Initializing product cache for public access...');
+
+    // Use a default company ID to populate cache
+    // You can change this to your preferred default company
+    const DEFAULT_COMPANY_ID = '1';
+
+    await cacheAllProducts(DEFAULT_COMPANY_ID);
+    console.log('✅ Product cache initialized for public access');
+
+  } catch (error) {
+    console.warn('⚠️ Failed to initialize public cache:', error);
   }
 };

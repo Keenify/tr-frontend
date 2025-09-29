@@ -510,12 +510,29 @@
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease;
+  transition: transform 0.3s ease;
   cursor: pointer;
+  position: relative;
+  z-index: 1;
 }
 
-.package-thumbnail:hover {
-  transform: scale(1.1);
+.package-thumbnail:hover,
+.package-thumbnail:active,
+.package-thumbnail:focus {
+  transform: scale(4);
+  transform-origin: left center;
+  z-index: 1000;
+  transition-delay: 0.1s;
+}
+
+/* Mobile touch support */
+@media (hover: none) and (pointer: coarse) {
+  .package-thumbnail:active {
+    transform: scale(3);
+    transform-origin: center center;
+    z-index: 1000;
+    transition-delay: 0s;
+  }
 }
 
 .package-thumbnail img {
