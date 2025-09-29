@@ -22,6 +22,7 @@ interface AutomatedGiftBox {
       price?: number;
     };
   };
+  selectedVariantDetails: ProductVariant[];
   totalPrice: number;
   pricePerBox: number;
   actualPricePerBox: number;
@@ -163,6 +164,7 @@ export const generateAutomatedGiftBox = (
   // Build selected products object with random variants and calculate actual costs
   const selectedProducts: { [productId: number]: { name: string; selectedVariants: string[]; price?: number } } = {};
   const allSelectedVariants: string[] = [];
+  const allSelectedVariantDetails: ProductVariant[] = [];
   let totalBaseCost = 0;
 
   let averageBoxPrice = 0;
@@ -195,6 +197,7 @@ export const generateAutomatedGiftBox = (
         price: productBoxPrice
       };
       allSelectedVariants.push(...randomVariants.map(v => v.name));
+      allSelectedVariantDetails.push(...randomVariants);
       averageBoxPrice += productBoxPrice;
       totalProducts++;
     }
@@ -225,6 +228,7 @@ export const generateAutomatedGiftBox = (
     name: giftBoxName,
     description: `${selectedProductsList.length}-Product Gift Box with ${allSelectedVariants.length} Flavors`,
     selectedProducts,
+    selectedVariantDetails: allSelectedVariantDetails,
     totalPrice,
     pricePerBox: actualPricePerBox,
     actualPricePerBox: actualPricePerBox,
@@ -248,11 +252,15 @@ export const formatGiftBoxForDisplay = (giftBox: AutomatedGiftBox) => {
     pricePerBox: giftBox.actualPricePerBox.toFixed(2),
     total: giftBox.totalPrice.toFixed(2),
     selectedProducts: products.map(p => ({ name: p.name, price: p.price })),
-    variants: allVariants.map(name => ({
-      name,
-      image_url: null,
-      productName: products.find(p => p.selectedVariants.includes(name))?.name || ''
-    })),
+    variants: allVariants.map(name => {
+      // Find the corresponding variant detail to get the image_url
+      const variantDetail = giftBox.selectedVariantDetails.find(v => v.name === name);
+      return {
+        name,
+        image_url: variantDetail?.image_url || null,
+        productName: products.find(p => p.selectedVariants.includes(name))?.name || ''
+      };
+    }),
     tierPricing: giftBox.tierPricing,
     priceBreakdown: giftBox.priceBreakdown
   };
