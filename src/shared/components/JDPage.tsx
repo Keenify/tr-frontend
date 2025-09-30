@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import { JDPage as JDPageType } from '../types/jd.types';
 import { jdService } from '../services/jdService';
 import { useJDPages } from '../hooks/useJDPages';
@@ -88,7 +88,7 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
         // This prevents clearing content during initial load
         editor.commands.setContent('');
       }
-      
+
       // Initialize editor state
       setEditorState({
         bold: editor.isActive('bold'),
@@ -97,6 +97,7 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
       });
     }
   }, [pages, editor, loading, error]);
+
 
   // Convert markdown to HTML for TipTap
   const convertMarkdownToHtml = (markdown: string): string => {
@@ -205,6 +206,82 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
     }
   }, [companyInfo?.id]);
 
+  // Render action buttons in the designated container
+  useLayoutEffect(() => {
+    const buttonContainer = document.getElementById('jd-action-buttons');
+    if (buttonContainer) {
+      const buttonsHtml = `
+        ${isEditing ? `
+          <button
+            id="jd-save-btn"
+            class="px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium flex items-center gap-2"
+            title="Save changes"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Save
+          </button>
+        ` : `
+          <button
+            id="jd-edit-btn"
+            class="px-3 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-sm font-medium flex items-center gap-2"
+            title="Edit job description"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Edit
+          </button>
+        `}
+
+        <button
+          id="jd-view-btn"
+          class="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium flex items-center gap-2"
+          title="View public page"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          View
+        </button>
+
+        <button
+          id="jd-copy-btn"
+          class="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium flex items-center gap-2"
+          title="Copy link to clipboard"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          Copy
+        </button>
+      `;
+
+      buttonContainer.innerHTML = buttonsHtml;
+
+      // Add event listeners
+      const saveBtn = document.getElementById('jd-save-btn');
+      const editBtn = document.getElementById('jd-edit-btn');
+      const viewBtn = document.getElementById('jd-view-btn');
+      const copyBtn = document.getElementById('jd-copy-btn');
+
+      if (saveBtn) saveBtn.addEventListener('click', handleSave);
+      if (editBtn) editBtn.addEventListener('click', () => setIsEditing(true));
+      if (viewBtn) viewBtn.addEventListener('click', handleView);
+      if (copyBtn) copyBtn.addEventListener('click', handleCopyLink);
+
+      // Cleanup function
+      return () => {
+        if (saveBtn) saveBtn.removeEventListener('click', handleSave);
+        if (editBtn) editBtn.removeEventListener('click', () => setIsEditing(true));
+        if (viewBtn) viewBtn.removeEventListener('click', handleView);
+        if (copyBtn) copyBtn.removeEventListener('click', handleCopyLink);
+      };
+    }
+  }, [isEditing, handleSave, handleView, handleCopyLink]);
+
   if (loading || companyLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -231,83 +308,6 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen relative">
-      {/* Sticky Edit Button - Positioned to avoid header overlap */}
-      <div className="fixed top-24 right-4 sm:right-6 z-40 hidden lg:block">
-        <div className="flex flex-col gap-2">
-          {isEditing ? (
-            <button
-              onClick={handleSave}
-              className="px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all duration-200 shadow-lg hover:shadow-xl font-medium flex items-center gap-2 transform hover:scale-105 backdrop-blur-sm bg-opacity-95"
-              title="Save changes"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Save
-            </button>
-          ) : (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl font-medium flex items-center gap-2 transform hover:scale-105 backdrop-blur-sm bg-opacity-95"
-              title="Edit job description"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              Edit
-            </button>
-          )}
-          
-          {/* Additional action buttons */}
-          <button
-            onClick={handleView}
-            className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg font-medium flex items-center gap-2 text-sm backdrop-blur-sm bg-opacity-95"
-            title="View public page"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            <span className="hidden sm:inline">View</span>
-          </button>
-          
-          <button
-            onClick={handleCopyLink}
-            className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-200 shadow-md hover:shadow-lg font-medium flex items-center gap-2 text-sm backdrop-blur-sm bg-opacity-95"
-            title="Copy link to clipboard"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-            <span className="hidden sm:inline">Copy</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Sticky Button - Shows on smaller screens */}
-      <div className="fixed bottom-4 right-4 z-40 lg:hidden">
-        {isEditing ? (
-          <button
-            onClick={handleSave}
-            className="w-14 h-14 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center transform hover:scale-105 backdrop-blur-sm bg-opacity-95"
-            title="Save changes"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </button>
-        ) : (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="w-14 h-14 bg-purple-500 text-white rounded-full hover:bg-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center transform hover:scale-105 backdrop-blur-sm bg-opacity-95"
-            title="Edit job description"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </button>
-        )}
-      </div>
 
       {/* Page Content */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -316,16 +316,16 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
           <div className="flex gap-3 items-center">
             <h1 className="text-2xl font-bold text-gray-900">Job Description</h1>
           </div>
-          <div className="flex gap-3">
-            {onClose && (
+          {onClose && (
+            <div className="flex gap-3 items-center">
               <button
                 onClick={onClose}
                 className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-md hover:shadow-lg font-medium"
               >
                 Close
               </button>
-              )}
-          </div>
+            </div>
+          )}
         </div>
         {/* Toolbar */}
         {isEditing && (

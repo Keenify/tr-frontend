@@ -135,7 +135,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   const [isAddingList, setIsAddingList] = useState(false);
   const [newListTitle, setNewListTitle] = useState('');
   const [newListCountry, setNewListCountry] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState<string>('all');
+  const [selectedCountry, setSelectedCountry] = useState<string>('SG');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [companyLabels, setCompanyLabels] = useState<Label[]>([]);
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([]);
@@ -169,10 +169,21 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
     return Array.from(uniqueCountries).sort();
   }, [lists]);
 
-  // Filter lists by selected country
+  // Filter lists by selected country (SG or MY only)
   const filteredLists = useMemo(() => {
-    if (selectedCountry === 'all') {
-      return lists;
+    if (selectedCountry === 'SG') {
+      return lists.filter(list =>
+        list.country === 'SG' ||
+        list.country === 'Singapore' ||
+        list.country === 'singapore' ||
+        !list.country  // Include lists without country for SG by default
+      );
+    } else if (selectedCountry === 'MY') {
+      return lists.filter(list =>
+        list.country === 'MY' ||
+        list.country === 'Malaysia' ||
+        list.country === 'malaysia'
+      );
     }
     return lists.filter(list => list.country === selectedCountry);
   }, [lists, selectedCountry]);
@@ -488,49 +499,48 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
         )}
       </div>
 
-      {/* Country Tabs */}
+      {/* Country Tabs - SG/MY Only */}
       <Tab.Group onChange={(index) => {
-        if (index === 0) {
-          setSelectedCountry('all');
-        } else {
-          setSelectedCountry(countries[index - 1]);
-        }
+        setSelectedCountry(index === 0 ? 'SG' : 'MY');
       }}>
         <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1 mb-6">
           <Tab
             className={({ selected }) =>
               `flex items-center justify-center px-4 py-2.5 text-sm font-medium leading-5 rounded-lg
-              ${selected 
+              ${selected
                 ? 'bg-white text-blue-700 shadow'
                 : 'text-gray-600 hover:bg-white/[0.12] hover:text-gray-800'
               }`
             }
           >
-            <span>All Countries</span>
+            <span>Singapore</span>
             <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-              {lists.length}
+              {lists.filter(list =>
+                list.country === 'SG' ||
+                list.country === 'Singapore' ||
+                list.country === 'singapore' ||
+                !list.country
+              ).length}
             </span>
           </Tab>
-          {countries.map((country) => {
-            const countryListCount = lists.filter(list => list.country === country).length;
-            return (
-              <Tab
-                key={country}
-                className={({ selected }) =>
-                  `flex items-center justify-center px-4 py-2.5 text-sm font-medium leading-5 rounded-lg
-                  ${selected 
-                    ? 'bg-white text-blue-700 shadow'
-                    : 'text-gray-600 hover:bg-white/[0.12] hover:text-gray-800'
-                  }`
-                }
-              >
-                <span>{country}</span>
-                <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                  {countryListCount}
-                </span>
-              </Tab>
-            );
-          })}
+          <Tab
+            className={({ selected }) =>
+              `flex items-center justify-center px-4 py-2.5 text-sm font-medium leading-5 rounded-lg
+              ${selected
+                ? 'bg-white text-blue-700 shadow'
+                : 'text-gray-600 hover:bg-white/[0.12] hover:text-gray-800'
+              }`
+            }
+          >
+            <span>Malaysia</span>
+            <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+              {lists.filter(list =>
+                list.country === 'MY' ||
+                list.country === 'Malaysia' ||
+                list.country === 'malaysia'
+              ).length}
+            </span>
+          </Tab>
         </Tab.List>
       </Tab.Group>
 
