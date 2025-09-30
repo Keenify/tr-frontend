@@ -259,23 +259,80 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
       product_id: 78,
       created_at: new Date().toISOString()
     },
-    // Additional unique flavors
+    // Seasonal flavors with borrowed working images
     {
       id: 36,
+      name: "Lunar New Year Mix",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115401_Chili Crab.jpg?", // Using red-themed image
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 37,
+      name: "Christmas Mix & Match",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/73/20250203_063637_Chocolate.jpg?", // Using festive image
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 38,
+      name: "Christmas Assorted",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/74/20250203_063822_Chocolate.jpg?", // Using another festive image
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 39,
+      name: "CNY Red Dragon",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154214_Chilli Crab.jpg?", // Using red-themed image
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 40,
+      name: "CNY Green Dragon",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/70/20250203_122104_Matcha.jpg?", // Using green-themed image
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 41,
+      name: "XMAS Yumi Gift Box",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/67/20250206_192220_Choco.jpg?", // Using festive chocolate
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 42,
+      name: "Hari Raya",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115454_Nasi Lemak.jpg?", // Using traditional flavor
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 43,
+      name: "Happy Teacher Day",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/78/20250203_145640_Children Day.jpg?", // Using special day image
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    // Additional unique flavors
+    {
+      id: 44,
       name: "BBQ Chicken",
       image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/68/20250203_121735_Yumi BBQ Chicken.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
     {
-      id: 37,
+      id: 45,
       name: "Matcha Green Tea",
       image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/70/20250203_122104_Matcha.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
     {
-      id: 38,
+      id: 46,
       name: "Earl Grey Tea",
       image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/71/20250203_122210_Earl Grey Jelly Drink.jpg?",
       product_id: 78,

@@ -65,9 +65,11 @@ export const transformGiftSuggestionToQuotation = (
   giftBoxProducts.slice(0, 2).forEach(product => {
     const productVariantsList = productVariants[product.id] || [];
 
-    // Get the variants that match the generated gift suggestion
+    // Get the variants that match the generated gift suggestion (exclude null images)
     const matchingVariants = giftData.variants
       .filter(giftVariant =>
+        giftVariant.image_url !== null &&
+        giftVariant.image_url !== undefined &&
         productVariantsList.some(pv => pv.name === giftVariant.name)
       )
       .map(giftVariant => {
@@ -117,13 +119,15 @@ export const transformGiftSuggestionToQuotation = (
       id: product.id,
       company_id: product.company_id,
       created_at: product.created_at,
-      variants: variants.map(variant => ({
-        name: variant.name,
-        image_url: variant.image_url,
-        id: variant.id,
-        product_id: variant.product_id,
-        created_at: variant.created_at
-      })),
+      variants: variants
+        .filter(variant => variant.image_url !== null && variant.image_url !== undefined)
+        .map(variant => ({
+          name: variant.name,
+          image_url: variant.image_url || '', // Ensure it's never null
+          id: variant.id,
+          product_id: variant.product_id,
+          created_at: variant.created_at
+        })),
       priceTiers
     };
   });
