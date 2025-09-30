@@ -31,7 +31,7 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
     {
       id: 2,
       name: "Children Day",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/78/20250203_145640_Children Day.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/78/20250203_145640_Children%20Day.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
@@ -46,7 +46,7 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
     {
       id: 6,
       name: "Salted Caramel",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115546_Salted Caramel.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115546_Salted%20Caramel.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
@@ -54,49 +54,49 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
     {
       id: 7,
       name: "Chilli Crab",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115401_Chili Crab.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115413_Chocolate.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
     {
       id: 8,
       name: "Kaya Butter Toast",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115437_Kaya Butter Toast.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115437_Kaya%20Butter%20Toast.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
     {
       id: 9,
       name: "Nasi Lemak",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115454_Nasi Lemak.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115454_Nasi%20Lemak.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
     {
       id: 10,
       name: "Fish Head Curry",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115424_Fish Head.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115424_Fish%20Head.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
     {
       id: 11,
       name: "Pulut Hitam",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115530_Pulut Hitam.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115530_Pulut%20Hitam.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
     {
       id: 12,
       name: "Tom Yum",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250206_192235_Tom Yum.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250206_192235_Tom%20Yum.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
     {
       id: 13,
       name: "Chicken Floss",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250203_064312_Chicken Floss.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250203_064312_Chicken%20Floss.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
@@ -118,14 +118,14 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
     {
       id: 16,
       name: "SpongeBob Nasi Lemak",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/73/20250203_063651_Nasi Lemak.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/73/20250203_063651_Nasi%20Lemak.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
     {
       id: 17,
       name: "SpongeBob Pulut Hitam",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/73/20250203_063703_Pulut Hitam.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/73/20250203_063703_Pulut%20Hitam.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
@@ -147,7 +147,7 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
     {
       id: 20,
       name: "Minions Kaya Toast",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/74/20250203_063836_Kaya Butter Toast.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/74/20250203_063836_Kaya%20Butter%20Toast.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
@@ -155,7 +155,7 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
     {
       id: 21,
       name: "Pokemon Chilli Crab",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/76/20250203_145324_Chilli Crab.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/76/20250203_145336_Chocolate.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
@@ -169,7 +169,7 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
     {
       id: 23,
       name: "Pokemon Kaya Toast",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/76/20250203_145348_Kaya Butter Toast.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/76/20250203_145348_Kaya%20Butter%20Toast.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
@@ -177,14 +177,14 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
     {
       id: 24,
       name: "Premium Chicken Floss",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154201_Chicken Floss.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154201_Chicken%20Floss.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
     {
       id: 25,
       name: "Premium Chilli Crab",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154214_Chilli Crab.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154226_Chocolate.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
@@ -198,35 +198,35 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
     {
       id: 27,
       name: "Premium Fish Head",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154240_Fish Head Curry.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154240_Fish%20Head%20Curry.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
     {
       id: 28,
       name: "Premium Kaya Toast",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154253_Kaya Butter Toast.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154253_Kaya%20Butter%20Toast.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
     {
       id: 29,
       name: "Premium Nasi Lemak",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154310_Nasi Lemak.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154310_Nasi%20Lemak.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
     {
       id: 30,
       name: "Premium Pulut Hitam",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154321_Pulut Hitam.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154321_Pulut%20Hitam.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
     {
       id: 31,
       name: "Premium Salted Caramel",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154334_Salted Caramel.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154334_Salted%20Caramel.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
@@ -263,7 +263,7 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
     {
       id: 36,
       name: "Lunar New Year Mix",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115401_Chili Crab.jpg?", // Using red-themed image
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115413_Chocolate.jpg?", // Using red-themed chocolate image
       product_id: 78,
       created_at: new Date().toISOString()
     },
@@ -284,7 +284,7 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
     {
       id: 39,
       name: "CNY Red Dragon",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154214_Chilli Crab.jpg?", // Using red-themed image
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154226_Chocolate.jpg?", // Using red-themed chocolate image
       product_id: 78,
       created_at: new Date().toISOString()
     },
@@ -305,14 +305,57 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
     {
       id: 42,
       name: "Hari Raya",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115454_Nasi Lemak.jpg?", // Using traditional flavor
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115454_Nasi%20Lemak.jpg?", // Using traditional flavor
       product_id: 78,
       created_at: new Date().toISOString()
     },
     {
       id: 43,
       name: "Happy Teacher Day",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/78/20250203_145640_Children Day.jpg?", // Using special day image
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/78/20250203_145640_Children%20Day.jpg?", // Using special day image
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    // Truncated name variants for backend lookup (these match the truncated names from PDF generation)
+    {
+      id: 47,
+      name: "Lunar New Year Mi...",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115413_Chocolate.jpg?", // Same as Lunar New Year Mix
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 48,
+      name: "Christmas Mix & M...",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/73/20250203_063637_Chocolate.jpg?", // Same as Christmas Mix & Match
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 49,
+      name: "The Kettle Gourme...",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/78/20250214_062020_General.jpg?", // Same as The Kettle Gourmet Gift Box
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 50,
+      name: "SpongeBob Pulut H...",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/73/20250203_063703_Pulut%20Hitam.jpg?", // Same as SpongeBob Pulut Hitam
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 51,
+      name: "Premium Chicken F...",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154201_Chicken%20Floss.jpg?", // Same as Premium Chicken Floss
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 52,
+      name: "Premium Salted Ca...",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154334_Salted%20Caramel.jpg?", // Same as Premium Salted Caramel
       product_id: 78,
       created_at: new Date().toISOString()
     },
@@ -320,7 +363,7 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
     {
       id: 44,
       name: "BBQ Chicken",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/68/20250203_121735_Yumi BBQ Chicken.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/68/20250203_121735_Yumi BBQ%20Chicken.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
@@ -334,7 +377,7 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
     {
       id: 46,
       name: "Earl Grey Tea",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/71/20250203_122210_Earl Grey Jelly Drink.jpg?",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/71/20250203_122210_Earl%20Grey%20Jelly%20Drink.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     }

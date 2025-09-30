@@ -121,13 +121,20 @@ export const transformGiftSuggestionToQuotation = (
       created_at: product.created_at,
       variants: variants
         .filter(variant => variant.image_url !== null && variant.image_url !== undefined)
-        .map(variant => ({
-          name: variant.name,
-          image_url: variant.image_url || '', // Ensure it's never null
-          id: variant.id,
-          product_id: variant.product_id,
-          created_at: variant.created_at
-        })),
+        .map(variant => {
+          // Apply same truncation logic as selectedFlavors to ensure matching
+          let truncatedName = variant.name;
+          if (truncatedName.length > 20) {
+            truncatedName = truncatedName.substring(0, 17) + '...';
+          }
+          return {
+            name: truncatedName,
+            image_url: variant.image_url || '', // Ensure it's never null
+            id: variant.id,
+            product_id: variant.product_id,
+            created_at: variant.created_at
+          };
+        }),
       priceTiers
     };
   });
