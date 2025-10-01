@@ -48,26 +48,31 @@ export const useDirectory = (companyId: string) => {
 
   const deactivateEmployee = useCallback(async (employeeId: string) => {
     console.log(`🎯 useDirectory: Starting deactivation for employee: ${employeeId}`);
-    
+
     try {
       setError(null);
       console.log(`📞 useDirectory: Calling directoryService.deactivateEmployee`);
-      
+
       const result = await directoryService.deactivateEmployee(employeeId);
       console.log(`📋 useDirectory: Deactivation result:`, result);
-      
+
       if (result.success) {
         console.log(`🔄 useDirectory: Deactivation successful, refreshing employee list...`);
-        
+
         // Refresh the employee list to reflect the changes
         await fetchEmployees();
         console.log(`✅ useDirectory: Employee list refreshed`);
-        
+
         // Close the panel if the deactivated employee was selected
-        if (filters.selectedEmployeeId === employeeId) {
-          console.log(`🚪 useDirectory: Closing panel for deactivated employee`);
-          setFilters({ ...filters, selectedEmployeeId: null });
-        }
+        // Use functional update to avoid filters dependency
+        setFilters(currentFilters => {
+          if (currentFilters.selectedEmployeeId === employeeId) {
+            console.log(`🚪 useDirectory: Closing panel for deactivated employee`);
+            return { ...currentFilters, selectedEmployeeId: null };
+          }
+          return currentFilters;
+        });
+
         return { success: true, message: result.message };
       } else {
         console.log(`⚠️ useDirectory: Deactivation failed:`, result.message);
@@ -79,7 +84,7 @@ export const useDirectory = (companyId: string) => {
       setError(errorMessage);
       return { success: false, message: errorMessage };
     }
-  }, [fetchEmployees, filters]);
+  }, [fetchEmployees]);
 
   useEffect(() => {
     // Only fetch if we have a company ID
