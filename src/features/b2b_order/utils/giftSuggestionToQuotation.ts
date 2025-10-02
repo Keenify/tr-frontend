@@ -51,93 +51,66 @@ export const transformGiftSuggestionToQuotation = (
     year: 'numeric'
   });
 
-  // Find the actual products from the cache that match the gift suggestions
-  const giftBoxProducts = products.filter(product =>
-    product.name.toLowerCase().includes('gift box')
-  );
+  // Use Product ID 78 ("The Kettle Gourmet Gift Box") for the quotation
+  const GIFT_BOX_PRODUCT_ID = 78;
+  const selectedProducts = [GIFT_BOX_PRODUCT_ID];
 
-  // Build selectedProducts array with actual product IDs
-  const selectedProducts = giftBoxProducts.map(product => product.id).slice(0, 2);
-
-  // Build selectedFlavors mapping - group variants by product ID
+  // Build selectedFlavors using the ACTUAL flavors from the gift suggestion
   const selectedFlavors: { [key: string]: string[] } = {};
 
-  giftBoxProducts.slice(0, 2).forEach(product => {
-    const productVariantsList = productVariants[product.id] || [];
+  // Map the generated gift flavors (truncate if needed)
+  const flavorNames = giftData.variants
+    .filter(variant => variant.image_url !== null && variant.image_url !== undefined)
+    .map(variant => {
+      // Truncate long flavor names to prevent column overflow
+      let name = variant.name;
+      if (name.length > 20) {
+        name = name.substring(0, 17) + '...';
+      }
+      return name;
+    });
 
-    // Get the variants that match the generated gift suggestion (exclude null images)
-    const matchingVariants = giftData.variants
-      .filter(giftVariant =>
-        giftVariant.image_url !== null &&
-        giftVariant.image_url !== undefined &&
-        productVariantsList.some(pv => pv.name === giftVariant.name)
-      )
-      .map(giftVariant => {
-        // Truncate long flavor names to prevent column overflow
-        let name = giftVariant.name;
-        if (name.length > 20) {
-          name = name.substring(0, 17) + '...';
+  selectedFlavors[GIFT_BOX_PRODUCT_ID.toString()] = flavorNames;
+
+  // Find the gift box product or create a placeholder
+  const giftBoxProduct = products.find(p => p.id === GIFT_BOX_PRODUCT_ID);
+
+  // Create price tiers based on gift suggestion tier pricing
+  const priceTiers = giftData.tierPricing.map((tier, index) => ({
+    min_cartons: tier.minQuantity,
+    price_per_unit: tier.pricePerUnit.toFixed(2),
+    id: index + 1,
+    product_id: GIFT_BOX_PRODUCT_ID,
+    created_at: new Date().toISOString()
+  }));
+
+  // Build the product entry using ACTUAL flavor variants from the gift data
+  const quotationProducts = [{
+    name: 'The Kettle Gourmet Gift Box',
+    description: giftData.description,
+    pack_count_per_box: 6, // Gift boxes: 6 boxes per carton as per requirement
+    recommended_retail_price: giftData.pricePerBox,
+    id: GIFT_BOX_PRODUCT_ID,
+    company_id: giftBoxProduct?.company_id || '1',
+    created_at: giftBoxProduct?.created_at || new Date().toISOString(),
+    variants: giftData.variants
+      .filter(variant => variant.image_url !== null && variant.image_url !== undefined)
+      .map((variant, index) => {
+        // Apply same truncation logic as selectedFlavors to ensure matching
+        let truncatedName = variant.name;
+        if (truncatedName.length > 20) {
+          truncatedName = truncatedName.substring(0, 17) + '...';
         }
-        return name;
-      });
-
-    // If we have matching variants, use them; otherwise use first 8 variants from product
-    if (matchingVariants.length > 0) {
-      selectedFlavors[product.id.toString()] = matchingVariants.slice(0, 8);
-    } else {
-      selectedFlavors[product.id.toString()] = productVariantsList
-        .slice(0, 8)
-        .map(variant => {
-          // Truncate long flavor names to prevent column overflow
-          let name = variant.name;
-          if (name.length > 20) {
-            name = name.substring(0, 17) + '...';
-          }
-          return name;
-        });
-    }
-  });
-
-  // Build products array with variants and pricing tiers
-  const quotationProducts = giftBoxProducts.slice(0, 2).map(product => {
-    const variants = productVariants[product.id] || [];
-
-    // Create price tiers based on gift suggestion tier pricing
-    const priceTiers = giftData.tierPricing.map((tier, index) => ({
-      min_cartons: tier.minQuantity,
-      price_per_unit: tier.pricePerUnit.toFixed(2),
-      id: index + 1,
-      product_id: product.id,
-      created_at: new Date().toISOString()
-    }));
-
-    return {
-      name: product.name,
-      description: product.description,
-      pack_count_per_box: 6, // Gift boxes: 6 boxes per carton as per requirement
-      recommended_retail_price: giftData.pricePerBox,
-      id: product.id,
-      company_id: product.company_id,
-      created_at: product.created_at,
-      variants: variants
-        .filter(variant => variant.image_url !== null && variant.image_url !== undefined)
-        .map(variant => {
-          // Apply same truncation logic as selectedFlavors to ensure matching
-          let truncatedName = variant.name;
-          if (truncatedName.length > 20) {
-            truncatedName = truncatedName.substring(0, 17) + '...';
-          }
-          return {
-            name: truncatedName,
-            image_url: variant.image_url || '', // Ensure it's never null
-            id: variant.id,
-            product_id: variant.product_id,
-            created_at: variant.created_at
-          };
-        }),
-      priceTiers
-    };
-  });
+        return {
+          name: truncatedName,
+          image_url: variant.image_url || '', // Use the actual flavor image
+          id: index + 1,
+          product_id: GIFT_BOX_PRODUCT_ID,
+          created_at: new Date().toISOString()
+        };
+      }),
+    priceTiers
+  }];
 
   // Create table settings for the quotation - customize for gift suggestions
   const paxNumber = parseInt(formInputs.pax);
