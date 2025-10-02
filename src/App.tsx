@@ -138,7 +138,7 @@ const App: React.FC = () => {
             {/* Job Preview route */}
             <Route path="/job-preview" element={<JobPreview />} />
             {/* Public JD Page route */}
-            <Route path="/jd/:companyId" element={<PublicJDPage />} />
+            <Route path="/jd/:companyId/:slug" element={<PublicJDPage />} />
 
             {/* Protected Routes */}
             <>

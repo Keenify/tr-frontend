@@ -1,7 +1,6 @@
-import React, { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { JDPage as JDPageType } from '../types/jd.types';
 import { jdService } from '../services/jdService';
-import { useJDPages } from '../hooks/useJDPages';
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -13,6 +12,9 @@ import Link from '@tiptap/extension-link';
 import { useUserAndCompanyData } from '../hooks/useUserAndCompanyData';
 import { useSession } from '../hooks/useSession';
 import toast from 'react-hot-toast';
+import { JDPageSidebar } from './JDPageSidebar';
+import { AddPageModal } from './AddPageModal';
+import { DeleteConfirmModal } from './DeleteConfirmModal';
 
 interface JDPageProps {
   onClose?: () => void;
@@ -21,18 +23,31 @@ interface JDPageProps {
 const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
   const { session } = useSession();
   const { companyInfo, isLoading: companyLoading } = useUserAndCompanyData(session?.user?.id || '');
-  
-  // Only pass company ID when it's available to prevent premature fetching
-  const { pages, loading, error, updatePage, fetchPages } = useJDPages(companyInfo?.id);
+
+  const [pages, setPages] = useState<JDPageType[]>([]);
+  const [currentPage, setCurrentPage] = useState<JDPageType | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [editorState, setEditorState] = useState({ bold: false, italic: false, underline: false });
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // TipTap Editor
   const editor: Editor | null = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        paragraph: {
+          HTMLAttributes: {
+            class: 'my-paragraph',
+          },
+        },
+        hardBreak: {
+          keepMarks: true,
+        },
+      }),
       Underline,
       Image,
       TaskList,
@@ -47,125 +62,181 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
       }),
     ],
     content: '',
-    onUpdate: ({ editor }) => {
-      // Update editor state for button highlighting
-      setEditorState({
-        bold: editor.isActive('bold'),
-        italic: editor.isActive('italic'),
-        underline: editor.isActive('underline'),
-      });
-    },
-    onSelectionUpdate: ({ editor }) => {
-      // Also update when selection changes (cursor moves)
-      setEditorState({
-        bold: editor.isActive('bold'),
-        italic: editor.isActive('italic'),
-        underline: editor.isActive('underline'),
-      });
-    },
     editorProps: {
       attributes: {
         class: 'prose max-w-none focus:outline-none',
-        'data-placeholder': 'Start writing your job description here... Use the formatting tools above to style your text and upload images.',
       },
     },
+    parseOptions: {
+      preserveWhitespace: 'full',
+    },
+    editable: true,
   });
 
-  // Load the single JD page
-  useEffect(() => {
-    if (editor) {
-      if (pages.length > 0) {
-        const page = pages[0]; // Always use the first/only page
-        if (page.content) {
-          // Convert markdown content to HTML for TipTap
-          const htmlContent = convertMarkdownToHtml(page.content);
-          editor.commands.setContent(htmlContent);
-        } else {
-          editor.commands.setContent('');
-        }
-      } else if (!loading && !error) {
-        // Only set empty content if we're not loading and there's no error
-        // This prevents clearing content during initial load
-        editor.commands.setContent('');
+  // Load all pages for the company
+  const loadPages = useCallback(async () => {
+    if (!companyInfo?.id) return;
+
+    try {
+      setIsLoading(true);
+      const fetchedPages = await jdService.fetchJDPages(companyInfo.id);
+
+      if (fetchedPages.length === 0) {
+        // Create default page if none exists
+        const defaultPage = await jdService.ensureDefaultPage(companyInfo.id);
+        setPages([defaultPage]);
+        setCurrentPage(defaultPage);
+      } else {
+        setPages(fetchedPages);
+        // Default to last edited page (first in array since ordered by updated_at DESC)
+        setCurrentPage(fetchedPages[0]);
       }
-
-      // Initialize editor state
-      setEditorState({
-        bold: editor.isActive('bold'),
-        italic: editor.isActive('italic'),
-        underline: editor.isActive('underline'),
-      });
+    } catch (error) {
+      console.error('Error loading pages:', error);
+      toast.error('Failed to load pages');
+    } finally {
+      setIsLoading(false);
     }
-  }, [pages, editor, loading, error]);
+  }, [companyInfo?.id]);
 
+  // Load pages on mount
+  useEffect(() => {
+    if (companyInfo?.id) {
+      loadPages();
+    }
+  }, [companyInfo?.id, loadPages]);
 
-  // Convert markdown to HTML for TipTap
-  const convertMarkdownToHtml = (markdown: string): string => {
-    return markdown
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/__(.*?)__/g, '<u>$1</u>')
-      .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-      .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-      .replace(/^• (.*$)/gm, '<ul><li>$1</li></ul>')
-      .replace(/\n/g, '<br>');
-  };
+  // Update editor content when current page changes
+  useEffect(() => {
+    if (editor && currentPage) {
+      let content = currentPage.content || '';
 
-  // Convert TipTap HTML back to markdown for storage
-  const convertHtmlToMarkdown = (html: string): string => {
-    // This is a simplified conversion - you might want to use a proper HTML-to-markdown library
-    return html
-      .replace(/<strong>(.*?)<\/strong>/g, '**$1**')
-      .replace(/<em>(.*?)<\/em>/g, '*$1*')
-      .replace(/<u>(.*?)<\/u>/g, '__$1__')
-      .replace(/<h1>(.*?)<\/h1>/g, '# $1')
-      .replace(/<h2>(.*?)<\/h2>/g, '## $1')
-      .replace(/<ul><li>(.*?)<\/li><\/ul>/g, '• $1')
-      .replace(/<br>/g, '\n');
-  };
+      // Convert old markdown syntax to HTML for backward compatibility
+      content = content.replace(
+        /\*\*\*__(.+?)__\*\*\*/g,
+        '<strong><em><u>$1</u></em></strong>'
+      );
 
-  const handleSave = useCallback(async () => {
-    if (pages.length === 0 || !editor) return;
-    
+      editor.commands.setContent(content);
+    }
+  }, [editor, currentPage]);
+
+  // Auto-save before switching pages
+  const autoSave = useCallback(async () => {
+    if (!currentPage || !editor || !isEditing) return;
+
     try {
       const htmlContent = editor.getHTML();
-      const markdownContent = convertHtmlToMarkdown(htmlContent);
-      
-      console.log('Saving JD page:', {
-        id: pages[0].id,
-        content: markdownContent,
-        htmlContent: htmlContent
-      });
-      
-      const result = await updatePage(pages[0].id, { content: markdownContent });
-      
-      console.log('Update result:', result);
-      
-      // Force refresh the cache to ensure public page gets updated content
-      await jdService.forceRefresh(companyInfo?.id);
-      
-      setIsEditing(false);
-      toast.success('Job description saved and published successfully! The public page has been updated.');
-    } catch (err) {
-      console.error('Failed to save page:', err);
-      console.error('Error details:', {
-        message: err instanceof Error ? err.message : 'Unknown error',
-        stack: err instanceof Error ? err.stack : undefined
-      });
-      toast.error(`Failed to save job description: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      await jdService.updateJDPage(currentPage.id, { content: htmlContent });
+    } catch (error) {
+      console.error('Auto-save failed:', error);
     }
-  }, [pages, editor, updatePage]);
+  }, [currentPage, editor, isEditing]);
 
+  // Handle page selection
+  const handlePageSelect = useCallback(async (pageId: string) => {
+    // Auto-save current page before switching
+    await autoSave();
+
+    const page = pages.find(p => p.id === pageId);
+    if (page) {
+      setCurrentPage(page);
+      setIsEditing(false);
+    }
+  }, [pages, autoSave]);
+
+  // Handle add page
+  const handleAddPage = useCallback(async (title: string) => {
+    if (!companyInfo?.id) return;
+
+    try {
+      const newPage = await jdService.createJDPage({
+        title,
+        companyId: companyInfo.id
+      });
+
+      // Reload pages and switch to new page in edit mode
+      await loadPages();
+      setCurrentPage(newPage);
+      setIsEditing(true);
+      toast.success('Page created successfully!');
+    } catch (error: any) {
+      console.error('Error creating page:', error);
+      throw error;
+    }
+  }, [companyInfo?.id, loadPages]);
+
+  // Handle delete page
+  const handleDeletePage = useCallback(async () => {
+    if (!currentPage || !companyInfo?.id) return;
+
+    try {
+      const result = await jdService.deleteJDPage(currentPage.id, companyInfo.id);
+
+      if (result.success) {
+        toast.success('Page deleted successfully');
+
+        // Reload pages
+        await loadPages();
+
+        // Switch to next page if available
+        if (result.nextPageId) {
+          const nextPage = pages.find(p => p.id === result.nextPageId);
+          if (nextPage) {
+            setCurrentPage(nextPage);
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('Error deleting page:', error);
+      toast.error(error.message || 'Failed to delete page');
+    }
+  }, [currentPage, companyInfo?.id, loadPages, pages]);
+
+  // Handle save
+  const handleSave = useCallback(async () => {
+    if (!currentPage || !editor) return;
+
+    try {
+      setIsSaving(true);
+      let htmlContent = editor.getHTML();
+
+      // Ensure empty paragraphs have <br> to prevent collapsing
+      // Handle paragraphs with attributes like: <p class="..." style="..."></p>
+      htmlContent = htmlContent.replace(/<p([^>]*)><\/p>/g, '<p$1><br></p>');
+      htmlContent = htmlContent.replace(/<p([^>]*)>\s*<\/p>/g, '<p$1><br></p>');
+
+      const updatedPage = await jdService.updateJDPage(currentPage.id, { content: htmlContent });
+
+      // Update current page state without reloading (to preserve content exactly)
+      setCurrentPage(updatedPage);
+
+      // Update pages list
+      setPages(prevPages =>
+        prevPages.map(p => p.id === updatedPage.id ? updatedPage : p)
+      );
+
+      setIsEditing(false);
+      toast.success('Page saved successfully!');
+    } catch (error) {
+      console.error('Failed to save page:', error);
+      toast.error('Failed to save page');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [currentPage, editor]);
+
+  // Handle image upload
   const handleImageUpload = useCallback(async (file: File) => {
     try {
       const imageUrl = await jdService.uploadImage(file);
-      
+
       if (editor) {
-        // Insert image at current cursor position
         editor.chain().focus().setImage({ src: imageUrl, alt: file.name }).run();
       }
-    } catch (err) {
-      console.error('Failed to upload image:', err);
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      toast.error('Failed to upload image');
     }
   }, [editor]);
 
@@ -174,322 +245,709 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
     if (file && file.type.startsWith('image/')) {
       handleImageUpload(file);
     }
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   }, [handleImageUpload]);
 
+  // Handle view public page
   const handleView = useCallback(() => {
-    if (!companyInfo?.id) {
-      toast.error('Company information not available');
+    if (!companyInfo?.id || !currentPage) {
+      toast.error('Page information not available');
       return;
     }
 
-    const viewUrl = `${window.location.origin}/jd/${companyInfo.id}`;
+    const viewUrl = `${window.location.origin}/jd/${companyInfo.id}/${currentPage.slug}`;
     window.open(viewUrl, '_blank');
-  }, [companyInfo?.id]);
+  }, [companyInfo?.id, currentPage]);
 
+  // Handle copy link
   const handleCopyLink = useCallback(async () => {
-    if (!companyInfo?.id) {
-      toast.error('Company information not available');
+    if (!companyInfo?.id || !currentPage) {
+      toast.error('Page information not available');
       return;
     }
 
     try {
-      const shareUrl = `${window.location.origin}/jd/${companyInfo.id}`;
+      const shareUrl = `${window.location.origin}/jd/${companyInfo.id}/${currentPage.slug}`;
       await navigator.clipboard.writeText(shareUrl);
       toast.success('Link copied to clipboard!');
-    } catch (err) {
-      console.error('Failed to copy link:', err);
+    } catch (error) {
+      console.error('Failed to copy link:', error);
       toast.error('Failed to copy link');
     }
-  }, [companyInfo?.id]);
+  }, [companyInfo?.id, currentPage]);
 
-  // Render action buttons in the designated container
-  useLayoutEffect(() => {
-    const buttonContainer = document.getElementById('jd-action-buttons');
-    if (buttonContainer) {
-      const buttonsHtml = `
-        ${isEditing ? `
-          <button
-            id="jd-save-btn"
-            class="px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium flex items-center gap-2"
-            title="Save changes"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            Save
-          </button>
-        ` : `
-          <button
-            id="jd-edit-btn"
-            class="px-3 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-sm font-medium flex items-center gap-2"
-            title="Edit job description"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            Edit
-          </button>
-        `}
+  // Handle title double-click
+  const handleTitleDoubleClick = useCallback(() => {
+    if (!currentPage || session?.user?.id !== currentPage.created_by) return;
+    setIsEditingTitle(true);
+    setEditedTitle(currentPage.title);
+  }, [currentPage, session?.user?.id]);
 
-        <button
-          id="jd-view-btn"
-          class="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium flex items-center gap-2"
-          title="View public page"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-          </svg>
-          View
-        </button>
-
-        <button
-          id="jd-copy-btn"
-          class="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium flex items-center gap-2"
-          title="Copy link to clipboard"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-          Copy
-        </button>
-      `;
-
-      buttonContainer.innerHTML = buttonsHtml;
-
-      // Add event listeners
-      const saveBtn = document.getElementById('jd-save-btn');
-      const editBtn = document.getElementById('jd-edit-btn');
-      const viewBtn = document.getElementById('jd-view-btn');
-      const copyBtn = document.getElementById('jd-copy-btn');
-
-      if (saveBtn) saveBtn.addEventListener('click', handleSave);
-      if (editBtn) editBtn.addEventListener('click', () => setIsEditing(true));
-      if (viewBtn) viewBtn.addEventListener('click', handleView);
-      if (copyBtn) copyBtn.addEventListener('click', handleCopyLink);
-
-      // Cleanup function
-      return () => {
-        if (saveBtn) saveBtn.removeEventListener('click', handleSave);
-        if (editBtn) editBtn.removeEventListener('click', () => setIsEditing(true));
-        if (viewBtn) viewBtn.removeEventListener('click', handleView);
-        if (copyBtn) copyBtn.removeEventListener('click', handleCopyLink);
-      };
+  // Handle title save
+  const handleTitleSave = useCallback(async () => {
+    if (!currentPage || !editedTitle.trim()) {
+      setIsEditingTitle(false);
+      return;
     }
-  }, [isEditing, handleSave, handleView, handleCopyLink]);
 
-  if (loading || companyLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading...</div>
-      </div>
+    // Validate title length
+    if (editedTitle.trim().length < 3 || editedTitle.trim().length > 100) {
+      toast.error('Title must be between 3 and 100 characters');
+      return;
+    }
+
+    // Check if title is unique
+    const titleExists = pages.some(
+      p => p.id !== currentPage.id && p.title.toLowerCase() === editedTitle.trim().toLowerCase()
     );
-  }
 
-  if (error) {
+    if (titleExists) {
+      toast.error('A page with this title already exists');
+      return;
+    }
+
+    try {
+      const updatedPage = await jdService.updateJDPage(currentPage.id, {
+        title: editedTitle.trim()
+      });
+
+      setCurrentPage(updatedPage);
+      setPages(prevPages =>
+        prevPages.map(p => p.id === updatedPage.id ? updatedPage : p)
+      );
+      setIsEditingTitle(false);
+      toast.success('Title updated successfully!');
+    } catch (error) {
+      console.error('Failed to update title:', error);
+      toast.error('Failed to update title');
+    }
+  }, [currentPage, editedTitle, pages]);
+
+  // Handle title cancel
+  const handleTitleCancel = useCallback(() => {
+    setIsEditingTitle(false);
+    setEditedTitle('');
+  }, []);
+
+  // Auto-save on unmount
+  useEffect(() => {
+    return () => {
+      if (isEditing && currentPage && editor) {
+        autoSave();
+      }
+    };
+  }, [isEditing, currentPage, editor, autoSave]);
+
+  if (isLoading || companyLoading) {
     return (
-      <div className="text-red-500 p-4">
-        Error: {error}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+        <div style={{ fontSize: '18px' }}>Loading...</div>
       </div>
     );
   }
 
   if (!editor) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading editor...</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+        <div style={{ fontSize: '18px' }}>Loading editor...</div>
       </div>
     );
   }
 
-  return (
-    <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen relative">
+  const canEdit = currentPage && session?.user?.id === currentPage.created_by;
 
-      {/* Page Content */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex gap-3 items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Job Description</h1>
-          </div>
-          {onClose && (
-            <div className="flex gap-3 items-center">
+  return (
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      {/* Sidebar */}
+      <JDPageSidebar
+        pages={pages}
+        currentPageId={currentPage?.id || null}
+        onPageSelect={handlePageSelect}
+        onAddPage={() => setShowAddModal(true)}
+        isLoading={isLoading}
+      />
+
+      {/* Main Content */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          {/* Header with title */}
+          <div style={{
+            marginBottom: '20px',
+            padding: '32px',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            border: '1px solid #e8e8e8'
+          }}>
+            <div style={{ marginBottom: '16px' }}>
+              {isEditingTitle ? (
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    value={editedTitle}
+                    onChange={(e) => setEditedTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleTitleSave();
+                      } else if (e.key === 'Escape') {
+                        handleTitleCancel();
+                      }
+                    }}
+                    autoFocus
+                    style={{
+                      fontSize: '20px',
+                      fontWeight: '600',
+                      padding: '8px 12px',
+                      border: '2px solid #5b8def',
+                      borderRadius: '6px',
+                      maxWidth: '400px',
+                      outline: 'none',
+                      fontFamily: 'inherit',
+                      color: '#1a1a1a',
+                      backgroundColor: '#f8f9fa'
+                    }}
+                    placeholder="Enter page title"
+                  />
+                  <button
+                    onClick={handleTitleSave}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: '#5b8def',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      fontSize: '14px',
+                      transition: 'all 0.2s',
+                      whiteSpace: 'nowrap'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4a7dd9'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5b8def'}
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={handleTitleCancel}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: 'white',
+                      color: '#495057',
+                      border: '1.5px solid #dee2e6',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      fontSize: '14px',
+                      transition: 'all 0.2s',
+                      whiteSpace: 'nowrap'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#f8f9fa';
+                      e.currentTarget.style.borderColor = '#adb5bd';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'white';
+                      e.currentTarget.style.borderColor = '#dee2e6';
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <h1
+                  style={{
+                    fontSize: '32px',
+                    fontWeight: '700',
+                    margin: 0,
+                    cursor: canEdit ? 'pointer' : 'default',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    transition: 'background-color 0.2s',
+                    color: '#1a1a1a'
+                  }}
+                  onDoubleClick={handleTitleDoubleClick}
+                  onMouseEnter={(e) => {
+                    if (canEdit) {
+                      e.currentTarget.style.backgroundColor = '#f8f9fa';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                  title={canEdit ? 'Double-click to edit title' : ''}
+                >
+                  {currentPage?.title || 'Job Description'}
+                </h1>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              {isEditing ? (
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: isSaving ? '#94a3b8' : '#5b8def',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    fontWeight: '600',
+                    fontSize: '14px',
+                    transition: 'all 0.2s',
+                    boxShadow: isSaving ? 'none' : '0 1px 3px rgba(91,141,239,0.3)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSaving) e.currentTarget.style.backgroundColor = '#4a7dd9';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSaving) e.currentTarget.style.backgroundColor = '#5b8def';
+                  }}
+                >
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+              ) : (
+                canEdit && (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    style={{
+                      padding: '10px 20px',
+                      backgroundColor: '#5b8def',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      fontSize: '14px',
+                      transition: 'all 0.2s',
+                      boxShadow: '0 1px 3px rgba(91,141,239,0.3)'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4a7dd9'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5b8def'}
+                  >
+                    Edit Page
+                  </button>
+                )
+              )}
+
               <button
-                onClick={onClose}
-                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-md hover:shadow-lg font-medium"
+                onClick={handleView}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: 'white',
+                  color: '#495057',
+                  border: '1.5px solid #dee2e6',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f8f9fa';
+                  e.currentTarget.style.borderColor = '#adb5bd';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.borderColor = '#dee2e6';
+                }}
               >
-                Close
+                View Page
               </button>
+
+              <button
+                onClick={handleCopyLink}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: 'white',
+                  color: '#495057',
+                  border: '1.5px solid #dee2e6',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f8f9fa';
+                  e.currentTarget.style.borderColor = '#adb5bd';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.borderColor = '#dee2e6';
+                }}
+              >
+                Copy Link
+              </button>
+
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: 'white',
+                  color: '#dc3545',
+                  border: '1.5px solid #f8d7da',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  transition: 'all 0.2s',
+                  marginLeft: 'auto'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#fff5f5';
+                  e.currentTarget.style.borderColor = '#dc3545';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.borderColor = '#f8d7da';
+                }}
+              >
+                Delete Page
+              </button>
+            </div>
+          </div>
+
+          {/* Toolbar */}
+          {isEditing && (
+            <div style={{
+              marginBottom: '20px',
+              padding: '24px',
+              backgroundColor: 'white',
+              border: '1px solid #e8e8e8',
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+            }}>
+              <h3 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px', color: '#495057', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Formatting Tools
+              </h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                <button
+                  onClick={() => editor.chain().focus().toggleBold().run()}
+                  style={{
+                    padding: '10px 18px',
+                    backgroundColor: editor.isActive('bold') ? '#5b8def' : 'white',
+                    color: editor.isActive('bold') ? 'white' : '#495057',
+                    border: `1.5px solid ${editor.isActive('bold') ? '#5b8def' : '#dee2e6'}`,
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    fontSize: '14px',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!editor.isActive('bold')) {
+                      e.currentTarget.style.backgroundColor = '#f8f9fa';
+                      e.currentTarget.style.borderColor = '#adb5bd';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!editor.isActive('bold')) {
+                      e.currentTarget.style.backgroundColor = 'white';
+                      e.currentTarget.style.borderColor = '#dee2e6';
+                    }
+                  }}
+                >
+                  B
+                </button>
+                <button
+                  onClick={() => editor.chain().focus().toggleItalic().run()}
+                  style={{
+                    padding: '10px 18px',
+                    backgroundColor: editor.isActive('italic') ? '#5b8def' : 'white',
+                    color: editor.isActive('italic') ? 'white' : '#495057',
+                    border: `1.5px solid ${editor.isActive('italic') ? '#5b8def' : '#dee2e6'}`,
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontStyle: 'italic',
+                    fontSize: '14px',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!editor.isActive('italic')) {
+                      e.currentTarget.style.backgroundColor = '#f8f9fa';
+                      e.currentTarget.style.borderColor = '#adb5bd';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!editor.isActive('italic')) {
+                      e.currentTarget.style.backgroundColor = 'white';
+                      e.currentTarget.style.borderColor = '#dee2e6';
+                    }
+                  }}
+                >
+                  I
+                </button>
+                <button
+                  onClick={() => editor.chain().focus().toggleUnderline().run()}
+                  style={{
+                    padding: '10px 18px',
+                    backgroundColor: editor.isActive('underline') ? '#5b8def' : 'white',
+                    color: editor.isActive('underline') ? 'white' : '#495057',
+                    border: `1.5px solid ${editor.isActive('underline') ? '#5b8def' : '#dee2e6'}`,
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    fontSize: '14px',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!editor.isActive('underline')) {
+                      e.currentTarget.style.backgroundColor = '#f8f9fa';
+                      e.currentTarget.style.borderColor = '#adb5bd';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!editor.isActive('underline')) {
+                      e.currentTarget.style.backgroundColor = 'white';
+                      e.currentTarget.style.borderColor = '#dee2e6';
+                    }
+                  }}
+                >
+                  U
+                </button>
+                <button
+                  onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                  style={{
+                    padding: '10px 18px',
+                    backgroundColor: editor.isActive('heading', { level: 1 }) ? '#5b8def' : 'white',
+                    color: editor.isActive('heading', { level: 1 }) ? 'white' : '#495057',
+                    border: `1.5px solid ${editor.isActive('heading', { level: 1 }) ? '#5b8def' : '#dee2e6'}`,
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!editor.isActive('heading', { level: 1 })) {
+                      e.currentTarget.style.backgroundColor = '#f8f9fa';
+                      e.currentTarget.style.borderColor = '#adb5bd';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!editor.isActive('heading', { level: 1 })) {
+                      e.currentTarget.style.backgroundColor = 'white';
+                      e.currentTarget.style.borderColor = '#dee2e6';
+                    }
+                  }}
+                >
+                  H1
+                </button>
+                <button
+                  onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                  style={{
+                    padding: '10px 18px',
+                    backgroundColor: editor.isActive('heading', { level: 2 }) ? '#5b8def' : 'white',
+                    color: editor.isActive('heading', { level: 2 }) ? 'white' : '#495057',
+                    border: `1.5px solid ${editor.isActive('heading', { level: 2 }) ? '#5b8def' : '#dee2e6'}`,
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!editor.isActive('heading', { level: 2 })) {
+                      e.currentTarget.style.backgroundColor = '#f8f9fa';
+                      e.currentTarget.style.borderColor = '#adb5bd';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!editor.isActive('heading', { level: 2 })) {
+                      e.currentTarget.style.backgroundColor = 'white';
+                      e.currentTarget.style.borderColor = '#dee2e6';
+                    }
+                  }}
+                >
+                  H2
+                </button>
+                <button
+                  onClick={() => editor.chain().focus().setTextAlign('left').run()}
+                  style={{
+                    padding: '10px 18px',
+                    backgroundColor: editor.isActive({ textAlign: 'left' }) ? '#5b8def' : 'white',
+                    color: editor.isActive({ textAlign: 'left' }) ? 'white' : '#495057',
+                    border: `1.5px solid ${editor.isActive({ textAlign: 'left' }) ? '#5b8def' : '#dee2e6'}`,
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    transition: 'all 0.2s'
+                  }}
+                  title="Align Left"
+                  onMouseEnter={(e) => {
+                    if (!editor.isActive({ textAlign: 'left' })) {
+                      e.currentTarget.style.backgroundColor = '#f8f9fa';
+                      e.currentTarget.style.borderColor = '#adb5bd';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!editor.isActive({ textAlign: 'left' })) {
+                      e.currentTarget.style.backgroundColor = 'white';
+                      e.currentTarget.style.borderColor = '#dee2e6';
+                    }
+                  }}
+                >
+                  ⬅
+                </button>
+                <button
+                  onClick={() => editor.chain().focus().setTextAlign('center').run()}
+                  style={{
+                    padding: '10px 18px',
+                    backgroundColor: editor.isActive({ textAlign: 'center' }) ? '#5b8def' : 'white',
+                    color: editor.isActive({ textAlign: 'center' }) ? 'white' : '#495057',
+                    border: `1.5px solid ${editor.isActive({ textAlign: 'center' }) ? '#5b8def' : '#dee2e6'}`,
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    transition: 'all 0.2s'
+                  }}
+                  title="Align Center"
+                  onMouseEnter={(e) => {
+                    if (!editor.isActive({ textAlign: 'center' })) {
+                      e.currentTarget.style.backgroundColor = '#f8f9fa';
+                      e.currentTarget.style.borderColor = '#adb5bd';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!editor.isActive({ textAlign: 'center' })) {
+                      e.currentTarget.style.backgroundColor = 'white';
+                      e.currentTarget.style.borderColor = '#dee2e6';
+                    }
+                  }}
+                >
+                  ↔
+                </button>
+                <button
+                  onClick={() => editor.chain().focus().setTextAlign('right').run()}
+                  style={{
+                    padding: '10px 18px',
+                    backgroundColor: editor.isActive({ textAlign: 'right' }) ? '#5b8def' : 'white',
+                    color: editor.isActive({ textAlign: 'right' }) ? 'white' : '#495057',
+                    border: `1.5px solid ${editor.isActive({ textAlign: 'right' }) ? '#5b8def' : '#dee2e6'}`,
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    transition: 'all 0.2s'
+                  }}
+                  title="Align Right"
+                  onMouseEnter={(e) => {
+                    if (!editor.isActive({ textAlign: 'right' })) {
+                      e.currentTarget.style.backgroundColor = '#f8f9fa';
+                      e.currentTarget.style.borderColor = '#adb5bd';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!editor.isActive({ textAlign: 'right' })) {
+                      e.currentTarget.style.backgroundColor = 'white';
+                      e.currentTarget.style.borderColor = '#dee2e6';
+                    }
+                  }}
+                >
+                  ➡
+                </button>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    padding: '10px 18px',
+                    backgroundColor: 'white',
+                    color: '#495057',
+                    border: '1.5px solid #dee2e6',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f8f9fa';
+                    e.currentTarget.style.borderColor = '#adb5bd';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'white';
+                    e.currentTarget.style.borderColor = '#dee2e6';
+                  }}
+                >
+                  🖼️ Image
+                </button>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                style={{ display: 'none' }}
+              />
             </div>
           )}
-        </div>
-        {/* Toolbar */}
-        {isEditing && (
-          <div className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg shadow-sm">
-            <h3 className="font-semibold mb-4 text-gray-800 text-lg">Formatting Tools</h3>
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => {
-                  if (editor) {
-                    editor.chain().focus().toggleBold().run();
-                    // Force a re-render to update button state
-                    setRefreshTrigger(prev => prev + 1);
-                  }
-                }}
-                className={`px-4 py-3 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2 ${
-                  editor?.isActive('bold')
-                    ? 'bg-blue-600 text-white shadow-lg ring-2 ring-blue-300' 
-                    : 'bg-blue-500 text-white hover:bg-blue-600 hover:shadow-lg'
-                }`}
-                title="Bold (click to toggle)"
-              >
-                <strong>B</strong>
-              </button>
-              <button
-                onClick={() => {
-                  if (editor) {
-                    editor.chain().focus().toggleItalic().run();
-                    // Force a re-render to update button state
-                    setRefreshTrigger(prev => prev + 1);
-                  }
-                }}
-                className={`px-4 py-3 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2 ${
-                  editor?.isActive('italic')
-                    ? 'bg-blue-600 text-white shadow-lg ring-2 ring-blue-300' 
-                    : 'bg-blue-500 text-white hover:bg-blue-600 hover:shadow-lg'
-                }`}
-                title="Italic (click to toggle)"
-              >
-                <em>I</em>
-              </button>
-              <button
-                onClick={() => {
-                  if (editor) {
-                    editor.chain().focus().toggleUnderline().run();
-                    // Force a re-render to update button state
-                    setRefreshTrigger(prev => prev + 1);
-                  }
-                }}
-                className={`px-4 py-3 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2 ${
-                  editor?.isActive('underline')
-                    ? 'bg-blue-600 text-white shadow-lg ring-2 ring-blue-300' 
-                    : 'bg-blue-500 text-white hover:bg-blue-600 hover:shadow-lg'
-                }`}
-                title="Underline (click to toggle)"
-              >
-                <u>U</u>
-              </button>
-              <button
-                onClick={() => editor.chain().focus().toggleBulletList().run()}
-                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
-                  editor.isActive('bulletList') ? 'bg-purple-600 text-white' : 'bg-purple-500 text-white hover:bg-purple-600'
-                }`}
-                title="Bullet List"
-              >
-                •
-              </button>
-              <button
-                onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
-                  editor.isActive('heading', { level: 1 }) ? 'bg-green-600 text-white' : 'bg-green-500 text-white hover:bg-green-600'
-                }`}
-                title="Heading 1"
-              >
-                H1
-              </button>
-              <button
-                onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
-                  editor.isActive('heading', { level: 2 }) ? 'bg-green-600 text-white' : 'bg-green-500 text-white hover:bg-green-600'
-                }`}
-                title="Heading 2"
-              >
-                H2
-              </button>
-              <button
-                onClick={() => editor.chain().focus().setTextAlign('left').run()}
-                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
-                  editor.isActive({ textAlign: 'left' }) ? 'bg-indigo-600 text-white' : 'bg-indigo-500 text-white hover:bg-indigo-600'
-                }`}
-                title="Align Left"
-              >
-                ⬅️
-              </button>
-              <button
-                onClick={() => editor.chain().focus().setTextAlign('center').run()}
-                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
-                  editor.isActive({ textAlign: 'center' }) ? 'bg-indigo-600 text-white' : 'bg-indigo-500 text-white hover:bg-indigo-600'
-                }`}
-                title="Align Center"
-              >
-                ↔️
-              </button>
-              <button
-                onClick={() => editor.chain().focus().setTextAlign('right').run()}
-                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
-                  editor.isActive({ textAlign: 'right' }) ? 'bg-indigo-600 text-white' : 'bg-indigo-500 text-white hover:bg-indigo-600'
-                }`}
-                title="Align Right"
-              >
-                ➡️
-              </button>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors shadow-md hover:shadow-lg flex items-center gap-2"
-                title="Upload Image"
-              >
-                🖼️
-              </button>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            <div className="mt-4 p-3 bg-blue-100 rounded-lg">
-              <p className="text-sm text-blue-800">
-                💡 <strong>Rich Text Editor:</strong> Use the formatting tools above to style your text. 
-                Click <strong>B</strong> to make text bold, <em>I</em> for italic, and <u>U</u> for underline. 
-                Click again to remove formatting. Images will be automatically inserted at your cursor position.
-              </p>
-            </div>
-          </div>
-        )}
 
-        {/* Unified Content Editor/Viewer - Google Docs Style */}
-        <div className="mb-6">
-          <div className="w-full border-2 border-gray-200 rounded-lg min-h-[500px] bg-white">
+          {/* Editor / Viewer */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '40px',
+            minHeight: '500px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            border: '1px solid #e8e8e8'
+          }}>
+            <style>{`
+              .ProseMirror p {
+                margin: 0;
+                margin-bottom: 1em;
+                min-height: 1.5em;
+              }
+              .ProseMirror p br {
+                display: block;
+                content: "";
+                margin-top: 0.5em;
+              }
+              .ProseMirror h1, .ProseMirror h2, .ProseMirror h3 {
+                margin-top: 1em;
+                margin-bottom: 0.5em;
+              }
+              .ProseMirror {
+                line-height: 1.6;
+              }
+              .ProseMirror > * + * {
+                margin-top: 0.75em;
+              }
+            `}</style>
             {isEditing ? (
-              <div className="tiptap-editor p-6">
-                <EditorContent editor={editor} className="min-h-[450px] prose max-w-none focus:outline-none" />
-              </div>
+              <EditorContent editor={editor} style={{ minHeight: '450px' }} />
             ) : (
-              <div className="p-6 min-h-[450px]">
-                {editor.getHTML() ? (
-                  <div 
-                    className="prose max-w-none"
-                    dangerouslySetInnerHTML={{
-                      __html: editor.getHTML()
-                    }}
-                  />
-                ) : (
-                  <div className="text-gray-500 text-center py-20">
-                    <div className="text-6xl mb-4">📝</div>
-                    <div className="text-xl font-medium text-gray-600 mb-2">No content yet</div>
-                    <div className="text-gray-500">Click "Edit Page" to start writing your job description</div>
-                  </div>
-                )}
-              </div>
+              <div
+                style={{
+                  whiteSpace: 'pre-wrap',
+                  lineHeight: '1.6'
+                }}
+                dangerouslySetInnerHTML={{
+                  __html: editor.getHTML() || '<p style="color: #999; text-align: center;">No content yet. Click Edit to start writing.</p>'
+                }}
+              />
             )}
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <AddPageModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleAddPage}
+        existingTitles={pages.map(p => p.title)}
+        isAtLimit={pages.length >= 50}
+      />
+
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        pageTitle={currentPage?.title || ''}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeletePage}
+        isLastPage={pages.length <= 1}
+      />
     </div>
   );
 };
