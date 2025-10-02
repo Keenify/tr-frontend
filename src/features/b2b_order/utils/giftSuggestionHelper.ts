@@ -1,4 +1,5 @@
 import { Product, ProductVariant } from '../../../shared/types/Product';
+import { filterFlavorVariants } from './giftBoxVariantFilter';
 
 interface AutomatedGiftBoxConfig {
   pax: number;
@@ -128,28 +129,20 @@ export const generateAutomatedGiftBox = (
   productVariants: { [key: number]: ProductVariant[] },
   branch: 'SG' | 'MY' = 'SG'
 ): AutomatedGiftBox | null => {
-  // Filter for ONLY gift box products that have variants
-  const availableProducts = products.filter(
-    product => product.name.toLowerCase().includes('gift box') && productVariants[product.id]?.length > 0
-  );
+  // Filter for actual popcorn/snack products (NOT gift box product) that have flavor variants
+  const availableProducts = products.filter(product => {
+    const hasVariants = productVariants[product.id]?.length > 0;
+    const isNotGiftBoxProduct = !product.name.toLowerCase().includes('gift box');
+    return hasVariants && isNotGiftBoxProduct;
+  });
 
   if (availableProducts.length === 0) {
     return null;
   }
 
-  // Determine number of products to include based on budget with some randomization
-  let baseProductCount = 3; // Default
-  if (config.budgetPerPerson < 20) {
-    baseProductCount = 2;
-  } else if (config.budgetPerPerson >= 50) {
-    baseProductCount = 4;
-  }
-
-  // Add some randomization to product count (±1 product for variety)
-  const randomVariation = Math.random() > 0.5 ? 1 : 0;
-  const maxPossible = Math.min(availableProducts.length, baseProductCount + 1);
-  const minPossible = Math.max(2, baseProductCount - 1);
-  const productsToInclude = Math.min(maxPossible, Math.max(minPossible, baseProductCount + (Math.random() > 0.7 ? randomVariation : 0)));
+  // Select 2-3 products to get a nice variety of ~8 flavors total
+  // (2-4 flavors per product × 2-3 products = 4-12 flavors, average ~8)
+  const productsToInclude = Math.min(availableProducts.length, 2 + Math.floor(Math.random() * 2)); // 2 or 3 products
 
   // Enhanced product randomization with time-based seed
   const productSeed = getRandomSeed();
@@ -164,52 +157,66 @@ export const generateAutomatedGiftBox = (
     }
   }
 
-  const selectedProductsList = shuffledProducts.slice(0, Math.min(productsToInclude, availableProducts.length));
+  // Select 8 flavors mixed from multiple products for variety
+  const targetFlavorCount = 8;
+  const selectedFlavors: ProductVariant[] = [];
+  const usedFlavorNames = new Set<string>(); // Track to avoid duplicates
 
-  // Build selected products object with random variants and calculate actual costs
-  const selectedProducts: { [productId: number]: { name: string; selectedVariants: string[]; price?: number } } = {};
-  const allSelectedVariants: string[] = [];
-  const allSelectedVariantDetails: ProductVariant[] = [];
-  let totalBaseCost = 0;
+  // Shuffle products for random selection order
+  const shuffledAvailableProducts = [...shuffledProducts.slice(0, availableProducts.length)];
 
-  let averageBoxPrice = 0;
-  let totalProducts = 0;
+  // Determine how many flavors to take from each product to reach 8 total
+  const flavorsPerProduct = Math.ceil(targetFlavorCount / Math.min(shuffledAvailableProducts.length, 3));
 
-  selectedProductsList.forEach(product => {
-    const variants = productVariants[product.id] || [];
-    const productBoxPrice = getProductBoxPrice(product, branch);
+  // Collect flavors from multiple products
+  for (const product of shuffledAvailableProducts) {
+    if (selectedFlavors.length >= targetFlavorCount) break;
 
-    // For gift box products, select 8 variants (8 flavors per box)
-    // For other products, select 1-4 variants with better randomization
-    const isGiftBox = product.name.toLowerCase().includes('gift box');
-    let variantCount;
-    if (isGiftBox) {
-      variantCount = Math.min(8, variants.length); // 8 flavors per gift box
-    } else {
-      // More variety in variant selection: 1-4 variants
-      const maxVariants = Math.min(4, variants.length);
-      const minVariants = 1;
-      variantCount = minVariants + Math.floor(Math.random() * (maxVariants - minVariants + 1));
+    const allVariants = productVariants[product.id] || [];
+    // Filter out gift box variants, keeping only actual flavors
+    const flavors = filterFlavorVariants(allVariants);
+
+    // Filter out already used flavors to avoid duplicates
+    const uniqueFlavors = flavors.filter(f => !usedFlavorNames.has(f.name));
+
+    if (uniqueFlavors.length > 0) {
+      // Take 2-3 flavors from this product
+      const variantSeed = getRandomSeed() + product.id;
+      const flavorsToTake = Math.min(
+        flavorsPerProduct,
+        uniqueFlavors.length,
+        targetFlavorCount - selectedFlavors.length
+      );
+
+      const productFlavors = selectRandomVariants(
+        uniqueFlavors,
+        flavorsToTake,
+        config.dietaryRestriction,
+        variantSeed
+      );
+
+      // Add to selected flavors and mark as used
+      productFlavors.forEach(flavor => {
+        selectedFlavors.push(flavor);
+        usedFlavorNames.add(flavor.name);
+      });
     }
+  }
 
-    const variantSeed = getRandomSeed() + product.id; // Unique seed per product
-    const randomVariants = selectRandomVariants(variants, variantCount, config.dietaryRestriction, variantSeed);
-
-    if (randomVariants.length > 0) {
-      selectedProducts[product.id] = {
-        name: product.name,
-        selectedVariants: randomVariants.map(v => v.name),
-        price: productBoxPrice
-      };
-      allSelectedVariants.push(...randomVariants.map(v => v.name));
-      allSelectedVariantDetails.push(...randomVariants);
-      averageBoxPrice += productBoxPrice;
-      totalProducts++;
+  // Build the single product entry for "The Kettle Gourmet Gift Box"
+  const selectedProducts: { [productId: number]: { name: string; selectedVariants: string[]; price?: number } } = {
+    78: {
+      name: 'The Kettle Gourmet Gift Box',
+      selectedVariants: selectedFlavors.map(v => v.name),
+      price: 60.00 / 6 // RM 10 per box
     }
-  });
+  };
 
-  // Calculate actual box price as average of selected products
-  const baseBoxPrice = totalProducts > 0 ? averageBoxPrice / totalProducts : 20.00;
+  const allSelectedVariants = selectedFlavors.map(v => v.name);
+  const allSelectedVariantDetails = selectedFlavors;
+
+  // Fixed price: RM 10 per box (60 RM per carton / 6 boxes)
+  const baseBoxPrice = 10.00;
 
   // Apply tier discount for volume orders
   const tierMultiplier = DEFAULT_TIER_PRICING.find(
@@ -225,13 +232,13 @@ export const generateAutomatedGiftBox = (
     pricePerUnit: Number((baseBoxPrice * tier.pricePerUnit).toFixed(2))
   }));
 
-  // Create gift box name based on selected flavors
-  const flavorSample = allSelectedVariants.slice(0, 2).join(' & ');
-  const giftBoxName = flavorSample || 'Custom Gift Box';
+  // Use "The Kettle Gourmet Gift Box" as the product name for branding
+  const giftBoxName = 'The Kettle Gourmet Gift Box';
+  const giftBoxDescription = `Premium gift box with ${allSelectedVariants.length} assorted flavors`;
 
   return {
     name: giftBoxName,
-    description: `${selectedProductsList.length}-Product Gift Box with ${allSelectedVariants.length} Flavors`,
+    description: giftBoxDescription,
     selectedProducts,
     selectedVariantDetails: allSelectedVariantDetails,
     totalPrice,

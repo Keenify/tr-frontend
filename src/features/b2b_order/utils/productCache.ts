@@ -1,6 +1,7 @@
 import { Product, ProductVariant } from '../../../shared/types/Product';
 import { getProductsByCompany } from '../../../services/useProducts';
 import { getProductVariants } from '../../../services/useProductVariants';
+import { filterFlavorVariants } from './giftBoxVariantFilter';
 
 interface CachedProduct extends Product {
   variants: ProductVariant[];
@@ -11,7 +12,11 @@ interface ProductCache {
   products: CachedProduct[];
   last_updated: string;
   company_id: string;
+  cache_version?: number; // Version to track filter updates
 }
+
+// Increment this version number when filter logic changes
+const CACHE_VERSION = 2;
 
 const CACHE_KEY = 'gift_generator_product_cache';
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
@@ -34,11 +39,15 @@ export const cacheAllProducts = async (companyId: string): Promise<CachedProduct
       try {
         console.log(`🌈 Fetching variants for "${product.name}" (ID: ${product.id})`);
         const variants = await getProductVariants(product.id.toString());
-        console.log(`   ✅ Found ${variants.length} variants`);
+        console.log(`   ✅ Found ${variants.length} variants (before filtering)`);
+
+        // Filter out gift box variants, keeping only actual flavors
+        const flavorVariants = filterFlavorVariants(variants);
+        console.log(`   🎯 Filtered to ${flavorVariants.length} flavor variants (removed ${variants.length - flavorVariants.length} gift box variants)`);
 
         cachedProducts.push({
           ...product,
-          variants,
+          variants: flavorVariants,
           cached_at: new Date().toISOString()
         });
       } catch (error) {
@@ -56,7 +65,8 @@ export const cacheAllProducts = async (companyId: string): Promise<CachedProduct
     const cache: ProductCache = {
       products: cachedProducts,
       last_updated: new Date().toISOString(),
-      company_id: companyId
+      company_id: companyId,
+      cache_version: CACHE_VERSION
     };
 
     // Store in localStorage
@@ -91,9 +101,17 @@ export const getCachedProducts = async (companyId?: string): Promise<{
       const cache: ProductCache = JSON.parse(cachedData);
       const cacheAge = Date.now() - new Date(cache.last_updated).getTime();
 
+      // Check if cache version matches (invalidate old cache when filter logic changes)
+      const isCacheVersionValid = cache.cache_version === CACHE_VERSION;
+
+      if (!isCacheVersionValid) {
+        console.log('⚠️ Cache version mismatch - clearing old cache with outdated filters');
+        localStorage.removeItem(CACHE_KEY);
+      }
+
       // For public access (no companyId), never expire the cache
       // For company-specific access, check expiration and company match
-      if ((!companyId) || (cacheAge < CACHE_DURATION && cache.company_id === companyId)) {
+      if (isCacheVersionValid && ((!companyId) || (cacheAge < CACHE_DURATION && cache.company_id === companyId))) {
         console.log('📋 Using cached products from localStorage');
 
         // Convert to the format expected by the gift generator
