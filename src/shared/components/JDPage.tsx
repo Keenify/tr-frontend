@@ -175,23 +175,28 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
 
       if (result.success) {
         toast.success('Page deleted successfully');
+        setShowDeleteModal(false);
 
-        // Reload pages
-        await loadPages();
+        // Remove the deleted page from state
+        const updatedPages = pages.filter(p => p.id !== currentPage.id);
+        setPages(updatedPages);
 
         // Switch to next page if available
         if (result.nextPageId) {
-          const nextPage = pages.find(p => p.id === result.nextPageId);
+          const nextPage = updatedPages.find(p => p.id === result.nextPageId);
           if (nextPage) {
             setCurrentPage(nextPage);
           }
+        } else if (updatedPages.length > 0) {
+          setCurrentPage(updatedPages[0]);
         }
       }
     } catch (error: any) {
       console.error('Error deleting page:', error);
       toast.error(error.message || 'Failed to delete page');
+      setShowDeleteModal(false);
     }
-  }, [currentPage, companyInfo?.id, loadPages, pages]);
+  }, [currentPage, companyInfo?.id, pages]);
 
   // Handle save
   const handleSave = useCallback(async () => {

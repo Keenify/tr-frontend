@@ -117,8 +117,10 @@ export const jdService = {
    */
   async createJDPage(pageData: CreateJDPageRequest): Promise<JDPage> {
     try {
+      console.log('createJDPage called with:', pageData);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
+      console.log('Current user:', user.id);
 
       const companyId = pageData.companyId;
       if (!companyId) {
@@ -148,14 +150,13 @@ export const jdService = {
 
       if (orderError) throw orderError;
 
-      // Create page
+      // Create page (company_id is set by trigger based on created_by)
       const { data, error } = await supabase
         .from(TABLE_NAME)
         .insert({
           title: pageData.title,
           slug: slug,
           content: pageData.content || '<h2 style="text-align: center"><strong><em><u>Welcome to your Job Description page. Click Edit to start customizing this content.</u></em></strong></h2>',
-          company_id: companyId,
           created_by: user.id,
           updated_by: user.id,
           display_order: displayOrder || 0
@@ -223,13 +224,19 @@ export const jdService = {
       // Find next page (first one that's not being deleted)
       const nextPage = allPages.find(p => p.id !== id);
 
-      // Delete the page
-      const { error } = await supabase
+      // Soft delete the page by setting is_active to false
+      const { data, error } = await supabase
         .from(TABLE_NAME)
-        .delete()
-        .eq('id', id);
+        .update({ is_active: false })
+        .eq('id', id)
+        .select();
 
-      if (error) throw error;
+      console.log('Delete result:', { data, error, id });
+
+      if (error) {
+        console.error('Delete error details:', error);
+        throw error;
+      }
 
       return {
         success: true,
