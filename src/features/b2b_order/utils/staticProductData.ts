@@ -10,8 +10,9 @@ export const STATIC_PRODUCTS: Product[] = [
     id: 78, // Using the real product ID from backend
     name: "The Kettle Gourmet Gift Box",
     description: "Premium assorted popcorn gift box with various flavors",
-    pack_count_per_box: 6, // 6 boxes per carton as per pricing logic
-    recommended_retail_price: "25.00", // 1 carton = RM 25
+    pack_count_per_box: 6, // 6 boxes per carton
+    rrp_sgd: null,
+    rrp_myr: "60.00", // 1 carton = RM 60 (RM 10 per box)
     company_id: "1",
     created_at: new Date().toISOString()
   }
