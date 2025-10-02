@@ -27,6 +27,9 @@ export const GIFT_BOX_VARIANT_NAMES = new Set([
   'XMAS Yumi GIft Box',
   "Lunar New Year Mini 'Huat' Box Info",
   'Lunar New Year Mix',
+  // Non-food items
+  'Post card size - 10.16 x 15.24cm',
+  'Thank you Card',
   // Truncated variants
   'Lunar New Year Mi...',
   'Christmas Mix & M...',
