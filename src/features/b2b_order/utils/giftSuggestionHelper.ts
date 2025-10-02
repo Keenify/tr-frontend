@@ -101,9 +101,9 @@ export const selectRandomVariants = (
 
 // Get actual product pricing from the product data
 const getProductBoxPrice = (product: Product, branch: 'SG' | 'MY' = 'SG'): number => {
-  // For gift boxes: 1 carton = 6 boxes = RM 25, so 1 box = RM 4.17
+  // For gift boxes: 1 carton = 6 boxes = RM 60, so 1 box = RM 10
   if (product.name.toLowerCase().includes('gift box')) {
-    return 25.00 / 6; // RM 4.17 per box
+    return 60.00 / 6; // RM 10 per box
   }
 
   // For other products, use the retail price from the product based on branch
