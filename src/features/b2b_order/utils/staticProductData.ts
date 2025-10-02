@@ -18,23 +18,8 @@ export const STATIC_PRODUCTS: Product[] = [
 ];
 
 export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
-  // The Kettle Gourmet Gift Box - Product ID 78 (ALL 41 flavors for variety)
+  // The Kettle Gourmet Gift Box - Product ID 78 (Only actual flavors, gift box variants removed)
   78: [
-    // Original flavors from screenshot
-    {
-      id: 1,
-      name: "General",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/78/20250214_062020_General.jpg?",
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 2,
-      name: "Children Day",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/78/20250203_145640_Children%20Day.jpg?",
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
     // Classic Popcorn Flavors
     {
       id: 4,
@@ -104,72 +89,6 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
       id: 14,
       name: "Mala",
       image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250206_192113_Mala.jpg?",
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    // SpongeBob Series
-    {
-      id: 15,
-      name: "SpongeBob Chocolate",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/73/20250203_063637_Chocolate.jpg?",
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 16,
-      name: "SpongeBob Nasi Lemak",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/73/20250203_063651_Nasi%20Lemak.jpg?",
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 17,
-      name: "SpongeBob Pulut Hitam",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/73/20250203_063703_Pulut%20Hitam.jpg?",
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    // Minions Series
-    {
-      id: 18,
-      name: "Minions Cheese",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/74/20250203_063812_Cheese.jpg?",
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 19,
-      name: "Minions Chocolate",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/74/20250203_063822_Chocolate.jpg?",
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 20,
-      name: "Minions Kaya Toast",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/74/20250203_063836_Kaya%20Butter%20Toast.jpg?",
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    // Pokemon Series
-    {
-      id: 21,
-      name: "Pokemon Chilli Crab",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/76/20250203_145336_Chocolate.jpg?",
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 22,
-      name: "Pokemon Chocolate",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/76/20250203_145336_Chocolate.jpg?",
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 23,
-      name: "Pokemon Kaya Toast",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/76/20250203_145348_Kaya%20Butter%20Toast.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
@@ -256,106 +175,6 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
       id: 35,
       name: "Double Chocolate",
       image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/67/20250206_192220_Choco.jpg?",
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    // Seasonal flavors with borrowed working images
-    {
-      id: 36,
-      name: "Lunar New Year Mix",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115413_Chocolate.jpg?", // Using red-themed chocolate image
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 37,
-      name: "Christmas Mix & Match",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/73/20250203_063637_Chocolate.jpg?", // Using festive image
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 38,
-      name: "Christmas Assorted",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/74/20250203_063822_Chocolate.jpg?", // Using another festive image
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 39,
-      name: "CNY Red Dragon",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154226_Chocolate.jpg?", // Using red-themed chocolate image
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 40,
-      name: "CNY Green Dragon",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/70/20250203_122104_Matcha.jpg?", // Using green-themed image
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 41,
-      name: "XMAS Yumi Gift Box",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/67/20250206_192220_Choco.jpg?", // Using festive chocolate
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 42,
-      name: "Hari Raya",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115454_Nasi%20Lemak.jpg?", // Using traditional flavor
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 43,
-      name: "Happy Teacher Day",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/78/20250203_145640_Children%20Day.jpg?", // Using special day image
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    // Truncated name variants for backend lookup (these match the truncated names from PDF generation)
-    {
-      id: 47,
-      name: "Lunar New Year Mi...",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/1/20250127_115413_Chocolate.jpg?", // Same as Lunar New Year Mix
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 48,
-      name: "Christmas Mix & M...",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/73/20250203_063637_Chocolate.jpg?", // Same as Christmas Mix & Match
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 49,
-      name: "The Kettle Gourme...",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/78/20250214_062020_General.jpg?", // Same as The Kettle Gourmet Gift Box
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 50,
-      name: "SpongeBob Pulut H...",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/73/20250203_063703_Pulut%20Hitam.jpg?", // Same as SpongeBob Pulut Hitam
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 51,
-      name: "Premium Chicken F...",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154201_Chicken%20Floss.jpg?", // Same as Premium Chicken Floss
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 52,
-      name: "Premium Salted Ca...",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/2/20250126_154334_Salted%20Caramel.jpg?", // Same as Premium Salted Caramel
       product_id: 78,
       created_at: new Date().toISOString()
     },
