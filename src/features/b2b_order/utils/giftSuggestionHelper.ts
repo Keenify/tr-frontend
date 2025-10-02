@@ -129,12 +129,22 @@ export const generateAutomatedGiftBox = (
   productVariants: { [key: number]: ProductVariant[] },
   branch: 'SG' | 'MY' = 'SG'
 ): AutomatedGiftBox | null => {
-  // Filter for actual popcorn/snack products (NOT gift box product) that have flavor variants
-  const availableProducts = products.filter(product => {
-    const hasVariants = productVariants[product.id]?.length > 0;
-    const isNotGiftBoxProduct = !product.name.toLowerCase().includes('gift box');
-    return hasVariants && isNotGiftBoxProduct;
-  });
+  // Detect if this is public access (static data) - Product 78 with flavors already filtered
+  const isPublicAccess = products.length === 1 && products[0].id === 78;
+
+  let availableProducts: Product[];
+
+  if (isPublicAccess) {
+    // PUBLIC ACCESS: Use the gift box product (it already has clean flavor variants in static data)
+    availableProducts = products.filter(product => productVariants[product.id]?.length > 0);
+  } else {
+    // LOGGED-IN USER: Filter for actual popcorn/snack products (NOT gift box product)
+    availableProducts = products.filter(product => {
+      const hasVariants = productVariants[product.id]?.length > 0;
+      const isNotGiftBoxProduct = !product.name.toLowerCase().includes('gift box');
+      return hasVariants && isNotGiftBoxProduct;
+    });
+  }
 
   if (availableProducts.length === 0) {
     return null;
