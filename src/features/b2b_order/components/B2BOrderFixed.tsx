@@ -221,29 +221,11 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
       );
 
       if (!automatedGiftBox) {
-        // Show user-friendly message when no real products are available
-        console.warn('No real products available for automated generation.');
+        // Products are still loading or not available - just log for debugging
+        console.warn('No products available for automated generation (products may still be loading).');
+        console.log('Products:', products.length, 'Product variants:', Object.keys(productVariants).length);
 
-        // Check if we have any products at all
-        const hasProducts = products.length > 0;
-        const hasVariants = Object.values(productVariants).some(variants => variants.length > 0);
-
-        let message = 'No products available for gift generation!\n\n';
-
-        if (!hasProducts) {
-          message += '• No products found in the system\n';
-          message += '• Please add products in the Product section first\n';
-        } else if (!hasVariants) {
-          message += `• Found ${products.length} products but no variants\n`;
-          message += '• Please add variants/flavors to your products\n';
-        } else {
-          message += '• Products and variants exist but none are suitable for gift boxes\n';
-          message += '• Check that products have proper pricing and variants\n';
-        }
-
-        message += '\nTip: Go to Product section → Add products → Add variants for each product';
-
-        alert(message);
+        // Silently return - don't show alert to user during loading
         setIsGenerating(false);
         return;
       }
