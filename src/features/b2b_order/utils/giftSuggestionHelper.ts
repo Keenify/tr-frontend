@@ -1,6 +1,5 @@
 import { Product, ProductVariant } from '../../../shared/types/Product';
 import { filterFlavorVariants } from './giftBoxVariantFilter';
-import { GIFT_BOX_TYPES, categorizeVariantsByBrand, BrandCategories, STATIC_PRODUCT_VARIANTS } from './staticProductData';
 
 interface AutomatedGiftBoxConfig {
   pax: number;
@@ -17,11 +16,6 @@ interface TierPricing {
 interface AutomatedGiftBox {
   name: string;
   description: string;
-  giftBoxType: {
-    id: string;
-    name: string;
-    image_url: string;
-  };
   selectedProducts: {
     [productId: number]: {
       name: string;
@@ -30,12 +24,6 @@ interface AutomatedGiftBox {
     };
   };
   selectedVariantDetails: ProductVariant[];
-  brandCategories: {
-    bronys: ProductVariant[];
-    kettleGourmet: ProductVariant[];
-    yumiCurls: ProductVariant[];
-    yumiSticks: ProductVariant[];
-  };
   totalPrice: number;
   pricePerBox: number;
   actualPricePerBox: number;
@@ -114,9 +102,9 @@ export const selectRandomVariants = (
 
 // Get actual product pricing from the product data
 const getProductBoxPrice = (product: Product, branch: 'SG' | 'MY' = 'SG'): number => {
-  // For gift boxes: RM 60 per box (new pricing)
+  // For gift boxes: 1 carton = 6 boxes = RM 60, so 1 box = RM 10
   if (product.name.toLowerCase().includes('gift box')) {
-    return 60.00; // RM 60 per box
+    return 60.00 / 6; // RM 10 per box
   }
 
   // For other products, use the retail price from the product based on branch
@@ -143,151 +131,102 @@ export const generateAutomatedGiftBox = (
 ): AutomatedGiftBox | null => {
   // Detect if this is public access (static data) - Product 78 with flavors already filtered
   const isPublicAccess = products.length === 1 && products[0].id === 78;
-  
-  // For logged-in users, check if we have any products with variants
-  const hasAvailableProducts = products.some(product => 
-    productVariants[product.id] && productVariants[product.id].length > 0
-  );
 
-  if (!isPublicAccess && !hasAvailableProducts) {
-    console.log('No available products with variants found');
-    return null;
-  }
+  let availableProducts: Product[];
 
-  // Get brand categories - use static data for public access, real data for logged-in users
-  let brandCategories: BrandCategories;
-  
   if (isPublicAccess) {
-    // Use static data for public access
-    brandCategories = categorizeVariantsByBrand();
+    // PUBLIC ACCESS: Use the gift box product (it already has clean flavor variants in static data)
+    availableProducts = products.filter(product => productVariants[product.id]?.length > 0);
   } else {
-    // For logged-in users, create brand categories from real product data using product IDs
-    // Try exact match first, then fallback to partial matching
-    let bronysProduct = products.find(p => p.name === "Brony's Brownie Crisps");
-    if (!bronysProduct) {
-      bronysProduct = products.find(p => p.name.toLowerCase().includes("brony"));
-    }
-
-    let kettleProduct = products.find(p => p.name === "The Kettle Gourmet Popcorn - 30g");
-    if (!kettleProduct) {
-      kettleProduct = products.find(p => {
-        const name = p.name.toLowerCase();
-        return name.includes("kettle") && name.includes("popcorn");
-      });
-    }
-
-    let yumiCurlsProduct = products.find(p => p.name === "Yumi Corn Curls");
-    if (!yumiCurlsProduct) {
-      yumiCurlsProduct = products.find(p => {
-        const name = p.name.toLowerCase();
-        return name.includes("yumi") && name.includes("curl");
-      });
-    }
-
-    let yumiSticksProduct = products.find(p => p.name === "Yumi Cornsticks Polybag");
-    if (!yumiSticksProduct) {
-      yumiSticksProduct = products.find(p => {
-        const name = p.name.toLowerCase();
-        return name.includes("yumi") && (name.includes("stick") || name.includes("cornstick"));
-      });
-    }
-
-    console.log('=== PRODUCT MATCHING DEBUG ===');
-    console.log('All products:', products.map(p => p.name));
-    console.log('Found products:', {
-      bronys: bronysProduct?.name || 'NOT FOUND',
-      kettle: kettleProduct?.name || 'NOT FOUND',
-      yumiCurls: yumiCurlsProduct?.name || 'NOT FOUND',
-      yumiSticks: yumiSticksProduct?.name || 'NOT FOUND'
+    // LOGGED-IN USER: Filter for actual popcorn/snack products (NOT gift box product)
+    availableProducts = products.filter(product => {
+      const hasVariants = productVariants[product.id]?.length > 0;
+      const isNotGiftBoxProduct = !product.name.toLowerCase().includes('gift box');
+      return hasVariants && isNotGiftBoxProduct;
     });
-
-    brandCategories = {
-      // Brony's Brownie Crisps (2 needed) - get variants by product ID
-      bronys: bronysProduct ? (productVariants[bronysProduct.id] || []) : [],
-
-      // The Kettle Gourmet Popcorn 30g (4 needed) - get variants by product ID
-      kettleGourmet: kettleProduct ? (productVariants[kettleProduct.id] || []) : [],
-
-      // Yumi Corn Curls (3 needed) - get variants by product ID
-      yumiCurls: yumiCurlsProduct ? (productVariants[yumiCurlsProduct.id] || []) : [],
-
-      // Yumi Cornsticks Polybag (1 needed) - get variants by product ID
-      yumiSticks: yumiSticksProduct ? (productVariants[yumiSticksProduct.id] || []) : []
-    };
-
-    console.log('Brand categories result:', {
-      bronys: brandCategories.bronys.length,
-      kettleGourmet: brandCategories.kettleGourmet.length,
-      yumiCurls: brandCategories.yumiCurls.length,
-      yumiSticks: brandCategories.yumiSticks.length
-    });
-    console.log('=== END DEBUG ===');
-  }
-  
-  // Randomly select one of the two gift box types
-  const selectedGiftBoxType = GIFT_BOX_TYPES[Math.floor(Math.random() * GIFT_BOX_TYPES.length)];
-  
-  // Check if we have enough variants in each category
-  console.log('Brand categories:', {
-    bronys: brandCategories.bronys.length,
-    kettleGourmet: brandCategories.kettleGourmet.length,
-    yumiCurls: brandCategories.yumiCurls.length,
-    yumiSticks: brandCategories.yumiSticks.length
-  });
-
-  // Select specific quantities from each brand category
-  const selectedBronys = selectRandomVariants(brandCategories.bronys, Math.min(2, brandCategories.bronys.length), config.dietaryRestriction);
-  const selectedKettleGourmet = selectRandomVariants(brandCategories.kettleGourmet, Math.min(4, brandCategories.kettleGourmet.length), config.dietaryRestriction);
-  const selectedYumiCurls = selectRandomVariants(brandCategories.yumiCurls, Math.min(3, brandCategories.yumiCurls.length), config.dietaryRestriction);
-  const selectedYumiSticks = selectRandomVariants(brandCategories.yumiSticks, Math.min(1, brandCategories.yumiSticks.length), config.dietaryRestriction);
-
-  // Combine all selected variants
-  const allSelectedVariants = [
-    ...selectedBronys,
-    ...selectedKettleGourmet,
-    ...selectedYumiCurls,
-    ...selectedYumiSticks
-  ];
-
-  // If we don't have enough variants, try to get more from available categories
-  if (allSelectedVariants.length < 5) {
-    console.log('Not enough variants selected, trying fallback...');
-    
-    // Get all available variants as fallback
-    const allAvailableVariants: ProductVariant[] = [];
-    if (isPublicAccess) {
-      allAvailableVariants.push(...STATIC_PRODUCT_VARIANTS[78] || []);
-    } else {
-      products.forEach(product => {
-        const variants = productVariants[product.id] || [];
-        allAvailableVariants.push(...variants);
-      });
-    }
-    
-    // If we still don't have enough, use what we have
-    if (allSelectedVariants.length === 0 && allAvailableVariants.length > 0) {
-      const fallbackVariants = selectRandomVariants(allAvailableVariants, Math.min(8, allAvailableVariants.length), config.dietaryRestriction);
-      allSelectedVariants.push(...fallbackVariants);
-    }
   }
 
-  // Final check - if we still have no variants, return null
-  if (allSelectedVariants.length === 0) {
-    console.log('No variants available for gift box generation');
+  if (availableProducts.length === 0) {
     return null;
   }
 
-  // Build the single product entry for the selected gift box type
+  // Select 2-3 products to get a nice variety of ~8 flavors total
+  // (2-4 flavors per product × 2-3 products = 4-12 flavors, average ~8)
+  const productsToInclude = Math.min(availableProducts.length, 2 + Math.floor(Math.random() * 2)); // 2 or 3 products
+
+  // Enhanced product randomization with time-based seed
+  const productSeed = getRandomSeed();
+  const shuffledProducts = [...availableProducts];
+
+  // Multiple shuffle passes for better randomization
+  for (let pass = 0; pass < 3; pass++) {
+    for (let i = shuffledProducts.length - 1; i > 0; i--) {
+      const randomValue = (productSeed + i + pass * 100) % 1000 / 1000;
+      const j = Math.floor((Math.random() + randomValue) / 2 * (i + 1));
+      [shuffledProducts[i], shuffledProducts[j]] = [shuffledProducts[j], shuffledProducts[i]];
+    }
+  }
+
+  // Select 8 flavors mixed from multiple products for variety
+  const targetFlavorCount = 8;
+  const selectedFlavors: ProductVariant[] = [];
+  const usedFlavorNames = new Set<string>(); // Track to avoid duplicates
+
+  // Shuffle products for random selection order
+  const shuffledAvailableProducts = [...shuffledProducts.slice(0, availableProducts.length)];
+
+  // Determine how many flavors to take from each product to reach 8 total
+  const flavorsPerProduct = Math.ceil(targetFlavorCount / Math.min(shuffledAvailableProducts.length, 3));
+
+  // Collect flavors from multiple products
+  for (const product of shuffledAvailableProducts) {
+    if (selectedFlavors.length >= targetFlavorCount) break;
+
+    const allVariants = productVariants[product.id] || [];
+    // Filter out gift box variants, keeping only actual flavors
+    const flavors = filterFlavorVariants(allVariants);
+
+    // Filter out already used flavors to avoid duplicates
+    const uniqueFlavors = flavors.filter(f => !usedFlavorNames.has(f.name));
+
+    if (uniqueFlavors.length > 0) {
+      // Take 2-3 flavors from this product
+      const variantSeed = getRandomSeed() + product.id;
+      const flavorsToTake = Math.min(
+        flavorsPerProduct,
+        uniqueFlavors.length,
+        targetFlavorCount - selectedFlavors.length
+      );
+
+      const productFlavors = selectRandomVariants(
+        uniqueFlavors,
+        flavorsToTake,
+        config.dietaryRestriction,
+        variantSeed
+      );
+
+      // Add to selected flavors and mark as used
+      productFlavors.forEach(flavor => {
+        selectedFlavors.push(flavor);
+        usedFlavorNames.add(flavor.name);
+      });
+    }
+  }
+
+  // Build the single product entry for "The Kettle Gourmet Gift Box"
   const selectedProducts: { [productId: number]: { name: string; selectedVariants: string[]; price?: number } } = {
     78: {
-      name: selectedGiftBoxType.name,
-      selectedVariants: allSelectedVariants.map(v => v.name),
-      price: 60.00 // RM 60 per box
+      name: 'The Kettle Gourmet Gift Box',
+      selectedVariants: selectedFlavors.map(v => v.name),
+      price: 60.00 / 6 // RM 10 per box
     }
   };
 
-  // Fixed price: RM 60 per box (new pricing)
-  const baseBoxPrice = 60.00;
+  const allSelectedVariants = selectedFlavors.map(v => v.name);
+  const allSelectedVariantDetails = selectedFlavors;
+
+  // Fixed price: RM 10 per box (60 RM per carton / 6 boxes)
+  const baseBoxPrice = 10.00;
 
   // Apply tier discount for volume orders
   const tierMultiplier = DEFAULT_TIER_PRICING.find(
@@ -303,20 +242,15 @@ export const generateAutomatedGiftBox = (
     pricePerUnit: Number((baseBoxPrice * tier.pricePerUnit).toFixed(2))
   }));
 
-  const giftBoxDescription = `Premium gift box with ${allSelectedVariants.length} assorted flavors from 4 different brands`;
+  // Use "The Kettle Gourmet Gift Box" as the product name for branding
+  const giftBoxName = 'The Kettle Gourmet Gift Box';
+  const giftBoxDescription = `Premium gift box with ${allSelectedVariants.length} assorted flavors`;
 
   return {
-    name: selectedGiftBoxType.name,
+    name: giftBoxName,
     description: giftBoxDescription,
-    giftBoxType: selectedGiftBoxType,
     selectedProducts,
-    selectedVariantDetails: allSelectedVariants,
-    brandCategories: {
-      bronys: selectedBronys,
-      kettleGourmet: selectedKettleGourmet,
-      yumiCurls: selectedYumiCurls,
-      yumiSticks: selectedYumiSticks
-    },
+    selectedVariantDetails: allSelectedVariantDetails,
     totalPrice,
     pricePerBox: actualPricePerBox,
     actualPricePerBox: actualPricePerBox,
@@ -349,9 +283,6 @@ export const formatGiftBoxForDisplay = (giftBox: AutomatedGiftBox) => {
         productName: products.find(p => p.selectedVariants.includes(name))?.name || ''
       };
     }),
-    // New structure for brand categories
-    giftBoxType: giftBox.giftBoxType,
-    brandCategories: giftBox.brandCategories,
     tierPricing: giftBox.tierPricing,
     priceBreakdown: giftBox.priceBreakdown
   };
