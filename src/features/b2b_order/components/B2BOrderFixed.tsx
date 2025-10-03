@@ -131,11 +131,9 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
       newErrors.pax = 'Number of people should be less than 1000 for practical orders';
     }
 
-    // Validate price per person (RM 5-500 range)
-    if (!pricePerPerson || isNaN(priceNum) || priceNum < 5) {
-      newErrors.price = 'Please enter a valid price per person (minimum RM 5)';
-    } else if (priceNum > 500) {
-      newErrors.price = 'Price per person should be reasonable (maximum RM 500)';
+    // Validate price per person (minimum RM 60 for gift boxes)
+    if (!pricePerPerson || isNaN(priceNum) || priceNum < 60) {
+      newErrors.price = 'Please enter a valid price per person (minimum RM 60)';
     }
 
     setErrors(newErrors);
@@ -158,14 +156,18 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setPricePerPerson(value);
       // Clear error when user starts typing valid prices
-      if (errors.price && value !== '' && parseFloat(value) >= 5 && parseFloat(value) <= 500) {
+      if (errors.price && value !== '' && parseFloat(value) >= 60) {
         setErrors({ ...errors, price: undefined });
       }
     }
   };
 
   const handleGenerateGifts = async () => {
+    console.log('Generate button clicked!');
+    console.log('Current form values:', { pax, pricePerPerson, dietaryRestriction });
+    
     if (!validateInputs()) {
+      console.log('Validation failed, not generating');
       return;
     }
 
@@ -220,12 +222,18 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
         'SG' // Default to Singapore branch - could be made dynamic
       );
 
+      console.log('Generated automated gift box result:', automatedGiftBox);
+
       if (!automatedGiftBox) {
         // Products are still loading or not available - just log for debugging
         console.warn('No products available for automated generation (products may still be loading).');
         console.log('Products:', products.length, 'Product variants:', Object.keys(productVariants).length);
+        console.log('Products details:', products);
+        console.log('Product variants details:', productVariants);
+        console.log('Is public access check:', products.length === 1 && products[0]?.id === 78);
 
-        // Silently return - don't show alert to user during loading
+        // Show alert to user so they know what's happening
+        alert('Unable to generate gift suggestions. Please ensure you have products with variants available, or try refreshing the page.');
         setIsGenerating(false);
         return;
       }
@@ -237,10 +245,14 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
         specialInstructions,
         name: automatedGiftBox.name,
         description: automatedGiftBox.description,
-        tierPricing: automatedGiftBox.tierPricing
+        tierPricing: automatedGiftBox.tierPricing,
+        giftBoxType: automatedGiftBox.giftBoxType,
+        brandCategories: automatedGiftBox.brandCategories
       };
 
       console.log('Generated automated gift box:', giftBoxItem);
+      console.log('Gift box type:', giftBoxItem.giftBoxType);
+      console.log('Brand categories:', giftBoxItem.brandCategories);
       setGeneratedItems([giftBoxItem]);
       setShowTable(true);
 
@@ -460,7 +472,7 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                   />
                   {errors.price && <div className="error-message">{errors.price}</div>}
                 </div>
-                <div className="input-explanation">Range: RM 5-500</div>
+                <div className="input-explanation">Minimum: RM 60</div>
               </div>
             </div>
 
@@ -517,16 +529,30 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                   <div key={index} className="gift-box-card">
                     <div className="card-header">
                       <h4>{item.name || item.productDescription}</h4>
-                      <span className="badge">✨ Auto-Generated Package</span>
                     </div>
 
                     <div className="card-body">
                       {/* Left Side - Product Details */}
                       <div className="product-details">
                         <div className="product-section">
-                          <div className="section-title">Selected Products</div>
-                          <div className="product-list">
-                            {item.selectedProducts && item.selectedProducts.map((product, i) => (
+                          <div className="gift-box-display">
+                            {item.giftBoxType && (
+                              <>
+                                <div className="gift-box-image">
+                                  <img 
+                                    src={item.giftBoxType.image_url} 
+                                    alt={item.giftBoxType.name}
+                                    crossOrigin="anonymous"
+                                    onError={(e) => {
+                                      console.error("Gift box image failed to load:", e.currentTarget.src);
+                                      e.currentTarget.style.display = "none";
+                                    }}
+                                  />
+                                </div>
+                                <div className="gift-box-name">{item.giftBoxType.name}</div>
+                              </>
+                            )}
+                            {!item.giftBoxType && item.selectedProducts && item.selectedProducts.map((product, i) => (
                               <div key={i} className="product-item">
                                 <div className="product-icon">📦</div>
                                 <span className="product-name">{product.name}</span>
@@ -536,37 +562,125 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                         </div>
 
                         <div className="product-section">
-                          <div className="section-title">Flavor Varieties ({item.variants?.length || 0})</div>
-                          <div className="flavor-chips">
-                            {item.variants && item.variants.map((variant, i) => (
-                              <span key={i} className="flavor-chip">
-                                {variant.name}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-
-                        {item.specialInstructions && (
-                          <div className="special-instructions-display">
-                            <strong>Special Instructions:</strong>
-                            <div>{item.specialInstructions}</div>
-                          </div>
-                        )}
-
-                        {/* Packaging Preview */}
-                        <div className="packaging-preview">
-                          {item.variants && item.variants.slice(0, 8).map((variant, i) => (
-                            <div key={i} className="package-thumbnail" title={variant.name}>
-                              {variant.image_url ? (
-                                <img src={variant.image_url} alt={variant.name} />
-                              ) : (
-                                <div className="package-placeholder">
-                                  {variant.name.split(' ').map(w => w[0]).join('').substring(0, 3)}
+                          <div className="section-title">Inside Contains ({item.variants?.length || 0})</div>
+                          {item.brandCategories ? (
+                            <div className="brand-categories">
+                              <div className="brand-section">
+                                <div className="brand-title">Brony's Brownie Crisps ({item.brandCategories.bronys.length})</div>
+                                <div className="brand-flavors">
+                                  {item.brandCategories.bronys.map((variant, i) => (
+                                    <div key={i} className="flavor-item">
+                                      <div className="flavor-image">
+                                        {variant.image_url ? (
+                                          <img 
+                                            src={variant.image_url} 
+                                            alt={variant.name}
+                                            crossOrigin="anonymous"
+                                            onError={(e) => {
+                                              console.error("Image failed to load:", e.currentTarget.src);
+                                              e.currentTarget.style.display = "none";
+                                            }}
+                                          />
+                                        ) : (
+                                          <div className="flavor-dot"></div>
+                                        )}
+                                      </div>
+                                      <div className="flavor-name">{variant.name}</div>
+                                    </div>
+                                  ))}
                                 </div>
-                              )}
+                              </div>
+
+                              <div className="brand-section">
+                                <div className="brand-title">The Kettle Gourmet Popcorn ({item.brandCategories.kettleGourmet.length})</div>
+                                <div className="brand-flavors">
+                                  {item.brandCategories.kettleGourmet.map((variant, i) => (
+                                    <div key={i} className="flavor-item">
+                                      <div className="flavor-image">
+                                        {variant.image_url ? (
+                                          <img 
+                                            src={variant.image_url} 
+                                            alt={variant.name}
+                                            crossOrigin="anonymous"
+                                            onError={(e) => {
+                                              console.error("Image failed to load:", e.currentTarget.src);
+                                              e.currentTarget.style.display = "none";
+                                            }}
+                                          />
+                                        ) : (
+                                          <div className="flavor-dot"></div>
+                                        )}
+                                      </div>
+                                      <div className="flavor-name">{variant.name}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="brand-section">
+                                <div className="brand-title">Yumi Corn Curls ({item.brandCategories.yumiCurls.length})</div>
+                                <div className="brand-flavors">
+                                  {item.brandCategories.yumiCurls.map((variant, i) => (
+                                    <div key={i} className="flavor-item">
+                                      <div className="flavor-image">
+                                        {variant.image_url ? (
+                                          <img 
+                                            src={variant.image_url} 
+                                            alt={variant.name}
+                                            crossOrigin="anonymous"
+                                            onError={(e) => {
+                                              console.error("Image failed to load:", e.currentTarget.src);
+                                              e.currentTarget.style.display = "none";
+                                            }}
+                                          />
+                                        ) : (
+                                          <div className="flavor-dot"></div>
+                                        )}
+                                      </div>
+                                      <div className="flavor-name">{variant.name}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="brand-section">
+                                <div className="brand-title">Yumi Cornsticks Polybag ({item.brandCategories.yumiSticks.length})</div>
+                                <div className="brand-flavors">
+                                  {item.brandCategories.yumiSticks.map((variant, i) => (
+                                    <div key={i} className="flavor-item">
+                                      <div className="flavor-image">
+                                        {variant.image_url ? (
+                                          <img 
+                                            src={variant.image_url} 
+                                            alt={variant.name}
+                                            crossOrigin="anonymous"
+                                            onError={(e) => {
+                                              console.error("Image failed to load:", e.currentTarget.src);
+                                              e.currentTarget.style.display = "none";
+                                            }}
+                                          />
+                                        ) : (
+                                          <div className="flavor-dot"></div>
+                                        )}
+                                      </div>
+                                      <div className="flavor-name">{variant.name}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
-                          ))}
+                          ) : (
+                            <div className="flavor-chips">
+                              {item.variants && item.variants.map((variant, i) => (
+                                <span key={i} className="flavor-chip">
+                                  {variant.name}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
+
+
                       </div>
 
                       {/* Right Side - Pricing Panel */}
