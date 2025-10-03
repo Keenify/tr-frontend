@@ -21,6 +21,11 @@ interface GiftSuggestionData {
     maxQuantity: number;
     pricePerUnit: number;
   }>;
+  giftBoxType?: {
+    id: string;
+    name: string;
+    image_url: string;
+  };
   specialInstructions?: string;
 }
 
@@ -86,13 +91,14 @@ export const transformGiftSuggestionToQuotation = (
 
   // Build the product entry using ACTUAL flavor variants from the gift data
   const quotationProducts = [{
-    name: 'The Kettle Gourmet Gift Box',
+    name: giftData.giftBoxType?.name || 'The Kettle Gourmet Gift Box',
     description: giftData.description,
     pack_count_per_box: 6, // Gift boxes: 6 boxes per carton as per requirement
     recommended_retail_price: giftData.pricePerBox,
     id: GIFT_BOX_PRODUCT_ID,
     company_id: giftBoxProduct?.company_id || '1',
     created_at: giftBoxProduct?.created_at || new Date().toISOString(),
+    image_url: giftData.giftBoxType?.image_url, // Add gift box packaging image
     variants: giftData.variants
       .filter(variant => variant.image_url !== null && variant.image_url !== undefined)
       .map((variant, index) => {
