@@ -40,6 +40,7 @@ import Client from "./features/people/client/components/Client";
 import Hiring from "./features/people/hiring/components/Hiring";
 import PublicJobDetails from "./features/people/hiring/components/PublicJobDetails";
 import JobPreview from "./features/people/hiring/components/JobPreview";
+import PublicJDPage from "./shared/components/PublicJDPage";
 import Idea from "./features/idea/components/Idea";
 import Feedback from "./features/people/feedback/components/Feedback";
 import AnonymousFeedbackPage from "./features/people/feedback/components/AnonymousFeedbackPage";
@@ -136,6 +137,8 @@ const App: React.FC = () => {
             <Route path="/jobs/:jobId" element={<PublicJobDetails />} />
             {/* Job Preview route */}
             <Route path="/job-preview" element={<JobPreview />} />
+            {/* Public JD Page route */}
+            <Route path="/jd/:companyId" element={<PublicJDPage />} />
 
             {/* Protected Routes */}
             <>

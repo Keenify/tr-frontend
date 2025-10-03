@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import { JDPage as JDPageType } from '../types/jd.types';
 import { jdService } from '../services/jdService';
 import { useJDPages } from '../hooks/useJDPages';
@@ -10,14 +10,23 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import TextAlign from '@tiptap/extension-text-align';
 import Link from '@tiptap/extension-link';
+import { useUserAndCompanyData } from '../hooks/useUserAndCompanyData';
+import { useSession } from '../hooks/useSession';
+import toast from 'react-hot-toast';
 
 interface JDPageProps {
   onClose?: () => void;
 }
 
 const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
-  const { pages, loading, error, updatePage, fetchPages } = useJDPages();
+  const { session } = useSession();
+  const { companyInfo, isLoading: companyLoading } = useUserAndCompanyData(session?.user?.id || '');
+  
+  // Only pass company ID when it's available to prevent premature fetching
+  const { pages, loading, error, updatePage, fetchPages } = useJDPages(companyInfo?.id);
   const [isEditing, setIsEditing] = useState(false);
+  const [editorState, setEditorState] = useState({ bold: false, italic: false, underline: false });
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // TipTap Editor
@@ -39,7 +48,20 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
     ],
     content: '',
     onUpdate: ({ editor }) => {
-      // Content is automatically managed by TipTap
+      // Update editor state for button highlighting
+      setEditorState({
+        bold: editor.isActive('bold'),
+        italic: editor.isActive('italic'),
+        underline: editor.isActive('underline'),
+      });
+    },
+    onSelectionUpdate: ({ editor }) => {
+      // Also update when selection changes (cursor moves)
+      setEditorState({
+        bold: editor.isActive('bold'),
+        italic: editor.isActive('italic'),
+        underline: editor.isActive('underline'),
+      });
     },
     editorProps: {
       attributes: {
@@ -66,8 +88,16 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
         // This prevents clearing content during initial load
         editor.commands.setContent('');
       }
+
+      // Initialize editor state
+      setEditorState({
+        bold: editor.isActive('bold'),
+        italic: editor.isActive('italic'),
+        underline: editor.isActive('underline'),
+      });
     }
   }, [pages, editor, loading, error]);
+
 
   // Convert markdown to HTML for TipTap
   const convertMarkdownToHtml = (markdown: string): string => {
@@ -100,10 +130,29 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
     try {
       const htmlContent = editor.getHTML();
       const markdownContent = convertHtmlToMarkdown(htmlContent);
-      await updatePage(pages[0].id, { title: 'Job Description', content: markdownContent });
+      
+      console.log('Saving JD page:', {
+        id: pages[0].id,
+        content: markdownContent,
+        htmlContent: htmlContent
+      });
+      
+      const result = await updatePage(pages[0].id, { content: markdownContent });
+      
+      console.log('Update result:', result);
+      
+      // Force refresh the cache to ensure public page gets updated content
+      await jdService.forceRefresh(companyInfo?.id);
+      
       setIsEditing(false);
+      toast.success('Job description saved and published successfully! The public page has been updated.');
     } catch (err) {
       console.error('Failed to save page:', err);
+      console.error('Error details:', {
+        message: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : undefined
+      });
+      toast.error(`Failed to save job description: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   }, [pages, editor, updatePage]);
 
@@ -131,15 +180,109 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
     }
   }, [handleImageUpload]);
 
-  const handleRefresh = useCallback(async () => {
-    try {
-      await fetchPages();
-    } catch (err) {
-      console.error('Failed to refresh page:', err);
+  const handleView = useCallback(() => {
+    if (!companyInfo?.id) {
+      toast.error('Company information not available');
+      return;
     }
-  }, [fetchPages]);
 
-  if (loading) {
+    const viewUrl = `${window.location.origin}/jd/${companyInfo.id}`;
+    window.open(viewUrl, '_blank');
+  }, [companyInfo?.id]);
+
+  const handleCopyLink = useCallback(async () => {
+    if (!companyInfo?.id) {
+      toast.error('Company information not available');
+      return;
+    }
+
+    try {
+      const shareUrl = `${window.location.origin}/jd/${companyInfo.id}`;
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success('Link copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+      toast.error('Failed to copy link');
+    }
+  }, [companyInfo?.id]);
+
+  // Render action buttons in the designated container
+  useLayoutEffect(() => {
+    const buttonContainer = document.getElementById('jd-action-buttons');
+    if (buttonContainer) {
+      const buttonsHtml = `
+        ${isEditing ? `
+          <button
+            id="jd-save-btn"
+            class="px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium flex items-center gap-2"
+            title="Save changes"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Save
+          </button>
+        ` : `
+          <button
+            id="jd-edit-btn"
+            class="px-3 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-sm font-medium flex items-center gap-2"
+            title="Edit job description"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Edit
+          </button>
+        `}
+
+        <button
+          id="jd-view-btn"
+          class="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium flex items-center gap-2"
+          title="View public page"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          View
+        </button>
+
+        <button
+          id="jd-copy-btn"
+          class="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium flex items-center gap-2"
+          title="Copy link to clipboard"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          Copy
+        </button>
+      `;
+
+      buttonContainer.innerHTML = buttonsHtml;
+
+      // Add event listeners
+      const saveBtn = document.getElementById('jd-save-btn');
+      const editBtn = document.getElementById('jd-edit-btn');
+      const viewBtn = document.getElementById('jd-view-btn');
+      const copyBtn = document.getElementById('jd-copy-btn');
+
+      if (saveBtn) saveBtn.addEventListener('click', handleSave);
+      if (editBtn) editBtn.addEventListener('click', () => setIsEditing(true));
+      if (viewBtn) viewBtn.addEventListener('click', handleView);
+      if (copyBtn) copyBtn.addEventListener('click', handleCopyLink);
+
+      // Cleanup function
+      return () => {
+        if (saveBtn) saveBtn.removeEventListener('click', handleSave);
+        if (editBtn) editBtn.removeEventListener('click', () => setIsEditing(true));
+        if (viewBtn) viewBtn.removeEventListener('click', handleView);
+        if (copyBtn) copyBtn.removeEventListener('click', handleCopyLink);
+      };
+    }
+  }, [isEditing, handleSave, handleView, handleCopyLink]);
+
+  if (loading || companyLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-lg">Loading...</div>
@@ -164,49 +307,25 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen">
+    <div className="max-w-4xl mx-auto p-6 bg-gray-50 min-h-screen relative">
+
       {/* Page Content */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <div className="flex gap-3">
-            <button
-              onClick={handleRefresh}
-              disabled={loading}
-              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              title="Refresh content from server"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Refresh
-            </button>
+          <div className="flex gap-3 items-center">
+            <h1 className="text-2xl font-bold text-gray-900">Job Description</h1>
           </div>
-          <div className="flex gap-3">
-            {isEditing ? (
-              <button
-                onClick={handleSave}
-                className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md hover:shadow-lg font-medium"
-              >
-                Save Changes
-              </button>
-            ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg font-medium"
-              >
-                Edit Page
-              </button>
-            )}
-            {onClose && (
+          {onClose && (
+            <div className="flex gap-3 items-center">
               <button
                 onClick={onClose}
-                className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-md hover:shadow-lg font-medium"
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-md hover:shadow-lg font-medium"
               >
                 Close
               </button>
-              )}
-          </div>
+            </div>
+          )}
         </div>
         {/* Toolbar */}
         {isEditing && (
@@ -214,29 +333,53 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
             <h3 className="font-semibold mb-4 text-gray-800 text-lg">Formatting Tools</h3>
             <div className="flex flex-wrap gap-3">
               <button
-                onClick={() => editor.chain().focus().toggleBold().run()}
-                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
-                  editor.isActive('bold') ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white hover:bg-blue-600'
+                onClick={() => {
+                  if (editor) {
+                    editor.chain().focus().toggleBold().run();
+                    // Force a re-render to update button state
+                    setRefreshTrigger(prev => prev + 1);
+                  }
+                }}
+                className={`px-4 py-3 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2 ${
+                  editor?.isActive('bold')
+                    ? 'bg-blue-600 text-white shadow-lg ring-2 ring-blue-300' 
+                    : 'bg-blue-500 text-white hover:bg-blue-600 hover:shadow-lg'
                 }`}
-                title="Bold"
+                title="Bold (click to toggle)"
               >
                 <strong>B</strong>
               </button>
               <button
-                onClick={() => editor.chain().focus().toggleItalic().run()}
-                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
-                  editor.isActive('italic') ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white hover:bg-blue-600'
+                onClick={() => {
+                  if (editor) {
+                    editor.chain().focus().toggleItalic().run();
+                    // Force a re-render to update button state
+                    setRefreshTrigger(prev => prev + 1);
+                  }
+                }}
+                className={`px-4 py-3 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2 ${
+                  editor?.isActive('italic')
+                    ? 'bg-blue-600 text-white shadow-lg ring-2 ring-blue-300' 
+                    : 'bg-blue-500 text-white hover:bg-blue-600 hover:shadow-lg'
                 }`}
-                title="Italic"
+                title="Italic (click to toggle)"
               >
                 <em>I</em>
               </button>
               <button
-                onClick={() => editor.chain().focus().toggleUnderline().run()}
-                className={`px-4 py-3 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center gap-2 ${
-                  editor.isActive('underline') ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white hover:bg-blue-600'
+                onClick={() => {
+                  if (editor) {
+                    editor.chain().focus().toggleUnderline().run();
+                    // Force a re-render to update button state
+                    setRefreshTrigger(prev => prev + 1);
+                  }
+                }}
+                className={`px-4 py-3 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2 ${
+                  editor?.isActive('underline')
+                    ? 'bg-blue-600 text-white shadow-lg ring-2 ring-blue-300' 
+                    : 'bg-blue-500 text-white hover:bg-blue-600 hover:shadow-lg'
                 }`}
-                title="Underline"
+                title="Underline (click to toggle)"
               >
                 <u>U</u>
               </button>
@@ -312,7 +455,8 @@ const JDPage: React.FC<JDPageProps> = ({ onClose }) => {
             <div className="mt-4 p-3 bg-blue-100 rounded-lg">
               <p className="text-sm text-blue-800">
                 💡 <strong>Rich Text Editor:</strong> Use the formatting tools above to style your text. 
-                Images will be automatically inserted at your cursor position and displayed in real-time.
+                Click <strong>B</strong> to make text bold, <em>I</em> for italic, and <u>U</u> for underline. 
+                Click again to remove formatting. Images will be automatically inserted at your cursor position.
               </p>
             </div>
           </div>
