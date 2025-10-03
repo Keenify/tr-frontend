@@ -255,9 +255,9 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   const handleAddListSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newListTitle.trim()) {
-      // Validate country code if provided
-      if (newListCountry.trim() && (newListCountry.trim().length !== 2 || !/^[A-Z]{2}$/.test(newListCountry.trim()))) {
-        alert('Please enter a valid 2-letter country code (e.g., SG, MY, US) or leave it empty.');
+      // Validate country code if provided (only SG or MY allowed)
+      if (newListCountry.trim() && newListCountry !== 'SG' && newListCountry !== 'MY') {
+        alert('Please select Singapore or Malaysia, or leave it empty.');
         return;
       }
       
@@ -599,14 +599,14 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
                       placeholder="Enter list title..."
                       className="w-full px-3 py-2 border rounded-md mb-2"
                     />
-                    <input
-                      type="text"
+                    <select
                       value={newListCountry}
-                      onChange={(e) => setNewListCountry(e.target.value.toUpperCase())}
-                      placeholder="Enter country code (optional, e.g. SG, MY)..."
-                      maxLength={2}
-                      className="w-full px-3 py-2 border rounded-md mb-2"
-                    />
+                      onChange={(e) => setNewListCountry(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-md mb-2 appearance-none bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="SG">Singapore</option>
+                      <option value="MY">Malaysia</option>
+                    </select>
                     <div className="flex items-center gap-2">
                       <button
                         type="submit"
