@@ -150,25 +150,25 @@ ${giftData.specialInstructions ? `Special Instructions: ${giftData.specialInstru
     selectedFlavors,
     products: quotationProducts,
     companyInfo: companyInfo ? {
-      name: companyInfo.name,
+      name: companyInfo.name || "The Kettle Gourmet",
       completed_sign_up_sequence: companyInfo.completed_sign_up_sequence || false,
-      company_brand_color: companyInfo.company_brand_color,
-      id: companyInfo.id,
-      created_at: companyInfo.created_at,
-      address: companyInfo.address,
-      website_url: companyInfo.website_url,
-      phone: companyInfo.phone,
-      logo_url: companyInfo.logo_url
+      company_brand_color: companyInfo.company_brand_color || "#000000",
+      id: companyInfo.id || "default-company-id",
+      created_at: companyInfo.created_at || new Date().toISOString(),
+      address: companyInfo.address || "Singapore",
+      website_url: companyInfo.website_url || "www.thekettlegourmet.com",
+      phone: companyInfo.phone || "+65 8020 0741",
+      logo_url: companyInfo.logo_url || ""
     } : {
       name: "The Kettle Gourmet",
       completed_sign_up_sequence: false,
-      company_brand_color: null,
+      company_brand_color: "#000000",
       id: "default-company-id",
       created_at: new Date().toISOString(),
       address: "Singapore",
       website_url: "www.thekettlegourmet.com",
       phone: "+65 8020 0741",
-      logo_url: null
+      logo_url: ""
     },
     customerCompanyName,
     currentDate,

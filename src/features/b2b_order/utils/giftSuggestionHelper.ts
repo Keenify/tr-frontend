@@ -236,13 +236,13 @@ export const generateAutomatedGiftBox = (
   });
 
   // Select specific quantities from each brand category
-  const selectedBronys = selectRandomVariants(brandCategories.bronys, Math.min(2, brandCategories.bronys.length), config.dietaryRestriction);
-  const selectedKettleGourmet = selectRandomVariants(brandCategories.kettleGourmet, Math.min(4, brandCategories.kettleGourmet.length), config.dietaryRestriction);
-  const selectedYumiCurls = selectRandomVariants(brandCategories.yumiCurls, Math.min(3, brandCategories.yumiCurls.length), config.dietaryRestriction);
-  const selectedYumiSticks = selectRandomVariants(brandCategories.yumiSticks, Math.min(1, brandCategories.yumiSticks.length), config.dietaryRestriction);
+  let selectedBronys = selectRandomVariants(brandCategories.bronys, Math.min(2, brandCategories.bronys.length), config.dietaryRestriction);
+  let selectedKettleGourmet = selectRandomVariants(brandCategories.kettleGourmet, Math.min(4, brandCategories.kettleGourmet.length), config.dietaryRestriction);
+  let selectedYumiCurls = selectRandomVariants(brandCategories.yumiCurls, Math.min(3, brandCategories.yumiCurls.length), config.dietaryRestriction);
+  let selectedYumiSticks = selectRandomVariants(brandCategories.yumiSticks, Math.min(1, brandCategories.yumiSticks.length), config.dietaryRestriction);
 
   // Combine all selected variants
-  const allSelectedVariants = [
+  let allSelectedVariants = [
     ...selectedBronys,
     ...selectedKettleGourmet,
     ...selectedYumiCurls,
@@ -252,7 +252,7 @@ export const generateAutomatedGiftBox = (
   // If we don't have enough variants, try to get more from available categories
   if (allSelectedVariants.length < 5) {
     console.log('Not enough variants selected, trying fallback...');
-    
+
     // Get all available variants as fallback
     const allAvailableVariants: ProductVariant[] = [];
     if (isPublicAccess) {
@@ -263,10 +263,23 @@ export const generateAutomatedGiftBox = (
         allAvailableVariants.push(...variants);
       });
     }
-    
-    // If we still don't have enough, use what we have
-    if (allSelectedVariants.length === 0 && allAvailableVariants.length > 0) {
-      const fallbackVariants = selectRandomVariants(allAvailableVariants, Math.min(8, allAvailableVariants.length), config.dietaryRestriction);
+
+    // If logged-in user has no variants, fallback to static data
+    if (allAvailableVariants.length === 0) {
+      console.log('⚠️ Logged-in user has no products/variants, using static data fallback');
+      allAvailableVariants.push(...STATIC_PRODUCT_VARIANTS[78] || []);
+      // Also use static brand categories
+      const staticBrandCategories = categorizeVariantsByBrand();
+      selectedBronys = selectRandomVariants(staticBrandCategories.bronys, 2, config.dietaryRestriction);
+      selectedKettleGourmet = selectRandomVariants(staticBrandCategories.kettleGourmet, 4, config.dietaryRestriction);
+      selectedYumiCurls = selectRandomVariants(staticBrandCategories.yumiCurls, 3, config.dietaryRestriction);
+      selectedYumiSticks = selectRandomVariants(staticBrandCategories.yumiSticks, 1, config.dietaryRestriction);
+
+      allSelectedVariants = [...selectedBronys, ...selectedKettleGourmet, ...selectedYumiCurls, ...selectedYumiSticks];
+      console.log('✅ Using static data: selected', allSelectedVariants.length, 'variants');
+    } else if (allSelectedVariants.length === 0 && allAvailableVariants.length > 0) {
+      // Use available user variants
+      const fallbackVariants = selectRandomVariants(allAvailableVariants, Math.min(10, allAvailableVariants.length), config.dietaryRestriction);
       allSelectedVariants.push(...fallbackVariants);
     }
   }
