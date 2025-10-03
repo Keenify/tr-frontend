@@ -86,7 +86,7 @@ export const transformGiftSuggestionToQuotation = (
 
   // Build the product entry using ACTUAL flavor variants from the gift data
   const quotationProducts = [{
-    name: giftData.name || 'The Kettle Gourmet Gift Box',
+    name: 'The Kettle Gourmet Gift Box',
     description: giftData.description,
     pack_count_per_box: 6, // Gift boxes: 6 boxes per carton as per requirement
     recommended_retail_price: giftData.pricePerBox,
