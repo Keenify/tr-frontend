@@ -282,12 +282,12 @@ export const GIFT_BOX_TYPES = [
   {
     id: 'christmas-mix',
     name: 'Christmas Mix & Match Gift Box',
-    image_url: '/src/assets/gift-boxes/Christmas Mix & Match Gift Box.jpg'
+    image_url: 'https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/78/20250227_085339_Christmas Mix & Match Gift Box.jpg?'
   },
   {
     id: 'xmas-yumi',
     name: 'XMAS Yumi Gift Box',
-    image_url: '/src/assets/gift-boxes/XMAS Yumi GIft Box.jpg'
+    image_url: 'https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/78/20250227_092150_XMAS Yumi GIft Box.jpg?'
   }
 ];
 
