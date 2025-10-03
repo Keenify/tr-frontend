@@ -258,6 +258,79 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
       image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/68/20250203_121745_Yumi%20Cheese.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
+    },
+    // Brony's Brownie Crisps variants
+    {
+      id: 101,
+      name: "Matcha",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/70/20250203_122104_Matcha.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 102,
+      name: "Choc-chip",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/70/20250203_122049_Choc-crisps.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 103,
+      name: "Chocolate Chip",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/70/20250429_115513_Chocolate Chip.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 104,
+      name: "Peanut Pancake",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/70/20250429_115520_Peanut Pancake.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 105,
+      name: "Banana Fritter",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/70/20250429_115524_Banana Fritter.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    // Yumi Corn Curls variants
+    {
+      id: 106,
+      name: "Cheese",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/72/20250214_062330_Cheese.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 107,
+      name: "Barbecue",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/72/20250214_062319_Barbecue.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 108,
+      name: "Squid",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/72/20250214_062339_Squid.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    // Yumi Cornsticks Polybag variants
+    {
+      id: 109,
+      name: "Original",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/68/20250203_121756_Original.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 110,
+      name: "BBQ Chicken",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/68/20250203_121735_Yumi BBQ Chicken.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
     }
   ]
 };
@@ -296,13 +369,14 @@ export const categorizeVariantsByBrand = (): BrandCategories => {
 
   // The Kettle Gourmet Popcorn - 30g exact variants
   const kettleVariants = ['Tom Yum', 'Mala', 'Salted Caramel', 'Chocolate', 'Chicken Floss',
-                          'Nasi Lemak', 'Pulut Hitam', 'Chilli Crab', 'Fish Head Curry', 'Cheese', 'Kaya Butter Toast'];
+                          'Nasi Lemak', 'Pulut Hitam', 'Chilli Crab', 'Fish Head Curry',
+                          'Cheese', 'Kaya Butter Toast'];
 
   // Yumi Corn Curls 60g exact variants
-  const yumiCurlsVariants = ['Curls Cheese', 'Barbecue', 'Squid'];
+  const yumiCurlsVariants = ['Cheese', 'Barbecue', 'Squid'];
 
   // Yumi Cornsticks Polybag exact variants
-  const yumiSticksVariants = ['Original', 'BBQ Chicken', 'Cornsticks Cheese'];
+  const yumiSticksVariants = ['Original', 'BBQ Chicken', 'Cheese'];
 
   return {
     // Brony's Brownie Crisps (2 needed)

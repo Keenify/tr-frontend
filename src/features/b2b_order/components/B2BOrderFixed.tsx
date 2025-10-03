@@ -575,11 +575,10 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                             {item.giftBoxType && (
                               <>
                                 <div className="gift-box-image">
-                                  <img
-                                    src={item.giftBoxType.image_url}
+                                  <img 
+                                    src={item.giftBoxType.image_url} 
                                     alt={item.giftBoxType.name}
                                     crossOrigin="anonymous"
-                                    loading="eager"
                                     onError={(e) => {
                                       console.error("Gift box image failed to load:", e.currentTarget.src);
                                       e.currentTarget.style.display = "none";
@@ -609,11 +608,10 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                                     <div key={i} className="flavor-item">
                                       <div className="flavor-image">
                                         {variant.image_url ? (
-                                          <img
-                                            src={variant.image_url}
+                                          <img 
+                                            src={variant.image_url} 
                                             alt={variant.name}
                                             crossOrigin="anonymous"
-                                            loading="lazy"
                                             onError={(e) => {
                                               console.error("Image failed to load:", e.currentTarget.src);
                                               e.currentTarget.style.display = "none";
@@ -636,11 +634,10 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                                     <div key={i} className="flavor-item">
                                       <div className="flavor-image">
                                         {variant.image_url ? (
-                                          <img
-                                            src={variant.image_url}
+                                          <img 
+                                            src={variant.image_url} 
                                             alt={variant.name}
                                             crossOrigin="anonymous"
-                                            loading="lazy"
                                             onError={(e) => {
                                               console.error("Image failed to load:", e.currentTarget.src);
                                               e.currentTarget.style.display = "none";
@@ -663,11 +660,10 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                                     <div key={i} className="flavor-item">
                                       <div className="flavor-image">
                                         {variant.image_url ? (
-                                          <img
-                                            src={variant.image_url}
+                                          <img 
+                                            src={variant.image_url} 
                                             alt={variant.name}
                                             crossOrigin="anonymous"
-                                            loading="lazy"
                                             onError={(e) => {
                                               console.error("Image failed to load:", e.currentTarget.src);
                                               e.currentTarget.style.display = "none";
@@ -690,11 +686,10 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                                     <div key={i} className="flavor-item">
                                       <div className="flavor-image">
                                         {variant.image_url ? (
-                                          <img
-                                            src={variant.image_url}
+                                          <img 
+                                            src={variant.image_url} 
                                             alt={variant.name}
                                             crossOrigin="anonymous"
-                                            loading="lazy"
                                             onError={(e) => {
                                               console.error("Image failed to load:", e.currentTarget.src);
                                               e.currentTarget.style.display = "none";
