@@ -179,25 +179,83 @@ export const STATIC_PRODUCT_VARIANTS: { [key: number]: ProductVariant[] } = {
       product_id: 78,
       created_at: new Date().toISOString()
     },
-    // Additional unique flavors
+    // Brony's Brownie Crisps variants
     {
-      id: 44,
+      id: 101,
+      name: "Matcha",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/70/20250203_122104_Matcha.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 102,
+      name: "Choc-chip",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/70/20250203_122049_Choc-crisps.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 103,
+      name: "Chocolate Chip",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/70/20250429_115513_Chocolate Chip.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 104,
+      name: "Peanut Pancake",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/70/20250429_115520_Peanut Pancake.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 105,
+      name: "Banana Fritter",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/70/20250429_115524_Banana Fritter.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    // Yumi Corn Curls variants
+    {
+      id: 106,
+      name: "Curls Cheese",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/72/20250214_062330_Cheese.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 107,
+      name: "Barbecue",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/72/20250214_062319_Barbecue.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 108,
+      name: "Squid",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/72/20250214_062339_Squid.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    // Yumi Cornsticks Polybag variants (only 2 unique flavors)
+    {
+      id: 109,
+      name: "Original",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/68/20250203_121756_Original.jpg?",
+      product_id: 78,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 110,
       name: "BBQ Chicken",
       image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/68/20250203_121735_Yumi BBQ%20Chicken.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },
     {
-      id: 45,
-      name: "Matcha Green Tea",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/70/20250203_122104_Matcha.jpg?",
-      product_id: 78,
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 46,
-      name: "Earl Grey Tea",
-      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/71/20250203_122210_Earl%20Grey%20Jelly%20Drink.jpg?",
+      id: 111,
+      name: "Cornsticks Cheese",
+      image_url: "https://ajnldibtdiyclquurxio.supabase.co/storage/v1/object/public/content-image/products/68/20250203_121745_Yumi%20Cheese.jpg?",
       product_id: 78,
       created_at: new Date().toISOString()
     },

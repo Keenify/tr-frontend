@@ -31,7 +31,45 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
   // UI state
   const [showTable, setShowTable] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedItems, setGeneratedItems] = useState<any[]>([]);
+  const [generatedItems, setGeneratedItems] = useState<Array<{
+    name: string;
+    description: string;
+    pax: number;
+    pricePerBox: string;
+    total: string;
+    productDescription?: string;
+    specialInstructions?: string;
+    tierPricing: Array<{
+      minQuantity: number;
+      maxQuantity: number;
+      pricePerUnit: number;
+    }>;
+    giftBoxType?: {
+      id: string;
+      name: string;
+      image_url: string;
+    };
+    brandCategories?: {
+      bronys: ProductVariant[];
+      kettleGourmet: ProductVariant[];
+      yumiCurls: ProductVariant[];
+      yumiSticks: ProductVariant[];
+    };
+    selectedProducts: Array<{
+      name: string;
+      price?: number;
+    }>;
+    variants: Array<{
+      name: string;
+      image_url: string | null;
+      productName: string;
+    }>;
+    priceBreakdown?: {
+      baseCost: number;
+      markup: number;
+      discount: number;
+    };
+  }>>([]);
 
   // Product data state
   const [products, setProducts] = useState<Product[]>([]);
@@ -347,7 +385,6 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
 
     } catch (error) {
       console.error('❌ Error generating PDF:', error);
-      alert(`Failed to generate PDF: ${error.message}. Please check the console for details.`);
     } finally {
       setIsGenerating(false);
     }
@@ -423,7 +460,6 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
 
     } catch (error) {
       console.error('❌ Error generating PDF:', error);
-      alert(`Failed to generate PDF: ${error.message}. Please check the console for details.`);
     } finally {
       setIsGenerating(false);
     }
