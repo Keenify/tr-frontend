@@ -686,7 +686,7 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                       {/* Right Side - Pricing Panel */}
                       <div className="pricing-panel">
                         <div className="price-display">
-                          <div className="quantity-label">Quantity</div>
+                          <div className="quantity-label">Each staff will get</div>
                           <div className="quantity-value">{item.pax} boxes</div>
                           <div className="price-per-box">RM {item.pricePerBox} per box</div>
                           <div className="total-price">Total: RM {item.total}</div>
