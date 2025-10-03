@@ -95,7 +95,6 @@ export const selectRandomVariants = (
       [filteredVariants[i], filteredVariants[j]] = [filteredVariants[j], filteredVariants[i]];
     }
   }
-  
 
   // Return the first 'count' items
   return filteredVariants.slice(0, Math.min(count, filteredVariants.length));
