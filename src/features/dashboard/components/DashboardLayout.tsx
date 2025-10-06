@@ -72,6 +72,7 @@ const navigationConfig = [
       { id: "salesTab", label: "Sales", shortForm: "Sa", icon: ThumbsUp },
       { id: "product", label: "Product", shortForm: "Pr", icon: ThumbsUp },
       { id: "quotation", label: "Quotation", shortForm: "Qu", icon: ThumbsUp },
+      { id: "b2b_order", label: "Gift Suggestion Generator", shortForm: "GSG", icon: ThumbsUp },
     ],
   },
   {
@@ -602,14 +603,14 @@ export function DashboardLayout({
           
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <div 
+              <div
                 className="h-10 w-10 rounded-full flex items-center justify-center overflow-hidden cursor-pointer border-2 border-white/30 hover:border-white/70 transition-all duration-200"
                 onClick={() => setIsProfileEditModalOpen(true)}
               >
                 {userAvatar ? (
-                  <img 
-                    src={userAvatar} 
-                    alt="User avatar" 
+                  <img
+                    src={userAvatar}
+                    alt="User avatar"
                     className="h-full w-full object-cover"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
