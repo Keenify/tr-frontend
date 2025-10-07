@@ -13,6 +13,7 @@ import VariantGrid from './VariantGrid';
 import EditProductExportModal from './EditProductExportModal';
 import ProductSlide from './ProductSlide';
 import toast from 'react-hot-toast';
+import { cacheAllProducts } from '../../b2b_order/utils/productCache';
 
 interface ProductProps {
   session: Session;
@@ -69,10 +70,25 @@ const Product: React.FC<ProductProps> = ({ session }) => {
     fetchProducts();
   }, [fetchProducts]);
 
+  // Helper function to refresh the gift generator cache
+  const refreshProductCache = React.useCallback(async () => {
+    if (companyInfo?.id) {
+      try {
+        console.log('🔄 Auto-refreshing product cache after CRUD operation...');
+        await cacheAllProducts(companyInfo.id);
+        console.log('✅ Product cache refreshed successfully');
+      } catch (error) {
+        console.warn('⚠️ Failed to refresh product cache:', error);
+        // Don't throw error - cache refresh is not critical for Product feature functionality
+      }
+    }
+  }, [companyInfo?.id]);
+
   const handleCreateProduct = async (productData: CreateProductRequest) => {
     try {
       await createProduct(productData);
       await fetchProducts();
+      await refreshProductCache(); // Auto-refresh cache for Gift Generator
       toast.success('Product created successfully');
     } catch (error) {
       console.error('Failed to create product:', error);
@@ -84,6 +100,7 @@ const Product: React.FC<ProductProps> = ({ session }) => {
     try {
       await updateProduct(productId, productData);
       await fetchProducts();
+      await refreshProductCache(); // Auto-refresh cache for Gift Generator
       toast.success('Product updated successfully');
     } catch (error) {
       console.error('Failed to update product:', error);
@@ -95,6 +112,7 @@ const Product: React.FC<ProductProps> = ({ session }) => {
     try {
       await deleteProduct(productId);
       await fetchProducts();
+      await refreshProductCache(); // Auto-refresh cache for Gift Generator
       toast.success('Product deleted successfully');
       setDeletingProduct(null);
     } catch (error) {
@@ -112,6 +130,7 @@ const Product: React.FC<ProductProps> = ({ session }) => {
         cost_of_goods_sold: '0.00'
       });
       await fetchProducts();
+      await refreshProductCache(); // Auto-refresh cache for Gift Generator
       toast.success('Variant created successfully');
       setCreatingVariantForProduct(null);
     } catch (error) {
@@ -127,11 +146,12 @@ const Product: React.FC<ProductProps> = ({ session }) => {
         ...prev,
         [productId]: variants
       }));
+      await refreshProductCache(); // Auto-refresh cache for Gift Generator
     } catch (error) {
       console.error('Failed to refresh variants:', error);
       setFetchError('Failed to refresh variants');
     }
-  }, []);
+  }, [refreshProductCache]);
 
   const filteredProducts = React.useMemo(() => {
     return products; // Return all products without filtering

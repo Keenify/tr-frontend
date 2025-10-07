@@ -135,7 +135,7 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   const [isAddingList, setIsAddingList] = useState(false);
   const [newListTitle, setNewListTitle] = useState('');
   const [newListCountry, setNewListCountry] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState<string>('SG');
+  const [selectedCountry, setSelectedCountry] = useState<string>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [companyLabels, setCompanyLabels] = useState<Label[]>([]);
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([]);
@@ -169,8 +169,11 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
     return Array.from(uniqueCountries).sort();
   }, [lists]);
 
-  // Filter lists by selected country (SG or MY only)
+  // Filter lists by selected country (All, SG, or MY)
   const filteredLists = useMemo(() => {
+    if (selectedCountry === 'all') {
+      return lists;  // Show all lists regardless of country
+    }
     if (selectedCountry === 'SG') {
       return lists.filter(list =>
         list.country === 'SG' ||
@@ -178,7 +181,8 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
         list.country === 'singapore' ||
         !list.country  // Include lists without country for SG by default
       );
-    } else if (selectedCountry === 'MY') {
+    }
+    if (selectedCountry === 'MY') {
       return lists.filter(list =>
         list.country === 'MY' ||
         list.country === 'Malaysia' ||
@@ -255,9 +259,9 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
   const handleAddListSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newListTitle.trim()) {
-      // Validate country code if provided
-      if (newListCountry.trim() && (newListCountry.trim().length !== 2 || !/^[A-Z]{2}$/.test(newListCountry.trim()))) {
-        alert('Please enter a valid 2-letter country code (e.g., SG, MY, US) or leave it empty.');
+      // Validate country code if provided (only SG or MY allowed)
+      if (newListCountry.trim() && newListCountry !== 'SG' && newListCountry !== 'MY') {
+        alert('Please select Singapore or Malaysia, or leave it empty.');
         return;
       }
       
@@ -499,11 +503,31 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
         )}
       </div>
 
-      {/* Country Tabs - SG/MY Only */}
+      {/* Country Tabs - All, SG, MY */}
       <Tab.Group onChange={(index) => {
-        setSelectedCountry(index === 0 ? 'SG' : 'MY');
+        if (index === 0) {
+          setSelectedCountry('all');
+        } else if (index === 1) {
+          setSelectedCountry('SG');
+        } else {
+          setSelectedCountry('MY');
+        }
       }}>
         <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1 mb-6">
+          <Tab
+            className={({ selected }) =>
+              `flex items-center justify-center px-4 py-2.5 text-sm font-medium leading-5 rounded-lg
+              ${selected
+                ? 'bg-white text-blue-700 shadow'
+                : 'text-gray-600 hover:bg-white/[0.12] hover:text-gray-800'
+              }`
+            }
+          >
+            <span>All</span>
+            <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+              {lists.length}
+            </span>
+          </Tab>
           <Tab
             className={({ selected }) =>
               `flex items-center justify-center px-4 py-2.5 text-sm font-medium leading-5 rounded-lg
@@ -599,14 +623,14 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
                       placeholder="Enter list title..."
                       className="w-full px-3 py-2 border rounded-md mb-2"
                     />
-                    <input
-                      type="text"
+                    <select
                       value={newListCountry}
-                      onChange={(e) => setNewListCountry(e.target.value.toUpperCase())}
-                      placeholder="Enter country code (optional, e.g. SG, MY)..."
-                      maxLength={2}
-                      className="w-full px-3 py-2 border rounded-md mb-2"
-                    />
+                      onChange={(e) => setNewListCountry(e.target.value)}
+                      className="w-full px-3 py-2 border rounded-md mb-2 appearance-none bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="SG">Singapore</option>
+                      <option value="MY">Malaysia</option>
+                    </select>
                     <div className="flex items-center gap-2">
                       <button
                         type="submit"

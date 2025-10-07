@@ -31,6 +31,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import DailyHuddle from "./features/dailyHuddle/components/DailyHuddle";
 import Sales from "./features/sales/components/Sales";
 import Quotation from "./features/quotation/components/Quotation";
+import B2BOrderFixed from "./features/b2b_order/components/B2BOrderFixed";
 import Product from "./features/product/components/Product";
 import Resources from "./features/resources/components/Resources";
 import Projects from "./features/projects/components/Projects";
@@ -104,26 +105,8 @@ const App: React.FC = () => {
         <Suspense fallback={<ClipLoader color="#36d7b7" />}>
           {session && <FloatingMusicPlayer />}
           
-          {/* Show loading spinner while session is being determined */}
-          {loading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-              <ClipLoader color="#36d7b7" />
-            </div>
-          ) : (
           <Routes>
-            {/* Default Redirect to User-Specific Route */}
-            <Route
-              path="/"
-              element={
-                <Navigate
-                  to={session ? `/${session.user.id}/vivid_vision` : "/login"}
-                  replace
-                />
-              }
-            />
-
-
-            {/* Public Routes */}
+            {/* Public Routes - Always accessible, even while loading */}
             <Route path="/login" element={<AuthForm />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route
@@ -132,7 +115,7 @@ const App: React.FC = () => {
             />
             {/* Public Daily Huddle routes */}
             <Route path="/daily_huddle/:userid" element={<PublicDailyHuddle />} />
-            
+
             {/* Public Job Details route */}
             <Route path="/jobs/:jobId" element={<PublicJobDetails />} />
             {/* Job Preview route */}
@@ -140,259 +123,318 @@ const App: React.FC = () => {
             {/* Public JD Page route */}
             <Route path="/jd/:companyId/:slug" element={<PublicJDPage />} />
 
+            {/* Public Order Budget Tracker - no auth required */}
+            <Route path="/public/order-tracker" element={<B2BOrderFixed session={null} />} />
+
+            {/* Order Budget Tracker for non-authenticated users - no sidebar */}
+            {!session && (
+              <Route
+                path="/:userId/b2b_order"
+                element={<B2BOrderFixed session={null} />}
+              />
+            )}
+
+
+            {/* Show loading spinner while session is being determined for protected routes */}
+            {loading ? (
+              <Route
+                path="*"
+                element={
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                    <ClipLoader color="#36d7b7" />
+                  </div>
+                }
+              />
+            ) : (
+              <>
+                {/* Default Redirect to User-Specific Route */}
+                <Route
+                  path="/"
+                  element={
+                    <Navigate
+                      to={session ? `/${session.user.id}/vivid_vision` : "/login"}
+                      replace
+                    />
+                  }
+                />
+
             {/* Protected Routes */}
             <>
-                <Route
-                  path="/:userId/directory"
-                  element={
-                    <ProtectedRoute
-                      session={session}
-                      element={
-                        <DashboardLayout
-                          session={session}
-                          signOut={signOut}
-                          activeTab="people"
-                          activeSubTab="directory"
-                          onSubTabChange={() => {}}
-                        >
-                          <DirectoryPage session={session} />
-                        </DashboardLayout>
-                      }
-                    />
-                  }
-                />
-                <Route
-                  path="/:userId/orgChart"
-                  element={
-                    <ProtectedRoute
-                      session={session}
-                      element={
-                        <DashboardLayout
-                          session={session}
-                          signOut={signOut}
-                          activeTab="people"
-                          activeSubTab="orgChart"
-                          onSubTabChange={() => {}}
-                        >
-                          {session && <OrgChartPage session={session} />}
-                        </DashboardLayout>
-                      }
-                    />
-                  }
-                />
-                <Route
-                  path="/:userId/supplier"
-                  element={
-                    <ProtectedRoute
-                      session={session}
-                      element={
-                        <DashboardLayout
-                          session={session}
-                          signOut={signOut}
-                          activeTab="people"
-                          activeSubTab="supplier"
-                          onSubTabChange={() => {}}
-                        >
-                          <Supplier session={session} />
-                        </DashboardLayout>
-                      }
-                    />
-                  }
-                />
-                <Route
-                  path="/:userId/client"
-                  element={
-                    <ProtectedRoute
-                      session={session}
-                      element={
-                        <DashboardLayout
-                          session={session}
-                          signOut={signOut}
-                          activeTab="people"
-                          activeSubTab="client"
-                          onSubTabChange={() => {}}
-                        >
-                          <Client session={session} />
-                        </DashboardLayout>
-                      }
-                    />
-                  }
-                />
-                <Route
-                  path="/:userId/steps/:tabId/editor"
-                  element={<Editor />}
-                />
-                <Route
-                  path="/:userId/dailyhuddle"
-                  element={
-                    <ProtectedRoute
-                      session={session}
-                      element={
-                        <DashboardLayout
-                          session={session}
-                          signOut={signOut}
-                          activeTab="meeting"
-                          activeSubTab="dailyHuddle"
-                          onSubTabChange={() => {}}
-                        >
-                          <DailyHuddle session={session} />
-                        </DashboardLayout>
-                      }
-                    />
-                  }
-                />
-                <Route
-                  path="/:userId/weeklyMeeting"
-                  element={
-                    <ProtectedRoute
-                      session={session}
-                      element={
-                        <DashboardLayout
-                          session={session}
-                          signOut={signOut}
-                          activeTab="meeting"
-                          activeSubTab="weeklyMeeting"
-                          onSubTabChange={() => {}}
-                        >
-                          <WeeklyMeeting session={session} />
-                        </DashboardLayout>
-                      }
-                    />
-                  }
-                />
-                <Route
-                  path="/:userId/salesTab"
-                  element={
-                    <ProtectedRoute
-                      session={session}
-                      element={
-                        <DashboardLayout
-                          session={session}
-                          signOut={signOut}
-                          activeTab="sales"
-                          activeSubTab="salesTab"
-                          onSubTabChange={() => {}}
-                        >
-                          <Sales session={session} />
-                        </DashboardLayout>
-                      }
-                    />
-                  }
-                />
-                <Route
-                  path="/:userId/quotation"
-                  element={
-                    <ProtectedRoute
-                      session={session}
-                      element={
-                        <DashboardLayout
-                          session={session}
-                          signOut={signOut}
-                          activeTab="sales"
-                          activeSubTab="quotation"
-                          onSubTabChange={() => {}}
-                        >
-                          <Quotation session={session} />
-                        </DashboardLayout>
-                      }
-                    />
-                  }
-                />
-                <Route
-                  path="/:userId/product"
-                  element={
-                    <ProtectedRoute
-                      session={session}
-                      element={
-                        <DashboardLayout
-                          session={session}
-                          signOut={signOut}
-                          activeTab="sales"
-                          activeSubTab="product"
-                          onSubTabChange={() => {}}
-                        >
-                          <Product session={session} />
-                        </DashboardLayout>
-                      }
-                    />
-                  }
-                />
-                <Route
-                  path="/:userId/resources"
-                  element={
-                    <ProtectedRoute
-                      session={session}
-                      element={
-                        <DashboardLayout
-                          session={session}
-                          signOut={signOut}
-                          activeTab="technology"
-                          activeSubTab="resources"
-                          onSubTabChange={() => {}}
-                        >
-                          <Resources session={session} />
-                        </DashboardLayout>
-                      }
-                    />
-                  }
-                />
-                <Route
-                  path="/:userId/projects"
-                  element={
-                    <ProtectedRoute
-                      session={session}
-                      element={
-                        <DashboardLayout
-                          session={session}
-                          signOut={signOut}
-                          activeTab="projects"
-                          activeSubTab="projects"
-                          onSubTabChange={() => {}}
-                        >
-                          <Projects session={session} />
-                        </DashboardLayout>
-                      }
-                    />
-                  }
-                />
-                <Route
-                  path="/:userId/creative-management"
-                  element={
-                    <ProtectedRoute
-                      session={session}
-                      element={
-                        <DashboardLayout
-                          session={session}
-                          signOut={signOut}
-                          activeTab="projects"
-                          activeSubTab="creative-management"
-                          onSubTabChange={() => {}}
-                        >
-                          <CreativeManagement session={session} />
-                        </DashboardLayout>
-                      }
-                    />
-                  }
-                />
-                <Route
-                  path="/:userId/hiring"
-                  element={
-                    <ProtectedRoute
-                      session={session}
-                      element={
-                        <DashboardLayout
-                          session={session}
-                          signOut={signOut}
-                          activeTab="people"
-                          activeSubTab="hiring"
-                          onSubTabChange={() => {}}
-                        >
-                          <Hiring session={session} />
-                        </DashboardLayout>
-                      }
-                    />
-                  }
-                />
+              {session && (
+                <>
+                  <Route
+                    path="/:userId/directory"
+                    element={
+                      <ProtectedRoute
+                        session={session}
+                        element={
+                          <DashboardLayout
+                            session={session}
+                            signOut={signOut}
+                            activeTab="people"
+                            activeSubTab="directory"
+                            onSubTabChange={() => {}}
+                          >
+                            <DirectoryPage session={session} />
+                          </DashboardLayout>
+                        }
+                      />
+                    }
+                  />
+                  <Route
+                    path="/:userId/orgChart"
+                    element={
+                      <ProtectedRoute
+                        session={session}
+                        element={
+                          <DashboardLayout
+                            session={session}
+                            signOut={signOut}
+                            activeTab="people"
+                            activeSubTab="orgChart"
+                            onSubTabChange={() => {}}
+                          >
+                            <OrgChartPage session={session} />
+                          </DashboardLayout>
+                        }
+                      />
+                    }
+                  />
+                  <Route
+                    path="/:userId/supplier"
+                    element={
+                      <ProtectedRoute
+                        session={session}
+                        element={
+                          <DashboardLayout
+                            session={session}
+                            signOut={signOut}
+                            activeTab="people"
+                            activeSubTab="supplier"
+                            onSubTabChange={() => {}}
+                          >
+                            <Supplier session={session} />
+                          </DashboardLayout>
+                        }
+                      />
+                    }
+                  />
+                  <Route
+                    path="/:userId/client"
+                    element={
+                      <ProtectedRoute
+                        session={session}
+                        element={
+                          <DashboardLayout
+                            session={session}
+                            signOut={signOut}
+                            activeTab="people"
+                            activeSubTab="client"
+                            onSubTabChange={() => {}}
+                          >
+                            <Client session={session} />
+                          </DashboardLayout>
+                        }
+                      />
+                    }
+                  />
+                  <Route
+                    path="/:userId/steps/:tabId/editor"
+                    element={<Editor />}
+                  />
+                  <Route
+                    path="/:userId/dailyhuddle"
+                    element={
+                      <ProtectedRoute
+                        session={session}
+                        element={
+                          <DashboardLayout
+                            session={session}
+                            signOut={signOut}
+                            activeTab="meeting"
+                            activeSubTab="dailyHuddle"
+                            onSubTabChange={() => {}}
+                          >
+                            <DailyHuddle session={session} />
+                          </DashboardLayout>
+                        }
+                      />
+                    }
+                  />
+                  <Route
+                    path="/:userId/weeklyMeeting"
+                    element={
+                      <ProtectedRoute
+                        session={session}
+                        element={
+                          <DashboardLayout
+                            session={session}
+                            signOut={signOut}
+                            activeTab="meeting"
+                            activeSubTab="weeklyMeeting"
+                            onSubTabChange={() => {}}
+                          >
+                            <WeeklyMeeting session={session} />
+                          </DashboardLayout>
+                        }
+                      />
+                    }
+                  />
+                  <Route
+                    path="/:userId/salesTab"
+                    element={
+                      <ProtectedRoute
+                        session={session}
+                        element={
+                          <DashboardLayout
+                            session={session}
+                            signOut={signOut}
+                            activeTab="sales"
+                            activeSubTab="salesTab"
+                            onSubTabChange={() => {}}
+                          >
+                            <Sales session={session} />
+                          </DashboardLayout>
+                        }
+                      />
+                    }
+                  />
+                  <Route
+                    path="/:userId/quotation"
+                    element={
+                      <ProtectedRoute
+                        session={session}
+                        element={
+                          <DashboardLayout
+                            session={session}
+                            signOut={signOut}
+                            activeTab="sales"
+                            activeSubTab="quotation"
+                            onSubTabChange={() => {}}
+                          >
+                            <Quotation session={session} />
+                          </DashboardLayout>
+                        }
+                      />
+                    }
+                  />
+                  <Route
+                    path="/:userId/b2b_order"
+                    element={
+                      <ProtectedRoute
+                        session={session}
+                        element={
+                          <DashboardLayout
+                            session={session}
+                            signOut={signOut}
+                            activeTab="sales"
+                            activeSubTab="b2b_order"
+                            onSubTabChange={() => {}}
+                          >
+                            <B2BOrderFixed session={session} />
+                          </DashboardLayout>
+                        }
+                      />
+                    }
+                  />
+                  <Route
+                    path="/:userId/product"
+                    element={
+                      <ProtectedRoute
+                        session={session}
+                        element={
+                          <DashboardLayout
+                            session={session}
+                            signOut={signOut}
+                            activeTab="sales"
+                            activeSubTab="product"
+                            onSubTabChange={() => {}}
+                          >
+                            <Product session={session} />
+                          </DashboardLayout>
+                        }
+                      />
+                    }
+                  />
+                  <Route
+                    path="/:userId/resources"
+                    element={
+                      <ProtectedRoute
+                        session={session}
+                        element={
+                          <DashboardLayout
+                            session={session}
+                            signOut={signOut}
+                            activeTab="technology"
+                            activeSubTab="resources"
+                            onSubTabChange={() => {}}
+                          >
+                            <Resources session={session} />
+                          </DashboardLayout>
+                        }
+                      />
+                    }
+                  />
+                  <Route
+                    path="/:userId/projects"
+                    element={
+                      <ProtectedRoute
+                        session={session}
+                        element={
+                          <DashboardLayout
+                            session={session}
+                            signOut={signOut}
+                            activeTab="projects"
+                            activeSubTab="projects"
+                            onSubTabChange={() => {}}
+                          >
+                            <Projects session={session} />
+                          </DashboardLayout>
+                        }
+                      />
+                    }
+                  />
+                  <Route
+                    path="/:userId/creative-management"
+                    element={
+                      <ProtectedRoute
+                        session={session}
+                        element={
+                          <DashboardLayout
+                            session={session}
+                            signOut={signOut}
+                            activeTab="projects"
+                            activeSubTab="creative-management"
+                            onSubTabChange={() => {}}
+                          >
+                            <CreativeManagement session={session} />
+                          </DashboardLayout>
+                        }
+                      />
+                    }
+                  />
+                  <Route
+                    path="/:userId/hiring"
+                    element={
+                      <ProtectedRoute
+                        session={session}
+                        element={
+                          <DashboardLayout
+                            session={session}
+                            signOut={signOut}
+                            activeTab="people"
+                            activeSubTab="hiring"
+                            onSubTabChange={() => {}}
+                          >
+                            <Hiring session={session} />
+                          </DashboardLayout>
+                        }
+                      />
+                    }
+                  />
+                </>
+              )}
+              {session && (
                 <Route
                   path="/:userId/accountability"
                   element={
@@ -412,6 +454,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/leaves"
                   element={
@@ -431,6 +475,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/password"
                   element={
@@ -450,6 +496,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/todo"
                   element={
@@ -469,6 +517,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/sandbox"
                   element={
@@ -488,6 +538,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/feedback"
                   element={
@@ -507,6 +559,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/financeTab"
                   element={
@@ -526,25 +580,29 @@ const App: React.FC = () => {
                     />
                   }
                 />
-                <Route
-                  path="/:userId/power-of-one"
-                  element={
-                    <ProtectedRoute
-                      session={session}
-                      element={
-                        <DashboardLayout
-                          session={session}
-                          signOut={signOut}
-                          activeTab="financeData"
-                          activeSubTab="power-of-one"
-                          onSubTabChange={() => {}}
-                        >
-                          <PowerOfOneWithCompany userId={session?.user.id || ''} />
-                        </DashboardLayout>
-                      }
-                    />
-                  }
-                />
+              )}
+                {session && (
+                  <Route
+                    path="/:userId/power-of-one"
+                    element={
+                      <ProtectedRoute
+                        session={session}
+                        element={
+                          <DashboardLayout
+                            session={session}
+                            signOut={signOut}
+                            activeTab="financeData"
+                            activeSubTab="power-of-one"
+                            onSubTabChange={() => {}}
+                          >
+                            <PowerOfOneWithCompany userId={session.user.id} />
+                          </DashboardLayout>
+                        }
+                      />
+                    }
+                  />
+                )}
+              {session && (
                 <Route
                   path="/:userId/playbook"
                   element={
@@ -564,6 +622,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/rockefeller-habit-checklist"
                   element={
@@ -583,6 +643,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/calendar"
                   element={
@@ -602,6 +664,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/onlineSales"
                   element={
@@ -621,6 +685,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/sandbox/new"
                   element={
@@ -640,6 +706,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/sandbox/:mindmapId"
                   element={
@@ -659,6 +727,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/admin"
                   element={
@@ -678,6 +748,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/award"
                   element={
@@ -697,6 +769,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/leaderboard"
                   element={
@@ -716,6 +790,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/milestone"
                   element={
@@ -735,6 +811,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/issue_statement"
                   element={
@@ -754,6 +832,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/peak"
                   element={
@@ -773,6 +853,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/vivid_vision"
                   element={
@@ -792,6 +874,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/integration"
                   element={
@@ -811,6 +895,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/businessQuadrant"
                   element={
@@ -830,6 +916,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/strata"
                   element={
@@ -849,6 +937,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/ccc"
                   element={
@@ -868,6 +958,8 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
+              {session && (
                 <Route
                   path="/:userId/theRocks"
                   element={
@@ -887,48 +979,53 @@ const App: React.FC = () => {
                     />
                   }
                 />
+              )}
                 <Route
                   path="/google/oauth/callback"
                   element={<GoogleOAuthCallback session={session} />}
                 />
-                <Route
-                  path="/:userId/paceForm"
-                  element={
-                    <ProtectedRoute
-                      session={session}
-                      element={
-                        <DashboardLayout
-                          session={session}
-                          signOut={signOut}
-                          activeTab="people"
-                          activeSubTab="paceForm"
-                          onSubTabChange={() => {}}
-                        >
-                          <PaceForm />
-                        </DashboardLayout>
-                      }
-                    />
-                  }
-                />
-                <Route
-                  path="/:userId/faceForm"
-                  element={
-                    <ProtectedRoute
-                      session={session}
-                      element={
-                        <DashboardLayout
-                          session={session}
-                          signOut={signOut}
-                          activeTab="people"
-                          activeSubTab="faceForm"
-                          onSubTabChange={() => {}}
-                        >
-                          <FaceForm />
-                        </DashboardLayout>
-                      }
-                    />
-                  }
-                />
+                {session && (
+                  <Route
+                    path="/:userId/paceForm"
+                    element={
+                      <ProtectedRoute
+                        session={session}
+                        element={
+                          <DashboardLayout
+                            session={session}
+                            signOut={signOut}
+                            activeTab="people"
+                            activeSubTab="paceForm"
+                            onSubTabChange={() => {}}
+                          >
+                            <PaceForm />
+                          </DashboardLayout>
+                        }
+                      />
+                    }
+                  />
+                )}
+                {session && (
+                  <Route
+                    path="/:userId/faceForm"
+                    element={
+                      <ProtectedRoute
+                        session={session}
+                        element={
+                          <DashboardLayout
+                            session={session}
+                            signOut={signOut}
+                            activeTab="people"
+                            activeSubTab="faceForm"
+                            onSubTabChange={() => {}}
+                          >
+                            <FaceForm />
+                          </DashboardLayout>
+                        }
+                      />
+                    }
+                  />
+                )}
               </>
 
             {/* Redirect base user ID route to vivid_vision - MUST be after all specific routes */}
@@ -945,8 +1042,9 @@ const App: React.FC = () => {
 
             {/* Catch-all for anything else */}
             <Route path="*" element={<NotFound />} />
+              </>
+            )}
           </Routes>
-          )}
         </Suspense>
       </Router>
       </QueryClientProvider>
