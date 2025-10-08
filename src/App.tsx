@@ -121,7 +121,42 @@ const App: React.FC = () => {
             {/* Job Preview route */}
             <Route path="/job-preview" element={<JobPreview />} />
             {/* Public JD Page route */}
-            <Route path="/jd/:companyId" element={<PublicJDPage />} />
+            <Route path="/jd/:companyId/:slug" element={<PublicJDPage />} />
+
+            {/* Public Order Budget Tracker - no auth required */}
+            <Route path="/public/order-tracker" element={<B2BOrderFixed session={null} />} />
+
+            {/* Order Budget Tracker for non-authenticated users - no sidebar */}
+            {!session && (
+              <Route
+                path="/:userId/b2b_order"
+                element={<B2BOrderFixed session={null} />}
+              />
+            )}
+
+
+            {/* Show loading spinner while session is being determined for protected routes */}
+            {loading ? (
+              <Route
+                path="*"
+                element={
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                    <ClipLoader color="#36d7b7" />
+                  </div>
+                }
+              />
+            ) : (
+              <>
+                {/* Default Redirect to User-Specific Route */}
+                <Route
+                  path="/"
+                  element={
+                    <Navigate
+                      to={session ? `/${session.user.id}/vivid_vision` : "/login"}
+                      replace
+                    />
+                  }
+                />
 
             {/* Public Order Budget Tracker - no auth required */}
             <Route path="/public/order-tracker" element={<B2BOrderFixed session={null} />} />
