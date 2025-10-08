@@ -43,12 +43,12 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
     try {
       setIsLoading(true);
       const employeesData = await directoryService.fetchEmployees(companyId);
-      
+
       // Filter to only show employed employees OR the backup user (special case)
-      const employedEmployees = employeesData.filter(employee => 
+      const employedEmployees = employeesData.filter(employee =>
         employee.Is_Employed || employee.first_name.toLowerCase() === 'backup'
       );
-      
+
       setEmployees(employedEmployees);
 
       // Log employees data
@@ -58,7 +58,7 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
       // OR if there are employees who don't report to anyone (potential roots)
       const hasHierarchy = employedEmployees.some(emp => emp.highest_rank || emp.reports_to);
       const hasPotentialRoots = employedEmployees.some(emp => !emp.reports_to);
-      
+
       if (hasHierarchy || hasPotentialRoots) {
         setTreeData(transformToTree(employedEmployees));
       } else {
@@ -70,6 +70,38 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
       setIsLoading(false);
     }
   }, [companyId]);
+
+  const deactivateEmployee = useCallback(async (employeeId: string) => {
+    console.log(`🎯 OrgChart: Starting deactivation for employee: ${employeeId}`);
+
+    try {
+      const result = await directoryService.deactivateEmployee(employeeId);
+      console.log(`📋 OrgChart: Deactivation result:`, result);
+
+      if (result.success) {
+        console.log(`🔄 OrgChart: Deactivation successful, refreshing employee list...`);
+
+        // Refresh the employee list to reflect the changes
+        await fetchEmployees();
+        console.log(`✅ OrgChart: Employee list refreshed`);
+
+        // Close the panel if the deactivated employee was selected
+        if (selectedEmployee?.id === employeeId) {
+          console.log(`🚪 OrgChart: Closing panel for deactivated employee`);
+          setIsEmployeePanelOpen(false);
+          setSelectedEmployee(undefined);
+        }
+        return { success: true, message: result.message };
+      } else {
+        console.log(`⚠️ OrgChart: Deactivation failed:`, result.message);
+        return { success: false, message: result.message };
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to deactivate employee';
+      console.error(`❌ OrgChart: Deactivation error:`, err);
+      return { success: false, message: errorMessage };
+    }
+  }, [fetchEmployees, selectedEmployee]);
 
   useEffect(() => {
     fetchEmployees();
@@ -210,6 +242,7 @@ export const OrgChart = ({ companyId }: OrgChartProps) => {
         employee={selectedEmployee}
         isOpen={isEmployeePanelOpen}
         onClose={() => setIsEmployeePanelOpen(false)}
+        onDeactivate={deactivateEmployee}
       />
 
       {/* Add the config panel */}
