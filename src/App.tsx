@@ -158,41 +158,6 @@ const App: React.FC = () => {
                   }
                 />
 
-            {/* Public Order Budget Tracker - no auth required */}
-            <Route path="/public/order-tracker" element={<B2BOrderFixed session={null} />} />
-
-            {/* Order Budget Tracker for non-authenticated users - no sidebar */}
-            {!session && (
-              <Route
-                path="/:userId/b2b_order"
-                element={<B2BOrderFixed session={null} />}
-              />
-            )}
-
-
-            {/* Show loading spinner while session is being determined for protected routes */}
-            {loading ? (
-              <Route
-                path="*"
-                element={
-                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                    <ClipLoader color="#36d7b7" />
-                  </div>
-                }
-              />
-            ) : (
-              <>
-                {/* Default Redirect to User-Specific Route */}
-                <Route
-                  path="/"
-                  element={
-                    <Navigate
-                      to={session ? `/${session.user.id}/vivid_vision` : "/login"}
-                      replace
-                    />
-                  }
-                />
-
             {/* Protected Routes */}
             <>
               {session && (
@@ -1015,11 +980,7 @@ const App: React.FC = () => {
                   }
                 />
               )}
-                <Route
-                  path="/google/oauth/callback"
-                  element={<GoogleOAuthCallback session={session} />}
-                />
-                {session && (
+              {session && (
                   <Route
                     path="/:userId/paceForm"
                     element={
@@ -1061,6 +1022,10 @@ const App: React.FC = () => {
                     }
                   />
                 )}
+                <Route
+                  path="/google/oauth/callback"
+                  element={<GoogleOAuthCallback session={session} />}
+                />
               </>
 
             {/* Redirect base user ID route to vivid_vision - MUST be after all specific routes */}
