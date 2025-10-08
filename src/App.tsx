@@ -121,7 +121,7 @@ const App: React.FC = () => {
             {/* Job Preview route */}
             <Route path="/job-preview" element={<JobPreview />} />
             {/* Public JD Page route */}
-            <Route path="/jd/:companyId" element={<PublicJDPage />} />
+            <Route path="/jd/:companyId/:slug" element={<PublicJDPage />} />
 
             {/* Public Order Budget Tracker - no auth required */}
             <Route path="/public/order-tracker" element={<B2BOrderFixed session={null} />} />
@@ -980,11 +980,7 @@ const App: React.FC = () => {
                   }
                 />
               )}
-                <Route
-                  path="/google/oauth/callback"
-                  element={<GoogleOAuthCallback session={session} />}
-                />
-                {session && (
+              {session && (
                   <Route
                     path="/:userId/paceForm"
                     element={
@@ -1026,6 +1022,10 @@ const App: React.FC = () => {
                     }
                   />
                 )}
+                <Route
+                  path="/google/oauth/callback"
+                  element={<GoogleOAuthCallback session={session} />}
+                />
               </>
 
             {/* Redirect base user ID route to vivid_vision - MUST be after all specific routes */}
