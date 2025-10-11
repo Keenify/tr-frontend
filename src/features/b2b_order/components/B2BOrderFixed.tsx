@@ -9,6 +9,7 @@ import { getCachedProducts, cacheAllProducts, getCacheInfo, initializePublicCach
 import { getStaticProducts } from '../utils/staticProductData';
 import { generateGiftSuggestionPDF as generateSamplePDF } from '../utils/giftSuggestionPdfGenerator';
 import { transformGiftSuggestionToQuotation } from '../utils/giftSuggestionToQuotation';
+import { useCurrencyDetection } from '../hooks/useCurrencyDetection';
 import { BACKEND_API_DOMAIN } from '../../../config';
 import '../styles/B2BOrder.css';
 import '../styles/GiftSuggestion.css';
@@ -21,6 +22,18 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
   // Handle both authenticated and public access
   const userId = session?.user?.id || '';
   const { companyInfo } = useUserAndCompanyData(userId);
+
+  // Detect currency based on user's IP location
+  const { currencyConfig: detectedCurrency, loading: currencyLoading } = useCurrencyDetection();
+
+  // 🧪 TESTING ONLY - Manual currency override (DELETE AFTER TESTING)
+  const [testCurrencyOverride, setTestCurrencyOverride] = useState<'MY' | 'SG' | null>(null);
+  const currencyConfig = testCurrencyOverride
+    ? (testCurrencyOverride === 'SG'
+        ? { currency: 'SGD', basePrice: 25, minPrice: 25, countryCode: 'SG' }
+        : { currency: 'RM', basePrice: 60, minPrice: 60, countryCode: 'MY' })
+    : detectedCurrency;
+  // 🧪 END TESTING CODE
 
   // Form state
   const [pax, setPax] = useState<string>('');
@@ -169,9 +182,10 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
       newErrors.pax = 'Number of people should be less than 1000 for practical orders';
     }
 
-    // Validate price per person (minimum RM 60 for gift boxes)
-    if (!pricePerPerson || isNaN(priceNum) || priceNum < 60) {
-      newErrors.price = 'Please enter a valid price per person (minimum RM 60)';
+    // Validate price per person (minimum based on detected currency)
+    const minPrice = currencyConfig.minPrice;
+    if (!pricePerPerson || isNaN(priceNum) || priceNum < minPrice) {
+      newErrors.price = `Please enter a valid price per person (minimum ${currencyConfig.currency} ${minPrice})`;
     }
 
     setErrors(newErrors);
@@ -194,7 +208,7 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setPricePerPerson(value);
       // Clear error when user starts typing valid prices
-      if (errors.price && value !== '' && parseFloat(value) >= 60) {
+      if (errors.price && value !== '' && parseFloat(value) >= currencyConfig.minPrice) {
         setErrors({ ...errors, price: undefined });
       }
     }
@@ -257,7 +271,8 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
         },
         products,
         productVariants,
-        'SG' // Default to Singapore branch - could be made dynamic
+        currencyConfig.countryCode === 'SG' ? 'SG' : 'MY', // Dynamic branch based on detected country
+        currencyConfig.basePrice // Pass detected base price
       );
 
       console.log('Generated automated gift box result:', automatedGiftBox);
@@ -343,7 +358,8 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
         products,
         productVariants,
         'Gift Box Customer', // customerCompanyName
-        'Sales Representative' // salesManager
+        'Sales Representative', // salesManager
+        currencyConfig.currency // Pass detected currency
       );
 
       console.log('📋 Transformed quotation data:', quotationData);
@@ -418,7 +434,8 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
         products,
         productVariants,
         'Gift Box Customer', // customerCompanyName
-        'Sales Representative' // salesManager
+        'Sales Representative', // salesManager
+        currencyConfig.currency // Pass detected currency
       );
 
       console.log('📋 Transformed quotation data:', quotationData);
@@ -471,6 +488,66 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
         <div className="gift-suggestion-header">
           <h2>Gift Suggestion Generator</h2>
           <p className="subtitle">Generate personalized gift suggestions for your team or clients</p>
+
+          {/* 🧪 TESTING ONLY - Currency Toggle (DELETE AFTER TESTING) */}
+          <div style={{
+            marginTop: '15px',
+            padding: '10px',
+            backgroundColor: '#fff3cd',
+            border: '2px solid #ffc107',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <span style={{ fontWeight: 'bold', color: '#856404' }}>🧪 TEST MODE:</span>
+            <button
+              onClick={() => setTestCurrencyOverride('MY')}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: testCurrencyOverride === 'MY' ? '#28a745' : '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              Malaysia (RM 60)
+            </button>
+            <button
+              onClick={() => setTestCurrencyOverride('SG')}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: testCurrencyOverride === 'SG' ? '#28a745' : '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              Singapore (SGD 25)
+            </button>
+            <button
+              onClick={() => setTestCurrencyOverride(null)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: testCurrencyOverride === null ? '#28a745' : '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              Auto-Detect
+            </button>
+            <span style={{ marginLeft: 'auto', color: '#856404' }}>
+              Current: <strong>{currencyConfig.currency} {currencyConfig.basePrice}</strong>
+            </span>
+          </div>
+          {/* 🧪 END TESTING CODE */}
         </div>
 
         <div className="form-content">
@@ -508,7 +585,7 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                   />
                   {errors.price && <div className="error-message">{errors.price}</div>}
                 </div>
-                <div className="input-explanation">Minimum: RM 60</div>
+                <div className="input-explanation">Minimum: {currencyConfig.currency} {currencyConfig.minPrice}</div>
               </div>
             </div>
 
@@ -724,8 +801,8 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                         <div className="price-display">
                           <div className="quantity-label">Each staff will get</div>
                           <div className="quantity-value">{item.pax} boxes</div>
-                          <div className="price-per-box">RM {item.pricePerBox} per box</div>
-                          <div className="total-price">Total: RM {item.total}</div>
+                          <div className="price-per-box">{currencyConfig.currency} {item.pricePerBox} per box</div>
+                          <div className="total-price">Total: {currencyConfig.currency} {item.total}</div>
                         </div>
 
                         {/* Tier Pricing */}
@@ -742,7 +819,7 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                                     {tier.minQuantity}{tier.maxQuantity === Infinity ? '+' : `-${tier.maxQuantity}`} boxes
                                   </span>
                                   <span className="tier-price">
-                                    RM {tier.pricePerUnit.toFixed(2)}
+                                    {currencyConfig.currency} {tier.pricePerUnit.toFixed(2)}
                                   </span>
                                 </div>
                               ))}

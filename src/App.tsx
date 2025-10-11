@@ -123,15 +123,24 @@ const App: React.FC = () => {
             {/* Public JD Page route */}
             <Route path="/jd/:companyId/:slug" element={<PublicJDPage />} />
 
-            {/* Public Order Budget Tracker - no auth required */}
-            <Route path="/public/order-tracker" element={<B2BOrderFixed session={null} />} />
+            {/* Public Gift Suggestion - no auth required */}
+            <Route path="/gift-suggestion" element={<B2BOrderFixed session={null} />} />
 
-            {/* Order Budget Tracker for non-authenticated users - no sidebar */}
+            {/* Legacy public order tracker route - redirect to /gift-suggestion */}
+            <Route path="/public/order-tracker" element={<Navigate to="/gift-suggestion" replace />} />
+
+            {/* Redirect non-authenticated users from /:userId/b2b_order to /gift-suggestion */}
             {!session && (
-              <Route
-                path="/:userId/b2b_order"
-                element={<B2BOrderFixed session={null} />}
-              />
+              <>
+                <Route
+                  path="/:userId/b2b_order"
+                  element={<Navigate to="/gift-suggestion" replace />}
+                />
+                <Route
+                  path="/:userId/gift-suggestion"
+                  element={<Navigate to="/gift-suggestion" replace />}
+                />
+              </>
             )}
 
 
@@ -319,7 +328,7 @@ const App: React.FC = () => {
                     }
                   />
                   <Route
-                    path="/:userId/b2b_order"
+                    path="/:userId/gift-suggestion"
                     element={
                       <ProtectedRoute
                         session={session}
@@ -328,7 +337,7 @@ const App: React.FC = () => {
                             session={session}
                             signOut={signOut}
                             activeTab="sales"
-                            activeSubTab="b2b_order"
+                            activeSubTab="gift-suggestion"
                             onSubTabChange={() => {}}
                           >
                             <B2BOrderFixed session={session} />
