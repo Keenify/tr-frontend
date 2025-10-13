@@ -7,18 +7,20 @@ export interface CurrencyConfig {
   countryCode: string;
 }
 
+// Default config for Singapore and rest of the world
 const DEFAULT_CONFIG: CurrencyConfig = {
-  currency: 'RM',
-  basePrice: 60,
-  minPrice: 60,
-  countryCode: 'MY'
-};
-
-const SINGAPORE_CONFIG: CurrencyConfig = {
   currency: 'SGD',
   basePrice: 25,
   minPrice: 25,
   countryCode: 'SG'
+};
+
+// Special config only for Malaysia
+const MALAYSIA_CONFIG: CurrencyConfig = {
+  currency: 'RM',
+  basePrice: 60,
+  minPrice: 60,
+  countryCode: 'MY'
 };
 
 /**
@@ -41,17 +43,17 @@ export const useCurrencyDetection = () => {
 
         const data = await response.json();
 
-        // Check if user is in Singapore
-        if (data.country_code === 'SG' || data.country === 'SG') {
-          setCurrencyConfig(SINGAPORE_CONFIG);
+        // Check if user is in Malaysia
+        if (data.country_code === 'MY' || data.country === 'MY') {
+          setCurrencyConfig(MALAYSIA_CONFIG);
         } else {
-          // Default to Malaysia/RM for all other countries
+          // Default to Singapore/SGD for Singapore and all other countries
           setCurrencyConfig(DEFAULT_CONFIG);
         }
       } catch (err) {
         console.error('Error detecting currency:', err);
         setError(err instanceof Error ? err.message : 'Unknown error');
-        // Fallback to default (RM) on error
+        // Fallback to default (Singapore/SGD) on error
         setCurrencyConfig(DEFAULT_CONFIG);
       } finally {
         setLoading(false);

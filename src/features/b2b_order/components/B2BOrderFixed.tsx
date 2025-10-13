@@ -27,11 +27,13 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
   const { currencyConfig: detectedCurrency, loading: currencyLoading } = useCurrencyDetection();
 
   // 🧪 TESTING ONLY - Manual currency override (DELETE AFTER TESTING)
-  const [testCurrencyOverride, setTestCurrencyOverride] = useState<'MY' | 'SG' | null>(null);
+  const [testCurrencyOverride, setTestCurrencyOverride] = useState<'MY' | 'SG' | 'US' | null>(null);
   const currencyConfig = testCurrencyOverride
     ? (testCurrencyOverride === 'SG'
         ? { currency: 'SGD', basePrice: 25, minPrice: 25, countryCode: 'SG' }
-        : { currency: 'RM', basePrice: 60, minPrice: 60, countryCode: 'MY' })
+        : testCurrencyOverride === 'MY'
+        ? { currency: 'RM', basePrice: 60, minPrice: 60, countryCode: 'MY' }
+        : { currency: 'SGD', basePrice: 25, minPrice: 25, countryCode: 'US' })
     : detectedCurrency;
   // 🧪 END TESTING CODE
 
@@ -528,6 +530,20 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
               }}
             >
               Singapore (SGD 25)
+            </button>
+            <button
+              onClick={() => setTestCurrencyOverride('US')}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: testCurrencyOverride === 'US' ? '#28a745' : '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              USA (SGD 25)
             </button>
             <button
               onClick={() => setTestCurrencyOverride(null)}
