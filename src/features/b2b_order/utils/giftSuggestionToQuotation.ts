@@ -47,7 +47,8 @@ export const transformGiftSuggestionToQuotation = (
   products: Product[],
   productVariants: { [key: number]: ProductVariant[] },
   customerCompanyName: string = "Gift Box Customer",
-  salesManager: string = "Sales Representative"
+  salesManager: string = "Sales Representative",
+  currency: string = "RM"
 ) => {
   // Get current date in the exact format used by quotations
   const currentDate = new Date().toLocaleDateString('en-GB', {
@@ -132,7 +133,7 @@ export const transformGiftSuggestionToQuotation = (
   // Standard quotation footer text with gift suggestion specific info
   const footer = `*Gift Suggestion Details:
 • Boxes Wanted: ${paxNumber} boxes
-• Total Price: RM ${giftData.total}
+• Total Price: ${currency} ${giftData.total}
 • Selected Flavors: ${giftData.variants?.length || 0} varieties
 
 *Remarks:

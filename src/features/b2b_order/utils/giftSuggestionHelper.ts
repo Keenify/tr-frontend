@@ -113,10 +113,11 @@ export const selectRandomVariants = (
 };
 
 // Get actual product pricing from the product data
-const getProductBoxPrice = (product: Product, branch: 'SG' | 'MY' = 'SG'): number => {
-  // For gift boxes: RM 60 per box (new pricing)
+const getProductBoxPrice = (product: Product, branch: 'SG' | 'MY' = 'SG', basePrice?: number): number => {
+  // For gift boxes: Use dynamic pricing based on country
   if (product.name.toLowerCase().includes('gift box')) {
-    return 60.00; // RM 60 per box
+    // If basePrice is provided, use it; otherwise default based on branch
+    return basePrice ?? (branch === 'SG' ? 25.00 : 60.00);
   }
 
   // For other products, use the retail price from the product based on branch
@@ -139,7 +140,8 @@ export const generateAutomatedGiftBox = (
   config: AutomatedGiftBoxConfig,
   products: Product[],
   productVariants: { [key: number]: ProductVariant[] },
-  branch: 'SG' | 'MY' = 'SG'
+  branch: 'SG' | 'MY' = 'SG',
+  basePrice?: number
 ): AutomatedGiftBox | null => {
   // Detect if this is public access (static data) - Product 78 with flavors already filtered
   const isPublicAccess = products.length === 1 && products[0].id === 78;
@@ -290,17 +292,17 @@ export const generateAutomatedGiftBox = (
     return null;
   }
 
+  // Dynamic price based on country: SGD 25 for Singapore, RM 60 for Malaysia
+  const baseBoxPrice = basePrice ?? (branch === 'SG' ? 25.00 : 60.00);
+
   // Build the single product entry for the selected gift box type
   const selectedProducts: { [productId: number]: { name: string; selectedVariants: string[]; price?: number } } = {
     78: {
       name: selectedGiftBoxType.name,
       selectedVariants: allSelectedVariants.map(v => v.name),
-      price: 60.00 // RM 60 per box
+      price: baseBoxPrice
     }
   };
-
-  // Fixed price: RM 60 per box (new pricing)
-  const baseBoxPrice = 60.00;
 
   // Apply tier discount for volume orders
   const tierMultiplier = DEFAULT_TIER_PRICING.find(

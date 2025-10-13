@@ -9,6 +9,7 @@ import { getCachedProducts, cacheAllProducts, getCacheInfo, initializePublicCach
 import { getStaticProducts } from '../utils/staticProductData';
 import { generateGiftSuggestionPDF as generateSamplePDF } from '../utils/giftSuggestionPdfGenerator';
 import { transformGiftSuggestionToQuotation } from '../utils/giftSuggestionToQuotation';
+import { useCurrencyDetection } from '../hooks/useCurrencyDetection';
 import { BACKEND_API_DOMAIN } from '../../../config';
 import '../styles/B2BOrder.css';
 import '../styles/GiftSuggestion.css';
@@ -21,6 +22,9 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
   // Handle both authenticated and public access
   const userId = session?.user?.id || '';
   const { companyInfo } = useUserAndCompanyData(userId);
+
+  // Detect currency based on user's IP location
+  const { currencyConfig, loading: currencyLoading } = useCurrencyDetection();
 
   // Form state
   const [pax, setPax] = useState<string>('');
@@ -169,9 +173,10 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
       newErrors.pax = 'Number of people should be less than 1000 for practical orders';
     }
 
-    // Validate price per person (minimum RM 60 for gift boxes)
-    if (!pricePerPerson || isNaN(priceNum) || priceNum < 60) {
-      newErrors.price = 'Please enter a valid price per person (minimum RM 60)';
+    // Validate price per person (minimum based on detected currency)
+    const minPrice = currencyConfig.minPrice;
+    if (!pricePerPerson || isNaN(priceNum) || priceNum < minPrice) {
+      newErrors.price = `Please enter a valid price per person (minimum ${currencyConfig.currency} ${minPrice})`;
     }
 
     setErrors(newErrors);
@@ -194,7 +199,7 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setPricePerPerson(value);
       // Clear error when user starts typing valid prices
-      if (errors.price && value !== '' && parseFloat(value) >= 60) {
+      if (errors.price && value !== '' && parseFloat(value) >= currencyConfig.minPrice) {
         setErrors({ ...errors, price: undefined });
       }
     }
@@ -257,7 +262,8 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
         },
         products,
         productVariants,
-        'SG' // Default to Singapore branch - could be made dynamic
+        currencyConfig.countryCode === 'SG' ? 'SG' : 'MY', // Dynamic branch based on detected country
+        currencyConfig.basePrice // Pass detected base price
       );
 
       console.log('Generated automated gift box result:', automatedGiftBox);
@@ -343,7 +349,8 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
         products,
         productVariants,
         'Gift Box Customer', // customerCompanyName
-        'Sales Representative' // salesManager
+        'Sales Representative', // salesManager
+        currencyConfig.currency // Pass detected currency
       );
 
       console.log('📋 Transformed quotation data:', quotationData);
@@ -418,7 +425,8 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
         products,
         productVariants,
         'Gift Box Customer', // customerCompanyName
-        'Sales Representative' // salesManager
+        'Sales Representative', // salesManager
+        currencyConfig.currency // Pass detected currency
       );
 
       console.log('📋 Transformed quotation data:', quotationData);
@@ -508,7 +516,7 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                   />
                   {errors.price && <div className="error-message">{errors.price}</div>}
                 </div>
-                <div className="input-explanation">Minimum: RM 60</div>
+                <div className="input-explanation">Minimum: {currencyConfig.currency} {currencyConfig.minPrice}</div>
               </div>
             </div>
 
@@ -724,8 +732,8 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                         <div className="price-display">
                           <div className="quantity-label">Each staff will get</div>
                           <div className="quantity-value">{item.pax} boxes</div>
-                          <div className="price-per-box">RM {item.pricePerBox} per box</div>
-                          <div className="total-price">Total: RM {item.total}</div>
+                          <div className="price-per-box">{currencyConfig.currency} {item.pricePerBox} per box</div>
+                          <div className="total-price">Total: {currencyConfig.currency} {item.total}</div>
                         </div>
 
                         {/* Tier Pricing */}
@@ -742,7 +750,7 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                                     {tier.minQuantity}{tier.maxQuantity === Infinity ? '+' : `-${tier.maxQuantity}`} boxes
                                   </span>
                                   <span className="tier-price">
-                                    RM {tier.pricePerUnit.toFixed(2)}
+                                    {currencyConfig.currency} {tier.pricePerUnit.toFixed(2)}
                                   </span>
                                 </div>
                               ))}
