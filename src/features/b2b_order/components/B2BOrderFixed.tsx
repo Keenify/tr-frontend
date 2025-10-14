@@ -6,11 +6,14 @@ import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyDa
 import { Product, ProductVariant } from '../../../shared/types/Product';
 import { generateAutomatedGiftBox, formatGiftBoxForDisplay } from '../utils/giftSuggestionHelper';
 import { getCachedProducts, cacheAllProducts, getCacheInfo, initializePublicCache } from '../utils/productCache';
-import { getStaticProducts } from '../utils/staticProductData';
+import { getStaticProducts, categorizeVariantsByBrand, GIFT_BOX_TYPES } from '../utils/staticProductData';
 import { generateGiftSuggestionPDF as generateSamplePDF } from '../utils/giftSuggestionPdfGenerator';
 import { transformGiftSuggestionToQuotation } from '../utils/giftSuggestionToQuotation';
 import { useCurrencyDetection } from '../hooks/useCurrencyDetection';
 import { BACKEND_API_DOMAIN } from '../../../config';
+import SelectionModeBox from './SelectionModeBox';
+import ManualSelectionModal from './ManualSelectionModal';
+import ManualModeLayout from './ManualModeLayout';
 import '../styles/B2BOrder.css';
 import '../styles/GiftSuggestion.css';
 
@@ -29,8 +32,31 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
   // Form state
   const [pax, setPax] = useState<string>('');
   const [pricePerPerson, setPricePerPerson] = useState<string>('');
-  const [dietaryRestriction, setDietaryRestriction] = useState<'halal' | 'non-halal'>('halal');
   const [specialInstructions, setSpecialInstructions] = useState<string>('');
+
+  // Selection mode state
+  const [selectionMode, setSelectionMode] = useState<'random' | 'manual' | null>(null);
+  const [modeSelected, setModeSelected] = useState<boolean>(false);
+
+  // Manual selection state
+  const [manualSelections, setManualSelections] = useState<{
+    bronys: ProductVariant[];
+    kettleGourmet: ProductVariant[];
+    yumiCurls: ProductVariant[];
+    yumiSticks: ProductVariant[];
+  }>({
+    bronys: [],
+    kettleGourmet: [],
+    yumiCurls: [],
+    yumiSticks: []
+  });
+
+  // Store the gift box type for manual mode
+  const [manualGiftBoxType, setManualGiftBoxType] = useState<{ id: string; name: string; image_url: string } | null>(null);
+
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentBrand, setCurrentBrand] = useState<'bronys' | 'kettleGourmet' | 'yumiCurls' | 'yumiSticks' | null>(null);
 
   // UI state
   const [showTable, setShowTable] = useState(false);
@@ -205,10 +231,68 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
     }
   };
 
+  // Handle initial mode selection
+  const handleModeSelection = (mode: 'random' | 'manual') => {
+    setSelectionMode(mode);
+    setModeSelected(true);
+
+    // If manual mode is selected, auto-populate Yumi Corn Curls with all 3 constant flavors
+    if (mode === 'manual') {
+      const brandCats = categorizeVariantsByBrand();
+      setManualSelections(prev => ({
+        ...prev,
+        yumiCurls: brandCats.yumiCurls // All 3 flavors: Curls Cheese, Barbecue, Squid
+      }));
+    }
+  };
+
+  // Handle mode switching - clear everything when switching modes
+  const handleModeChange = () => {
+    setModeSelected(false);
+    setSelectionMode(null);
+    setShowTable(false);
+    setGeneratedItems([]);
+    setManualSelections({
+      bronys: [],
+      kettleGourmet: [],
+      yumiCurls: [],
+      yumiSticks: []
+    });
+    setPax('');
+    setPricePerPerson('');
+    setSpecialInstructions('');
+  };
+
+  // Handle opening modal for brand selection
+  const handleBrandClick = (brand: 'bronys' | 'kettleGourmet' | 'yumiCurls' | 'yumiSticks') => {
+    // Prevent selection for yumiCurls as it has constant items
+    if (brand === 'yumiCurls') {
+      return;
+    }
+
+    if (selectionMode === 'manual' && showTable) {
+      setCurrentBrand(brand);
+      setIsModalOpen(true);
+    }
+  };
+
+  // Handle selection change from modal
+  const handleSelectionChange = (brand: 'bronys' | 'kettleGourmet' | 'yumiCurls' | 'yumiSticks', variants: ProductVariant[]) => {
+    setManualSelections(prev => ({
+      ...prev,
+      [brand]: variants
+    }));
+  };
+
+  // Get total count of manually selected items
+  const getTotalManualSelections = () => {
+    return Object.values(manualSelections).reduce((sum, variants) => sum + variants.length, 0);
+  };
+
   const handleGenerateGifts = async () => {
     console.log('Generate button clicked!');
-    console.log('Current form values:', { pax, pricePerPerson, dietaryRestriction });
-    
+    console.log('Current form values:', { pax, pricePerPerson, selectionMode });
+
     if (!validateInputs()) {
       console.log('Validation failed, not generating');
       return;
@@ -223,7 +307,54 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
     try {
       const paxNum = parseInt(pax);
       const priceNum = parseFloat(pricePerPerson);
-      const isHalal = dietaryRestriction === 'halal';
+
+      // For manual mode, show empty results first
+      if (selectionMode === 'manual') {
+        console.log('Manual mode - showing empty gift box for user selection');
+
+        // Select random gift box type
+        const selectedGiftBoxType = GIFT_BOX_TYPES[Math.floor(Math.random() * GIFT_BOX_TYPES.length)];
+
+        // Create empty gift box structure
+        const emptyGiftBox = {
+          name: selectedGiftBoxType.name,
+          description: 'Select your own items for each brand category',
+          pax: paxNum,
+          pricePerBox: priceNum.toFixed(2),
+          total: (paxNum * priceNum).toFixed(2),
+          productDescription: 'Custom selected gift box',
+          specialInstructions,
+          tierPricing: [
+            { minQuantity: 1, maxQuantity: 49, pricePerUnit: priceNum },
+            { minQuantity: 50, maxQuantity: 99, pricePerUnit: priceNum * 0.95 },
+            { minQuantity: 100, maxQuantity: 199, pricePerUnit: priceNum * 0.90 },
+            { minQuantity: 200, maxQuantity: 499, pricePerUnit: priceNum * 0.85 },
+            { minQuantity: 500, maxQuantity: Infinity, pricePerUnit: priceNum * 0.80 },
+          ],
+          giftBoxType: selectedGiftBoxType,
+          brandCategories: {
+            bronys: [],
+            kettleGourmet: [],
+            yumiCurls: [],
+            yumiSticks: []
+          },
+          selectedProducts: [],
+          variants: [],
+          priceBreakdown: {
+            baseCost: priceNum,
+            markup: 0,
+            discount: 0
+          }
+        };
+
+        setGeneratedItems([emptyGiftBox]);
+        setShowTable(true);
+        setIsGenerating(false);
+        return;
+      }
+
+      // Random mode - use existing logic
+      const isHalal = true; // Default to halal for random mode
 
       // Enhanced debug logging
       console.log('=== GIFT GENERATOR DEBUG ===');
@@ -258,7 +389,7 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
         {
           pax: paxNum,
           budgetPerPerson: priceNum,
-          dietaryRestriction: dietaryRestriction
+          dietaryRestriction: 'halal' // Always use halal for random mode
         },
         products,
         productVariants,
@@ -327,23 +458,55 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
   const handleExportPDF = async () => {
     if (isGenerating || generatedItems.length === 0) return;
 
+    // Validate manual mode has exact required selections
+    if (selectionMode === 'manual') {
+      const { bronys, kettleGourmet, yumiCurls, yumiSticks } = manualSelections;
+
+      if (bronys.length !== 2 || kettleGourmet.length !== 4 || yumiCurls.length !== 3 || yumiSticks.length !== 1) {
+        alert('Please select exactly:\n- 2 Brony\'s Brownie Crisps\n- 4 Kettle Gourmet Popcorn\n- 3 Yumi Corn Curls\n- 1 Yumi Cornsticks Polybag');
+        return;
+      }
+    }
+
     try {
       setIsGenerating(true);
       const currentItem = generatedItems[0];
 
       console.log('🎁 Starting PDF generation using quotation system...');
 
+      // Use manual selections if in manual mode, otherwise use generated items
+      let itemToExport = currentItem;
+      if (selectionMode === 'manual' && getTotalManualSelections() > 0) {
+        // Convert manual selections to variants format for PDF
+        const allSelectedVariants = [
+          ...manualSelections.bronys,
+          ...manualSelections.kettleGourmet,
+          ...manualSelections.yumiCurls,
+          ...manualSelections.yumiSticks
+        ];
+
+        itemToExport = {
+          ...currentItem,
+          brandCategories: manualSelections,
+          variants: allSelectedVariants.map(v => ({
+            name: v.name,
+            image_url: v.image_url,
+            productName: 'Gift Box'
+          }))
+        };
+      }
+
       // Form inputs for transformation
       const formInputs = {
         pax,
         pricePerPerson,
-        dietaryRestriction,
+        dietaryRestriction: 'halal' as 'halal' | 'non-halal',
         specialInstructions
       };
 
       // Transform gift suggestion data to exact quotation format
       const quotationData = transformGiftSuggestionToQuotation(
-        currentItem,
+        itemToExport,
         companyInfo,
         formInputs,
         products,
@@ -398,28 +561,103 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
   };
 
   const handleDownloadSample = async () => {
-    if (isGenerating || generatedItems.length === 0) {
-      console.log('Cannot generate PDF: isGenerating =', isGenerating, 'generatedItems.length =', generatedItems.length);
-      return;
+    // For manual mode, skip generatedItems check
+    if ((selectionMode === 'manual')) {
+      const { bronys, kettleGourmet, yumiCurls, yumiSticks } = manualSelections;
+
+      // Validate manual mode has exact required selections
+      if (bronys.length !== 2 || kettleGourmet.length !== 4 || yumiCurls.length !== 3 || yumiSticks.length !== 1) {
+        alert('Please select exactly:\n- 2 Brony\'s Brownie Crisps\n- 4 Kettle Gourmet Popcorn\n- 3 Yumi Corn Curls\n- 1 Yumi Cornsticks Polybag');
+        return;
+      }
+
+      // Validate pax is entered
+      if (!pax || parseInt(pax) === 0) {
+        alert('Please enter the number of people first');
+        return;
+      }
+    } else {
+      // For random mode, check generatedItems
+      if (isGenerating || generatedItems.length === 0) {
+        console.log('Cannot generate PDF: isGenerating =', isGenerating, 'generatedItems.length =', generatedItems.length);
+        return;
+      }
     }
 
     try {
       setIsGenerating(true);
-      const currentItem = generatedItems[0];
 
       console.log('🎁 Starting PDF generation using quotation system...');
+
+      // Build item data for manual mode or use generated item for random mode
+      let itemToExport;
+      if ((selectionMode === 'manual')) {
+        // Create a complete item structure for manual mode
+        const allSelectedVariants = [
+          ...manualSelections.bronys,
+          ...manualSelections.kettleGourmet,
+          ...manualSelections.yumiCurls,
+          ...manualSelections.yumiSticks
+        ];
+
+        const paxNum = parseInt(pax);
+        const priceNum = currencyConfig.basePrice;
+
+        // Calculate tier pricing
+        const tiers = [
+          { minQuantity: 1, maxQuantity: 49, pricePerUnit: priceNum },
+          { minQuantity: 50, maxQuantity: 99, pricePerUnit: priceNum * 0.95 },
+          { minQuantity: 100, maxQuantity: 199, pricePerUnit: priceNum * 0.90 },
+          { minQuantity: 200, maxQuantity: 499, pricePerUnit: priceNum * 0.85 },
+          { minQuantity: 500, maxQuantity: Infinity, pricePerUnit: priceNum * 0.80 },
+        ];
+
+        const tier = tiers.find(t => paxNum >= t.minQuantity && paxNum <= t.maxQuantity);
+        const pricePerBox = tier ? tier.pricePerUnit : priceNum;
+
+        // Use the gift box type that was selected in ManualModeLayout, or fallback to first one
+        const selectedGiftBoxType = manualGiftBoxType || GIFT_BOX_TYPES[0];
+
+        itemToExport = {
+          name: selectedGiftBoxType.name,
+          description: 'Custom selected gift box',
+          pax: paxNum,
+          pricePerBox: pricePerBox.toFixed(2),
+          total: (paxNum * pricePerBox).toFixed(2),
+          productDescription: 'Custom selected gift box',
+          specialInstructions,
+          tierPricing: tiers,
+          giftBoxType: selectedGiftBoxType,
+          brandCategories: manualSelections,
+          selectedProducts: [],
+          variants: allSelectedVariants.map(v => ({
+            name: v.name,
+            image_url: v.image_url,
+            productName: 'Gift Box'
+          })),
+          priceBreakdown: {
+            baseCost: pricePerBox,
+            markup: 0,
+            discount: 0
+          }
+        };
+      } else {
+        // Random mode - use generated item
+        const currentItem = generatedItems[0];
+        itemToExport = currentItem;
+      }
 
       // Form inputs for transformation
       const formInputs = {
         pax,
-        pricePerPerson,
-        dietaryRestriction,
+        pricePerPerson: currencyConfig.basePrice.toString(),
+        dietaryRestriction: 'halal' as 'halal' | 'non-halal',
         specialInstructions
       };
 
       // Transform gift suggestion data to exact quotation format
       const quotationData = transformGiftSuggestionToQuotation(
-        currentItem,
+        itemToExport,
         companyInfo,
         formInputs,
         products,
@@ -476,14 +714,100 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
   return (
     <div className="gift-suggestion-page">
       <div className="gift-suggestion-container">
-        <div className="gift-suggestion-header">
-          <h2>Gift Suggestion Generator</h2>
-          <p className="subtitle">Generate personalized gift suggestions for your team or clients</p>
-        </div>
+        {/* Show selection boxes only when mode is not selected */}
+        {!modeSelected && (
+          <SelectionModeBox onSelectMode={handleModeSelection} />
+        )}
 
-        <div className="form-content">
-          {/* Three input fields in a row */}
-          <div className="input-row">
+        {/* Show form only when mode is selected */}
+        {modeSelected && selectionMode && (
+          <>
+            {/* Header for Random mode */}
+            {selectionMode === 'random' && (
+              <div className="gift-suggestion-header">
+                <h2>Gift Suggestion Generator</h2>
+                <p className="subtitle">We'll create a surprise selection for you</p>
+                <button
+                  onClick={handleModeChange}
+                  className="change-selection-btn"
+                  style={{
+                    marginTop: '16px',
+                    padding: '8px 16px',
+                    background: 'transparent',
+                    border: '2px solid #4CAF50',
+                    borderRadius: '6px',
+                    color: '#4CAF50',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#4CAF50';
+                    e.currentTarget.style.color = 'white';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = '#4CAF50';
+                  }}
+                >
+                  ← Change Selection Method
+                </button>
+              </div>
+            )}
+
+            {/* Manual Mode - New Layout */}
+            {selectionMode === 'manual' ? (
+              <>
+                <div className="gift-suggestion-header">
+                  <h2>Build Your Custom Gift Box</h2>
+                  <p className="subtitle">Choose your own flavors for the perfect gift box</p>
+                  <button
+                    onClick={handleModeChange}
+                    className="change-selection-btn"
+                    style={{
+                      marginTop: '16px',
+                      padding: '8px 16px',
+                      background: 'transparent',
+                      border: '2px solid #4CAF50',
+                      borderRadius: '6px',
+                      color: '#4CAF50',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#4CAF50';
+                      e.currentTarget.style.color = 'white';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = '#4CAF50';
+                    }}
+                  >
+                    ← Change Selection Method
+                  </button>
+                </div>
+                <ManualModeLayout
+                  currencyConfig={currencyConfig}
+                  manualSelections={manualSelections}
+                  onSelectionChange={handleSelectionChange}
+                  pax={pax}
+                  onPaxChange={handlePaxChange}
+                  specialInstructions={specialInstructions}
+                  onSpecialInstructionsChange={setSpecialInstructions}
+                  onDownloadPDF={handleDownloadSample}
+                  isGenerating={isGenerating}
+                  onGiftBoxTypeChange={setManualGiftBoxType}
+                />
+              </>
+            ) : (
+              /* Random Mode - Original Form */
+              <div className="form-content">
+
+          {/* Two input fields in a row */}
+          <div className="input-row" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
             <div className="input-group">
               <div className="input-field-container">
                 <label htmlFor="pax">Number of People</label>
@@ -504,7 +828,7 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
 
             <div className="input-group">
               <div className="input-field-container">
-                <label htmlFor="price">Price per Person (RM)</label>
+                <label htmlFor="price">Price per Person ({currencyConfig.currency})</label>
                 <div className="input-with-error">
                   <input
                     id="price"
@@ -517,23 +841,6 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                   {errors.price && <div className="error-message">{errors.price}</div>}
                 </div>
                 <div className="input-explanation">Minimum: {currencyConfig.currency} {currencyConfig.minPrice}</div>
-              </div>
-            </div>
-
-            <div className="input-group">
-              <div className="input-field-container">
-                <label htmlFor="dietary">Dietary Restriction</label>
-                <div className="input-with-error">
-                  <select
-                    id="dietary"
-                    value={dietaryRestriction}
-                    onChange={(e) => setDietaryRestriction(e.target.value as 'halal' | 'non-halal')}
-                    className="form-select"
-                  >
-                    <option value="halal">Halal</option>
-                    <option value="non-halal">Non-Halal</option>
-                  </select>
-                </div>
               </div>
             </div>
           </div>
@@ -559,7 +866,10 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                 disabled={isGenerating || !!errors.pax || !!errors.price}
                 className="generate-btn"
               >
-{isGenerating ? 'Generating...' : 'Generate Gift Suggestions'}
+                {isGenerating
+                  ? ((selectionMode === 'manual') ? 'Preparing...' : 'Generating...')
+                  : ((selectionMode === 'manual') ? 'Start Manual Selection' : 'Generate Gift Suggestions')
+                }
               </button>
             </div>
           )}
@@ -609,10 +919,18 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                           <div className="section-title">Inside Contains ({item.variants?.length || 0})</div>
                           {item.brandCategories ? (
                             <div className="brand-categories">
-                              <div className="brand-section">
-                                <div className="brand-title">Brony's Brownie Crisps ({item.brandCategories.bronys.length})</div>
+                              <div
+                                className="brand-section"
+                                style={{ cursor: (selectionMode === 'manual') ? 'pointer' : 'default' }}
+                                onClick={() => handleBrandClick('bronys')}
+                              >
+                                <div className="brand-title">
+                                  Brony's Brownie Crisps
+                                  {(selectionMode === 'manual') && manualSelections.bronys.length > 0 && ` (${manualSelections.bronys.length}/2)`}
+                                  {(selectionMode === 'random') && ` (${item.brandCategories.bronys.length})`}
+                                </div>
                                 <div className="brand-flavors">
-                                  {item.brandCategories.bronys.map((variant, i) => (
+                                  {((selectionMode === 'manual') ? manualSelections.bronys : item.brandCategories.bronys).map((variant, i) => (
                                     <div key={i} className="flavor-item">
                                       <div className="flavor-image">
                                         {variant.image_url ? (
@@ -635,10 +953,18 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                                 </div>
                               </div>
 
-                              <div className="brand-section">
-                                <div className="brand-title">The Kettle Gourmet Popcorn ({item.brandCategories.kettleGourmet.length})</div>
+                              <div
+                                className="brand-section"
+                                style={{ cursor: (selectionMode === 'manual') ? 'pointer' : 'default' }}
+                                onClick={() => handleBrandClick('kettleGourmet')}
+                              >
+                                <div className="brand-title">
+                                  The Kettle Gourmet Popcorn
+                                  {(selectionMode === 'manual') && manualSelections.kettleGourmet.length > 0 && ` (${manualSelections.kettleGourmet.length}/4)`}
+                                  {(selectionMode === 'random') && ` (${item.brandCategories.kettleGourmet.length})`}
+                                </div>
                                 <div className="brand-flavors">
-                                  {item.brandCategories.kettleGourmet.map((variant, i) => (
+                                  {((selectionMode === 'manual') ? manualSelections.kettleGourmet : item.brandCategories.kettleGourmet).map((variant, i) => (
                                     <div key={i} className="flavor-item">
                                       <div className="flavor-image">
                                         {variant.image_url ? (
@@ -661,10 +987,18 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                                 </div>
                               </div>
 
-                              <div className="brand-section">
-                                <div className="brand-title">Yumi Corn Curls ({item.brandCategories.yumiCurls.length})</div>
+                              <div
+                                className="brand-section"
+                                style={{ cursor: (selectionMode === 'manual') ? 'pointer' : 'default' }}
+                                onClick={() => handleBrandClick('yumiCurls')}
+                              >
+                                <div className="brand-title">
+                                  Yumi Corn Curls
+                                  {(selectionMode === 'manual') && manualSelections.yumiCurls.length > 0 && ` (${manualSelections.yumiCurls.length}/3)`}
+                                  {(selectionMode === 'random') && ` (${item.brandCategories.yumiCurls.length})`}
+                                </div>
                                 <div className="brand-flavors">
-                                  {item.brandCategories.yumiCurls.map((variant, i) => (
+                                  {((selectionMode === 'manual') ? manualSelections.yumiCurls : item.brandCategories.yumiCurls).map((variant, i) => (
                                     <div key={i} className="flavor-item">
                                       <div className="flavor-image">
                                         {variant.image_url ? (
@@ -687,10 +1021,18 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                                 </div>
                               </div>
 
-                              <div className="brand-section">
-                                <div className="brand-title">Yumi Cornsticks Polybag ({item.brandCategories.yumiSticks.length})</div>
+                              <div
+                                className="brand-section"
+                                style={{ cursor: (selectionMode === 'manual') ? 'pointer' : 'default' }}
+                                onClick={() => handleBrandClick('yumiSticks')}
+                              >
+                                <div className="brand-title">
+                                  Yumi Cornsticks Polybag
+                                  {(selectionMode === 'manual') && manualSelections.yumiSticks.length > 0 && ` (${manualSelections.yumiSticks.length}/1)`}
+                                  {(selectionMode === 'random') && ` (${item.brandCategories.yumiSticks.length})`}
+                                </div>
                                 <div className="brand-flavors">
-                                  {item.brandCategories.yumiSticks.map((variant, i) => (
+                                  {((selectionMode === 'manual') ? manualSelections.yumiSticks : item.brandCategories.yumiSticks).map((variant, i) => (
                                     <div key={i} className="flavor-item">
                                       <div className="flavor-image">
                                         {variant.image_url ? (
@@ -763,17 +1105,19 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                 ))}
               </div>
 
-              {/* Action buttons (when table is shown) */}
-              <div className="button-container">
-                <button
-                  type="button"
-                  onClick={handleRegenerate}
-                  disabled={isGenerating || !!errors.pax || !!errors.price}
-                  className="regenerate-btn"
-                >
-                  {isGenerating ? 'Regenerating...' : '🔄 Regenerate Suggestions'}
-                </button>
-              </div>
+              {/* Action buttons (when table is shown) - only show regenerate in random mode */}
+              {selectionMode === 'random' && (
+                <div className="button-container">
+                  <button
+                    type="button"
+                    onClick={handleRegenerate}
+                    disabled={isGenerating || !!errors.pax || !!errors.price}
+                    className="regenerate-btn"
+                  >
+                    {isGenerating ? 'Regenerating...' : 'Regenerate Suggestions'}
+                  </button>
+                </div>
+              )}
 
               {/* Download sample link - positioned under the regenerate button */}
               <div className="download-sample-container">
@@ -785,12 +1129,15 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                     cursor: isGenerating ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  {isGenerating ? '📄 Generating PDF...' : '📄 Download Quotation PDF'}
+                  {isGenerating ? 'Generating PDF...' : 'Download Quotation PDF'}
                 </span>
               </div>
             </div>
           )}
-        </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
