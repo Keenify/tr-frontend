@@ -51,6 +51,9 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
     yumiSticks: []
   });
 
+  // Store the gift box type for manual mode
+  const [manualGiftBoxType, setManualGiftBoxType] = useState<{ id: string; name: string; image_url: string } | null>(null);
+
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentBrand, setCurrentBrand] = useState<'bronys' | 'kettleGourmet' | 'yumiCurls' | 'yumiSticks' | null>(null);
@@ -598,8 +601,8 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
         const tier = tiers.find(t => paxNum >= t.minQuantity && paxNum <= t.maxQuantity);
         const pricePerBox = tier ? tier.pricePerUnit : priceNum;
 
-        // Select random gift box type
-        const selectedGiftBoxType = GIFT_BOX_TYPES[Math.floor(Math.random() * GIFT_BOX_TYPES.length)];
+        // Use the gift box type that was selected in ManualModeLayout, or fallback to first one
+        const selectedGiftBoxType = manualGiftBoxType || GIFT_BOX_TYPES[0];
 
         itemToExport = {
           name: selectedGiftBoxType.name,
@@ -782,6 +785,7 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
                   onSpecialInstructionsChange={setSpecialInstructions}
                   onDownloadPDF={handleDownloadSample}
                   isGenerating={isGenerating}
+                  onGiftBoxTypeChange={setManualGiftBoxType}
                 />
               </>
             ) : (

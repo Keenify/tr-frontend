@@ -22,6 +22,7 @@ interface ManualModeLayoutProps {
   onSpecialInstructionsChange: (value: string) => void;
   onDownloadPDF: () => void;
   isGenerating: boolean;
+  onGiftBoxTypeChange?: (giftBoxType: { id: string; name: string; image_url: string }) => void;
 }
 
 const ManualModeLayout: React.FC<ManualModeLayoutProps> = ({
@@ -33,7 +34,8 @@ const ManualModeLayout: React.FC<ManualModeLayoutProps> = ({
   specialInstructions,
   onSpecialInstructionsChange,
   onDownloadPDF,
-  isGenerating
+  isGenerating,
+  onGiftBoxTypeChange
 }) => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [currentBrand, setCurrentBrand] = React.useState<'bronys' | 'kettleGourmet' | 'yumiCurls' | 'yumiSticks' | null>(null);
@@ -81,7 +83,12 @@ const ManualModeLayout: React.FC<ManualModeLayoutProps> = ({
   ];
 
   const [giftBoxType] = React.useState(() => {
-    return GIFT_BOX_TYPES[Math.floor(Math.random() * GIFT_BOX_TYPES.length)];
+    const selected = GIFT_BOX_TYPES[Math.floor(Math.random() * GIFT_BOX_TYPES.length)];
+    // Notify parent component of the selected gift box type
+    if (onGiftBoxTypeChange) {
+      onGiftBoxTypeChange(selected);
+    }
+    return selected;
   });
 
   return (
