@@ -28,13 +28,8 @@ const SelectionModeBox: React.FC<SelectionModeBoxProps> = ({ onSelectMode }) => 
           </div>
           <h3 className="box-title">Random Selection</h3>
           <p className="box-description">
-            Let us surprise you! We'll carefully select a variety of flavors to create the perfect gift box.
+            We'll select a variety of products for you
           </p>
-          <ul className="box-features">
-            <li>Quick and easy</li>
-            <li>Balanced flavor variety</li>
-            <li>Regenerate for different options</li>
-          </ul>
           <button className="select-button">Select Random</button>
         </div>
 
@@ -51,13 +46,8 @@ const SelectionModeBox: React.FC<SelectionModeBoxProps> = ({ onSelectMode }) => 
           </div>
           <h3 className="box-title">Manual Selection</h3>
           <p className="box-description">
-            Take control! Choose exactly which flavors you want for each brand in your gift box.
+            Choose your own products
           </p>
-          <ul className="box-features">
-            <li>Full customization</li>
-            <li>Pick specific flavors</li>
-            <li>Perfect for known preferences</li>
-          </ul>
           <button className="select-button">Select Manual</button>
         </div>
       </div>

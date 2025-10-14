@@ -235,6 +235,15 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
   const handleModeSelection = (mode: 'random' | 'manual') => {
     setSelectionMode(mode);
     setModeSelected(true);
+
+    // If manual mode is selected, auto-populate Yumi Corn Curls with all 3 constant flavors
+    if (mode === 'manual') {
+      const brandCats = categorizeVariantsByBrand();
+      setManualSelections(prev => ({
+        ...prev,
+        yumiCurls: brandCats.yumiCurls // All 3 flavors: Curls Cheese, Barbecue, Squid
+      }));
+    }
   };
 
   // Handle mode switching - clear everything when switching modes
@@ -256,6 +265,11 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
 
   // Handle opening modal for brand selection
   const handleBrandClick = (brand: 'bronys' | 'kettleGourmet' | 'yumiCurls' | 'yumiSticks') => {
+    // Prevent selection for yumiCurls as it has constant items
+    if (brand === 'yumiCurls') {
+      return;
+    }
+
     if (selectionMode === 'manual' && showTable) {
       setCurrentBrand(brand);
       setIsModalOpen(true);

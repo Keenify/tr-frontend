@@ -59,21 +59,23 @@ const ManualModeLayout: React.FC<ManualModeLayoutProps> = ({
   const calculateTotal = () => {
     const paxNum = parseInt(pax) || 0;
     const tiers = [
-      { min: 1, max: 49, price: currencyConfig.basePrice },
-      { min: 50, max: 99, price: currencyConfig.basePrice * 0.95 },
-      { min: 100, max: 199, price: currencyConfig.basePrice * 0.90 },
-      { min: 200, max: 499, price: currencyConfig.basePrice * 0.85 },
-      { min: 500, max: Infinity, price: currencyConfig.basePrice * 0.80 },
+      { min: 1, max: 49, price: currencyConfig.basePrice, discountPercent: 0 },
+      { min: 50, max: 99, price: currencyConfig.basePrice * 0.95, discountPercent: 5 },
+      { min: 100, max: 199, price: currencyConfig.basePrice * 0.90, discountPercent: 10 },
+      { min: 200, max: 499, price: currencyConfig.basePrice * 0.85, discountPercent: 15 },
+      { min: 500, max: Infinity, price: currencyConfig.basePrice * 0.80, discountPercent: 20 },
     ];
 
     const tier = tiers.find(t => paxNum >= t.min && paxNum <= t.max);
     const pricePerBox = tier ? tier.price : currencyConfig.basePrice;
+    const discountPercent = tier ? tier.discountPercent : 0;
+    const discountAmount = currencyConfig.basePrice - pricePerBox;
     const total = pricePerBox * paxNum;
 
-    return { pricePerBox, total, paxNum };
+    return { pricePerBox, total, paxNum, discountPercent, discountAmount };
   };
 
-  const { pricePerBox, total, paxNum } = calculateTotal();
+  const { pricePerBox, total, paxNum, discountPercent, discountAmount } = calculateTotal();
 
   const brandConfig = [
     { key: 'bronys' as const, emoji: '🍫', name: "Brony's Brownie Crisps", required: 2 },
@@ -129,7 +131,7 @@ const ManualModeLayout: React.FC<ManualModeLayoutProps> = ({
                 </div>
                 <div className="brand-flavors-manual">
                   {manualSelections.bronys.length === 0 ? (
-                    <div className="empty-selection">Click to select flavors</div>
+                    <div className="empty-selection">Click to select products</div>
                   ) : (
                     manualSelections.bronys.map((variant, i) => (
                       <div key={i} className="flavor-item-manual">
@@ -164,7 +166,7 @@ const ManualModeLayout: React.FC<ManualModeLayoutProps> = ({
                 </div>
                 <div className="brand-flavors-manual">
                   {manualSelections.kettleGourmet.length === 0 ? (
-                    <div className="empty-selection">Click to select flavors</div>
+                    <div className="empty-selection">Click to select products</div>
                   ) : (
                     manualSelections.kettleGourmet.map((variant, i) => (
                       <div key={i} className="flavor-item-manual">
@@ -191,8 +193,7 @@ const ManualModeLayout: React.FC<ManualModeLayoutProps> = ({
               </div>
 
               <div
-                className="brand-section-manual"
-                onClick={() => handleBrandClick('yumiCurls')}
+                className="brand-section-manual brand-section-locked"
               >
                 <div className="brand-title-manual">
                   Yumi Corn Curls ({manualSelections.yumiCurls.length}/3)
@@ -234,7 +235,7 @@ const ManualModeLayout: React.FC<ManualModeLayoutProps> = ({
                 </div>
                 <div className="brand-flavors-manual">
                   {manualSelections.yumiSticks.length === 0 ? (
-                    <div className="empty-selection">Click to select flavors</div>
+                    <div className="empty-selection">Click to select products</div>
                   ) : (
                     manualSelections.yumiSticks.map((variant, i) => (
                       <div key={i} className="flavor-item-manual">
@@ -270,7 +271,12 @@ const ManualModeLayout: React.FC<ManualModeLayoutProps> = ({
 
         <div className="price-display-box">
           <div className="box-price-label">Box Price:</div>
-          <div className="box-price-value">{currencyConfig.currency} {currencyConfig.basePrice.toFixed(2)}</div>
+          <div className="box-price-value">{currencyConfig.currency} {pricePerBox.toFixed(2)}</div>
+          {discountPercent > 0 && (
+            <div className="discount-info">
+              Discount: {discountPercent}% off
+            </div>
+          )}
         </div>
 
         <div className="quantity-input-group">
