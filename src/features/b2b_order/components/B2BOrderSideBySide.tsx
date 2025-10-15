@@ -369,7 +369,7 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
             {!randomResult && (
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '20px 0', width: '100%' }}>
                 <button
-                  onClick={handleRandomGenerate}
+                  onClick={(e) => { e.stopPropagation(); handleRandomGenerate(); }}
                   disabled={randomGenerating}
                   className="generate-btn"
                   style={{ width: 'auto', padding: '12px 32px', margin: '0 auto' }}
@@ -537,7 +537,7 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '15px', width: '100%' }}>
                   <button
                     type="button"
-                    onClick={() => { setRandomResult(null); handleRandomGenerate(); }}
+                    onClick={(e) => { e.stopPropagation(); setRandomResult(null); handleRandomGenerate(); }}
                     disabled={randomGenerating}
                     className="generate-btn"
                     style={{
@@ -553,7 +553,7 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
                 {/* Download Button - Text Link Style */}
                 <div className="download-sample-container" style={{ textAlign: 'center', marginTop: '15px' }}>
                   <span
-                    onClick={handleRandomDownload}
+                    onClick={(e) => { e.stopPropagation(); handleRandomDownload(); }}
                     style={{
                       color: '#9b59b6',
                       textDecoration: 'underline',
@@ -627,7 +627,7 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
             <div className="brand-categories-manual">
                     <div
                       className="brand-section-manual"
-                      onClick={() => handleBrandClick('bronys')}
+                      onClick={(e) => { e.stopPropagation(); handleBrandClick('bronys'); }}
                     >
                       <div className="brand-title-manual">
                         Brony's Brownie Crisps ({manualSelections.bronys.length}/2)
@@ -662,7 +662,7 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
 
                     <div
                       className="brand-section-manual"
-                      onClick={() => handleBrandClick('kettleGourmet')}
+                      onClick={(e) => { e.stopPropagation(); handleBrandClick('kettleGourmet'); }}
                     >
                       <div className="brand-title-manual">
                         The Kettle Gourmet Popcorn ({manualSelections.kettleGourmet.length}/4)
@@ -731,7 +731,7 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
 
                     <div
                       className="brand-section-manual"
-                      onClick={() => handleBrandClick('yumiSticks')}
+                      onClick={(e) => { e.stopPropagation(); handleBrandClick('yumiSticks'); }}
                     >
                       <div className="brand-title-manual">
                         Yumi Cornsticks Polybag ({manualSelections.yumiSticks.length}/1)
@@ -876,7 +876,7 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
 
             {/* Download Button */}
             <button
-              onClick={handleManualDownload}
+              onClick={(e) => { e.stopPropagation(); handleManualDownload(); }}
               disabled={manualGenerating || !getSelectionComplete() || parseInt(manualPax) === 0}
               className="download-pdf-btn"
               style={{

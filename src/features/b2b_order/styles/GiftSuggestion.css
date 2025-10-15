@@ -766,6 +766,13 @@
   }
 }
 
+/* Medium screens with sidebar - prevent stacking */
+@media (max-width: 900px) and (min-width: 769px) {
+  .brand-flavors {
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  }
+}
+
 @media (max-width: 768px) {
   .gift-suggestion-page {
     padding: 1rem;
