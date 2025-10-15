@@ -403,20 +403,17 @@
 }
 
 /* Responsive Design */
-@media (max-width: 1200px) {
+@media (max-width: 1760px) {
   .brand-categories-manual {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .brand-flavors-manual {
-    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
   }
-}
 
-/* Medium screens with sidebar - prevent stacking */
-@media (max-width: 900px) and (min-width: 769px) {
-  .brand-flavors-manual {
-    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  .flavor-item-manual {
+    min-width: 75px;
   }
 }
 
