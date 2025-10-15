@@ -3,8 +3,8 @@ import { Session } from '@supabase/supabase-js';
 import { useUserAndCompanyData } from '../../../shared/hooks/useUserAndCompanyData';
 import { Product, ProductVariant } from '../../../shared/types/Product';
 import { generateAutomatedGiftBox, formatGiftBoxForDisplay } from '../utils/giftSuggestionHelper';
-import { getCachedProducts } from '../utils/productCache';
-import { categorizeVariantsByBrand, GIFT_BOX_TYPES } from '../utils/staticProductData';
+import { getCachedProducts, initializePublicCache, getCacheInfo, cacheAllProducts } from '../utils/productCache';
+import { categorizeVariantsByBrand, GIFT_BOX_TYPES, getStaticProducts } from '../utils/staticProductData';
 import { transformGiftSuggestionToQuotation } from '../utils/giftSuggestionToQuotation';
 import { useCurrencyDetection } from '../hooks/useCurrencyDetection';
 import { BACKEND_API_DOMAIN } from '../../../config';
@@ -61,10 +61,57 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
   // Load products on mount
   useEffect(() => {
     const loadProducts = async () => {
-      const { products: cachedProducts, productVariants: cachedVariants } = await getCachedProducts(companyInfo?.id);
-      setProducts(cachedProducts);
-      setProductVariants(cachedVariants);
+      console.log('=== PRODUCT CACHE SYSTEM ===');
+      // Check cache info
+      const cacheInfo = getCacheInfo();
+      console.log('Cache info:', cacheInfo);
+
+      try {
+        // Try to get cached products (works for both authenticated and public access)
+        const { products: cachedProducts, productVariants: cachedVariants } = await getCachedProducts(companyInfo?.id);
+
+        if (cachedProducts.length > 0) {
+          console.log('✅ Successfully loaded products from cache system');
+          console.log(`📦 Loaded ${cachedProducts.length} products with variants`);
+          setProducts(cachedProducts);
+          setProductVariants(cachedVariants);
+        } else {
+          console.log('❌ No products available in cache system, using static fallback');
+          // Use static products as fallback for incognito/public access
+          const { products: staticProducts, productVariants: staticVariants } = getStaticProducts();
+          setProducts(staticProducts);
+          setProductVariants(staticVariants);
+          console.log('✅ Loaded static products for public access');
+        }
+
+        // Initialize public cache if no cache exists at all (for first-time visitors)
+        if (!cacheInfo.hasCache) {
+          console.log('🚀 No cache found, initializing for public access...');
+          initializePublicCache().catch(error => {
+            console.warn('⚠️ Public cache initialization failed:', error);
+          });
+        }
+
+        // If we have a company ID but no fresh cache, refresh the cache in background
+        if (companyInfo?.id && (!cacheInfo.hasCache || cacheInfo.companyId !== companyInfo.id)) {
+          console.log('🔄 Refreshing product cache in background...');
+          cacheAllProducts(companyInfo.id).catch(error => {
+            console.warn('⚠️ Background cache refresh failed:', error);
+          });
+        }
+
+      } catch (error) {
+        console.error('❌ Failed to load products from cache system:', error);
+        // Use static products as ultimate fallback
+        const { products: staticProducts, productVariants: staticVariants } = getStaticProducts();
+        setProducts(staticProducts);
+        setProductVariants(staticVariants);
+        console.log('✅ Using static products as fallback after cache failure');
+      } finally {
+        console.log('=== END PRODUCT CACHE SYSTEM ===');
+      }
     };
+
     loadProducts();
   }, [companyInfo?.id]);
 
