@@ -22,7 +22,16 @@ interface B2BOrderSideBySideProps {
 const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
   const userId = session?.user?.id || '';
   const { companyInfo } = useUserAndCompanyData(userId);
-  const { currencyConfig } = useCurrencyDetection();
+  const { currencyConfig, loading: currencyLoading, error: currencyError } = useCurrencyDetection();
+
+  // Debug currency detection
+  useEffect(() => {
+    console.log('=== CURRENCY DETECTION ===');
+    console.log('Currency Config:', currencyConfig);
+    console.log('Currency Loading:', currencyLoading);
+    console.log('Currency Error:', currencyError);
+    console.log('=========================');
+  }, [currencyConfig, currencyLoading, currencyError]);
 
   // Product data
   const [products, setProducts] = useState<Product[]>([]);
@@ -389,7 +398,7 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
               </div>
 
               <div className="input-group">
-                <label htmlFor="random-price">Price per Person ({currencyConfig.currency})</label>
+                <label htmlFor="random-price">Price per Person</label>
                 <input
                   id="random-price"
                   type="text"
