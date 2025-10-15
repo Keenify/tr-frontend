@@ -31,7 +31,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import DailyHuddle from "./features/dailyHuddle/components/DailyHuddle";
 import Sales from "./features/sales/components/Sales";
 import Quotation from "./features/quotation/components/Quotation";
-import B2BOrderFixed from "./features/b2b_order/components/B2BOrderFixed";
+import B2BOrderSideBySide from "./features/b2b_order/components/B2BOrderSideBySide";
 import Product from "./features/product/components/Product";
 import Resources from "./features/resources/components/Resources";
 import Projects from "./features/projects/components/Projects";
@@ -124,7 +124,7 @@ const App: React.FC = () => {
             <Route path="/jd/:companyId/:slug" element={<PublicJDPage />} />
 
             {/* Public Gift Suggestion - no auth required */}
-            <Route path="/gift-suggestion" element={<B2BOrderFixed session={null} />} />
+            <Route path="/gift-suggestion" element={<B2BOrderSideBySide session={null} />} />
 
             {/* Legacy public order tracker route - redirect to /gift-suggestion */}
             <Route path="/public/order-tracker" element={<Navigate to="/gift-suggestion" replace />} />
@@ -340,7 +340,7 @@ const App: React.FC = () => {
                             activeSubTab="gift-suggestion"
                             onSubTabChange={() => {}}
                           >
-                            <B2BOrderFixed session={session} />
+                            <B2BOrderSideBySide session={session} />
                           </DashboardLayout>
                         }
                       />

@@ -8,7 +8,7 @@
   margin-bottom: 3rem;
   background: white;
   border-radius: 20px;
-  padding: 2.5rem;
+  padding: 1.5rem;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -48,6 +48,7 @@
   margin-bottom: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 1px;
+  text-align: center;
 }
 
 .brand-categories-manual {
@@ -61,7 +62,7 @@
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
   border: 2px solid #e9ecef;
   border-radius: 16px;
-  padding: 1.25rem;
+  padding: 15px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
   overflow: visible;
@@ -127,8 +128,8 @@
 }
 
 .flavor-image-manual {
-  width: 70px;
-  height: 70px;
+  width: 40px;
+  height: 40px;
   border-radius: 8px;
   overflow: visible;
   flex-shrink: 0;
@@ -418,7 +419,7 @@
   }
 
   .manual-section {
-    padding: 1.5rem;
+    padding: 1rem;
     margin-bottom: 2rem;
   }
 
@@ -452,8 +453,8 @@
   }
 
   .flavor-image-manual {
-    width: 60px;
-    height: 60px;
+    width: 35px;
+    height: 35px;
   }
 
   .flavor-item-manual {
@@ -504,7 +505,7 @@
   }
 
   .manual-section {
-    padding: 1rem;
+    padding: 0.75rem;
     margin-bottom: 1.5rem;
   }
 
@@ -518,8 +519,8 @@
   }
 
   .flavor-image-manual {
-    width: 50px;
-    height: 50px;
+    width: 30px;
+    height: 30px;
   }
 
   .flavor-item-manual {
@@ -543,5 +544,44 @@
   .download-pdf-btn {
     padding: 1rem 2rem;
     font-size: 1rem;
+  }
+}
+
+/* Very small mobile screens - more aggressive reductions */
+@media (max-width: 380px) {
+  .brand-categories-manual {
+    gap: 0.75rem;
+  }
+
+  .brand-section-manual {
+    padding: 10px;
+  }
+
+  .brand-flavors-manual {
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 0.4rem;
+  }
+
+  .flavor-item-manual {
+    padding: 0.4rem;
+    min-width: 60px;
+  }
+
+  .flavor-image-manual {
+    width: 28px;
+    height: 28px;
+  }
+
+  .flavor-name-manual {
+    font-size: 0.65rem;
+    max-width: 55px;
+  }
+
+  .brand-title-manual {
+    font-size: 0.85rem;
+  }
+
+  .section-title-manual {
+    font-size: 0.85rem;
   }
 }

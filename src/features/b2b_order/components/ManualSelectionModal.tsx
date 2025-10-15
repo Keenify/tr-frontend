@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ProductVariant } from '../../../shared/types/Product';
 import '../styles/ManualSelectionModal.css';
 
@@ -21,6 +21,25 @@ const ManualSelectionModal: React.FC<ManualSelectionModalProps> = ({
   selectedVariants,
   onSelectionChange
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Lock body scroll when modal is open and scroll to modal
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      // Auto-scroll to the modal so user sees it, not just grey backdrop
+      setTimeout(() => {
+        modalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -51,7 +70,7 @@ const ManualSelectionModal: React.FC<ManualSelectionModalProps> = ({
 
   return (
     <div className="manual-selection-backdrop" onClick={handleBackdropClick}>
-      <div className="manual-selection-modal">
+      <div className="manual-selection-modal" ref={modalRef}>
         <div className="modal-header">
           <h3>Select {maxSelection} {brandName}</h3>
           <button className="close-button" onClick={onClose}>

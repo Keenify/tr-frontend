@@ -1,39 +1,79 @@
+/* Header-only container (no mode selection boxes) */
+.selection-mode-header-only {
+  position: relative;
+  padding: 20px 20px 30px 20px;
+  overflow: hidden;
+}
+
+/* Scrollable wrapper for the entire selection mode */
+.selection-mode-wrapper {
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
 .selection-mode-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 60px 20px 40px 20px;
+  padding: 20px 20px 40px 20px;
   position: relative;
   overflow: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 /* Christmas Countdown */
 .christmas-countdown {
   position: absolute;
-  top: 40px;
-  right: 20px;
+  top: 70px;
+  right: 220px;
   background: rgba(255, 255, 255, 0.98);
   border-radius: 12px;
-  padding: 12px 16px;
+  padding: 10px 14px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   z-index: 10;
   border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
+/* Responsive countdown positioning - center it for screens with potential sidebar */
+@media (max-width: 1900px) and (min-width: 1500px) {
+  .christmas-countdown {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    top: 20px;
+    margin-bottom: 30px;
+  }
+}
+
+@media (max-width: 1499px) and (min-width: 772px) {
+  .christmas-countdown {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    top: 10px;
+    margin-bottom: 20px;
+  }
+}
+
 .countdown-title {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: #c41e3a;
   text-align: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   letter-spacing: 0.3px;
 }
 
 .countdown-footer {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: #165b33;
   text-align: center;
-  margin-top: 8px;
+  margin-top: 6px;
   letter-spacing: 0.3px;
 }
 
@@ -51,7 +91,7 @@
 }
 
 .time-value {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: #165b33;
   line-height: 1.2;
@@ -92,7 +132,7 @@
   top: -10%;
   color: #a8d8ea;
   font-size: 1.5em;
-  opacity: 0.7;
+  opacity: 0;
   animation: fall linear infinite;
   text-shadow: 0 0 10px rgba(168, 216, 234, 0.8);
 }
@@ -167,10 +207,51 @@
   font-size: 1.8em;
 }
 
+.snowflake:nth-child(11) {
+  left: 15%;
+  animation-duration: 11s;
+  animation-delay: 2s;
+  font-size: 1.4em;
+}
+
+.snowflake:nth-child(12) {
+  left: 35%;
+  animation-duration: 13s;
+  animation-delay: 4s;
+  font-size: 1.6em;
+}
+
+.snowflake:nth-child(13) {
+  left: 55%;
+  animation-duration: 9s;
+  animation-delay: 1s;
+  font-size: 1.3em;
+}
+
+.snowflake:nth-child(14) {
+  left: 75%;
+  animation-duration: 12s;
+  animation-delay: 3s;
+  font-size: 1.7em;
+}
+
+.snowflake:nth-child(15) {
+  left: 85%;
+  animation-duration: 10s;
+  animation-delay: 5s;
+  font-size: 1.5em;
+}
+
 @keyframes fall {
   0% {
     transform: translateY(-10vh) rotate(0deg);
-    opacity: 0.8;
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.7;
+  }
+  90% {
+    opacity: 0.7;
   }
   100% {
     transform: translateY(110vh) rotate(360deg);
@@ -180,16 +261,17 @@
 
 .selection-mode-header {
   text-align: center;
-  margin-bottom: 60px;
+  margin-top: 110px;
+  margin-bottom: 30px;
   position: relative;
   z-index: 2;
 }
 
 .selection-mode-header h2 {
-  font-size: 36px;
+  font-size: 39px;
   font-weight: 700;
   color: #1a1a1a;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .festive-text {
@@ -223,8 +305,8 @@
 .selection-boxes {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 30px;
-  max-width: 800px;
+  gap: 40px;
+  max-width: 1200px;
   margin: 0 auto;
   position: relative;
   z-index: 2;
@@ -255,14 +337,15 @@
   image-rendering: crisp-edges;
   backface-visibility: hidden;
   transform: translateZ(0);
-  max-height: 350px;
+  max-height: 450px;
+  min-height: 300px;
   object-position: center 20%;
 }
 
 .box-caption {
-  padding: 24px 28px;
+  padding: 28px 32px;
   margin: 0;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
   color: #1a1a1a;
   text-align: center;
@@ -364,16 +447,45 @@
   transform: translateY(0);
 }
 
+/* Tablet and medium screens */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .selection-boxes {
+    max-width: 900px;
+    gap: 30px;
+  }
+
+  .box-image {
+    max-height: 380px;
+    min-height: 280px;
+  }
+
+  .box-caption {
+    padding: 24px 28px;
+    font-size: 17px;
+  }
+
+  .selection-mode-header h2 {
+    font-size: 28px;
+  }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
+  .selection-mode-wrapper {
+    height: auto;
+    min-height: 100vh;
+  }
+
   .selection-mode-container {
     padding: 20px 15px 30px 15px;
+    min-height: auto;
   }
 
   .christmas-countdown {
     position: static;
-    margin: 0 auto 25px auto;
+    margin: 20px auto 25px auto;
     max-width: fit-content;
+    transform: none;
   }
 
   .countdown-title {
@@ -385,7 +497,7 @@
   }
 
   .time-value {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .time-label {
@@ -399,17 +511,18 @@
 
   .selection-boxes {
     grid-template-columns: 1fr;
-    gap: 15px;
-    max-width: 90%;
+    gap: 20px;
+    max-width: 100%;
     padding: 0 10px;
   }
 
   .selection-mode-header {
-    margin-bottom: 30px;
+    margin-top: 0;
+    margin-bottom: 25px;
   }
 
   .selection-mode-header h2 {
-    font-size: 26px;
+    font-size: 28px;
   }
 
   .selection-subtitle {
@@ -422,11 +535,12 @@
 
   .box-image {
     max-height: 280px;
+    min-height: 200px;
   }
 
   .box-caption {
-    padding: 18px 20px;
-    font-size: 15px;
+    padding: 20px 24px;
+    font-size: 16px;
   }
 
   .box-icon {

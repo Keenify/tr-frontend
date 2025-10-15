@@ -1,0 +1,142 @@
+/* Split-screen layout for side-by-side Random and Manual modes */
+.split-screen-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 20px;
+  padding-top: 40px;
+  min-height: calc(100vh - 200px);
+}
+
+/* Each mode panel */
+.mode-panel {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-y: auto;
+  max-height: calc(100vh - 220px);
+  min-height: 600px;
+}
+
+.mode-panel:hover {
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.12);
+}
+
+/* Panel headers */
+.mode-panel-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.mode-panel-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+}
+
+.mode-panel-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+/* Random Mode specific */
+.random-mode-panel .mode-panel-header {
+  border-bottom-color: #667eea;
+}
+
+.random-mode-panel .mode-panel-title {
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Allow random panel to stretch when results are shown */
+.random-mode-panel {
+  overflow-y: visible;
+  overflow-x: hidden;
+  max-height: none;
+  height: auto;
+}
+
+/* Manual Mode specific */
+.manual-mode-panel .mode-panel-header {
+  border-bottom-color: #9b59b6;
+}
+
+.manual-mode-panel .mode-panel-title {
+  background: linear-gradient(90deg, #9b59b6, #8e44ad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Allow manual panel to stretch to fit all content (no scrolling) */
+.manual-mode-panel {
+  overflow-y: visible;
+  overflow-x: hidden;
+  max-height: none;
+  height: auto;
+}
+
+/* Responsive - Stack on smaller screens */
+@media (max-width: 1024px) {
+  .split-screen-container {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    overflow-x: hidden;
+  }
+
+  .mode-panel {
+    max-height: none;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 768px) {
+  .split-screen-container {
+    padding: 15px;
+    padding-top: 30px;
+    gap: 20px;
+    overflow-x: hidden;
+  }
+
+  .mode-panel {
+    padding: 20px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .mode-panel-title {
+    font-size: 20px;
+  }
+
+  .mode-panel-subtitle {
+    font-size: 13px;
+  }
+}
+
+/* Very small mobile screens - prevent overflow issues */
+@media (max-width: 380px) {
+  .split-screen-container {
+    padding: 10px;
+    padding-top: 25px;
+    gap: 15px;
+  }
+
+  .mode-panel {
+    padding: 12px;
+  }
+}
