@@ -54,6 +54,7 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentBrand, setCurrentBrand] = useState<'bronys' | 'kettleGourmet' | 'yumiCurls' | 'yumiSticks' | null>(null);
+  const [manualPaxError, setManualPaxError] = useState<string>('');
 
   // Track which panel is active
   const [activePanel, setActivePanel] = useState<'random' | 'manual' | null>(null);
@@ -267,15 +268,16 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
       return;
     }
 
-    if (!manualPax || parseInt(manualPax) === 0) {
-      alert('Please enter the number of people');
+    const paxNum = parseInt(manualPax);
+    if (!manualPax || isNaN(paxNum) || paxNum < 1) {
+      setManualPaxError('Quantity is required');
       return;
     }
 
+    setManualPaxError('');
     setManualGenerating(true);
 
     const allSelectedVariants = [...bronys, ...kettleGourmet, ...yumiCurls, ...yumiSticks];
-    const paxNum = parseInt(manualPax);
     const priceNum = currencyConfig.basePrice;
 
     const tiers = [
@@ -823,11 +825,30 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
                   id="manual-pax"
                   type="text"
                   value={manualPax}
-                  onChange={(e) => setManualPax(e.target.value)}
+                  onChange={(e) => {
+                    setManualPax(e.target.value);
+                    setManualPaxError('');
+                  }}
                   placeholder="Enter number"
                   className="quantity-input"
-                  style={{ width: '100%', padding: '8px 12px', fontSize: '14px' }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    border: manualPaxError ? '3px solid #dc3545' : '3px solid #e9ecef',
+                    backgroundColor: manualPaxError ? '#fff5f5' : 'white'
+                  }}
                 />
+                {manualPaxError && (
+                  <div style={{
+                    color: '#dc3545',
+                    fontSize: '11px',
+                    marginTop: '4px',
+                    fontWeight: '400'
+                  }}>
+                    {manualPaxError}
+                  </div>
+                )}
               </div>
 
               {/* Pricing Summary Box */}
@@ -922,22 +943,41 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
             </div>
 
             {/* Download Button */}
-            <button
-              onClick={(e) => { e.stopPropagation(); handleManualDownload(); }}
-              disabled={manualGenerating || !getSelectionComplete() || parseInt(manualPax) === 0}
-              className="download-pdf-btn"
-              style={{
-                width: 'auto',
-                padding: '10px 24px',
-                fontSize: '14px',
-                display: 'block',
-                margin: '20px auto 40px',
-                position: 'relative',
-                zIndex: 10
-              }}
-            >
-              {manualGenerating ? 'Generating PDF...' : 'Download Quotation PDF'}
-            </button>
+            <div style={{ textAlign: 'center' }}>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleManualDownload(); }}
+                disabled={manualGenerating || !getSelectionComplete() || !manualPax || parseInt(manualPax) === 0}
+                className="download-pdf-btn"
+                style={{
+                  width: 'auto',
+                  padding: '10px 24px',
+                  fontSize: '14px',
+                  display: 'block',
+                  margin: '20px auto 0',
+                  position: 'relative',
+                  zIndex: 10
+                }}
+              >
+                {manualGenerating ? 'Generating PDF...' : 'Download Quotation PDF'}
+              </button>
+
+              {/* Helper text when button is disabled */}
+              {(manualGenerating || !getSelectionComplete() || !manualPax || parseInt(manualPax) === 0) && (
+                <div style={{
+                  fontSize: '11px',
+                  color: '#999',
+                  marginTop: '8px',
+                  marginBottom: '32px',
+                  fontStyle: 'italic'
+                }}>
+                  {!getSelectionComplete()
+                    ? 'Please select all required products to continue'
+                    : (!manualPax || parseInt(manualPax) === 0)
+                    ? 'Please enter quantity above to continue'
+                    : 'Generating your PDF...'}
+                </div>
+              )}
+            </div>
 
             {/* Manual Selection Modal */}
             {currentBrand && (
