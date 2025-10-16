@@ -91,11 +91,58 @@
   font-size: 1rem;
   font-weight: 700;
   color: #495057;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   padding-bottom: 0.75rem;
   border-bottom: 3px solid #667eea;
   text-align: left;
   letter-spacing: 0.3px;
+}
+
+/* Brand Description Styles */
+.brand-description {
+  margin-bottom: 1rem;
+  padding: 0 2px;
+}
+
+.description-text {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #6c757d;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  margin-bottom: 0.5rem;
+}
+
+.description-text.collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  max-height: 2.6em; /* approximately 2 lines */
+}
+
+.description-text.expanded {
+  display: block;
+  max-height: 500px; /* large enough for full text */
+}
+
+.read-more-btn {
+  background: none;
+  border: none;
+  color: #667eea;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  text-decoration: underline;
+  display: inline-block;
+}
+
+.read-more-btn:hover {
+  background: #f3e5f5;
+  color: #764ba2;
+  text-decoration: none;
 }
 
 .brand-flavors-manual {
@@ -448,8 +495,23 @@
 
   .brand-title-manual {
     font-size: 0.95rem;
-    margin-bottom: 0.875rem;
+    margin-bottom: 0.75rem;
     padding-bottom: 0.625rem;
+  }
+
+  .description-text {
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+
+  .description-text.collapsed {
+    -webkit-line-clamp: 3; /* Show 3 lines on mobile for better readability */
+    max-height: 3.5em;
+  }
+
+  .read-more-btn {
+    font-size: 0.75rem;
+    padding: 3px 6px;
   }
 
   .brand-flavors-manual {
@@ -518,6 +580,15 @@
     font-size: 1rem;
   }
 
+  .description-text {
+    font-size: 0.75rem;
+    line-height: 1.35;
+  }
+
+  .read-more-btn {
+    font-size: 0.7rem;
+  }
+
   .brand-flavors-manual {
     grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
     gap: 0.5rem;
@@ -584,6 +655,15 @@
 
   .brand-title-manual {
     font-size: 0.85rem;
+  }
+
+  .description-text {
+    font-size: 0.7rem;
+    line-height: 1.3;
+  }
+
+  .read-more-btn {
+    font-size: 0.65rem;
   }
 
   .section-title-manual {

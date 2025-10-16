@@ -68,6 +68,19 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
   // Track which panel is active
   const [activePanel, setActivePanel] = useState<'random' | 'manual' | null>(null);
 
+  // Track which brand descriptions are expanded
+  const [expandedDescriptions, setExpandedDescriptions] = useState<{
+    bronys: boolean;
+    kettleGourmet: boolean;
+    yumiCurls: boolean;
+    yumiSticks: boolean;
+  }>({
+    bronys: false,
+    kettleGourmet: false,
+    yumiCurls: false,
+    yumiSticks: false
+  });
+
   // Load products on mount
   useEffect(() => {
     const loadProducts = async () => {
@@ -139,6 +152,22 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
     const selected = GIFT_BOX_TYPES[Math.floor(Math.random() * GIFT_BOX_TYPES.length)];
     setManualGiftBoxType(selected);
   }, []);
+
+  // Brand descriptions
+  const brandDescriptions = {
+    bronys: "Brownie Crisps are made from real brownie dough and baked into thin, crunchy crisps - freshly baked with no preservatives or artificial colors. Packed in resealable high quality aluminum foil to keep every crisp fresh so you can enjoy it anytime, anywhere. Plus, two of the flavours are inspired by Malaysian favourites - apam balik and pisang goreng, now turned into crispy brownie crisps.",
+    kettleGourmet: "Sort it in any way you want it. Our Assorted Singles bundle of 8 packs gives you the satisfaction of choosing your very own popcorn flavours to savour. Don't leave your friends out. Get a double or a triple of Assorted Singles bundle and throw a party in the house!",
+    yumiCurls: "Enjoy our corn curls in three unique flavours - Squid, BBQ, and Cheese. Made from premium corn, a bite of this heavenly snack allows you to enjoy a crunchy, melt-in-your-mouth texture.",
+    yumiSticks: "Introducing YUMI Corn Stick Bundle! In this bundle, Ori san, Chicky san and Cheesy san bring the amazing different flavours of YUMI Corn Stick to brighten up your day. With the unique Original flavour, the scrumptious Cheese flavour and smoky BBQ Chicken, you will definitely be satisfied with this addictive mix of flavours!\n\nRich, unique corn taste that's so addictive, you'll be begging for more. Crunchy with long-lasting flavour unlike other corn sticks on the market.\n\nTrust The Kettle Gourmet to bring you only the best quality corn snack there is. Get your own YUMI Assorted Corn Stick Bundle here today!"
+  };
+
+  // Toggle description expansion
+  const toggleDescription = (brand: 'bronys' | 'kettleGourmet' | 'yumiCurls' | 'yumiSticks') => {
+    setExpandedDescriptions(prev => ({
+      ...prev,
+      [brand]: !prev[brand]
+    }));
+  };
 
   // Manual mode helper functions
   const handleBrandClick = (brand: 'bronys' | 'kettleGourmet' | 'yumiCurls' | 'yumiSticks') => {
@@ -478,6 +507,17 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
                             <div className="brand-title" style={{ fontWeight: '600', marginBottom: '10px', fontSize: '14px' }}>
                               {brandNames[key as keyof typeof brandNames]} ({variants.length})
                             </div>
+                            <div className="brand-description">
+                              <div className={`description-text ${expandedDescriptions[key as keyof typeof expandedDescriptions] ? 'expanded' : 'collapsed'}`}>
+                                {brandDescriptions[key as keyof typeof brandDescriptions]}
+                              </div>
+                              <button
+                                className="read-more-btn"
+                                onClick={(e) => { e.stopPropagation(); toggleDescription(key as 'bronys' | 'kettleGourmet' | 'yumiCurls' | 'yumiSticks'); }}
+                              >
+                                {expandedDescriptions[key as keyof typeof expandedDescriptions] ? 'Read less ↑' : 'Read more ↓'}
+                              </button>
+                            </div>
                             <div className="brand-flavors" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                               {variants.map((variant: any, i: number) => (
                                 <div key={i} className="flavor-item" style={{ flex: '0 0 calc(50% - 5px)', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -690,6 +730,17 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
                       <div className="brand-title-manual">
                         Brony's Brownie Crisps ({manualSelections.bronys.length}/2)
                       </div>
+                      <div className="brand-description">
+                        <div className={`description-text ${expandedDescriptions.bronys ? 'expanded' : 'collapsed'}`}>
+                          {brandDescriptions.bronys}
+                        </div>
+                        <button
+                          className="read-more-btn"
+                          onClick={(e) => { e.stopPropagation(); toggleDescription('bronys'); }}
+                        >
+                          {expandedDescriptions.bronys ? 'Read less ↑' : 'Read more ↓'}
+                        </button>
+                      </div>
                       <div className="brand-flavors-manual">
                         {manualSelections.bronys.length === 0 ? (
                           <div className="empty-selection">Click to select products</div>
@@ -725,6 +776,17 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
                       <div className="brand-title-manual">
                         The Kettle Gourmet Popcorn ({manualSelections.kettleGourmet.length}/4)
                       </div>
+                      <div className="brand-description">
+                        <div className={`description-text ${expandedDescriptions.kettleGourmet ? 'expanded' : 'collapsed'}`}>
+                          {brandDescriptions.kettleGourmet}
+                        </div>
+                        <button
+                          className="read-more-btn"
+                          onClick={(e) => { e.stopPropagation(); toggleDescription('kettleGourmet'); }}
+                        >
+                          {expandedDescriptions.kettleGourmet ? 'Read less ↑' : 'Read more ↓'}
+                        </button>
+                      </div>
                       <div className="brand-flavors-manual">
                         {manualSelections.kettleGourmet.length === 0 ? (
                           <div className="empty-selection">Click to select products</div>
@@ -758,6 +820,17 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
                     >
                       <div className="brand-title-manual">
                         Yumi Corn Curls ({manualSelections.yumiCurls.length}/3)
+                      </div>
+                      <div className="brand-description">
+                        <div className={`description-text ${expandedDescriptions.yumiCurls ? 'expanded' : 'collapsed'}`}>
+                          {brandDescriptions.yumiCurls}
+                        </div>
+                        <button
+                          className="read-more-btn"
+                          onClick={(e) => { e.stopPropagation(); toggleDescription('yumiCurls'); }}
+                        >
+                          {expandedDescriptions.yumiCurls ? 'Read less ↑' : 'Read more ↓'}
+                        </button>
                       </div>
                       <div className="brand-flavors-manual">
                         {manualSelections.yumiCurls.length === 0 ? (
@@ -793,6 +866,17 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
                     >
                       <div className="brand-title-manual">
                         Yumi Cornsticks Polybag ({manualSelections.yumiSticks.length}/1)
+                      </div>
+                      <div className="brand-description">
+                        <div className={`description-text ${expandedDescriptions.yumiSticks ? 'expanded' : 'collapsed'}`}>
+                          {brandDescriptions.yumiSticks}
+                        </div>
+                        <button
+                          className="read-more-btn"
+                          onClick={(e) => { e.stopPropagation(); toggleDescription('yumiSticks'); }}
+                        >
+                          {expandedDescriptions.yumiSticks ? 'Read less ↑' : 'Read more ↓'}
+                        </button>
                       </div>
                       <div className="brand-flavors-manual">
                         {manualSelections.yumiSticks.length === 0 ? (
