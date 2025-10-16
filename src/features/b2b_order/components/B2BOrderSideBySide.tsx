@@ -81,6 +81,10 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
     yumiSticks: false
   });
 
+  // Mobile panel accordion state
+  const [isMobile, setIsMobile] = useState(false);
+  const [expandedMobilePanel, setExpandedMobilePanel] = useState<'random' | 'manual' | null>(null);
+
   // Load products on mount
   useEffect(() => {
     const loadProducts = async () => {
@@ -153,6 +157,17 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
     setManualGiftBoxType(selected);
   }, []);
 
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 1024);
+    };
+
+    checkMobile(); // Check on mount
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // Brand descriptions
   const brandDescriptions = {
     bronys: "Brownie Crisps are made from real brownie dough and baked into thin, crunchy crisps - freshly baked with no preservatives or artificial colors. Packed in resealable high quality aluminum foil to keep every crisp fresh so you can enjoy it anytime, anywhere. Plus, two of the flavours are inspired by Malaysian favourites - apam balik and pisang goreng, now turned into crispy brownie crisps.",
@@ -167,6 +182,19 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
       ...prev,
       [brand]: !prev[brand]
     }));
+  };
+
+  // Toggle mobile panel accordion (mobile only)
+  const toggleMobilePanel = (panel: 'random' | 'manual') => {
+    if (!isMobile) return; // Only works on mobile
+
+    // If clicking the currently expanded panel, open the other one instead
+    if (expandedMobilePanel === panel) {
+      setExpandedMobilePanel(panel === 'random' ? 'manual' : 'random');
+    } else {
+      // If clicking a collapsed panel, expand it
+      setExpandedMobilePanel(panel);
+    }
   };
 
   // Manual mode helper functions
@@ -393,23 +421,38 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
     <div className="gift-suggestion-page">
       <SelectionModeHeader />
 
-      <div className="split-screen-container">
+      <div className={`split-screen-container ${isMobile && expandedMobilePanel === null ? 'both-collapsed' : ''}`}>
         {/* Random Mode Panel */}
         <div
           className="mode-panel random-mode-panel"
           onClick={() => setActivePanel('random')}
           style={{
-            filter: activePanel === 'manual' ? 'grayscale(100%)' : 'none',
-            opacity: activePanel === 'manual' ? 0.5 : 1,
+            filter: !isMobile && activePanel === 'manual' ? 'grayscale(100%)' : 'none',
+            opacity: !isMobile && activePanel === 'manual' ? 0.5 : 1,
             transition: 'all 0.3s ease',
             transform: activePanel === 'random' ? 'scale(1.01)' : 'scale(1)',
             border: activePanel === 'random' ? '2px solid #667eea' : 'none'
           }}
         >
-          <div className="mode-panel-header">
+          <div
+            className={`mode-panel-header ${isMobile ? 'mobile-clickable' : ''}`}
+            onClick={(e) => {
+              if (isMobile) {
+                e.stopPropagation();
+                toggleMobilePanel('random');
+              }
+            }}
+            style={{ cursor: isMobile ? 'pointer' : 'default' }}
+          >
             <h3 className="mode-panel-title">Let us surprise you with our selection</h3>
+            {isMobile && (
+              <span className="mobile-expand-icon">
+                {expandedMobilePanel === 'random' ? '⌄' : '›'}
+              </span>
+            )}
           </div>
 
+          {(!isMobile || expandedMobilePanel === 'random') && (
           <div className="form-content">
             {/* Two input fields side by side */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
@@ -681,6 +724,7 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
               </div>
             )}
           </div>
+          )}
         </div>
 
         {/* Manual Mode Panel */}
@@ -688,17 +732,32 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
           className="mode-panel manual-mode-panel"
           onClick={() => setActivePanel('manual')}
           style={{
-            filter: activePanel === 'random' ? 'grayscale(100%)' : 'none',
-            opacity: activePanel === 'random' ? 0.5 : 1,
+            filter: !isMobile && activePanel === 'random' ? 'grayscale(100%)' : 'none',
+            opacity: !isMobile && activePanel === 'random' ? 0.5 : 1,
             transition: 'all 0.3s ease',
             transform: activePanel === 'manual' ? 'scale(1.01)' : 'scale(1)',
             border: activePanel === 'manual' ? '2px solid #9b59b6' : 'none'
           }}
         >
-          <div className="mode-panel-header">
+          <div
+            className={`mode-panel-header ${isMobile ? 'mobile-clickable' : ''}`}
+            onClick={(e) => {
+              if (isMobile) {
+                e.stopPropagation();
+                toggleMobilePanel('manual');
+              }
+            }}
+            style={{ cursor: isMobile ? 'pointer' : 'default' }}
+          >
             <h3 className="mode-panel-title">Pick your own flavors</h3>
+            {isMobile && (
+              <span className="mobile-expand-icon">
+                {expandedMobilePanel === 'manual' ? '⌄' : '›'}
+              </span>
+            )}
           </div>
 
+          {(!isMobile || expandedMobilePanel === 'manual') && (
           <div className="form-content">
             {/* Gift Box Display */}
             <div className="gift-box-display">
@@ -1098,6 +1157,7 @@ const B2BOrderSideBySide: React.FC<B2BOrderSideBySideProps> = ({ session }) => {
               />
             )}
           </div>
+          )}
         </div>
       </div>
     </div>
