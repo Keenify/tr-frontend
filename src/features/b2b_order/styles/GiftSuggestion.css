@@ -747,7 +747,7 @@
 }
 
 /* Responsive Design */
-@media (max-width: 1200px) {
+@media (max-width: 1760px) {
   .card-body {
     grid-template-columns: 1fr;
   }
@@ -758,11 +758,15 @@
   }
 
   .brand-categories {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .brand-flavors {
-    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+  }
+
+  .flavor-item {
+    min-width: 75px;
   }
 }
 
@@ -790,6 +794,16 @@
 
   .form-content {
     padding: 1.5rem 1rem;
+  }
+
+  .form-input,
+  .form-select {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .input-field-container label {
+    font-size: 0.8rem;
   }
 
   .special-instructions {
@@ -844,6 +858,7 @@
   }
 
   .brand-categories {
+    grid-template-columns: 1fr;
     gap: 1rem;
   }
 
@@ -953,5 +968,60 @@
   .gift-box-image {
     width: 100px;
     height: 100px;
+  }
+}
+
+/* Very small mobile screens - more aggressive reductions */
+@media (max-width: 380px) {
+  .form-input,
+  .form-select {
+    padding: 0.6rem 0.25rem;
+    font-size: 0.7rem;
+    max-width: 120px;
+  }
+
+  .input-field-container label {
+    font-size: 0.5rem;
+  }
+
+  .brand-categories {
+    gap: 0.75rem;
+  }
+
+  .brand-section {
+    padding: 10px;
+  }
+
+  .brand-flavors {
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 0.4rem;
+  }
+
+  .flavor-item {
+    padding: 0.4rem;
+    min-width: 60px;
+  }
+
+  .flavor-image {
+    width: 45px;
+    height: 45px;
+  }
+
+  .flavor-name {
+    font-size: 0.65rem;
+    max-width: 55px;
+  }
+
+  .brand-title {
+    font-size: 0.85rem;
+  }
+
+  .section-title {
+    font-size: 0.85rem;
+  }
+
+  .gift-box-image {
+    width: 90px;
+    height: 90px;
   }
 }

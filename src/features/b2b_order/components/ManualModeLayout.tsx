@@ -265,36 +265,79 @@ const ManualModeLayout: React.FC<ManualModeLayoutProps> = ({
         </div>
       </div>
 
-      {/* Section 2: Quantity & Pricing */}
-      <div className="manual-section pricing-section">
-        <h3 className="section-heading">QUANTITY & PRICING</h3>
+      {/* Section 2: Combined Quantity, Pricing & Total */}
+      <div className="manual-section pricing-total-section">
+        <h3 className="section-heading" style={{ fontSize: '15px', marginBottom: '12px' }}>QUANTITY & TOTAL</h3>
 
-        <div className="price-display-box">
-          <div className="box-price-label">Box Price:</div>
-          <div className="box-price-value">{currencyConfig.currency} {pricePerBox.toFixed(2)}</div>
-          {discountPercent > 0 && (
-            <div className="discount-info">
-              Discount: {discountPercent}% off
-            </div>
-          )}
-        </div>
-
-        <div className="quantity-input-group">
-          <label htmlFor="manual-pax">How many people need gift boxes?</label>
+        {/* Quantity Input */}
+        <div style={{ marginBottom: '15px' }}>
+          <label htmlFor="manual-pax" style={{ fontSize: '13px', marginBottom: '6px', display: 'block', fontWeight: '500' }}>How many people need gift boxes?</label>
           <input
             id="manual-pax"
             type="text"
             value={pax}
             onChange={(e) => onPaxChange(e.target.value)}
-            placeholder="Enter number of people"
+            placeholder="Enter number"
             className="quantity-input"
+            style={{ width: '100%', padding: '8px 12px', fontSize: '14px' }}
+          />
+        </div>
+
+        {/* Pricing Summary Box */}
+        <div style={{
+          background: '#f8f9fa',
+          padding: '12px 15px',
+          borderRadius: '8px',
+          marginBottom: '15px',
+          border: '1px solid #dee2e6'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '13px', color: '#666' }}>Box Price:</span>
+            <span style={{ fontSize: '16px', fontWeight: '700', color: '#9b59b6' }}>
+              {currencyConfig.currency} {pricePerBox.toFixed(2)}
+            </span>
+          </div>
+          {discountPercent > 0 && (
+            <div style={{ fontSize: '11px', color: '#4CAF50', textAlign: 'right' }}>
+              {discountPercent}% discount applied
+            </div>
+          )}
+          <div style={{
+            borderTop: '1px solid #dee2e6',
+            marginTop: '10px',
+            paddingTop: '10px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a' }}>Total:</span>
+            <span style={{ fontSize: '24px', fontWeight: '700', color: '#9b59b6' }}>
+              {currencyConfig.currency} {total.toFixed(2)}
+            </span>
+          </div>
+          <div style={{ fontSize: '11px', color: '#888', textAlign: 'center', marginTop: '6px' }}>
+            {currencyConfig.currency} {pricePerBox.toFixed(2)} × {paxNum} boxes
+          </div>
+        </div>
+
+        {/* Special Instructions */}
+        <div style={{ marginBottom: '0' }}>
+          <label htmlFor="manual-instructions" style={{ fontSize: '13px', marginBottom: '6px', display: 'block', fontWeight: '500' }}>Special Instructions (Optional)</label>
+          <textarea
+            id="manual-instructions"
+            value={specialInstructions}
+            onChange={(e) => onSpecialInstructionsChange(e.target.value)}
+            placeholder="Any specific requirements, preferences, or notes..."
+            className="instructions-textarea-manual"
+            rows={2}
+            style={{ width: '100%', resize: 'vertical' }}
           />
         </div>
       </div>
 
       {/* Section 3: Volume Discounts */}
       <div className="manual-section discounts-section">
-        <h3 className="section-heading">VOLUME DISCOUNT TIERS</h3>
+        <h3 className="section-heading" style={{ fontSize: '16px', marginBottom: '12px' }}>VOLUME DISCOUNT TIERS</h3>
 
         <div className="discount-tiers">
           {[
@@ -323,36 +366,23 @@ const ManualModeLayout: React.FC<ManualModeLayoutProps> = ({
         </div>
       </div>
 
-      {/* Section 4: Total Calculation */}
-      <div className="manual-section total-section">
-        <h3 className="section-heading">TOTAL</h3>
-
-        <div className="total-calculation">
-          <div className="calculation-line">
-            {currencyConfig.currency} {pricePerBox.toFixed(2)} × {paxNum} boxes = {currencyConfig.currency} {total.toFixed(2)}
-          </div>
-        </div>
-
-        <div className="special-instructions-manual">
-          <label htmlFor="manual-instructions">Special Instructions (Optional)</label>
-          <textarea
-            id="manual-instructions"
-            value={specialInstructions}
-            onChange={(e) => onSpecialInstructionsChange(e.target.value)}
-            placeholder="Any specific requirements, preferences, or notes..."
-            className="instructions-textarea-manual"
-            rows={3}
-          />
-        </div>
-
-        <button
-          onClick={onDownloadPDF}
-          disabled={isGenerating || !getSelectionComplete() || paxNum === 0}
-          className="download-pdf-btn"
-        >
-          {isGenerating ? 'Generating PDF...' : 'Download Quotation PDF'}
-        </button>
-      </div>
+      {/* Download Button */}
+      <button
+        onClick={onDownloadPDF}
+        disabled={isGenerating || !getSelectionComplete() || paxNum === 0}
+        className="download-pdf-btn"
+        style={{
+          width: 'auto',
+          padding: '10px 24px',
+          fontSize: '14px',
+          display: 'block',
+          margin: '20px auto 40px',
+          position: 'relative',
+          zIndex: 10
+        }}
+      >
+        {isGenerating ? 'Generating PDF...' : 'Download Quotation PDF'}
+      </button>
 
       {/* Manual Selection Modal */}
       {currentBrand && (

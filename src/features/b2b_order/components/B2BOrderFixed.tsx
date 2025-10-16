@@ -11,11 +11,12 @@ import { generateGiftSuggestionPDF as generateSamplePDF } from '../utils/giftSug
 import { transformGiftSuggestionToQuotation } from '../utils/giftSuggestionToQuotation';
 import { useCurrencyDetection } from '../hooks/useCurrencyDetection';
 import { BACKEND_API_DOMAIN } from '../../../config';
-import SelectionModeBox from './SelectionModeBox';
+import SelectionModeHeader from './SelectionModeBox';
 import ManualSelectionModal from './ManualSelectionModal';
 import ManualModeLayout from './ManualModeLayout';
 import '../styles/B2BOrder.css';
 import '../styles/GiftSuggestion.css';
+import '../styles/SplitScreenGift.css';
 
 interface B2BOrderProps {
   session: Session | null;
@@ -29,14 +30,14 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
   // Detect currency based on user's IP location
   const { currencyConfig, loading: currencyLoading } = useCurrencyDetection();
 
-  // Form state
-  const [pax, setPax] = useState<string>('');
-  const [pricePerPerson, setPricePerPerson] = useState<string>('');
-  const [specialInstructions, setSpecialInstructions] = useState<string>('');
+  // Form state - Random mode
+  const [randomPax, setRandomPax] = useState<string>('');
+  const [randomPricePerPerson, setRandomPricePerPerson] = useState<string>('');
+  const [randomSpecialInstructions, setRandomSpecialInstructions] = useState<string>('');
 
-  // Selection mode state
-  const [selectionMode, setSelectionMode] = useState<'random' | 'manual' | null>(null);
-  const [modeSelected, setModeSelected] = useState<boolean>(false);
+  // Form state - Manual mode
+  const [manualPax, setManualPax] = useState<string>('');
+  const [manualSpecialInstructions, setManualSpecialInstructions] = useState<string>('');
 
   // Manual selection state
   const [manualSelections, setManualSelections] = useState<{
@@ -58,8 +59,53 @@ const B2BOrderFixed: React.FC<B2BOrderProps> = ({ session }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentBrand, setCurrentBrand] = useState<'bronys' | 'kettleGourmet' | 'yumiCurls' | 'yumiSticks' | null>(null);
 
-  // UI state
-  const [showTable, setShowTable] = useState(false);
+  // UI state - Random mode
+  const [randomShowTable, setRandomShowTable] = useState(false);
+  const [randomIsGenerating, setRandomIsGenerating] = useState(false);
+  const [randomGeneratedItems, setRandomGeneratedItems] = useState<Array<{
+    name: string;
+    description: string;
+    pax: number;
+    pricePerBox: string;
+    total: string;
+    productDescription?: string;
+    specialInstructions?: string;
+    tierPricing: Array<{
+      minQuantity: number;
+      maxQuantity: number;
+      pricePerUnit: number;
+    }>;
+    giftBoxType?: {
+      id: string;
+      name: string;
+      image_url: string;
+    };
+    brandCategories?: {
+      bronys: ProductVariant[];
+      kettleGourmet: ProductVariant[];
+      yumiCurls: ProductVariant[];
+      yumiSticks: ProductVariant[];
+    };
+    selectedProducts: Array<{
+      name: string;
+      price?: number;
+    }>;
+    variants: Array<{
+      name: string;
+      image_url: string | null;
+      productName: string;
+    }>;
+    priceBreakdown?: {
+      baseCost: number;
+      markup: number;
+      discount: number;
+    };
+  }>>([]);
+
+  // UI state - Manual mode
+  const [manualIsGenerating, setManualIsGenerating] = useState(false);
+
+  // Legacy state (will be removed)
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedItems, setGeneratedItems] = useState<Array<{
     name: string;

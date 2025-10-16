@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/SelectionModeBox.css';
 
-interface SelectionModeBoxProps {
-  onSelectMode: (mode: 'random' | 'manual') => void;
-}
-
-const SelectionModeBox: React.FC<SelectionModeBoxProps> = ({ onSelectMode }) => {
+// Updated to only show header and countdown, no mode selection
+const SelectionModeHeader: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
@@ -36,7 +33,7 @@ const SelectionModeBox: React.FC<SelectionModeBoxProps> = ({ onSelectMode }) => 
   }, []);
 
   return (
-    <div className="selection-mode-container">
+    <div className="selection-mode-header-only">
       {/* Christmas Countdown */}
       <div className="christmas-countdown">
         <div className="countdown-title">🎄You  have 🎄</div>
@@ -81,50 +78,13 @@ const SelectionModeBox: React.FC<SelectionModeBoxProps> = ({ onSelectMode }) => 
         <div className="snowflake">❄</div>
         <div className="snowflake">❅</div>
         <div className="snowflake">❆</div>
-        <div className="snowflake">❄</div>
-        <div className="snowflake">❅</div>
-        <div className="snowflake">❆</div>
-        <div className="snowflake">❄</div>
-        <div className="snowflake">❅</div>
       </div>
 
       <div className="selection-mode-header">
         <h2>Choose Your <span className="festive-text">Christmas Gift Box</span></h2>
       </div>
-
-      <div className="selection-boxes">
-        {/* Random Selection Box */}
-        <div
-          className="selection-box random-box"
-          onClick={() => onSelectMode('random')}
-        >
-          <img
-            src="/random-selection.png"
-            alt="Random Selection"
-            className="box-image"
-            loading="eager"
-            decoding="async"
-          />
-          <p className="box-caption">Let us surprise you with our selection</p>
-        </div>
-
-        {/* Manual Selection Box */}
-        <div
-          className="selection-box manual-box"
-          onClick={() => onSelectMode('manual')}
-        >
-          <img
-            src="/manual-selection.png"
-            alt="Manual Selection"
-            className="box-image"
-            loading="eager"
-            decoding="async"
-          />
-          <p className="box-caption">I want to pick my own products</p>
-        </div>
-      </div>
     </div>
   );
 };
 
-export default SelectionModeBox;
+export default SelectionModeHeader;

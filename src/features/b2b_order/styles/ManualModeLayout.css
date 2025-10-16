@@ -8,7 +8,7 @@
   margin-bottom: 3rem;
   background: white;
   border-radius: 20px;
-  padding: 2.5rem;
+  padding: 1.5rem;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -48,6 +48,7 @@
   margin-bottom: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 1px;
+  text-align: center;
 }
 
 .brand-categories-manual {
@@ -61,7 +62,7 @@
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
   border: 2px solid #e9ecef;
   border-radius: 16px;
-  padding: 1.25rem;
+  padding: 15px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
   overflow: visible;
@@ -90,11 +91,58 @@
   font-size: 1rem;
   font-weight: 700;
   color: #495057;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   padding-bottom: 0.75rem;
   border-bottom: 3px solid #667eea;
   text-align: left;
   letter-spacing: 0.3px;
+}
+
+/* Brand Description Styles */
+.brand-description {
+  margin-bottom: 1rem;
+  padding: 0 2px;
+}
+
+.description-text {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #6c757d;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  margin-bottom: 0.5rem;
+}
+
+.description-text.collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  max-height: 2.6em; /* approximately 2 lines */
+}
+
+.description-text.expanded {
+  display: block;
+  max-height: 500px; /* large enough for full text */
+}
+
+.read-more-btn {
+  background: none;
+  border: none;
+  color: #667eea;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  text-decoration: underline;
+  display: inline-block;
+}
+
+.read-more-btn:hover {
+  background: #f3e5f5;
+  color: #764ba2;
+  text-decoration: none;
 }
 
 .brand-flavors-manual {
@@ -127,8 +175,8 @@
 }
 
 .flavor-image-manual {
-  width: 70px;
-  height: 70px;
+  width: 40px;
+  height: 40px;
   border-radius: 8px;
   overflow: visible;
   flex-shrink: 0;
@@ -402,13 +450,17 @@
 }
 
 /* Responsive Design */
-@media (max-width: 1200px) {
+@media (max-width: 1760px) {
   .brand-categories-manual {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .brand-flavors-manual {
-    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+  }
+
+  .flavor-item-manual {
+    min-width: 75px;
   }
 }
 
@@ -418,7 +470,7 @@
   }
 
   .manual-section {
-    padding: 1.5rem;
+    padding: 1rem;
     margin-bottom: 2rem;
   }
 
@@ -433,6 +485,7 @@
   }
 
   .brand-categories-manual {
+    grid-template-columns: 1fr;
     gap: 1rem;
   }
 
@@ -442,8 +495,23 @@
 
   .brand-title-manual {
     font-size: 0.95rem;
-    margin-bottom: 0.875rem;
+    margin-bottom: 0.75rem;
     padding-bottom: 0.625rem;
+  }
+
+  .description-text {
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+
+  .description-text.collapsed {
+    -webkit-line-clamp: 3; /* Show 3 lines on mobile for better readability */
+    max-height: 3.5em;
+  }
+
+  .read-more-btn {
+    font-size: 0.75rem;
+    padding: 3px 6px;
   }
 
   .brand-flavors-manual {
@@ -452,8 +520,8 @@
   }
 
   .flavor-image-manual {
-    width: 60px;
-    height: 60px;
+    width: 35px;
+    height: 35px;
   }
 
   .flavor-item-manual {
@@ -504,12 +572,21 @@
   }
 
   .manual-section {
-    padding: 1rem;
+    padding: 0.75rem;
     margin-bottom: 1.5rem;
   }
 
   .section-heading {
     font-size: 1rem;
+  }
+
+  .description-text {
+    font-size: 0.75rem;
+    line-height: 1.35;
+  }
+
+  .read-more-btn {
+    font-size: 0.7rem;
   }
 
   .brand-flavors-manual {
@@ -518,8 +595,8 @@
   }
 
   .flavor-image-manual {
-    width: 50px;
-    height: 50px;
+    width: 30px;
+    height: 30px;
   }
 
   .flavor-item-manual {
@@ -543,5 +620,53 @@
   .download-pdf-btn {
     padding: 1rem 2rem;
     font-size: 1rem;
+  }
+}
+
+/* Very small mobile screens - more aggressive reductions */
+@media (max-width: 380px) {
+  .brand-categories-manual {
+    gap: 0.75rem;
+  }
+
+  .brand-section-manual {
+    padding: 10px;
+  }
+
+  .brand-flavors-manual {
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 0.4rem;
+  }
+
+  .flavor-item-manual {
+    padding: 0.4rem;
+    min-width: 60px;
+  }
+
+  .flavor-image-manual {
+    width: 28px;
+    height: 28px;
+  }
+
+  .flavor-name-manual {
+    font-size: 0.65rem;
+    max-width: 55px;
+  }
+
+  .brand-title-manual {
+    font-size: 0.85rem;
+  }
+
+  .description-text {
+    font-size: 0.7rem;
+    line-height: 1.3;
+  }
+
+  .read-more-btn {
+    font-size: 0.65rem;
+  }
+
+  .section-title-manual {
+    font-size: 0.85rem;
   }
 }
