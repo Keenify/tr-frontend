@@ -140,3 +140,90 @@
     padding: 12px;
   }
 }
+
+/* Mobile Accordion Styles - Applied only on mobile (≤1024px) */
+@media (max-width: 1024px) {
+  /* Bring panels way closer together */
+  .split-screen-container {
+    gap: 20px !important;
+  }
+
+  /* When both panels are collapsed, reduce gap even more */
+  .split-screen-container.both-collapsed {
+    gap: 20px !important;
+    min-height: auto !important;
+    height: auto !important;
+  }
+
+  /* Override min-height so collapsed panels don't take up 600px */
+  .mode-panel {
+    min-height: 150px !important;
+    height: fit-content !important;
+    padding: 15px 20px 20px 20px; /* Add bottom padding for white space under header */
+  }
+
+  /* Override the height: auto from random/manual panel specific styles */
+  .random-mode-panel,
+  .manual-mode-panel {
+    height: fit-content !important;
+  }
+
+  /* Even smaller padding on very small screens */
+  @media (max-width: 768px) {
+    .mode-panel {
+      padding: 12px 15px 18px 15px; /* Bottom padding for breathing room */
+    }
+  }
+
+  /* Reduce header spacing on mobile */
+  .mode-panel-header {
+    margin-bottom: 0;
+    padding-bottom: 12px;
+  }
+
+  /* Ensure both titles are exactly the same size */
+  .mode-panel-title {
+    font-size: 18px !important;
+  }
+
+  /* Make panel headers clickable on mobile */
+  .mode-panel-header.mobile-clickable {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mode-panel-header.mobile-clickable:active {
+    opacity: 0.7;
+  }
+
+  /* Expand/collapse icon */
+  .mobile-expand-icon {
+    font-size: 24px;
+    font-weight: bold;
+    color: #667eea;
+    transition: transform 0.3s ease;
+  }
+
+  .manual-mode-panel .mobile-expand-icon {
+    color: #9b59b6;
+  }
+
+  /* Smooth content expansion */
+  .form-content {
+    animation: slideDown 0.3s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
