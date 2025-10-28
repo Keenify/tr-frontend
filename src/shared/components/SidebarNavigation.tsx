@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   Calendar,
   ThumbsUp,
@@ -170,27 +170,60 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
 }) => {
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
+  const location = useLocation();
 
   // Get user info for role-based filtering
   const { userInfo } = useUserAndCompanyData(session.user.id);
 
-  // State management
-  const [activeTabState, setActiveTabState] = useState<TabType>('meeting');
-  const [localActiveSubTab, setLocalActiveSubTab] = useState<SubTabType | undefined>('dailyHuddle');
+  // Helper function to determine active tab/sub-tab from current route
+  const getActivePageFromRoute = () => {
+    const currentPath = location.pathname;
+    const pathParts = currentPath.split('/');
+    const lastPart = pathParts[pathParts.length - 1] as SubTabType;
+
+    // Find which parent tab and sub-tab this route belongs to
+    for (const tab of navigationConfig) {
+      const subTab = tab.subTabs.find(sub => sub.id === lastPart);
+      if (subTab) {
+        return { parentTab: tab.id as TabType, subTab: lastPart };
+      }
+    }
+
+    // Default fallback
+    return { parentTab: 'meeting' as TabType, subTab: 'dailyHuddle' as SubTabType };
+  };
+
+  // Initialize state from current route
+  const initialPageState = getActivePageFromRoute();
+  const [activeTabState, setActiveTabState] = useState<TabType>(initialPageState.parentTab);
+  const [localActiveSubTab, setLocalActiveSubTab] = useState<SubTabType | undefined>(initialPageState.subTab);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Submenu states
+  // Submenu states - initialize with current active tab expanded
   const [submenuStates, setSubmenuStates] = useState<Record<TabType, boolean>>({
-    people: false,
-    sales: false,
-    meeting: true,
-    financeData: false,
-    projects: false,
-    process: false,
-    technology: false,
-    teamHealth: false,
-    thePlan: false,
+    people: initialPageState.parentTab === 'people',
+    sales: initialPageState.parentTab === 'sales',
+    meeting: initialPageState.parentTab === 'meeting',
+    financeData: initialPageState.parentTab === 'financeData',
+    projects: initialPageState.parentTab === 'projects',
+    process: initialPageState.parentTab === 'process',
+    technology: initialPageState.parentTab === 'technology',
+    teamHealth: initialPageState.parentTab === 'teamHealth',
+    thePlan: initialPageState.parentTab === 'thePlan',
   });
+
+  // Update active states when route changes
+  useEffect(() => {
+    const { parentTab, subTab } = getActivePageFromRoute();
+    setActiveTabState(parentTab);
+    setLocalActiveSubTab(subTab);
+
+    // Also expand the parent section of the current page
+    setSubmenuStates(prev => ({
+      ...prev,
+      [parentTab]: true
+    }));
+  }, [location.pathname]);
 
   // Filter navigation items based on search and user role
   const filteredNavigation = useMemo(() => {
