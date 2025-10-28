@@ -200,13 +200,13 @@
     font-size: 13px !important;
   }
 
-  /* List container - reduce default height */
+  /* List container - slightly taller */
   .projects-page .flex-shrink-0.w-80 > div {
-    max-height: 400px !important; /* Limit default height */
+    max-height: 550px !important; /* Increased from 500px */
   }
 
-  /* Cards container within list - scrollable with reduced height */
+  /* Cards container within list - scrollable with better height */
   .projects-page .flex-shrink-0.w-80 .overflow-y-auto {
-    max-height: 320px !important; /* Reduced scrollable area */
+    max-height: 470px !important; /* Increased from 420px */
   }
 }
