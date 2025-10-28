@@ -10,6 +10,11 @@ import { List, Card as ProjectCard } from "../types/board";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 import { getUserData } from '../../../services/useUser';
 import { logDeletion } from '../../../shared/services/deletionLogService';
+import { MobileNavToggle } from '../../dailyHuddle/components/MobileNavToggle';
+import { MobileSidebarOverlay } from '../../dailyHuddle/components/MobileSidebarOverlay';
+import { SidebarNavigation } from '../../../shared/components/SidebarNavigation';
+import { useIsMobileOrTablet } from '../../../hooks/useResponsive';
+import '../styles/Projects.css';
 
 interface ProjectProps {
   session: Session;
@@ -47,7 +52,11 @@ const Project: React.FC<ProjectProps> = ({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [activelyEditing, setActivelyEditing] = useState<{cardId?: string, listId?: string} | null>(null);
   const [companyBoardId, setCompanyBoardId] = useState<string | null>(null);
-  
+
+  // Mobile sidebar state
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const isMobileOrTablet = useIsMobileOrTablet();
+
   // Use ref to store companyBoardId to avoid dependency recreation cycles
   const companyBoardIdRef = useRef<string | null>(null);
   
@@ -63,6 +72,15 @@ const Project: React.FC<ProjectProps> = ({
       console.log('💪 [Projects] Component unmounting');
     };
   }, []);
+
+  // Mobile sidebar handlers
+  const toggleMobileSidebar = () => {
+    setIsMobileSidebarOpen(!isMobileSidebarOpen);
+  };
+
+  const closeMobileSidebar = () => {
+    setIsMobileSidebarOpen(false);
+  };
 
   // Get or create company-specific Projects board
   const getCompanyBoard = useCallback(async () => {
@@ -395,32 +413,48 @@ const Project: React.FC<ProjectProps> = ({
   };
 
   return (
-    <div className="min-h-screen p-6 flex flex-col">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Project Management</h1>
-        {companyInfo?.name && (
-          <span className="text-lg text-gray-600">{companyInfo.name}</span>
-        )}
+    <>
+      {/* Mobile-only components - ONLY render on mobile/tablet */}
+      {isMobileOrTablet && (
+        <>
+          <MobileNavToggle isOpen={isMobileSidebarOpen} onClick={toggleMobileSidebar} />
+          <MobileSidebarOverlay isOpen={isMobileSidebarOpen} onClose={closeMobileSidebar}>
+            <SidebarNavigation
+              session={session}
+              onNavigate={closeMobileSidebar}
+              isMobile={true}
+            />
+          </MobileSidebarOverlay>
+        </>
+      )}
+
+      <div className="projects-page min-h-screen p-6 flex flex-col">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Project Management</h1>
+          {companyInfo?.name && (
+            <span className="text-lg text-gray-600">{companyInfo.name}</span>
+          )}
+        </div>
+        <TrelloBoard
+          initialLists={lists as unknown as TrelloBoardList[]}
+          onListMove={handleListMove}
+          onCardMove={handleCardMove}
+          onCardUpdate={handleCardUpdate}
+          onListTitleChange={handleListTitleChange}
+          onListCountryChange={handleListCountryChange}
+          onCardAdd={handleCardAdd}
+          onListAdd={handleListAdd}
+          onCardDelete={handleCardDelete}
+          onListDelete={handleListDelete}
+          userRole={userRole}
+          session={session}
+          onRefresh={handleRefresh}
+          onCardModalOpen={handleCardModalOpen}
+          onCardModalClose={handleCardModalClose}
+          boardModule="projects"
+        />
       </div>
-      <TrelloBoard 
-        initialLists={lists as unknown as TrelloBoardList[]}
-        onListMove={handleListMove}
-        onCardMove={handleCardMove}
-        onCardUpdate={handleCardUpdate}
-        onListTitleChange={handleListTitleChange}
-        onListCountryChange={handleListCountryChange}
-        onCardAdd={handleCardAdd}
-        onListAdd={handleListAdd}
-        onCardDelete={handleCardDelete}
-        onListDelete={handleListDelete}
-        userRole={userRole}
-        session={session}
-        onRefresh={handleRefresh}
-        onCardModalOpen={handleCardModalOpen}
-        onCardModalClose={handleCardModalClose}
-        boardModule="projects"
-      />
-    </div>
+    </>
   );
 };
 

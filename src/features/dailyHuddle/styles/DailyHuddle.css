@@ -1178,3 +1178,287 @@ td.on-leave-cell {
 .task-item:last-child {
   margin-bottom: 0;
 } */
+
+/* ========================================
+   MOBILE RESPONSIVE STYLES
+   Only affects Daily Huddle page on mobile/tablet
+   Desktop (> 1024px) is completely unchanged
+   ======================================== */
+
+/* Mobile: Hide header and sidebar on Daily Huddle page ONLY */
+@media (max-width: 1024px) {
+  /* Hide the top header bar (company logo, user profile) on mobile */
+  body:has(.daily-huddle-page) .bg-gradient-to-r.from-rose-400 {
+    display: none !important;
+  }
+
+  /* Alternative selector if :has() not supported */
+  .flex.flex-col.h-screen > .flex.justify-between.items-center {
+    display: none;
+  }
+
+  /* Hide the DashboardLayout sidebar on mobile */
+  body:has(.daily-huddle-page) .bg-gradient-to-b.from-gray-900 {
+    display: none !important;
+  }
+
+  /* Make the main content area full width when header is hidden */
+  body:has(.daily-huddle-page) .flex.flex-1.overflow-hidden {
+    width: 100% !important;
+  }
+
+  body:has(.daily-huddle-page) .flex-1.overflow-auto {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  /* Make daily huddle container full width on mobile */
+  .daily-huddle-page {
+    padding: 15px 15px 20px 15px !important;
+    max-width: 100vw;
+    overflow-x: hidden;
+    margin: 0 !important;
+  }
+
+  /* Make heading responsive */
+  .daily-huddle-page h1 {
+    font-size: 1.8rem !important;
+    margin-bottom: 15px !important;
+  }
+
+  /* Make mission statement responsive */
+  .daily-huddle-page > div:first-of-type p {
+    font-size: 1.2rem !important;
+    line-height: 1.3 !important;
+    padding: 0 10px;
+  }
+
+  /* Make tabs touch-friendly - only on Daily Huddle page */
+  .daily-huddle-page .react-tabs__tab-list {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px !important;
+  }
+
+  .daily-huddle-page .react-tabs__tab {
+    min-height: 44px !important; /* Apple HIG minimum touch target */
+    padding: 12px 20px !important;
+    font-size: 16px !important;
+    flex: 1;
+    min-width: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .daily-huddle-page .react-tabs__tab-panel {
+    padding: 15px 10px !important;
+    border-radius: 8px;
+  }
+
+  /* Make date navigation controls smaller on mobile for Tab 2 (Response) */
+  .daily-huddle-page .date-picker-container {
+    flex-wrap: wrap;
+    gap: 6px !important;
+    margin-bottom: 15px !important;
+  }
+
+  .daily-huddle-page .today-button {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    border-radius: 16px !important;
+  }
+
+  .daily-huddle-page .date-nav-button {
+    padding: 4px 8px !important;
+    font-size: 18px !important;
+    min-width: 32px;
+    height: 32px;
+  }
+
+  .daily-huddle-page .selected-month-year {
+    font-size: 14px !important;
+    margin: 0 4px !important;
+  }
+
+  .daily-huddle-page .calendar-icon-button {
+    padding: 4px 8px !important;
+    min-width: 32px;
+    height: 32px;
+  }
+
+  .daily-huddle-page .calendar-icon {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  .daily-huddle-page .refresh-button {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    gap: 4px !important;
+    height: 32px;
+  }
+
+  .daily-huddle-page .refresh-icon {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  /* Make "Submitted Responses for..." title smaller on mobile */
+  .daily-huddle-page .response-title {
+    font-size: 16px !important;
+    margin-bottom: 12px !important;
+  }
+
+  /* ===== MOBILE TABLE OPTIMIZATION ===== */
+  /* Make table horizontally scrollable on mobile */
+  .daily-huddle-page .response-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  }
+
+  /* Reduce table size and make it scrollable */
+  .daily-huddle-page .response-table {
+    font-size: 11px !important;
+    min-width: 100%; /* Allow table to be wider than viewport */
+  }
+
+  /* Make table header sticky at top while scrolling */
+  .daily-huddle-page .response-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #f5f5f5;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Reduce table header font and padding */
+  .daily-huddle-page .response-table th {
+    font-size: 10px !important;
+    padding: 6px 4px !important;
+    line-height: 1.2;
+  }
+
+  /* Reduce table cell padding and font size */
+  .daily-huddle-page .response-table td {
+    font-size: 11px !important;
+    padding: 6px 4px !important;
+    line-height: 1.3;
+  }
+
+  /* Reduce number column width */
+  .daily-huddle-page .response-table th:nth-child(1),
+  .daily-huddle-page .response-table td:nth-child(1) {
+    width: 35px !important;
+    min-width: 35px !important;
+    max-width: 35px !important;
+  }
+
+  /* Reduce profile picture size */
+  .daily-huddle-page .response-table .profile-pic {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  /* Reduce member name font */
+  .daily-huddle-page .response-table .member-name {
+    font-size: 10px !important;
+  }
+
+  /* Make badges smaller */
+  .daily-huddle-page .top-submitter-badge {
+    font-size: 8px !important;
+    padding: 2px 4px !important;
+  }
+
+  .daily-huddle-page .top-submitter-badge::before {
+    font-size: 9px !important;
+  }
+
+  /* Reduce column widths for mobile */
+  .daily-huddle-page .col-member {
+    width: 80px !important;
+    min-width: 80px !important;
+  }
+
+  .daily-huddle-page .col-one-word {
+    width: 70px !important;
+    min-width: 70px !important;
+  }
+
+  .daily-huddle-page .col-wins {
+    width: 100px !important;
+    min-width: 100px !important;
+  }
+
+  .daily-huddle-page .col-priority {
+    width: 80px !important;
+    min-width: 80px !important;
+  }
+
+  .daily-huddle-page .col-goals {
+    width: 120px !important;
+    min-width: 120px !important;
+  }
+
+  .daily-huddle-page .col-help {
+    width: 80px !important;
+    min-width: 80px !important;
+  }
+
+  .daily-huddle-page .col-thank-you {
+    width: 70px !important;
+    min-width: 70px !important;
+  }
+
+  .daily-huddle-page .col-submitted {
+    width: 70px !important;
+    min-width: 70px !important;
+    font-size: 9px !important;
+  }
+
+  /* Smaller submission time styling */
+  .daily-huddle-page .submission-time {
+    padding: 3px !important;
+    font-size: 9px !important;
+  }
+
+  /* Reduce "on leave" message size */
+  .daily-huddle-page .employee-on-leave {
+    font-size: 10px !important;
+    padding: 8px !important;
+  }
+
+  .daily-huddle-page .employee-on-leave::before {
+    font-size: 12px !important;
+  }
+}
+
+/* Tablet specific (641px - 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .daily-huddle-page {
+    padding: 30px 30px 30px 30px !important;
+  }
+
+  .daily-huddle-page h1 {
+    font-size: 2.2rem !important;
+  }
+}
+
+/* Mobile phone specific (max 640px) */
+@media (max-width: 640px) {
+  .daily-huddle-page {
+    padding: 15px 10px 15px 10px !important;
+  }
+
+  .daily-huddle-page h1 {
+    font-size: 1.6rem !important;
+  }
+
+  .daily-huddle-page .react-tabs__tab {
+    font-size: 14px !important;
+    padding: 10px 15px !important;
+    min-width: 120px;
+  }
+}

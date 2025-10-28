@@ -1,0 +1,212 @@
+/* Mobile-specific styles for Projects page */
+/* Only affects Projects page on mobile devices (max-width: 1024px) */
+
+@media (max-width: 1024px) {
+  /* Hide the top header bar (company logo, user profile) on mobile */
+  body:has(.projects-page) .bg-gradient-to-r.from-rose-400 {
+    display: none !important;
+  }
+
+  /* Hide the DashboardLayout sidebar on mobile */
+  body:has(.projects-page) .bg-gradient-to-b.from-gray-900 {
+    display: none !important;
+  }
+
+  /* Make the main content area full width when header is hidden */
+  body:has(.projects-page) .flex.flex-1.overflow-hidden {
+    width: 100% !important;
+  }
+
+  body:has(.projects-page) .flex-1.overflow-auto {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  /* Ensure Projects page content takes full width on mobile */
+  .projects-page {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+    padding: 60px 16px 16px 16px !important; /* Added 60px top padding for hamburger icon */
+  }
+
+  /* ========================================
+     STEP 1: Header Row - Title + Company Name
+     Stack vertically on mobile
+     ======================================== */
+
+  /* Header container - stack vertically, align left */
+  .projects-page > div:first-child {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    margin-bottom: 12px !important;
+    gap: 4px !important;
+  }
+
+  /* Project Management title - reduce size for mobile */
+  .projects-page h1 {
+    font-size: 1.125rem !important; /* 18px */
+    margin-bottom: 0 !important;
+  }
+
+  /* Company name - smaller text */
+  .projects-page .text-lg {
+    font-size: 0.875rem !important; /* 14px */
+  }
+
+  /* ========================================
+     STEP 2: Layout Reorganization for Mobile
+     Stack all controls vertically in proper order
+     ======================================== */
+
+  /* Main controls container - force vertical stacking */
+  .projects-page .flex.flex-col.gap-4 > .flex.items-center.justify-between {
+    flex-direction: column !important;
+    align-items: flex-start !important; /* Changed from stretch to flex-start */
+    gap: 12px !important;
+  }
+
+  /* Inner containers - also stack vertically */
+  .projects-page .flex.items-center.gap-4 {
+    flex-direction: row !important; /* Keep buttons side by side */
+    align-items: center !important;
+    width: auto !important; /* Changed from 100% to auto */
+    gap: 8px !important;
+  }
+
+  /* Search and filter parent container */
+  .projects-page .flex.items-center.justify-between.gap-4.mb-4 {
+    flex-direction: column !important;
+    margin-bottom: 0 !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+  }
+
+  /* ========================================
+     Search Bar - Compact but still usable
+     ======================================== */
+
+  /* Search container - reasonable width, not full */
+  .projects-page .relative.flex-grow.max-w-md {
+    max-width: 280px !important; /* Compact but usable width */
+    flex: 0 0 auto !important;
+    width: 280px !important;
+  }
+
+  /* Search input - compact size */
+  .projects-page input[type="text"][placeholder*="Search"] {
+    padding: 8px 8px 8px 36px !important;
+    font-size: 14px !important;
+    height: 36px !important;
+    width: 100% !important;
+  }
+
+  /* Search icon - adjust position for larger input */
+  .projects-page .absolute.inset-y-0.left-0.pl-3 {
+    padding-left: 12px !important;
+  }
+
+  /* Clear button (X) - adjust position */
+  .projects-page .absolute.inset-y-0.right-0.pr-3 {
+    padding-right: 10px !important;
+  }
+
+  /* Search icon - smaller size */
+  .projects-page .absolute.inset-y-0.left-0 svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  /* ========================================
+     Buttons and Filter - Compact Width
+     ======================================== */
+
+  /* Add List button - compact */
+  .projects-page button:has(span:only-child) {
+    padding: 6px 12px !important;
+    font-size: 14px !important;
+    height: 36px !important;
+    width: auto !important;
+  }
+
+  /* Filter by Labels dropdown - compact width */
+  .projects-page .relative.inline-block.text-left {
+    width: auto !important;
+  }
+
+  .projects-page .relative.inline-block.text-left button {
+    min-width: 180px !important;
+    max-width: 280px !important;
+    height: 36px !important;
+    padding: 6px 10px !important;
+    font-size: 14px !important;
+  }
+
+  /* Filter dropdown icons - smaller */
+  .projects-page .relative.inline-block.text-left button svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  /* ========================================
+     Country Tabs (All/SG/MY) - Compact Size
+     ======================================== */
+
+  /* Tab list container - reduce padding */
+  .projects-page .flex.space-x-1.rounded-xl.bg-blue-900\/20 {
+    padding: 4px !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* Individual tabs - smaller size */
+  .projects-page .flex.space-x-1.rounded-xl.bg-blue-900\/20 button {
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+    min-height: 32px !important;
+  }
+
+  /* Tab count badges - smaller */
+  .projects-page .flex.space-x-1.rounded-xl.bg-blue-900\/20 button span.ml-2 {
+    padding: 2px 6px !important;
+    font-size: 11px !important;
+  }
+
+  /* ========================================
+     TrelloBoard Lists - Reduce Size for Mobile
+     ======================================== */
+
+  /* List cards - reduce width from 320px to 240px */
+  .projects-page .flex-shrink-0.w-80 {
+    width: 240px !important; /* Reduced from 320px (w-80) */
+  }
+
+  /* List container gap - reduce spacing between lists */
+  .projects-page .flex.flex-row.flex-nowrap.gap-6 {
+    gap: 12px !important; /* Reduced from 24px (gap-6) */
+  }
+
+  /* Add List form when adding new list - also reduce width */
+  .projects-page .flex-shrink-0.w-80 form {
+    padding: 12px !important;
+  }
+
+  /* List title - smaller font */
+  .projects-page .flex-shrink-0.w-80 h3 {
+    font-size: 14px !important;
+  }
+
+  /* Cards inside lists - ensure they fit */
+  .projects-page .flex-shrink-0.w-80 .space-y-2 {
+    font-size: 13px !important;
+  }
+
+  /* List container - slightly taller */
+  .projects-page .flex-shrink-0.w-80 > div {
+    max-height: 550px !important; /* Increased from 500px */
+  }
+
+  /* Cards container within list - scrollable with better height */
+  .projects-page .flex-shrink-0.w-80 .overflow-y-auto {
+    max-height: 470px !important; /* Increased from 420px */
+  }
+}
