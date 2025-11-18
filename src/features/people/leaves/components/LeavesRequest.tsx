@@ -15,11 +15,13 @@ import {
 } from '../types/leaveRequest';
 import toast from 'react-hot-toast';
 import { ChevronUpDownIcon } from '@heroicons/react/20/solid';
+import { PencilSquareIcon } from '@heroicons/react/24/solid';
 import { useUserAndCompanyData } from '../../../../shared/hooks/useUserAndCompanyData';
 import { directoryService } from '../../../../shared/services/directoryService';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { uploadLeaveAttachment, getLeaveAttachmentUrl } from '../services/useLeaveAttachments';
+import EditLeaveRequestModal from './EditLeaveRequestModal';
 
 interface LeavesRequestProps {
     session: Session;
@@ -60,6 +62,10 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
 
     const [cancellationReason, setCancellationReason] = useState<string>('');
     const [cancelRequestId, setCancelRequestId] = useState<string | null>(null);
+
+    // Edit modal state
+    const [selectedRequestForEdit, setSelectedRequestForEdit] = useState<LeaveRequest | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     // Helper function to check if it's a single day request
     const isSingleDayRequest = useCallback(() => {
@@ -296,11 +302,11 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
 
     const submitCancellation = async () => {
         if (!cancelRequestId) return;
-        
+
         try {
-            await updateLeaveRequest(cancelRequestId, { 
-                status: 'canceled', 
-                cancellation_reason: cancellationReason 
+            await updateLeaveRequest(cancelRequestId, {
+                status: 'canceled',
+                cancellation_reason: cancellationReason
             });
             toast.success('Leave request canceled successfully');
             fetchLeaveRequests();
@@ -309,6 +315,42 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
         } catch (error) {
             console.error('Error canceling leave request:', error);
             toast.error('Failed to cancel leave request');
+        }
+    };
+
+    // Edit modal handlers
+    const handleOpenEditModal = (request: LeaveRequest) => {
+        setSelectedRequestForEdit(request);
+        setIsEditModalOpen(true);
+    };
+
+    const handleCloseEditModal = () => {
+        setSelectedRequestForEdit(null);
+        setIsEditModalOpen(false);
+    };
+
+    const handleUpdateLeaveRequest = async (payload: Partial<CreateLeaveRequestPayload>) => {
+        if (!selectedRequestForEdit) return;
+
+        try {
+            await updateLeaveRequest(selectedRequestForEdit.id, payload);
+            toast.success('Leave request updated successfully');
+            fetchLeaveRequests(); // Refresh table
+            handleCloseEditModal();
+        } catch (error: any) {
+            console.error('Error updating leave request:', error);
+
+            // Enhanced error handling for backend validation
+            if (error.response?.status === 400) {
+                const message = error.response?.data?.detail || 'Validation error';
+                toast.error(message);
+            } else if (error.response?.status === 404) {
+                toast.error('Leave request not found');
+            } else {
+                toast.error('Failed to update leave request');
+            }
+
+            throw error; // Re-throw so modal can handle loading state
         }
     };
 
@@ -642,6 +684,11 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
                                     </div>
                                 </th>
                                 {isManager && (
+                                    <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                                        Edit
+                                    </th>
+                                )}
+                                {isManager && (
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                                         Actions
                                     </th>
@@ -699,6 +746,18 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
                                             </div>
                                         )}
                                     </td>
+                                    {/* Edit Column - Managers only */}
+                                    {isManager && (
+                                        <td className="px-3 py-4 whitespace-nowrap text-center">
+                                            <button
+                                                onClick={() => handleOpenEditModal(request)}
+                                                className="text-blue-600 hover:text-blue-900 transition-colors"
+                                                title="Edit request"
+                                            >
+                                                <PencilSquareIcon className="h-5 w-5" />
+                                            </button>
+                                        </td>
+                                    )}
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                                         {isManager && request.status === 'pending' && (
                                             <>
@@ -734,6 +793,17 @@ export function LeavesRequest({ session, isManager, companyId }: LeavesRequestPr
                     </table>
                 </div>
             </div>
+
+            {/* Edit Leave Request Modal */}
+            {selectedRequestForEdit && (
+                <EditLeaveRequestModal
+                    isOpen={isEditModalOpen}
+                    onClose={handleCloseEditModal}
+                    onSubmit={handleUpdateLeaveRequest}
+                    request={selectedRequestForEdit}
+                    companyEmployees={companyEmployees}
+                />
+            )}
         </div>
     );
 }
