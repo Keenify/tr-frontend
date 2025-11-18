@@ -33,6 +33,14 @@ export interface CreateLeaveRequestPayload {
 }
 
 export interface UpdateLeaveRequestPayload {
+    // NEW FIELDS - For editing leave requests
+    leave_type?: LeaveType;
+    start_date?: string;
+    end_date?: string;
+    request_reason?: string;
+    half_day?: HalfDayType;
+
+    // EXISTING FIELDS - For approval/rejection/cancellation
     status?: LeaveStatus;
     cancellation_reason?: string;
     attachment_filepath?: string;
