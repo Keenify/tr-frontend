@@ -47,7 +47,8 @@ export const transformGiftSuggestionToQuotation = (
   products: Product[],
   productVariants: { [key: number]: ProductVariant[] },
   customerCompanyName: string = "Gift Box Customer",
-  salesManager: string = "Sales Representative"
+  salesManager: string = "Sales Representative",
+  currency: string = "RM"
 ) => {
   // Get current date in the exact format used by quotations
   const currentDate = new Date().toLocaleDateString('en-GB', {
@@ -91,7 +92,7 @@ export const transformGiftSuggestionToQuotation = (
 
   // Build the product entry using ACTUAL flavor variants from the gift data
   const quotationProducts = [{
-    name: giftData.giftBoxType?.name || 'The Kettle Gourmet Gift Box',
+    name: 'Gift Box', // Generic name - specific type will show via giftBoxConfiguration
     description: giftData.description,
     pack_count_per_box: 6, // Gift boxes: 6 boxes per carton as per requirement
     recommended_retail_price: giftData.pricePerBox,
@@ -132,7 +133,7 @@ export const transformGiftSuggestionToQuotation = (
   // Standard quotation footer text with gift suggestion specific info
   const footer = `*Gift Suggestion Details:
 • Boxes Wanted: ${paxNumber} boxes
-• Total Price: RM ${giftData.total}
+• Total Price: ${currency} ${giftData.total}
 • Selected Flavors: ${giftData.variants?.length || 0} varieties
 
 *Remarks:
@@ -144,11 +145,37 @@ export const transformGiftSuggestionToQuotation = (
 
 ${giftData.specialInstructions ? `Special Instructions: ${giftData.specialInstructions}` : ''}`;
 
+  // Build selectedProducts structure for giftBoxConfiguration
+  // Group variants by their product to match backend expectations
+  const giftBoxSelectedProducts: { [key: string]: { selectedVariants: string[] } } = {};
+
+  if (giftData.giftBoxType && giftData.variants && giftData.variants.length > 0) {
+    // For gift suggestions, all variants belong to product ID 78
+    giftBoxSelectedProducts[GIFT_BOX_PRODUCT_ID.toString()] = {
+      selectedVariants: giftData.variants
+        .filter(variant => variant.image_url !== null && variant.image_url !== undefined)
+        .map(variant => {
+          // Use same truncation as selectedFlavors for consistency
+          let name = variant.name;
+          if (name.length > 20) {
+            name = name.substring(0, 17) + '...';
+          }
+          return name;
+        })
+    };
+  }
+
   // Build the exact quotation structure
   const quotationData = {
     selectedProducts,
     selectedFlavors,
     products: quotationProducts,
+    // Add giftBoxConfiguration to trigger backend's special gift box layout
+    giftBoxConfiguration: giftData.giftBoxType ? {
+      name: giftData.giftBoxType.name,
+      image_url: giftData.giftBoxType.image_url,
+      selectedProducts: giftBoxSelectedProducts // Properly structured with variants
+    } : undefined,
     companyInfo: companyInfo ? {
       name: companyInfo.name || "The Kettle Gourmet",
       completed_sign_up_sequence: companyInfo.completed_sign_up_sequence || false,

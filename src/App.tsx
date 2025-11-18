@@ -31,7 +31,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import DailyHuddle from "./features/dailyHuddle/components/DailyHuddle";
 import Sales from "./features/sales/components/Sales";
 import Quotation from "./features/quotation/components/Quotation";
-import B2BOrderFixed from "./features/b2b_order/components/B2BOrderFixed";
+import B2BOrderSideBySide from "./features/b2b_order/components/B2BOrderSideBySide";
 import Product from "./features/product/components/Product";
 import Resources from "./features/resources/components/Resources";
 import Projects from "./features/projects/components/Projects";
@@ -121,17 +121,26 @@ const App: React.FC = () => {
             {/* Job Preview route */}
             <Route path="/job-preview" element={<JobPreview />} />
             {/* Public JD Page route */}
-            <Route path="/jd/:companyId" element={<PublicJDPage />} />
+            <Route path="/jd/:companyId/:slug" element={<PublicJDPage />} />
 
-            {/* Public Order Budget Tracker - no auth required */}
-            <Route path="/public/order-tracker" element={<B2BOrderFixed session={null} />} />
+            {/* Public Gift Suggestion - no auth required */}
+            <Route path="/gift-suggestion" element={<B2BOrderSideBySide session={null} />} />
 
-            {/* Order Budget Tracker for non-authenticated users - no sidebar */}
+            {/* Legacy public order tracker route - redirect to /gift-suggestion */}
+            <Route path="/public/order-tracker" element={<Navigate to="/gift-suggestion" replace />} />
+
+            {/* Redirect non-authenticated users from /:userId/b2b_order to /gift-suggestion */}
             {!session && (
-              <Route
-                path="/:userId/b2b_order"
-                element={<B2BOrderFixed session={null} />}
-              />
+              <>
+                <Route
+                  path="/:userId/b2b_order"
+                  element={<Navigate to="/gift-suggestion" replace />}
+                />
+                <Route
+                  path="/:userId/gift-suggestion"
+                  element={<Navigate to="/gift-suggestion" replace />}
+                />
+              </>
             )}
 
 
@@ -319,7 +328,7 @@ const App: React.FC = () => {
                     }
                   />
                   <Route
-                    path="/:userId/b2b_order"
+                    path="/:userId/gift-suggestion"
                     element={
                       <ProtectedRoute
                         session={session}
@@ -328,10 +337,10 @@ const App: React.FC = () => {
                             session={session}
                             signOut={signOut}
                             activeTab="sales"
-                            activeSubTab="b2b_order"
+                            activeSubTab="gift-suggestion"
                             onSubTabChange={() => {}}
                           >
-                            <B2BOrderFixed session={session} />
+                            <B2BOrderSideBySide session={session} />
                           </DashboardLayout>
                         }
                       />
@@ -980,11 +989,7 @@ const App: React.FC = () => {
                   }
                 />
               )}
-                <Route
-                  path="/google/oauth/callback"
-                  element={<GoogleOAuthCallback session={session} />}
-                />
-                {session && (
+              {session && (
                   <Route
                     path="/:userId/paceForm"
                     element={
@@ -1026,6 +1031,10 @@ const App: React.FC = () => {
                     }
                   />
                 )}
+                <Route
+                  path="/google/oauth/callback"
+                  element={<GoogleOAuthCallback session={session} />}
+                />
               </>
 
             {/* Redirect base user ID route to vivid_vision - MUST be after all specific routes */}

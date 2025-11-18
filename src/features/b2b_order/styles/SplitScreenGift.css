@@ -1,0 +1,229 @@
+/* Split-screen layout for side-by-side Random and Manual modes */
+.split-screen-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 20px;
+  padding-top: 40px;
+  min-height: calc(100vh - 200px);
+}
+
+/* Each mode panel */
+.mode-panel {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-y: auto;
+  max-height: calc(100vh - 220px);
+  min-height: 600px;
+}
+
+.mode-panel:hover {
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.12);
+}
+
+/* Panel headers */
+.mode-panel-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.mode-panel-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+}
+
+.mode-panel-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+/* Random Mode specific */
+.random-mode-panel .mode-panel-header {
+  border-bottom-color: #667eea;
+}
+
+.random-mode-panel .mode-panel-title {
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Allow random panel to stretch when results are shown */
+.random-mode-panel {
+  overflow-y: visible;
+  overflow-x: hidden;
+  max-height: none;
+  height: auto;
+}
+
+/* Manual Mode specific */
+.manual-mode-panel .mode-panel-header {
+  border-bottom-color: #9b59b6;
+}
+
+.manual-mode-panel .mode-panel-title {
+  background: linear-gradient(90deg, #9b59b6, #8e44ad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Allow manual panel to stretch to fit all content (no scrolling) */
+.manual-mode-panel {
+  overflow-y: visible;
+  overflow-x: hidden;
+  max-height: none;
+  height: auto;
+}
+
+/* Responsive - Stack on smaller screens */
+@media (max-width: 1024px) {
+  .split-screen-container {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    overflow-x: hidden;
+  }
+
+  .mode-panel {
+    max-height: none;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 768px) {
+  .split-screen-container {
+    padding: 15px;
+    padding-top: 30px;
+    gap: 20px;
+    overflow-x: hidden;
+  }
+
+  .mode-panel {
+    padding: 20px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .mode-panel-title {
+    font-size: 20px;
+  }
+
+  .mode-panel-subtitle {
+    font-size: 13px;
+  }
+}
+
+/* Very small mobile screens - prevent overflow issues */
+@media (max-width: 380px) {
+  .split-screen-container {
+    padding: 10px;
+    padding-top: 25px;
+    gap: 15px;
+  }
+
+  .mode-panel {
+    padding: 12px;
+  }
+}
+
+/* Mobile Accordion Styles - Applied only on mobile (≤1024px) */
+@media (max-width: 1024px) {
+  /* Bring panels way closer together */
+  .split-screen-container {
+    gap: 20px !important;
+  }
+
+  /* When both panels are collapsed, reduce gap even more */
+  .split-screen-container.both-collapsed {
+    gap: 20px !important;
+    min-height: auto !important;
+    height: auto !important;
+  }
+
+  /* Override min-height so collapsed panels don't take up 600px */
+  .mode-panel {
+    min-height: 150px !important;
+    height: fit-content !important;
+    padding: 15px 20px 20px 20px; /* Add bottom padding for white space under header */
+  }
+
+  /* Override the height: auto from random/manual panel specific styles */
+  .random-mode-panel,
+  .manual-mode-panel {
+    height: fit-content !important;
+  }
+
+  /* Even smaller padding on very small screens */
+  @media (max-width: 768px) {
+    .mode-panel {
+      padding: 12px 15px 18px 15px; /* Bottom padding for breathing room */
+    }
+  }
+
+  /* Reduce header spacing on mobile */
+  .mode-panel-header {
+    margin-bottom: 0;
+    padding-bottom: 12px;
+  }
+
+  /* Ensure both titles are exactly the same size */
+  .mode-panel-title {
+    font-size: 18px !important;
+  }
+
+  /* Make panel headers clickable on mobile */
+  .mode-panel-header.mobile-clickable {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mode-panel-header.mobile-clickable:active {
+    opacity: 0.7;
+  }
+
+  /* Expand/collapse icon */
+  .mobile-expand-icon {
+    font-size: 24px;
+    font-weight: bold;
+    color: #667eea;
+    transition: transform 0.3s ease;
+  }
+
+  .manual-mode-panel .mobile-expand-icon {
+    color: #9b59b6;
+  }
+
+  /* Smooth content expansion */
+  .form-content {
+    animation: slideDown 0.3s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

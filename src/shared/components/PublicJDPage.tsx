@@ -1,24 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
 import { jdService } from '../services/jdService';
-
-interface PublicJDData {
-  id: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
-  companies: {
-    name: string;
-  };
-}
+import { JDPage as JDPageType } from '../types/jd.types';
 
 const PublicJDPage: React.FC = () => {
-  const { companyId } = useParams<{ companyId: string }>();
-  const [jdData, setJdData] = useState<PublicJDData | null>(null);
+  const { companyId, slug } = useParams<{ companyId: string; slug: string }>();
+  const [jdData, setJdData] = useState<JDPageType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
 
   useEffect(() => {
     const fetchPublicJD = async () => {
@@ -28,14 +17,19 @@ const PublicJDPage: React.FC = () => {
         return;
       }
 
+      if (!slug) {
+        setError('Page slug is required');
+        setLoading(false);
+        return;
+      }
+
       try {
-        // Use the service method to ensure consistency
-        const data = await jdService.fetchJDPageByCompanyId(companyId);
-        
+        const data = await jdService.fetchPageBySlug(companyId, slug);
+
         if (data) {
           setJdData(data);
         } else {
-          setError('No job description found for this company');
+          setError('Page not found');
         }
       } catch (err) {
         setError('Failed to load job description');
@@ -46,25 +40,19 @@ const PublicJDPage: React.FC = () => {
     };
 
     fetchPublicJD();
-  }, [companyId]);
-
-  // Convert markdown to HTML for display
-  const convertMarkdownToHtml = (markdown: string): string => {
-    return markdown
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/__(.*?)__/g, '<u>$1</u>')
-      .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-      .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-      .replace(/^• (.*$)/gm, '<ul><li>$1</li></ul>')
-      .replace(/\n/g, '<br>');
-  };
+  }, [companyId, slug]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-lg text-gray-600">Loading job description...</div>
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#f9f9f9',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '18px', color: '#666' }}>Loading job description...</div>
         </div>
       </div>
     );
@@ -72,67 +60,104 @@ const PublicJDPage: React.FC = () => {
 
   if (error || !jdData) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">📝</div>
-          <div className="text-xl font-medium text-gray-600 mb-2">
-            {error || 'Job description not found'}
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#f9f9f9',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ textAlign: 'center', padding: '20px' }}>
+          <div style={{ fontSize: '60px', marginBottom: '20px' }}>📝</div>
+          <div style={{ fontSize: '24px', fontWeight: '600', color: '#333', marginBottom: '10px' }}>
+            {error || 'Page not found'}
           </div>
-          <div className="text-gray-500">
-            This company hasn't published a job description yet.
+          <div style={{ fontSize: '16px', color: '#666' }}>
+            This page doesn't exist or hasn't been published yet.
           </div>
         </div>
       </div>
     );
   }
 
-  const companyName = jdData.companies?.name || 'Company';
-  const htmlContent = jdData.content ? convertMarkdownToHtml(jdData.content) : '';
-
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-6">
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#f9f9f9',
+      padding: '40px 20px'
+    }}>
+      <div style={{
+        maxWidth: '900px',
+        margin: '0 auto'
+      }}>
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {companyName}
-            </h1>
-            <p className="text-lg text-gray-600">Job Description</p>
-          </div>
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          padding: '30px',
+          marginBottom: '20px',
+          textAlign: 'center'
+        }}>
+          <h1 style={{
+            fontSize: '32px',
+            fontWeight: 'bold',
+            color: '#333',
+            marginBottom: '10px'
+          }}>
+            {jdData.title}
+          </h1>
+          <p style={{
+            fontSize: '16px',
+            color: '#666'
+          }}>
+            Job Description
+          </p>
         </div>
 
         {/* Content */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-          {htmlContent ? (
-            <div 
-              className="prose max-w-none prose-lg"
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          padding: '40px'
+        }}>
+          {jdData.content ? (
+            <div
               dangerouslySetInnerHTML={{
-                __html: htmlContent
+                __html: jdData.content
+              }}
+              style={{
+                lineHeight: '1.8',
+                fontSize: '16px',
+                color: '#333'
               }}
             />
           ) : (
-            <div className="text-center text-gray-500 py-20">
-              <div className="text-6xl mb-4">📝</div>
-              <div className="text-xl font-medium text-gray-600 mb-2">
+            <div style={{
+              textAlign: 'center',
+              padding: '60px 20px',
+              color: '#999'
+            }}>
+              <div style={{ fontSize: '60px', marginBottom: '20px' }}>📝</div>
+              <div style={{ fontSize: '20px', fontWeight: '600', color: '#666', marginBottom: '10px' }}>
                 No content available
               </div>
-              <div className="text-gray-500">
-                This company hasn't added job description content yet.
+              <div style={{ fontSize: '16px', color: '#999' }}>
+                This page hasn't been filled with content yet.
               </div>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-8 text-sm text-gray-500">
-          <p>Interested in this position? Contact {companyName} directly.</p>
-          <p className="mt-2">
-            Last updated: {new Date(jdData.updated_at).toLocaleDateString()} at {new Date(jdData.updated_at).toLocaleTimeString()}
-          </p>
-          <p className="mt-1 text-xs text-gray-400">
-            Click refresh to get the latest content
-          </p>
+        <div style={{
+          textAlign: 'center',
+          marginTop: '30px',
+          fontSize: '14px',
+          color: '#999'
+        }}>
+          <p>Last updated: {new Date(jdData.updated_at).toLocaleDateString()}</p>
         </div>
       </div>
     </div>

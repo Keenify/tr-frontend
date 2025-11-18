@@ -29,7 +29,8 @@ export const generateGiftSuggestionPDF = async (
     pricePerPerson: string;
     dietaryRestriction: 'halal' | 'non-halal';
     specialInstructions: string;
-  }
+  },
+  currency: string = 'RM'
 ) => {
   try {
     console.log('Starting PDF generation with data:', { giftData, companyInfo, formInputs });
@@ -102,7 +103,7 @@ export const generateGiftSuggestionPDF = async (
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.text(`Number of People: ${formInputs.pax}`, margin, currentY);
-    doc.text(`Budget per Person: RM ${formInputs.pricePerPerson}`, margin, currentY + 6);
+    doc.text(`Budget per Person: ${currency} ${formInputs.pricePerPerson}`, margin, currentY + 6);
     doc.text(`Dietary Restriction: ${formInputs.dietaryRestriction === 'halal' ? 'Halal' : 'Non-Halal'}`, margin, currentY + 12);
 
     currentY += 25;
@@ -119,8 +120,8 @@ export const generateGiftSuggestionPDF = async (
   doc.text(`Name: ${giftData.name}`, margin, currentY);
   doc.text(`Description: ${giftData.description}`, margin, currentY + 6);
   doc.text(`Quantity: ${giftData.pax} boxes`, margin, currentY + 12);
-  doc.text(`Price per Box: RM ${giftData.pricePerBox}`, margin, currentY + 18);
-  doc.text(`Total Price: RM ${giftData.total}`, margin, currentY + 24);
+  doc.text(`Price per Box: ${currency} ${giftData.pricePerBox}`, margin, currentY + 18);
+  doc.text(`Total Price: ${currency} ${giftData.total}`, margin, currentY + 24);
 
   currentY += 35;
 
@@ -134,7 +135,7 @@ export const generateGiftSuggestionPDF = async (
     const productTableData = giftData.selectedProducts.map((product, index) => [
       index + 1,
       product.name,
-      product.price ? `RM ${product.price.toFixed(2)}` : 'N/A'
+      product.price ? `${currency} ${product.price.toFixed(2)}` : 'N/A'
     ]);
 
     autoTable(doc, {
@@ -209,7 +210,7 @@ export const generateGiftSuggestionPDF = async (
 
     const tierTableData = giftData.tierPricing.map((tier) => [
       `${tier.minQuantity}${tier.maxQuantity === Infinity ? '+' : `-${tier.maxQuantity}`}`,
-      `RM ${tier.pricePerUnit.toFixed(2)}`
+      `${currency} ${tier.pricePerUnit.toFixed(2)}`
     ]);
 
     autoTable(doc, {
