@@ -1,4 +1,4 @@
-import { LeaveRequest, CreateLeaveRequestPayload, UpdateLeaveRequestPayload } from '../types/leaveRequest';
+import { LeaveRequest, CreateLeaveRequestPayload, UpdateLeaveRequestPayload, PaginatedResponse } from '../types/leaveRequest';
 
 const API_DOMAIN = import.meta.env.VITE_BACKEND_API_DOMAIN;
 
@@ -146,10 +146,34 @@ export async function getEmployeeLeaveRequests(employeeId: string): Promise<Leav
 /**
  * Fetches all leave requests for a company
  * @param {string} companyId - The ID of the company
- * @returns {Promise<LeaveRequest[]>} - A promise that resolves to an array of leave requests
+ * @returns {Promise<PaginatedResponse<LeaveRequest>>} - A promise that resolves to an array of leave requests
  */
-export async function getCompanyLeaveRequests(companyId: string): Promise<LeaveRequest[]> {
-    const endpoint = `${API_DOMAIN}/employee-leaves/request/company/${encodeURIComponent(companyId)}`;
+export async function getCompanyLeaveRequests(
+    companyId: string,
+    filters?: {
+        status?: string;
+        start_date?: string;
+        end_date?: string;
+        leave_type?: string;
+        search_query?: string;
+        page?: number;
+        page_size?: number;
+    }
+): Promise<PaginatedResponse<LeaveRequest>> {
+    let endpoint = `${API_DOMAIN}/employee-leaves/request/company/${encodeURIComponent(companyId)}`;
+    
+    if (filters) {
+        const params = new URLSearchParams();
+        if (filters.status) params.append('status', filters.status);
+        if (filters.start_date) params.append('start_date', filters.start_date);
+        if (filters.end_date) params.append('end_date', filters.end_date);
+        if (filters.leave_type) params.append('leave_type', filters.leave_type);
+        if (filters.search_query) params.append('search_query', filters.search_query);
+        if (filters.page) params.append('page', filters.page.toString());
+        if (filters.page_size) params.append('page_size', filters.page_size.toString());
+        
+        endpoint += `?${params.toString()}`;
+    }
 
     const response = await fetch(endpoint, {
         method: 'GET',
@@ -169,5 +193,5 @@ export async function getCompanyLeaveRequests(companyId: string): Promise<LeaveR
         throw new Error('Failed to fetch company leave requests');
     }
 
-    return data as LeaveRequest[];
+    return data as PaginatedResponse<LeaveRequest>;
 }

@@ -46,4 +46,12 @@ export interface UpdateLeaveRequestPayload {
     attachment_filepath?: string;
     timeoff_type?: TimeoffType;
     timeoff_value?: number;
+}
+
+export interface PaginatedResponse<T> {
+    items: T[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
 } 
