@@ -293,7 +293,7 @@ export const TrelloList: React.FC<TrelloListProps> = ({
           {...provided.draggableProps}
           className="flex-shrink-0 w-80 sm:w-96"
         >
-          <div className="bg-gray-100 rounded-lg p-4 flex flex-col h-full min-h-[150px] relative">
+          <div className="bg-gray-100 rounded-lg p-4 flex flex-col h-full min-h-[150px] max-h-[calc(100vh-16rem)] relative">
             {/* Toast notification */}
             {toast && (
               <div 
@@ -483,6 +483,11 @@ export const TrelloList: React.FC<TrelloListProps> = ({
                     -m-2 p-2
                     ${snapshot.isDraggingOver ? 'bg-blue-50' : ''}
                   `}
+                  style={{
+                    WebkitOverflowScrolling: 'touch',
+                    touchAction: 'pan-y',
+                    overscrollBehavior: 'contain',
+                  }}
                 >
                   {filteredCards.map((card, cardIndex) => (
                     <TrelloCard

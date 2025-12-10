@@ -585,6 +585,10 @@ export const TrelloBoard: React.FC<TrelloBoardProps> = ({
                 p-1
                 ${snapshot.isDraggingOver ? 'bg-gray-50' : ''}
               `}
+              style={{
+                WebkitOverflowScrolling: 'touch',
+                touchAction: 'pan-x pan-y',
+              }}
             >
               {filteredLists.map((list, index) => (
                 <TrelloList
