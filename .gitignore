@@ -21,6 +21,9 @@
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
+.env.preview
+.env.development
 
 # Logs
 npm-debug.log*
@@ -51,3 +54,5 @@ supabase/.env
 .claude/settings.local.json
 claude.local.md
 CLAUDE.md
+.vercel
+

@@ -120,7 +120,7 @@ export async function updateTodo(
 export async function getCompanyTodos(
     companyId: string,
     skip: number = 0,
-    limit: number = 1000
+    limit: number = 10000
 ): Promise<TodoData[]> {
     const endpoint = `${API_DOMAIN}/todos/company/${encodeURIComponent(companyId)}?skip=${skip}&limit=${limit}`;
 
@@ -150,7 +150,7 @@ export async function getCompanyTodos(
 export async function getEmployeeTodos(
     employeeId: string,
     skip: number = 0,
-    limit: number = 1000
+    limit: number = 10000
 ): Promise<TodoData[]> {
     const endpoint = `${API_DOMAIN}/todos/employee/${encodeURIComponent(employeeId)}?skip=${skip}&limit=${limit}`;
 

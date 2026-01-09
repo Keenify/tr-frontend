@@ -270,7 +270,7 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
               {isProtectedUser ? "My Todos (protected)" : "My Todos"}
             </option>
             {employees
-              .filter(emp => emp.id !== userInfo?.id)
+              .filter(emp => emp.id !== userInfo?.id && emp.Is_Employed)
               .map(emp => (
                 <option key={emp.id} value={emp.id}>
                   {emp.first_name} {emp.last_name}'s Todos

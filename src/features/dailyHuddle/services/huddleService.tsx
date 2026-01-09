@@ -80,6 +80,39 @@ export const fetchQuestions = async (): Promise<Question[]> => {
 };
 
 /**
+ * Fetches all responses for a company on a specific date (BULK FETCH - OPTIMIZED).
+ * This is much faster than fetching individual responses.
+ * @param {string} companyId - The ID of the company.
+ * @param {string} date - The date for which to fetch responses.
+ * @returns {Promise<Array>} - A promise that resolves to an array of employee responses.
+ */
+export async function fetchAllResponsesByCompanyAndDate(companyId: string, date: string): Promise<any[]> {
+  const url = `${API_DOMAIN}/forms/responses/company/${companyId}?date=${date}&questionnaire_id=${FORM_ID}`;
+  console.log("Fetching all responses from:", url);
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`Error ${response.status}: ${response.statusText}`);
+      return []; // Return empty array on error
+    }
+
+    const data = await response.json();
+    console.log(`✅ Fetched ${data.length} responses in one request`);
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch responses:', error);
+    return []; // Return empty array instead of throwing
+  }
+}
+
+/**
  * Fetches the response data for a specific date and employee.
  * @param {string} date - The date for which to fetch the response.
  * @param {string} employeeId - The ID of the employee.

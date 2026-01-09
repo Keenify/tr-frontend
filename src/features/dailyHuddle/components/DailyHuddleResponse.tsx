@@ -102,7 +102,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
   const [questions, setQuestions] = React.useState<Question[]>([]);
   const [selectedDate, setSelectedDate] = React.useState(getEffectiveDate());
   const { companyInfo, error: dataError } = useUserAndCompanyData(session.user.id);
-  const { employeeResponses, error, refreshEmployeeResponses } = useEmployeeResponses(companyInfo?.id, selectedDate);
+  const { employeeResponses, error, isLoading, refreshEmployeeResponses } = useEmployeeResponses(companyInfo?.id, selectedDate);
   const [calendarEvents, setCalendarEvents] = React.useState<CalendarEvent[]>([]);
   const [refreshing, setRefreshing] = React.useState(false);
   const dateInputRef = React.useRef<HTMLInputElement>(null); // Ref for hidden date input
@@ -466,7 +466,7 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
 
   // Initial loading state check
   // Show loader only if loading is true and either questions or employeeResponses haven't been fetched yet.
-  const showInitialLoader = loading && (!questions.length || !employeeResponses);
+  const showInitialLoader = (loading || isLoading) && (!questions.length || !employeeResponses);
 
   if (showInitialLoader) {
       return (
@@ -605,9 +605,34 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
     );
   }
 
+  // Check if selected date is today
+  const isToday = selectedDate === new Date().toISOString().split('T')[0];
+
   // Filter out backup employees and add empty response object if needed
   const filteredResponses = (employeeResponses || []) // Handle potentially undefined responses
-    .filter(emp => emp && emp.name && !emp.name.toLowerCase().includes('backup'))
+    .filter(emp => {
+      // Always filter out backup employees
+      if (!emp || !emp.name || emp.name.toLowerCase().includes('backup')) {
+        return false;
+      }
+
+      // Check if this is a past employee
+      const isPastEmployee = emp.Is_Employed === false;
+      const hasResponse = !!emp.submittedTime;
+
+      if (isPastEmployee) {
+        // If viewing today's date, exclude ALL past employees
+        if (isToday) {
+          return false;
+        }
+        // For previous dates, only show past employees who submitted responses
+        if (!hasResponse) {
+          return false;
+        }
+      }
+
+      return true;
+    })
     .map(emp => ({
       ...emp,
       response: emp.response || { questions: [] } // Ensure response object exists
@@ -784,20 +809,20 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
           </tr>
         </thead>
         <tbody>
-           {allResponses.length === 0 && !loading && (
+           {allResponses.length === 0 && !loading && !isLoading && (
              <tr>
                <td colSpan={questions.length + 3} className="no-responses-cell">
                  No responses submitted for {selectedDate}.
                </td>
              </tr>
            )}
-          {allResponses.map(({ id, name, response, submittedTime, profile_pic_url, rank }, index) => {
+          {allResponses.map(({ id, name, response, submittedTime, profile_pic_url, rank, Is_Employed }, index) => {
             // Check if employee is on leave
             const onLeave = isEmployeeOnLeave(name);
             const hasSubmitted = !!submittedTime;
-            
-            // Determine row class based on rank
-            const rowClass = rank && rank <= 3 ? `top-performer-${rank}` : '';
+
+            // Determine row class based on rank and employment status
+            const rowClass = rank && rank <= 3 ? `top-performer-${rank}` : (Is_Employed === false ? 'past-employee-row' : '');
             
             return (
               <tr key={id} className={rowClass}>
@@ -823,7 +848,10 @@ const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) =>
                         )}
                       </div>
                       {/* Name */}
-                      <span className="member-name">{name}</span>
+                      <span className="member-name">
+                        {name}
+                        {Is_Employed === false && <span className="past-employee-badge"> (Past Employee)</span>}
+                      </span>
                     </div>
                     
                     {/* Second row: Badge */}
