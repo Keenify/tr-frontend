@@ -1,7 +1,7 @@
 import React, { useState, KeyboardEvent } from 'react';
-import { TodoData } from '../types/todo';
+import { TodoData, TodoReorderItem } from '../types/todo';
 import { format } from 'date-fns';
-import { createTodo, updateTodo } from '../services/useTodos';
+import { createTodo, updateTodo, reorderTodos } from '../services/useTodos';
 import { TodoItem } from './TodoItem';
 
 interface DayColumnProps {
@@ -12,6 +12,7 @@ interface DayColumnProps {
   onTodoCreated: (todo: TodoData) => void;
   onTodoUpdated: (todo: TodoData) => void;
   onTodoDeleted: (todoId: string) => void;
+  onTodosReordered?: (reorderedTodos: TodoReorderItem[]) => void;
   isViewOnly?: boolean;
   maxTodosAcrossColumns?: number; // New prop to ensure consistent notelines
 }
@@ -43,16 +44,21 @@ export const DayColumn: React.FC<DayColumnProps> = ({
   onTodoCreated,
   onTodoUpdated,
   onTodoDeleted,
+  onTodosReordered,
   isViewOnly = false,
   maxTodosAcrossColumns = 0 // Default to 0 if not provided
 }) => {
   const [newTodoText, setNewTodoText] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const minLines = 10; // Minimum number of lines (including todos and empty lines)
-  
+
+  // Sort todos by position
+  const sortedTodos = [...todos].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+
   // Calculate empty lines based on the maximum todos across all columns or the minimum lines
   const totalLines = Math.max(maxTodosAcrossColumns, minLines);
-  const emptyLines = Math.max(totalLines - todos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row when not in view-only mode
+  const emptyLines = Math.max(totalLines - sortedTodos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row when not in view-only mode
 
   const createNewTodo = async () => {
     if (newTodoText.trim()) {
@@ -84,24 +90,73 @@ export const DayColumn: React.FC<DayColumnProps> = ({
     await createNewTodo();
   };
 
-  const handleDrop = async (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent, dropIndex?: number) => {
     if (isViewOnly) {
       e.preventDefault();
       return;
     }
-    
+
     e.preventDefault();
     setIsDragOver(false);
+    setDragOverIndex(null);
+
     const todoId = e.dataTransfer.getData('todoId');
-    
-    try {
-      const updatedTodo = await updateTodo(todoId, {
-        due_date: format(date, 'yyyy-MM-dd')
-      });
-      onTodoUpdated(updatedTodo);
-    } catch (error) {
-      console.error('Failed to update todo date:', error);
+    const sourceDateStr = e.dataTransfer.getData('sourceDate');
+    const targetDateStr = format(date, 'yyyy-MM-dd');
+
+    // Find the dragged todo
+    const draggedTodo = sortedTodos.find(t => t.id === todoId);
+
+    // Check if this is a within-column reorder
+    if (sourceDateStr === targetDateStr && dropIndex !== undefined && draggedTodo) {
+      const currentIndex = sortedTodos.findIndex(t => t.id === todoId);
+      if (currentIndex === dropIndex || currentIndex === -1) return; // No change needed
+
+      // Calculate new order
+      const newTodos = [...sortedTodos];
+      const [removed] = newTodos.splice(currentIndex, 1);
+      newTodos.splice(dropIndex, 0, removed);
+
+      // Assign new positions (1, 2, 3...)
+      const reorderItems: TodoReorderItem[] = newTodos.map((todo, idx) => ({
+        id: todo.id,
+        position: idx + 1
+      }));
+
+      // Optimistic update
+      if (onTodosReordered) {
+        onTodosReordered(reorderItems);
+      }
+
+      // API call
+      try {
+        await reorderTodos(reorderItems);
+      } catch (error) {
+        console.error('Failed to reorder todos:', error);
+        // Rollback will be handled by parent component refetching data
+      }
+    } else {
+      // Cross-column move (existing logic)
+      try {
+        const updatedTodo = await updateTodo(todoId, {
+          due_date: targetDateStr
+        });
+        onTodoUpdated(updatedTodo);
+      } catch (error) {
+        console.error('Failed to update todo date:', error);
+      }
     }
+  };
+
+  const handleTodoDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverIndex(index);
+  };
+
+  const handleTodoDrop = (e: React.DragEvent, index: number) => {
+    e.stopPropagation();
+    handleDrop(e, index);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -144,11 +199,17 @@ export const DayColumn: React.FC<DayColumnProps> = ({
       <div className="flex flex-col overflow-hidden">
         {/* All todo items */}
         <div className="overflow-hidden">
-          {todos.map((todo) => (
-            <div key={todo.id} className="h-[28px] relative">
+          {sortedTodos.map((todo, index) => (
+            <div
+              key={todo.id}
+              className={`h-[28px] relative ${dragOverIndex === index ? 'border-t-2 border-blue-500' : ''}`}
+              onDragOver={(e) => handleTodoDragOver(e, index)}
+              onDrop={(e) => handleTodoDrop(e, index)}
+              onDragLeave={() => setDragOverIndex(null)}
+            >
               <div className={`absolute bottom-0 ${isViewOnly ? 'left-0' : 'left-[24px]'} right-0 border-b border-gray-100`}></div>
-              <TodoItem 
-                todo={todo} 
+              <TodoItem
+                todo={todo}
                 onUpdate={onTodoUpdated}
                 onDelete={onTodoDeleted}
                 isViewOnly={isViewOnly}

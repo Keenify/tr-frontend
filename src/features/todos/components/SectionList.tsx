@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { TodoData, TabData } from '../types/todo';
+import { TodoData, TabData, TodoReorderItem } from '../types/todo';
 import { createSection } from '../services/useTodos';
 import { SectionColumn } from './SectionColumn';
 import { FaAngleLeft, FaAngleRight } from 'react-icons/fa';
@@ -12,6 +12,7 @@ interface SectionListProps {
   onTodoCreated: (todo: TodoData) => void;
   onTodoUpdated: (todo: TodoData) => void;
   onTodoDeleted: (todoId: string) => void;
+  onTodosReordered?: (reorderedTodos: TodoReorderItem[]) => void;
   onSectionCreated: () => void;
   onSectionUpdated?: () => void;
   onSectionDeleted?: () => void;
@@ -47,6 +48,7 @@ export const SectionList: React.FC<SectionListProps> = ({
   onTodoCreated,
   onTodoUpdated,
   onTodoDeleted,
+  onTodosReordered,
   onSectionCreated,
   onSectionUpdated,
   onSectionDeleted,
@@ -170,6 +172,7 @@ export const SectionList: React.FC<SectionListProps> = ({
               onTodoCreated={onTodoCreated}
               onTodoUpdated={onTodoUpdated}
               onTodoDeleted={onTodoDeleted}
+              onTodosReordered={onTodosReordered}
               onSectionUpdated={onSectionUpdated}
               onSectionDeleted={onSectionDeleted || onSectionUpdated}
               isViewOnly={isViewOnly}

@@ -11,6 +11,7 @@ export interface TodoData {
     updated_at?: string;
     section_id: string | null | undefined;
     section_name: string | null | undefined;
+    position?: number;
 }
 
 export interface CreateTodoPayload {
@@ -31,6 +32,7 @@ export interface UpdateTodoPayload {
     color_code?: string;
     is_completed?: boolean;
     section_id?: string;
+    position?: number;
 }
 
 export interface SectionData {
@@ -71,4 +73,19 @@ export interface CreateTabPayload {
 
 export interface UpdateTabPayload {
     name?: string;
+}
+
+// Reorder types
+export interface TodoReorderItem {
+    id: string;
+    position: number;
+}
+
+export interface TodoBatchReorderRequest {
+    todos: TodoReorderItem[];
+}
+
+export interface TodoBatchReorderResponse {
+    success: boolean;
+    updated_count: number;
 } 

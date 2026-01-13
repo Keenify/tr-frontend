@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 
 export function useUserAndCompanyData(userId: string) {
   const { getCachedUserData } = useUserDataContext();
-  
+
   console.log(`🎣 [useUserAndCompanyData] Hook called for userId: ${userId}`);
-  
+
   const [data, setData] = useState(() => {
     const initialData = getCachedUserData(userId);
     console.log(`🏁 [useUserAndCompanyData] Initial data for ${userId}:`, {
@@ -16,7 +16,7 @@ export function useUserAndCompanyData(userId: string) {
     });
     return initialData;
   });
-  
+
   useEffect(() => {
     console.log(`🔄 [useUserAndCompanyData] useEffect triggered for userId: ${userId}`);
     if (userId) {
@@ -30,7 +30,7 @@ export function useUserAndCompanyData(userId: string) {
           currentCompanyId: currentData.companyInfo?.id,
           newCompanyId: newData.companyInfo?.id
         });
-        
+
         if (hasChanged) {
           console.log(`🔄 [useUserAndCompanyData] Updating data for ${userId} - WILL TRIGGER RE-RENDER`);
           return newData;
@@ -40,7 +40,7 @@ export function useUserAndCompanyData(userId: string) {
       });
     }
   }, [userId, getCachedUserData]);
-  
+
   console.log(`📤 [useUserAndCompanyData] Returning data for ${userId}:`, {
     hasUserInfo: !!data.userInfo,
     hasCompanyInfo: !!data.companyInfo,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { TodoData, TabData } from '../types/todo';
+import { TodoData, TabData, TodoReorderItem } from '../types/todo';
 import { getEmployeeTabs } from '../services/useTodos';
 import { TabList } from './TabList';
 import { SectionList } from './SectionList';
@@ -11,6 +11,7 @@ interface TodoSectionProps {
   onTodoCreated: (todo: TodoData) => void;
   onTodoUpdated: (todo: TodoData) => void;
   onTodoDeleted: (todoId: string) => void;
+  onTodosReordered?: (reorderedTodos: TodoReorderItem[]) => void;
   isViewOnly?: boolean;
 }
 
@@ -39,6 +40,7 @@ export const TodoSection: React.FC<TodoSectionProps> = ({
   onTodoCreated,
   onTodoUpdated,
   onTodoDeleted,
+  onTodosReordered,
   isViewOnly = false
 }) => {
   const [tabs, setTabs] = useState<TabData[]>([]);
@@ -120,7 +122,7 @@ export const TodoSection: React.FC<TodoSectionProps> = ({
         <div className="flex-1 overflow-visible h-full">
           <SectionList
             tab={activeTab}
-            todos={todos.filter(todo => 
+            todos={todos.filter(todo =>
               // Find todos that belong to sections in the active tab
               activeTab.sections.some(section => section.id === todo.section_id)
             )}
@@ -129,6 +131,7 @@ export const TodoSection: React.FC<TodoSectionProps> = ({
             onTodoCreated={onTodoCreated}
             onTodoUpdated={onTodoUpdated}
             onTodoDeleted={onTodoDeleted}
+            onTodosReordered={onTodosReordered}
             onSectionCreated={handleSectionChange}
             onSectionUpdated={handleSectionChange}
             isViewOnly={isViewOnly}
