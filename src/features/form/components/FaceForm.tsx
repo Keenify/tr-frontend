@@ -73,7 +73,7 @@ const FaceForm: React.FC = () => {
   const [loadingExistingData, setLoadingExistingData] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [originalFormData, setOriginalFormData] = useState<FaceFormValues | null>(null);
-  
+
   // State to track removed functions persistently
   const [removedFunctions, setRemovedFunctions] = useState<string[]>([]);
   

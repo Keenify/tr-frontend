@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Session } from '@supabase/supabase-js';
-import { TodoData } from '../types/todo';
+import { TodoData, TodoReorderItem } from '../types/todo';
 import { getEmployeeTodos } from '../services/useTodos';
 import { DayColumn } from './DayColumn';
 import { addDays, startOfToday, format, subDays, addWeeks, subWeeks, parseISO } from 'date-fns';
@@ -107,6 +107,19 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
 
   const handleTodoDeleted = (todoId: string) => {
     setTodos(todos.filter(todo => todo.id !== todoId));
+  };
+
+  const handleTodosReordered = (reorderedTodos: TodoReorderItem[]) => {
+    // Update positions of todos in local state
+    setTodos(prevTodos =>
+      prevTodos.map(todo => {
+        const reorderItem = reorderedTodos.find(item => item.id === todo.id);
+        if (reorderItem) {
+          return { ...todo, position: reorderItem.position };
+        }
+        return todo;
+      })
+    );
   };
 
   const handlePrevDay = () => {
@@ -387,8 +400,8 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
                 <DayColumn
                   key={date.toISOString()}
                   date={date}
-                  todos={todos.filter(todo => 
-                    todo.due_date === format(date, 'yyyy-MM-dd') && 
+                  todos={todos.filter(todo =>
+                    todo.due_date === format(date, 'yyyy-MM-dd') &&
                     todo.section_id === null // Only show todos without a section
                   )}
                   employeeId={selectedEmployeeId || userInfo?.id || ''}
@@ -396,6 +409,7 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
                   onTodoCreated={handleTodoCreated}
                   onTodoUpdated={handleTodoUpdated}
                   onTodoDeleted={handleTodoDeleted}
+                  onTodosReordered={handleTodosReordered}
                   isViewOnly={selectedEmployeeId !== null && selectedEmployeeId !== userInfo?.id}
                   maxTodosAcrossColumns={maxTodos}
                 />
@@ -416,6 +430,7 @@ const Todos: React.FC<TodosProps> = ({ session }) => {
             onTodoCreated={handleTodoCreated}
             onTodoUpdated={handleTodoUpdated}
             onTodoDeleted={handleTodoDeleted}
+            onTodosReordered={handleTodosReordered}
             isViewOnly={selectedEmployeeId !== null && selectedEmployeeId !== userInfo?.id}
           />
         </div>

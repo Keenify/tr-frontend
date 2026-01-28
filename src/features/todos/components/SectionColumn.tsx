@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { TodoData, SectionData } from '../types/todo';
-import { createTodo, updateTodo, updateSection, deleteSection } from '../services/useTodos';
+import { TodoData, SectionData, TodoReorderItem } from '../types/todo';
+import { createTodo, updateTodo, updateSection, deleteSection, reorderTodos } from '../services/useTodos';
 import { TodoItem } from './TodoItem';
 
 interface SectionColumnProps {
@@ -12,6 +12,7 @@ interface SectionColumnProps {
   onTodoCreated: (todo: TodoData) => void;
   onTodoUpdated: (todo: TodoData) => void;
   onTodoDeleted: (todoId: string) => void;
+  onTodosReordered?: (reorderedTodos: TodoReorderItem[]) => void;
   onSectionUpdated?: () => void;
   onSectionDeleted?: () => void;
   isViewOnly?: boolean;
@@ -44,6 +45,7 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
   onTodoCreated,
   onTodoUpdated,
   onTodoDeleted,
+  onTodosReordered,
   onSectionUpdated,
   onSectionDeleted,
   isViewOnly = false
@@ -54,9 +56,14 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<{top: number, left: number} | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
   const minLines = 10; // Minimum number of lines (including todos and empty lines)
-  const emptyLines = Math.max(minLines - todos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row when not in view-only mode
+
+  // Sort todos by position
+  const sortedTodos = [...todos].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+
+  const emptyLines = Math.max(minLines - sortedTodos.length - (isViewOnly ? 0 : 1), 0); // -1 for input row when not in view-only mode
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -115,24 +122,72 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
     }
   };
 
-  const handleDrop = async (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent, dropIndex?: number) => {
     if (isViewOnly) {
       e.preventDefault();
       return;
     }
-    
+
     e.preventDefault();
     setIsDragOver(false);
+    setDragOverIndex(null);
+
     const todoId = e.dataTransfer.getData('todoId');
-    
-    try {
-      const updatedTodo = await updateTodo(todoId, {
-        section_id: section.id
-      });
-      onTodoUpdated(updatedTodo);
-    } catch (error) {
-      console.error('Failed to update todo section:', error);
+    const sourceSectionId = e.dataTransfer.getData('sourceSection');
+
+    // Find the dragged todo
+    const draggedTodo = sortedTodos.find(t => t.id === todoId);
+
+    // Check if this is a within-section reorder
+    if (sourceSectionId === section.id && dropIndex !== undefined && draggedTodo) {
+      const currentIndex = sortedTodos.findIndex(t => t.id === todoId);
+      if (currentIndex === dropIndex || currentIndex === -1) return; // No change needed
+
+      // Calculate new order
+      const newTodos = [...sortedTodos];
+      const [removed] = newTodos.splice(currentIndex, 1);
+      newTodos.splice(dropIndex, 0, removed);
+
+      // Assign new positions (1, 2, 3...)
+      const reorderItems: TodoReorderItem[] = newTodos.map((todo, idx) => ({
+        id: todo.id,
+        position: idx + 1
+      }));
+
+      // Optimistic update
+      if (onTodosReordered) {
+        onTodosReordered(reorderItems);
+      }
+
+      // API call
+      try {
+        await reorderTodos(reorderItems);
+      } catch (error) {
+        console.error('Failed to reorder todos:', error);
+        // Rollback will be handled by parent component refetching data
+      }
+    } else {
+      // Cross-section move (existing logic)
+      try {
+        const updatedTodo = await updateTodo(todoId, {
+          section_id: section.id
+        });
+        onTodoUpdated(updatedTodo);
+      } catch (error) {
+        console.error('Failed to update todo section:', error);
+      }
     }
+  };
+
+  const handleTodoDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverIndex(index);
+  };
+
+  const handleTodoDrop = (e: React.DragEvent, index: number) => {
+    e.stopPropagation();
+    handleDrop(e, index);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -305,11 +360,17 @@ export const SectionColumn: React.FC<SectionColumnProps> = ({
       <div className="flex flex-col overflow-hidden">
         {/* All todo items */}
         <div className="overflow-hidden">
-          {todos.map((todo) => (
-            <div key={todo.id} className="h-[28px] relative">
+          {sortedTodos.map((todo, index) => (
+            <div
+              key={todo.id}
+              className={`h-[28px] relative ${dragOverIndex === index ? 'border-t-2 border-blue-500' : ''}`}
+              onDragOver={(e) => handleTodoDragOver(e, index)}
+              onDrop={(e) => handleTodoDrop(e, index)}
+              onDragLeave={() => setDragOverIndex(null)}
+            >
               <div className={`absolute bottom-0 ${isViewOnly ? 'left-0' : 'left-[24px]'} right-0 border-b border-gray-100`}></div>
-              <TodoItem 
-                todo={todo} 
+              <TodoItem
+                todo={todo}
                 onUpdate={onTodoUpdated}
                 onDelete={onTodoDeleted}
                 isViewOnly={isViewOnly}

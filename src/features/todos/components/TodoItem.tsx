@@ -281,6 +281,9 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onUpdate, onDelete, is
       return;
     }
     e.dataTransfer.setData('todoId', todo.id);
+    // Add source info for detecting within-column drops
+    e.dataTransfer.setData('sourceDate', todo.due_date || '');
+    e.dataTransfer.setData('sourceSection', todo.section_id || '');
     e.dataTransfer.effectAllowed = 'move';
     setIsDragging(true);
   };

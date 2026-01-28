@@ -1,13 +1,15 @@
-import { 
-    CreateTodoPayload, 
-    TodoData, 
-    UpdateTodoPayload, 
-    TabData, 
-    CreateTabPayload, 
+import {
+    CreateTodoPayload,
+    TodoData,
+    UpdateTodoPayload,
+    TabData,
+    CreateTabPayload,
     UpdateTabPayload,
     SectionData,
     CreateSectionPayload,
-    UpdateSectionPayload
+    UpdateSectionPayload,
+    TodoReorderItem,
+    TodoBatchReorderResponse
 } from '../types/todo';
 
 const API_DOMAIN = import.meta.env.VITE_BACKEND_API_DOMAIN;
@@ -496,4 +498,30 @@ export async function getEmployeeSections(employeeId: string): Promise<SectionDa
     }
 
     return data as SectionData[];
+}
+
+/**
+ * Batch reorder todos within a column
+ * @param {TodoReorderItem[]} todos - Array of todos with their new positions
+ * @returns {Promise<TodoBatchReorderResponse>} - A promise that resolves to the reorder response
+ */
+export async function reorderTodos(todos: TodoReorderItem[]): Promise<TodoBatchReorderResponse> {
+    const endpoint = `${API_DOMAIN}/todos/reorder`;
+
+    const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ todos }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        return handleApiError(response, data, 'Failed to reorder todos');
+    }
+
+    return data as TodoBatchReorderResponse;
 }
