@@ -941,17 +941,20 @@ td.on-leave-cell {
   margin-left: 10px;
   padding: 6px 12px;
   background-color: #f8f9fa;
-  border: 1px solid #ced4da;
+  border: 1px solid #6c757d !important;
   border-radius: 4px;
   display: flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
+  color: #495057 !important;
+  transform: none !important;
 }
 
 .refresh-button:hover {
   background-color: #e9ecef;
+  transform: none !important;
 }
 
 .refresh-button:disabled {
@@ -960,7 +963,7 @@ td.on-leave-cell {
 }
 
 .refresh-icon {
-  transition: transform 0.5s ease;
+  /* No transition needed - spin animation handles rotation when refreshing */
 }
 
 .refresh-icon.refreshing {
