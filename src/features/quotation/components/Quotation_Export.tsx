@@ -215,9 +215,9 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
                         }
                         return freshProduct;
                     });
-                    setSelections(mergedData);
+                    updateSelections(mergedData);
                 } else {
-                    setSelections(transformedData);
+                    updateSelections(transformedData);
                 }
 
                 if (collapsedRows.size === 0) {
