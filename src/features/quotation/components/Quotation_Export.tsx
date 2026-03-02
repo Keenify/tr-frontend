@@ -190,10 +190,36 @@ export const QuotationExport: React.FC<QuotationExportProps> = ({ session }) => 
 
                 // 3. Transform data, passing in the detailed variants map
                 const transformedData = transformToSelectableFormat(exportDetailsData, variantsMap);
-                // Only set initial data if we don't have localStorage data
-                if (selections.length === 0) {
+
+                // Always update with fresh data from database to ensure product parameter updates are reflected
+                // Merge with localStorage state (isSelected, variants.isSelected) to preserve user selections
+                const savedSelections = localStorage.getItem('export_selections');
+                if (savedSelections) {
+                    const savedData: ProductExportSelection[] = JSON.parse(savedSelections);
+                    const savedSelectionsMap = new Map(savedData.map(s => [s.product_id, s]));
+
+                    // Merge: use fresh product data but preserve selection state
+                    const mergedData = transformedData.map(freshProduct => {
+                        const savedProduct = savedSelectionsMap.get(freshProduct.product_id);
+                        if (savedProduct) {
+                            // Preserve selection state from localStorage
+                            const savedVariantsMap = new Map(savedProduct.variants.map(v => [v.variant_id, v.isSelected]));
+                            return {
+                                ...freshProduct,
+                                isSelected: savedProduct.isSelected,
+                                variants: freshProduct.variants.map(v => ({
+                                    ...v,
+                                    isSelected: savedVariantsMap.get(v.variant_id) ?? false
+                                }))
+                            };
+                        }
+                        return freshProduct;
+                    });
+                    setSelections(mergedData);
+                } else {
                     setSelections(transformedData);
                 }
+
                 if (collapsedRows.size === 0) {
                     setCollapsedRows(new Set(transformedData.map(p => p.product_id)));
                 }
