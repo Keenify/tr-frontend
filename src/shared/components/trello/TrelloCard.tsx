@@ -390,7 +390,7 @@ export const TrelloCard: React.FC<TrelloCardProps> = ({
               backgroundColor: colorCode || 'white',
               ...provided.draggableProps.style,
               transformOrigin: 'center',
-              touchAction: 'none',
+              touchAction: 'manipulation',
             }}
             onClick={!isDragging ? handleCardClick : undefined}
           >
