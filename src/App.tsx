@@ -63,6 +63,7 @@ import Leaderboard from "./features/teamHealth/components/Leaderboard";
 import { IssueStatementPage } from './features/teamHealth/pages/IssueStatementPage';
 import Integration from "./features/integration/components/Integration";
 import GoogleOAuthCallback from "./features/integration/components/GoogleOAuthCallback";
+import ShopeeOAuthCallback from "./features/integration/components/ShopeeOAuthCallback";
 import BusinessQuadrant from "./features/company/components/BusinessQuadrant";
 import CashAccelerationStrategies from "./features/cash/components/CashAccelerationStrategies";
 import TheRocksMain from "./features/theRocks/components/main";
@@ -1034,6 +1035,10 @@ const App: React.FC = () => {
                 <Route
                   path="/google/oauth/callback"
                   element={<GoogleOAuthCallback session={session} />}
+                />
+                <Route
+                  path="/shopee/oauth/callback"
+                  element={<ShopeeOAuthCallback session={session} />}
                 />
               </>
 

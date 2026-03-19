@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
 import { useUserAndCompanyData } from "../../../shared/hooks/useUserAndCompanyData";
 import { getGoogleAuthUrl, validateGoogleToken, revokeGoogleToken, handleGoogleCallback } from "../services/useGoogle";
+import { getShopeeAuthUrl, handleShopeeCallback, getShopeeTokens, ShopeeTokenResponse } from "../services/useShopee";
 import toast from "react-hot-toast";
 import { ExternalLink, Check, X, RefreshCw } from "react-feather";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -9,6 +10,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 interface IntegrationProps {
   session: Session;
 }
+
+const SHOPEE_SHOPS: { shopId: number; name: string; country: string }[] = [
+  { shopId: 976040827, name: "thekettlegourmetmy", country: "MY" },
+  { shopId: 2421911,   name: "thekettlegourmetsg", country: "SG" },
+];
 
 const Integration: React.FC<IntegrationProps> = ({ session }) => {
   const { userInfo, companyInfo, error: dataError, isLoading } = useUserAndCompanyData(session.user.id);
@@ -18,60 +24,88 @@ const Integration: React.FC<IntegrationProps> = ({ session }) => {
   const [isValidating, setIsValidating] = useState(false);
   const [isRevoking, setIsRevoking] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+
+  const [shopeeTokens, setShopeeTokens] = useState<ShopeeTokenResponse[]>([]);
+  const [shopeeResyncingId, setShopeeResyncingId] = useState<number | null>(null);
+
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Check if the current URL is the OAuth callback
+  // Handle OAuth callbacks
   useEffect(() => {
     const handleOAuthCallback = async () => {
-      // Check if this is the Google OAuth callback route
+      // Google OAuth callback
       if (location.pathname === "/google/oauth/callback") {
         const urlParams = new URLSearchParams(location.search);
         const code = urlParams.get("code");
         const error = urlParams.get("error");
-        
-        // Get employee and company IDs from localStorage
+
         const employeeId = localStorage.getItem('google_oauth_employee_id');
         const companyId = localStorage.getItem('google_oauth_company_id');
-        
-        // Clear localStorage items
         localStorage.removeItem('google_oauth_employee_id');
         localStorage.removeItem('google_oauth_company_id');
-        
+
         if (error) {
-          console.error("Google OAuth error:", error);
           toast.error("Failed to connect to Google: " + error);
           navigate("/integration");
           return;
         }
-        
         if (!code || !employeeId || !companyId) {
           toast.error("Missing required parameters for Google integration");
           navigate("/integration");
           return;
         }
-        
         try {
-          // Handle the callback
           await handleGoogleCallback(code, employeeId, companyId);
           toast.success("Successfully connected to Google!");
           navigate("/integration");
-        } catch (error) {
-          console.error("Failed to handle Google callback:", error);
+        } catch {
           toast.error("Failed to complete Google integration");
           navigate("/integration");
         }
       }
+
+      // Shopee OAuth callback
+      if (location.pathname === "/shopee/oauth/callback") {
+        const urlParams = new URLSearchParams(location.search);
+        const code = urlParams.get("code");
+        const shopId = urlParams.get("shop_id");
+        const error = urlParams.get("error");
+
+        const companyId = localStorage.getItem('shopee_oauth_company_id');
+        const country = localStorage.getItem('shopee_oauth_country') || undefined;
+        localStorage.removeItem('shopee_oauth_company_id');
+        localStorage.removeItem('shopee_oauth_country');
+
+        if (error) {
+          toast.error("Shopee authorization failed: " + error);
+          navigate("/integration");
+          return;
+        }
+        if (!code || !shopId || !companyId) {
+          toast.error("Missing required parameters for Shopee integration");
+          navigate("/integration");
+          return;
+        }
+        try {
+          await handleShopeeCallback(code, shopId, companyId, country);
+          toast.success("Shopee shop successfully re-authorized!");
+          navigate("/integration");
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : "Failed to complete Shopee authorization";
+          toast.error(msg);
+          navigate("/integration");
+        }
+      }
     };
-    
+
     handleOAuthCallback();
   }, [location, navigate]);
 
-  // Check if the user is connected to Google
+  // Check Google connection
   useEffect(() => {
     const checkGoogleConnection = async () => {
       if (!userInfo || !companyInfo) return;
-      
       try {
         setIsValidating(true);
         const validationResponse = await validateGoogleToken({
@@ -79,50 +113,54 @@ const Integration: React.FC<IntegrationProps> = ({ session }) => {
           company_id: companyInfo.id,
           refresh: false
         });
-        
         setGoogleConnected(validationResponse.is_valid);
         setGoogleTokenId(validationResponse.token_id);
         setGoogleTokenExpiry(validationResponse.expires_at);
-      } catch (error) {
-        console.error("Failed to validate Google token:", error);
+      } catch {
         setGoogleConnected(false);
       } finally {
         setIsValidating(false);
       }
     };
-
     checkGoogleConnection();
   }, [userInfo, companyInfo]);
 
-  // Handle Google OAuth connection
+  // Load Shopee tokens
+  useEffect(() => {
+    const loadShopeeTokens = async () => {
+      if (!companyInfo) return;
+      try {
+        const tokens = await getShopeeTokens(companyInfo.id);
+        setShopeeTokens(tokens);
+      } catch {
+        // silently fail — not connected yet
+      }
+    };
+    loadShopeeTokens();
+  }, [companyInfo]);
+
   const handleConnectGoogle = async () => {
     if (!userInfo || !companyInfo) {
       toast.error("User or company information not available");
       return;
     }
-
     try {
       setIsConnecting(true);
       const authUrlResponse = await getGoogleAuthUrl();
-      // Store employee and company IDs in localStorage for the callback
       localStorage.setItem('google_oauth_employee_id', userInfo.id);
       localStorage.setItem('google_oauth_company_id', companyInfo.id);
-      // Redirect to Google's authorization page
       window.location.href = authUrlResponse.authorization_url;
-    } catch (error) {
-      console.error("Failed to get Google auth URL:", error);
+    } catch {
       toast.error("Failed to connect to Google");
       setIsConnecting(false);
     }
   };
 
-  // Handle token revocation
   const handleRevokeAccess = async () => {
     if (!googleTokenId) {
       toast.error("No Google token found to revoke");
       return;
     }
-
     try {
       setIsRevoking(true);
       await revokeGoogleToken(googleTokenId);
@@ -130,21 +168,18 @@ const Integration: React.FC<IntegrationProps> = ({ session }) => {
       setGoogleTokenId(null);
       setGoogleTokenExpiry(null);
       toast.success("Google access successfully revoked");
-    } catch (error) {
-      console.error("Failed to revoke Google token:", error);
+    } catch {
       toast.error("Failed to revoke Google access");
     } finally {
       setIsRevoking(false);
     }
   };
 
-  // Handle token refresh
   const handleRefreshToken = async () => {
     if (!userInfo || !companyInfo) {
       toast.error("User or company information not available");
       return;
     }
-
     try {
       setIsValidating(true);
       const validationResponse = await validateGoogleToken({
@@ -152,28 +187,43 @@ const Integration: React.FC<IntegrationProps> = ({ session }) => {
         company_id: companyInfo.id,
         refresh: true
       });
-      
       setGoogleConnected(validationResponse.is_valid);
       setGoogleTokenId(validationResponse.token_id);
       setGoogleTokenExpiry(validationResponse.expires_at);
-      
       if (validationResponse.was_refreshed) {
         toast.success("Google token successfully refreshed");
       } else {
         toast.success("Token is still valid, no refresh needed");
       }
-    } catch (error) {
-      console.error("Failed to refresh Google token:", error);
+    } catch {
       toast.error("Failed to refresh Google token");
     } finally {
       setIsValidating(false);
     }
   };
 
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
+  const handleShopeeResync = async (shopId: number, country: string) => {
+    if (!companyInfo) {
+      toast.error("Company information not available");
+      return;
+    }
+    try {
+      setShopeeResyncingId(shopId);
+      const callbackUrl = `${window.location.origin}/shopee/oauth/callback`;
+      const { authorization_url } = await getShopeeAuthUrl(callbackUrl);
+      localStorage.setItem('shopee_oauth_company_id', companyInfo.id);
+      localStorage.setItem('shopee_oauth_country', country);
+      window.location.href = authorization_url;
+    } catch {
+      toast.error("Failed to generate Shopee authorization link");
+      setShopeeResyncingId(null);
+    }
   };
+
+  const formatDate = (dateString: string) => new Date(dateString).toLocaleString();
+
+  const getShopeeToken = (shopId: number) =>
+    shopeeTokens.find((t) => t.shop_id === shopId);
 
   if (isLoading) {
     return (
@@ -204,7 +254,7 @@ const Integration: React.FC<IntegrationProps> = ({ session }) => {
     <div className="container mx-auto px-4 py-8">
       <div className="bg-white rounded-lg shadow-md p-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-6">Integration Dashboard</h1>
-        
+
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -219,15 +269,15 @@ const Integration: React.FC<IntegrationProps> = ({ session }) => {
             </div>
           </div>
         </div>
-        
+
         {/* Google Integration Card */}
         <div className="mb-8 border border-gray-200 rounded-lg overflow-hidden">
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <img 
-                  src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" 
-                  alt="Google Logo" 
+                <img
+                  src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png"
+                  alt="Google Logo"
                   className="h-8 mr-3"
                 />
                 <h2 className="text-xl font-semibold text-gray-800">Google Integration</h2>
@@ -247,12 +297,12 @@ const Integration: React.FC<IntegrationProps> = ({ session }) => {
               </div>
             </div>
           </div>
-          
+
           <div className="p-6">
             <p className="text-gray-600 mb-6">
               Connect your Google account to access calendar events, emails, and other Google services directly from this platform.
             </p>
-            
+
             {googleConnected && googleTokenExpiry && (
               <div className="mb-6 bg-gray-50 p-4 rounded-lg flex justify-between items-center">
                 <div>
@@ -268,39 +318,27 @@ const Integration: React.FC<IntegrationProps> = ({ session }) => {
                     className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isValidating ? (
-                      <>
-                        <RefreshCw size={16} className="mr-2 animate-spin" />
-                        Refreshing...
-                      </>
+                      <><RefreshCw size={16} className="mr-2 animate-spin" />Refreshing...</>
                     ) : (
-                      <>
-                        <RefreshCw size={16} className="mr-2" />
-                        Refresh Token
-                      </>
+                      <><RefreshCw size={16} className="mr-2" />Refresh Token</>
                     )}
                   </button>
-                  
+
                   <button
                     onClick={handleRevokeAccess}
                     disabled={isRevoking}
                     className="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isRevoking ? (
-                      <>
-                        <RefreshCw size={16} className="mr-2 animate-spin" />
-                        Revoking...
-                      </>
+                      <><RefreshCw size={16} className="mr-2 animate-spin" />Revoking...</>
                     ) : (
-                      <>
-                        <X size={16} className="mr-2" />
-                        Revoke Access
-                      </>
+                      <><X size={16} className="mr-2" />Revoke Access</>
                     )}
                   </button>
                 </div>
               </div>
             )}
-            
+
             <div className="flex flex-wrap gap-3">
               {!googleConnected && (
                 <button
@@ -309,18 +347,80 @@ const Integration: React.FC<IntegrationProps> = ({ session }) => {
                   className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isConnecting ? (
-                    <>
-                      <RefreshCw size={16} className="mr-2 animate-spin" />
-                      Connecting...
-                    </>
+                    <><RefreshCw size={16} className="mr-2 animate-spin" />Connecting...</>
                   ) : (
-                    <>
-                      <ExternalLink size={16} className="mr-2" />
-                      Connect with Google
-                    </>
+                    <><ExternalLink size={16} className="mr-2" />Connect with Google</>
                   )}
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Shopee Integration Card */}
+        <div className="mb-8 border border-gray-200 rounded-lg overflow-hidden">
+          <div className="bg-gradient-to-r from-orange-50 to-red-50 px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center">
+              <div className="w-8 h-8 mr-3 flex items-center justify-center bg-orange-500 rounded-full">
+                <span className="text-white font-bold text-sm">S</span>
+              </div>
+              <h2 className="text-xl font-semibold text-gray-800">Shopee Integration</h2>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <p className="text-gray-600 mb-6">
+              Re-authorize your Shopee shops to sync the latest credentials. Click <strong>Resync</strong> on each shop to complete the OAuth flow on Shopee.
+            </p>
+
+            <div className="space-y-4">
+              {SHOPEE_SHOPS.map(({ shopId, name, country }) => {
+                const token = getShopeeToken(shopId);
+                const isSyncing = shopeeResyncingId === shopId;
+
+                return (
+                  <div key={shopId} className="bg-gray-50 p-4 rounded-lg flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">
+                        {name}
+                        <span className="ml-2 text-gray-400 font-normal">({shopId})</span>
+                        <span className="ml-2 text-xs font-medium text-gray-500 bg-gray-200 px-2 py-0.5 rounded">{country}</span>
+                      </p>
+                      {token ? (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Last synced: {formatDate(token.updated_at)}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-orange-500 mt-1">Not yet authorized</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {token ? (
+                        <span className="flex items-center text-green-600 bg-green-100 px-3 py-1 rounded-full text-sm font-medium">
+                          <Check size={14} className="mr-1" />
+                          Connected
+                        </span>
+                      ) : (
+                        <span className="flex items-center text-gray-500 bg-gray-100 px-3 py-1 rounded-full text-sm font-medium">
+                          <X size={14} className="mr-1" />
+                          Not Connected
+                        </span>
+                      )}
+                      <button
+                        onClick={() => handleShopeeResync(shopId, country)}
+                        disabled={isSyncing || !companyInfo}
+                        className="flex items-center px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSyncing ? (
+                          <><RefreshCw size={14} className="mr-2 animate-spin" />Redirecting...</>
+                        ) : (
+                          <><ExternalLink size={14} className="mr-2" />Resync</>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
