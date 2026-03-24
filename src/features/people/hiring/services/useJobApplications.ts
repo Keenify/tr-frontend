@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { supabase } from '../../../../lib/supabase';
-import { 
-  JobApplication, 
-  ApplicantFormData, 
-  ApplicationStage, 
+import { uploadFileToR2, getPresignedDownloadUrl, deleteFile } from '../../../../services/storageService';
+import {
+  JobApplication,
+  ApplicantFormData,
+  ApplicationStage,
   EmploymentType,
   APIApplicationStage,
   APIEmploymentType
 } from '../types/hiring.types';
 
 const API_URL = import.meta.env.VITE_BACKEND_API_DOMAIN || 'http://localhost:8000';
-const STORAGE_BUCKET = import.meta.env.VITE_SUPABASE_STORAGE_BUCKET_ATTACHMENTS || 'attachments';
+const STORAGE_BUCKET = 'attachments';
 
 // Map internal employment type values to API expected values
 const mapEmploymentTypeToAPI = (type: EmploymentType): APIEmploymentType => {
@@ -41,24 +41,8 @@ const mapStatusToAPI = (status: ApplicationStage): APIApplicationStage => {
  * @returns {Promise<string>} - The storage path of the file
  */
 export const uploadCV = async (file: File): Promise<string> => {
-  // Create a unique file path using timestamp and original filename
-  const fileKey = `hiring/cv/${Date.now()}_${file.name}`;
-
   console.log('Starting CV upload for:', file.name);
-
-  const { error } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .upload(fileKey, file, {
-      cacheControl: '3600',
-      upsert: false,
-      contentType: file.type,
-    });
-
-  if (error) {
-    console.error('Error uploading CV file:', error);
-    throw error;
-  }
-
+  const fileKey = await uploadFileToR2(file, STORAGE_BUCKET, 'hiring/cv');
   console.log('CV file uploaded successfully. Path:', fileKey);
   return fileKey;
 };
@@ -72,23 +56,8 @@ export const getCVSignedUrl = async (filePath: string): Promise<string> => {
   if (!filePath) {
     throw new Error('No file path provided');
   }
-
   console.log('Getting signed URL for CV:', filePath);
-  
-  const { data, error } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .createSignedUrl(filePath, 60 * 60); // URL expires in 1 hour
-
-  if (error) {
-    console.error('Error getting signed URL for CV:', error);
-    throw error;
-  }
-
-  if (!data?.signedUrl) {
-    throw new Error('No signed URL returned');
-  }
-
-  return data.signedUrl;
+  return getPresignedDownloadUrl(STORAGE_BUCKET, filePath);
 };
 
 /**
@@ -317,13 +286,11 @@ export const useJobApplications = () => {
       // First, get the application to check if it has a CV file
       const application = await getJobApplicationById(id);
       
-      // Delete the CV file if it exists (still using Supabase storage)
+      // Delete the CV file if it exists
       if (application.cv_file_path) {
-        const { error: storageError } = await supabase.storage
-          .from(STORAGE_BUCKET)
-          .remove([application.cv_file_path]);
-          
-        if (storageError) {
+        try {
+          await deleteFile(STORAGE_BUCKET, application.cv_file_path);
+        } catch (storageError) {
           console.error('Error deleting CV file:', storageError);
           // Continue with application deletion even if file deletion fails
         }

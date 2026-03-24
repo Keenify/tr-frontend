@@ -27,6 +27,7 @@ import {
 } from '@mui/material';
 import { Upload, CheckCircle } from '@mui/icons-material';
 import { supabase } from '../../../../lib/supabase';
+import { uploadFileToR2, getPublicUrl } from '../../../../services/storageService';
 
 interface CustomQuestion {
   id: string;
@@ -644,27 +645,22 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
 
     setIsFileUploading(true);
     try {
-      // Try Supabase Storage first
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `resumes/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('job-applications')
-        .upload(filePath, file);
-
-      if (uploadError) {
+      let publicUrl: string;
+      try {
+        const fileKey = await uploadFileToR2(file, 'job-applications', 'resumes');
+        publicUrl = getPublicUrl('job-applications', fileKey);
+      } catch (uploadError) {
         console.error('Upload error details:', uploadError);
-        
+
         // Fallback: Convert to base64 and store filename
         const reader = new FileReader();
         reader.onload = () => {
           const base64 = reader.result as string;
-          setFormData(prev => ({ 
-            ...prev, 
-            resume_url: `${file.name}|${base64}` 
+          setFormData(prev => ({
+            ...prev,
+            resume_url: `${file.name}|${base64}`
           }));
-          
+
           setSnackbar({
             open: true,
             message: 'Resume uploaded successfully (stored locally)',
@@ -675,11 +671,7 @@ const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         return;
       }
 
-      const { data } = supabase.storage
-        .from('job-applications')
-        .getPublicUrl(filePath);
-
-      setFormData(prev => ({ ...prev, resume_url: data.publicUrl }));
+      setFormData(prev => ({ ...prev, resume_url: publicUrl }));
       
       setSnackbar({
         open: true,

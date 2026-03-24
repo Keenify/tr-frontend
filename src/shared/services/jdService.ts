@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase';
+import { uploadFileToR2, getPublicUrl } from '../../services/storageService';
 import { JDPage, CreateJDPageRequest, UpdateJDPageRequest, DeleteJDPageResponse } from '../types/jd.types';
 
 const TABLE_NAME = 'jd_pages_v2';
@@ -253,21 +254,8 @@ export const jdService = {
    */
   async uploadImage(file: File): Promise<string> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      const fileName = `${Date.now()}-${file.name}`;
-      const { data, error } = await supabase.storage
-        .from('jd-images')
-        .upload(fileName, file);
-
-      if (error) throw error;
-
-      const { data: urlData } = supabase.storage
-        .from('jd-images')
-        .getPublicUrl(fileName);
-
-      return urlData.publicUrl;
+      const fileKey = await uploadFileToR2(file, 'jd-images', '');
+      return getPublicUrl('jd-images', fileKey);
     } catch (error) {
       console.error('Error uploading image:', error);
       throw error;

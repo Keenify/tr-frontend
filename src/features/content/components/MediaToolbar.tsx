@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Editor } from '@tiptap/react';
-import { supabase } from '../../../lib/supabase';
+import { uploadFileToR2, getPublicUrl } from '../../../services/storageService';
 import ImageUploadModal from '../modals/ImageUploadModal';
 
 interface MediaToolbarProps {
@@ -11,23 +11,8 @@ export const MediaToolbar: React.FC<MediaToolbarProps> = ({ editor }) => {
   const [showImageModal, setShowImageModal] = useState(false);
 
   const uploadImage = async (file: File): Promise<string> => {
-    const bucketName = import.meta.env.VITE_SUPABASE_STORAGE_BUCKET;
-    const fileKey = `content/${Date.now()}_${file.name}`;
-
-    const { error } = await supabase.storage
-      .from(bucketName)
-      .upload(fileKey, file, {
-        cacheControl: '3600',
-        upsert: false,
-        contentType: file.type,
-      });
-
-    if (error) {
-      throw error;
-    }
-
-    const { data } = supabase.storage.from(bucketName).getPublicUrl(fileKey);
-    return data.publicUrl;
+    const fileKey = await uploadFileToR2(file, 'content-image', 'content');
+    return getPublicUrl('content-image', fileKey);
   };
 
   const handleImageUpload = async (file: File) => {

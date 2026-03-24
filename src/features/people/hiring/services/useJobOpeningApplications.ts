@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '../../../../lib/supabase';
+import { getPresignedDownloadUrl } from '../../../../services/storageService';
 
 interface JobOpeningData {
   role?: string;
@@ -272,47 +272,12 @@ export const useJobOpeningApplications = () => {
       return resumeUrl;
     }
 
-    // If it's a storage path, try to get signed URL
+    // If it's a storage path, get a presigned download URL from R2
     try {
-      // Try different possible bucket names
-      const possibleBuckets = [
-        'attachments',
-        'resumes', 
-        'files',
-        import.meta.env.VITE_SUPABASE_STORAGE_BUCKET_ATTACHMENTS || 'attachments'
-      ];
-
-      for (const bucketName of possibleBuckets) {
-        console.log(`Trying bucket: ${bucketName} for path: ${resumeUrl}`);
-        
-        const { data, error } = await supabase.storage
-          .from(bucketName)
-          .createSignedUrl(resumeUrl, 60 * 60); // URL expires in 1 hour
-
-        if (!error && data?.signedUrl) {
-          console.log(`Successfully got signed URL from bucket: ${bucketName}`);
-          return data.signedUrl;
-        }
-        
-        if (error) {
-          console.warn(`Failed to get signed URL from bucket ${bucketName}:`, error);
-        }
-      }
-
-      // If all buckets failed, throw an error
-      throw new Error('Could not generate signed URL from any bucket');
-
+      console.log(`Getting presigned URL for path: ${resumeUrl}`);
+      return await getPresignedDownloadUrl('attachments', resumeUrl);
     } catch (err) {
       console.error('Error getting signed URL for resume:', err);
-      
-      // As a fallback, try to construct a direct Supabase URL
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      if (supabaseUrl) {
-        const directUrl = `${supabaseUrl}/storage/v1/object/public/attachments/${resumeUrl}`;
-        console.log('Falling back to direct public URL:', directUrl);
-        return directUrl;
-      }
-      
       throw err;
     }
   };

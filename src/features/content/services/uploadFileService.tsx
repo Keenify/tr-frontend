@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { supabase } from '../../../lib/supabase';
+import { getPublicUrl } from '../../../services/storageService';
 
 interface UploadResponse {
   file_name: string;
@@ -101,17 +101,7 @@ export const fetchCompanyDocuments = async (companyId: string): Promise<UploadRe
  * @throws {Error} When unable to generate signed URL
  */
 export const getFileUrl = async (filePath: string): Promise<string> => {
-  const { data, error } = await supabase
-    .storage
-    .from('documents')
-    .createSignedUrl(filePath, 604800);
-
-  if (error) {
-    console.error('Error creating signed URL:', error);
-    throw error;
-  }
-
-  return data.signedUrl;
+  return getPublicUrl('documents', filePath);
 };
 
 /**
