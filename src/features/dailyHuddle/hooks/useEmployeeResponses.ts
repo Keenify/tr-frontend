@@ -99,5 +99,10 @@ export function useEmployeeResponses(companyId: string | undefined, selectedDate
     fetchAllResponses();
   }, [companyId, selectedDate]); // Direct dependencies to avoid circular references
 
-  return { employeeResponses, error, isLoading, refreshEmployeeResponses: fetchAllResponses };
+  const refreshEmployeeResponses = useCallback(async () => {
+    lastFetchRef.current = null; // Clear cache so force-refresh always fetches fresh data
+    await fetchAllResponses();
+  }, [fetchAllResponses]);
+
+  return { employeeResponses, error, isLoading, refreshEmployeeResponses };
 }

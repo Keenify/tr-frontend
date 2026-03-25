@@ -66,6 +66,7 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
   const [effectiveDate, setEffectiveDate] = useState<string>(getEffectiveDate());
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState<boolean>(false);
   const [initialAnswers, setInitialAnswers] = useState<{ [key: string]: string }>({});
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   
   // Refs for tooltip guidance
   const tooltipRef = useRef<HTMLDivElement | null>(null);
@@ -256,6 +257,7 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
    */
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (isSubmitting) return;
     if (!employeeId) {
       console.error("Employee ID is not available");
       return;
@@ -288,6 +290,7 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
       })),
     };
 
+    setIsSubmitting(true);
     try {
       if (isEditing && responseId) {
         const updateData = questions.map((question) => ({
@@ -304,7 +307,7 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
           setResponseId(result.response_id);
         }
       }
-      
+
       setHasSubmitted(true);
       setIsEditing(false); // Reset editing state after successful submission
       setHasUnsavedChanges(false); // Clear unsaved changes after successful submission
@@ -312,6 +315,8 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
     } catch (error) {
       console.error("Submission failed:", error);
       alert("Failed to submit your response. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -496,6 +501,7 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
                   <input
                     title={question.question_text}
                     type="text"
+                    autoComplete="off"
                     value={answers[question.id] || ""}
                     onChange={(e) => handleInputChange(question.id, e.target.value)}
                     onFocus={(e) => handleInputFocus(e, question.id)}
@@ -560,8 +566,16 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
           <button
             type="submit"
             className="submit-button"
+            disabled={isSubmitting}
           >
-            {isEditing ? "Update" : "Submit"}
+            {isSubmitting ? (
+              <>
+                <ClipLoader size={16} color={"#fff"} loading={true} />
+                <span>{isEditing ? "Updating..." : "Submitting..."}</span>
+              </>
+            ) : (
+              isEditing ? "Update" : "Submit"
+            )}
           </button>
         </form>
       </div>
@@ -795,6 +809,7 @@ const GoalsInput: React.FC<{
           <div className="goal-number">{index + 1}</div>
           <input
             type="text"
+            autoComplete="off"
             value={goal}
             ref={el => inputRefs.current[index] = el}
             onChange={(e) => handleGoalChange(index, e.target.value)}

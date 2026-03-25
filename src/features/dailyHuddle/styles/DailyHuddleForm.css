@@ -285,8 +285,17 @@
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   margin: 0 auto;
+  min-width: 120px;
+}
+
+.submit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .emotion-wheel {
