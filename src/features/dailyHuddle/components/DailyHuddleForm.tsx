@@ -161,26 +161,41 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
           // Get the effective date (today or tomorrow based on cutoff time)
           const currentEffectiveDate = getEffectiveDate();
           setEffectiveDate(currentEffectiveDate);
-          
-          // Check if user has already submitted for the effective date
-          const effectiveResponse = await fetchResponse(currentEffectiveDate, userData.id);
-          setHasSubmitted(!!effectiveResponse);
 
-          if (effectiveResponse) {
-            const typedResponse = effectiveResponse as ResponseData;
+          // Check if user has already submitted for the effective date
+          let foundResponse = await fetchResponse(currentEffectiveDate, userData.id);
+
+          // Fallback: if no response for the effective date and it's after cutoff (effectiveDate = tomorrow),
+          // check today's date so users who submitted earlier today still see their response
+          if (!foundResponse) {
+            const todayDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore' });
+            if (currentEffectiveDate !== todayDate) {
+              foundResponse = await fetchResponse(todayDate, userData.id);
+              if (foundResponse) {
+                // Found today's response — load it but keep effectiveDate as tomorrow
+                // so a fresh tomorrow submission can still be made
+                setEffectiveDate(currentEffectiveDate);
+              }
+            }
+          }
+
+          setHasSubmitted(!!foundResponse);
+
+          if (foundResponse) {
+            const typedResponse = foundResponse as ResponseData;
             setResponseId(typedResponse.response_id);
             const previousAnswers = typedResponse.questions.reduce((acc, response) => ({
               ...acc,
               [response.question_id]: response.answer_text,
             }), {});
             setAnswers(previousAnswers);
-            setInitialAnswers(previousAnswers); // Track initial state for change detection
-            setHasUnsavedChanges(false); // Clear any false positives during initialization
+            setInitialAnswers(previousAnswers);
+            setHasUnsavedChanges(false);
           } else {
             // Initialize with empty answers for change detection
             const emptyAnswers: { [key: string]: string } = {};
             setInitialAnswers(emptyAnswers);
-            setHasUnsavedChanges(false); // Clear any false positives during initialization
+            setHasUnsavedChanges(false);
           }
         }
       } catch (error) {
@@ -282,7 +297,7 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
       response_data: {
         employee_id: employeeId,
         questionnaire_id: FORM_ID,
-        date: effectiveDate, // Use the effective date
+        submitted_date: effectiveDate,
       },
       answers_data: questions.map((question) => ({
         answer_text: answers[question.id] || "",
