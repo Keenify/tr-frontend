@@ -33,6 +33,7 @@ interface DailyHuddleProps {
  */
 const DailyHuddle: React.FC<DailyHuddleProps> = ({ session }) => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [responseRefreshKey, setResponseRefreshKey] = useState(0);
   const isMobileOrTablet = useIsMobileOrTablet();
 
   const toggleMobileSidebar = () => {
@@ -89,7 +90,11 @@ const DailyHuddle: React.FC<DailyHuddleProps> = ({ session }) => {
         </p>
       </div>
 
-      <Tabs>
+      <Tabs onSelect={(index) => {
+          if (index === 1) {
+            setResponseRefreshKey(prev => prev + 1);
+          }
+        }}>
         <TabList>
           <Tab>Daily Huddle Form</Tab>
           <Tab>Daily Huddle Response</Tab>
@@ -99,7 +104,7 @@ const DailyHuddle: React.FC<DailyHuddleProps> = ({ session }) => {
           <DailyHuddleForm session={session} />
         </TabPanel>
         <TabPanel>
-          <DailyHuddleResponse session={session} />
+          <DailyHuddleResponse session={session} refreshKey={responseRefreshKey} />
         </TabPanel>
       </Tabs>
       </div>

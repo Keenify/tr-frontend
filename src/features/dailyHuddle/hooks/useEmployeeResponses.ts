@@ -12,7 +12,7 @@ interface EmployeeResponse {
   Is_Employed?: boolean;
 }
 
-export function useEmployeeResponses(companyId: string | undefined, selectedDate: string) {
+export function useEmployeeResponses(companyId: string | undefined, selectedDate: string, refreshKey: number = 0) {
   const [employeeResponses, setEmployeeResponses] = useState<EmployeeResponse[]>([]);
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -98,6 +98,13 @@ export function useEmployeeResponses(companyId: string | undefined, selectedDate
   useEffect(() => {
     fetchAllResponses();
   }, [companyId, selectedDate]); // Direct dependencies to avoid circular references
+
+  // Re-fetch when the response tab becomes active (refreshKey increments on tab select)
+  useEffect(() => {
+    if (refreshKey === 0) return; // Skip initial mount
+    lastFetchRef.current = null;
+    fetchAllResponses();
+  }, [refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const refreshEmployeeResponses = useCallback(async () => {
     lastFetchRef.current = null; // Clear cache so force-refresh always fetches fresh data

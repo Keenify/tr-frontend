@@ -12,6 +12,7 @@ import { CalendarEvent } from '../../people/calendar/types/calendar';
 
 interface DailyHuddleResponseProps {
   session: Session;
+  refreshKey?: number;
 }
 
 /**
@@ -97,12 +98,12 @@ interface RankedEmployeeResponse {
  * @param {Session} props.session - User session object containing authentication details
  * @returns {JSX.Element} Rendered Daily Huddle Response component
  */
-const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session }) => {
+const DailyHuddleResponse: React.FC<DailyHuddleResponseProps> = ({ session, refreshKey = 0 }) => {
   const [loading, setLoading] = React.useState(true);
   const [questions, setQuestions] = React.useState<Question[]>([]);
   const [selectedDate, setSelectedDate] = React.useState(getEffectiveDate());
   const { companyInfo, error: dataError } = useUserAndCompanyData(session.user.id);
-  const { employeeResponses, error, isLoading, refreshEmployeeResponses } = useEmployeeResponses(companyInfo?.id, selectedDate);
+  const { employeeResponses, error, isLoading, refreshEmployeeResponses } = useEmployeeResponses(companyInfo?.id, selectedDate, refreshKey);
   const [calendarEvents, setCalendarEvents] = React.useState<CalendarEvent[]>([]);
   const [refreshing, setRefreshing] = React.useState(false);
   const dateInputRef = React.useRef<HTMLInputElement>(null); // Ref for hidden date input
