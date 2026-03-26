@@ -297,7 +297,7 @@ const DailyHuddleFormContent: React.FC<DailyHuddleFormProps> = ({ session }) => 
       response_data: {
         employee_id: employeeId,
         questionnaire_id: FORM_ID,
-        submitted_date: effectiveDate,
+        date: effectiveDate,
       },
       answers_data: questions.map((question) => ({
         answer_text: answers[question.id] || "",
